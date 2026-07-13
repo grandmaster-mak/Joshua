@@ -894,9 +894,23 @@ function executeMove(fromR, fromC, r, c, isAIMove){
 // to finishing the move instead of waiting on a non-existent animation).
 function slidePieceVisual(fromR, fromC, toR, toC){
 
+    // createBoard() renders in visual order, not raw r/c order, when
+    // the board is flipped — so the DOM child index for a given square
+    // has to be computed the same way createBoard() placed it, or this
+    // grabs the wrong square entirely (causing a phantom animation on
+    // an unrelated square before the real board redraw "corrects" it).
+    const flipped = (gameMode === "online" && myColor === "black");
+
+    function domIndex(r, c){
+        if(flipped){
+            return (7 - r) * 8 + (7 - c);
+        }
+        return r * 8 + c;
+    }
+
     const squares = board.children;
-    const fromSquare = squares[fromR * 8 + fromC];
-    const toSquare = squares[toR * 8 + toC];
+    const fromSquare = squares[domIndex(fromR, fromC)];
+    const toSquare = squares[domIndex(toR, toC)];
 
     if(!fromSquare || !toSquare) return false;
 
