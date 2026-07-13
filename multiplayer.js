@@ -135,6 +135,7 @@ function listenForRemoteMoves(code){
         if(!move || move.by === myColor) return;
 
         applyingRemoteMove = true;
+        remotePromotionPiece = move.promotion || null;
         executeMove(move.fromR, move.fromC, move.toR, move.toC, false);
         applyingRemoteMove = false;
 
