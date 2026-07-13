@@ -1059,12 +1059,17 @@ function completeMove(fromR, fromC, r, c, isAIMove){
     // Promotion check
     if(movedPiece === "wP" && r === 0){
 
-        if(gameMode === "ai" || gameMode === "online" || isAIMove){
+        if(isAIMove){
             pieces[r][c] = "wQ";
+            finishTurn();
+        }else if(gameMode === "online" && applyingRemoteMove){
+            pieces[r][c] = "w" + (remotePromotionPiece || "Q");
+            remotePromotionPiece = null;
             finishTurn();
         }else{
             promotionSquare = {r, c};
             promotionColor = "w";
+            pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
             createBoard();
             showPromotion("w");
         }
@@ -1074,12 +1079,17 @@ function completeMove(fromR, fromC, r, c, isAIMove){
 
     if(movedPiece === "bP" && r === 7){
 
-        if(gameMode === "ai" || gameMode === "online" || isAIMove){
+        if(isAIMove){
             pieces[r][c] = "bQ";
+            finishTurn();
+        }else if(gameMode === "online" && applyingRemoteMove){
+            pieces[r][c] = "b" + (remotePromotionPiece || "Q");
+            remotePromotionPiece = null;
             finishTurn();
         }else{
             promotionSquare = {r, c};
             promotionColor = "b";
+            pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
             createBoard();
             showPromotion("b");
         }
