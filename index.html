@@ -34,19 +34,21 @@
             <h2>Game Information</h2>
             <p id="turn">White to Move</p>
 
-            <p id="whiteTimer">⚪ White: 10:00</p>
+            <div id="topPlayerBox">
+                <p id="topTimer"></p>
+                <p>
+                    Captured:
+                    <span id="topCaptured"></span>
+                </p>
+            </div>
 
-            <p id="blackTimer">⚫ Black: 10:00</p>
-
-            <p>
-                White Captured:
-                <span id="whiteCaptured"></span>
-            </p>
-
-            <p>
-                Black Captured:
-                <span id="blackCaptured"></span>
-            </p>
+            <div id="bottomPlayerBox">
+                <p id="bottomTimer"></p>
+                <p>
+                    Captured:
+                    <span id="bottomCaptured"></span>
+                </p>
+            </div>
 
             <button id="newGame" onclick="showTimeControl()">
                 New Game
