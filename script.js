@@ -1251,6 +1251,7 @@ function newGame(){
 
     positionHistory = [getPositionKey()];
     createBoard();
+    if(gameMode === "online") return;
 }
 
 function createCoordinates(){
@@ -1300,6 +1301,7 @@ function closePromotion(){
 }
 
 function undoMove(){
+    if(gameMode === "online") return;
 
     if(gameOver) return;
 
