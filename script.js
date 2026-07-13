@@ -64,9 +64,16 @@ function createBoard(){
 
     board.innerHTML = "";
 
-    for(let r = 0; r < 8; r++){
+    // In online mode, the player who's Black sees the board flipped —
+    // their own pieces at the bottom, just like a real physical board.
+    const flipped = (gameMode === "online" && myColor === "black");
 
-        for(let c = 0; c < 8; c++){
+    for(let i = 0; i < 8; i++){
+
+        for(let j = 0; j < 8; j++){
+
+            const r = flipped ? 7 - i : i;
+            const c = flipped ? 7 - j : j;
 
             const square = document.createElement("div");
 
@@ -115,14 +122,16 @@ function createBoard(){
 
             }
 
-            if(r === 7){
+            // Labels sit on the visual bottom row / left column,
+            // regardless of whether the board is flipped.
+            if(i === 7){
                 const file = document.createElement("span");
                 file.className = "fileLabel";
                 file.textContent = "abcdefgh"[c];
                 square.appendChild(file);
             }
 
-            if(c === 0){
+            if(j === 0){
                 const rank = document.createElement("span");
                 rank.className = "rankLabel";
                 rank.textContent = 8 - r;
@@ -679,17 +688,41 @@ function formatTime(seconds){
     return minutes + ":" + String(secs).padStart(2, "0");
 }
 
+// Which color's info shows in the top box vs the bottom box.
+// Default: Black on top, White on bottom (matches the default
+// un-flipped board). If you're playing Black online, your own board
+// is flipped, so your info moves to the bottom to match.
+function getOrientation(){
+
+    if(gameMode === "online" && myColor === "black"){
+        return { top: "white", bottom: "black" };
+    }
+
+    return { top: "black", bottom: "white" };
+}
+
 function updateTimers(){
 
-    document.getElementById("whiteTimer").textContent =
-        whiteTime === -1
-        ? "⚪ White: Unlimited"
-        : "⚪ White: " + formatTime(whiteTime);
+    const orientation = getOrientation();
 
-    document.getElementById("blackTimer").textContent =
-        blackTime === -1
-        ? "⚫ Black: Unlimited"
-        : "⚫ Black: " + formatTime(blackTime);
+    const topTime = orientation.top === "white" ? whiteTime : blackTime;
+    const bottomTime = orientation.bottom === "white" ? whiteTime : blackTime;
+
+    const topIcon = orientation.top === "white" ? "⚪" : "⚫";
+    const bottomIcon = orientation.bottom === "white" ? "⚪" : "⚫";
+
+    const topLabel = orientation.top === "white" ? whitePlayer : blackPlayer;
+    const bottomLabel = orientation.bottom === "white" ? whitePlayer : blackPlayer;
+
+    document.getElementById("topTimer").textContent =
+        topTime === -1
+        ? topIcon + " " + topLabel + ": Unlimited"
+        : topIcon + " " + topLabel + ": " + formatTime(topTime);
+
+    document.getElementById("bottomTimer").textContent =
+        bottomTime === -1
+        ? bottomIcon + " " + bottomLabel + ": Unlimited"
+        : bottomIcon + " " + bottomLabel + ": " + formatTime(bottomTime);
 }
 
 function startTimer(){
@@ -1097,18 +1130,23 @@ function finishTurn(){
 
 function updateCaptured(){
 
-    const whiteBox = document.getElementById("whiteCaptured");
-    const blackBox = document.getElementById("blackCaptured");
+    const orientation = getOrientation();
 
-    whiteBox.innerHTML = "";
-    blackBox.innerHTML = "";
+    const topBox = document.getElementById("topCaptured");
+    const bottomBox = document.getElementById("bottomCaptured");
 
-    whiteCaptured.forEach(piece => {
-        whiteBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
+    const topList = orientation.top === "white" ? whiteCaptured : blackCaptured;
+    const bottomList = orientation.bottom === "white" ? whiteCaptured : blackCaptured;
+
+    topBox.innerHTML = "";
+    bottomBox.innerHTML = "";
+
+    topList.forEach(piece => {
+        topBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
     });
 
-    blackCaptured.forEach(piece => {
-        blackBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
+    bottomList.forEach(piece => {
+        bottomBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
     });
 
 }
