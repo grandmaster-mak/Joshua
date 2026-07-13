@@ -142,7 +142,7 @@ function listenForRemoteMoves(code){
 
 }
 
-function sendMoveToFirebase(fromR, fromC, toR, toC){
+function sendMoveToFirebase(fromR, fromC, toR, toC, promotion){
 
     if(!db || !currentRoomCode) return;
 
@@ -152,6 +152,7 @@ function sendMoveToFirebase(fromR, fromC, toR, toC){
         toR: toR,
         toC: toC,
         by: myColor,
+        promotion: promotion || null,
         time: Date.now()
     });
 
