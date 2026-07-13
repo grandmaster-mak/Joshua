@@ -72,6 +72,19 @@ h1{
     font-size:20px;
 }
 
+#topPlayerBox{
+    padding-bottom:10px;
+    border-bottom:1px solid #555;
+    margin-bottom:10px;
+}
+
+#bottomPlayerBox{
+    padding-top:5px;
+    padding-bottom:15px;
+    border-bottom:1px solid #555;
+    margin-bottom:10px;
+}
+
 button{
     width:100%;
     padding:12px;
