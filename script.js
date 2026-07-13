@@ -863,12 +863,13 @@ function playAIMove(fromR, fromC, toR, toC){
 // applies the real game-logic update once the slide finishes.
 function executeMove(fromR, fromC, r, c, isAIMove){
 
-    if(gameMode === "online" && !applyingRemoteMove && typeof sendMoveToFirebase === "function"){
-        sendMoveToFirebase(fromR, fromC, r, c);
-    }
-
     const movedPiece = pieces[fromR][fromC];
     const isCastle = (movedPiece === "wK" || movedPiece === "bK") && Math.abs(c - fromC) === 2;
+    const isPromotionMove = (movedPiece === "wP" && r === 0) || (movedPiece === "bP" && r === 7);
+
+    if(gameMode === "online" && !applyingRemoteMove && !isPromotionMove && typeof sendMoveToFirebase === "function"){
+        sendMoveToFirebase(fromR, fromC, r, c, null);
+    }
 
     const finish = function(){
         completeMove(fromR, fromC, r, c, isAIMove);
