@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>♟️ Chess Game</h1>
+
+    <div id="game">
+
+        <!-- Chess Board -->
+        <div id="boardContainer">
+
+            <div id="filesTop"></div>
+
+            <div id="boardArea">
+
+                <div id="ranksLeft"></div>
+
+                <div id="board"></div>
+
+            </div>
+
+        </div>
+
+        <!-- Right Panel -->
+        <div id="panel">
+
+            <h2>Game Information</h2>
+            <p id="turn">White to Move</p>
+
+            <p id="whiteTimer">⚪ White: 10:00</p>
+
+            <p id="blackTimer">⚫ Black: 10:00</p>
+
+            <p>
+                White Captured:
+                <span id="whiteCaptured"></span>
+            </p>
+
+            <p>
+                Black Captured:
+                <span id="blackCaptured"></span>
+            </p>
+
+            <button id="newGame" onclick="showTimeControl()">
+                New Game
+            </button>
+
+            <button id="restart" onclick="newGame()">
+                Restart Game
+            </button>
+
+            <button id="undo" onclick="undoMove()">
+                Undo Move
+            </button>
+
+            <h3>Move History</h3>
+
+            <div id="history"></div>
+
+        </div>
+
+    </div>
+
+    <!-- Time Control Popup -->
+    <div id="timeControlPopup" class="popup">
+
+        <div class="popupContent">
+
+            <h2>New Game</h2>
+
+            <label><b>Game Mode</b></label><br>
+
+            <select id="gameMode" onchange="updateGameMode()">
+
+                <option value="human">Two Players</option>
+
+                <option value="ai">Play vs AI</option>
+
+                <option value="online">Play Online</option>
+
+            </select>
+
+            <br><br>
+
+            <div id="difficultyBox" style="display:none;">
+
+                <label><b>AI Difficulty</b></label><br>
+
+                <select id="aiDifficulty">
+
+                    <option value="easy">Easy</option>
+
+                    <option value="medium">Medium</option>
+
+                    <option value="hard">Hard</option>
+
+                </select>
+
+                <br><br>
+
+            </div>
+
+            <div id="onlineBox" style="display:none;">
+
+                <button onclick="createOnlineRoom()">Create Room</button>
+
+                <p id="roomCodeDisplay"></p>
+
+                <br>
+
+                <label><b>Or Join a Room</b></label><br>
+
+                <input type="text" id="joinRoomInput" placeholder="Enter room code" maxlength="6" style="width:100%; padding:10px; margin-top:8px; border-radius:5px; border:none; text-align:center; text-transform:uppercase;">
+
+                <button onclick="joinOnlineRoom()">Join Room</button>
+
+                <p id="onlineStatus"></p>
+
+            </div>
+
+            <div id="timeControlSection">
+
+                <label><b>Time Control</b></label><br>
+
+                <select id="timeControl">
+
+                    <option value="60">1 Minute</option>
+
+                    <option value="180">3 Minutes</option>
+
+                    <option value="300">5 Minutes</option>
+
+                    <option value="600" selected>10 Minutes</option>
+
+                    <option value="900">15 Minutes</option>
+
+                    <option value="-1">Unlimited</option>
+
+                </select>
+
+            </div>
+
+            <br><br>
+
+            <button id="startGameBtn" onclick="startNewGame()">
+
+                Start Game
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Game Over Popup -->
+    <div id="gameOverPopup" class="popup">
+
+        <div class="popupContent">
+
+            <h2 id="popupTitle"></h2>
+
+            <p id="popupMessage"></p>
+
+            <button onclick="closePopup(); newGame();">
+                New Game
+            </button>
+
+            <button onclick="closePopup();">
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Promotion Popup -->
+    <div id="promotionPopup" class="popup">
+
+        <div class="popupContent">
+
+            <h2>Choose Promotion</h2>
+
+            <div id="promotionChoices">
+
+                <img id="promoteQ" class="promotionPiece" onclick="choosePromotion('Q')">
+                <img id="promoteR" class="promotionPiece" onclick="choosePromotion('R')">
+                <img id="promoteB" class="promotionPiece" onclick="choosePromotion('B')">
+                <img id="promoteN" class="promotionPiece" onclick="choosePromotion('N')">
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Firebase (compat build — works with plain script tags, no bundler needed) -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+
+    <script src="script.js"></script>
+    <script src="ai.js"></script>
+    <script src="multiplayer.js"></script>
+
+</body>
+</html>
