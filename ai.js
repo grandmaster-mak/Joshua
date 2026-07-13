@@ -1,4 +1,4 @@
-// ============================================================
+ // ============================================================
 // Stockfish integration
 //
 // Requires these two files in the SAME folder as this one:
@@ -29,8 +29,18 @@ try {
 
     stockfish.onerror = function(err){
         console.error("Stockfish failed to load:", err.message);
+        alert("Stockfish worker error: " + err.message);
         stockfish = null;
     };
+
+    // If we never hear back from the engine at all within 6 seconds,
+    // something silently failed (usually the .wasm file not loading
+    // correctly) — flag it instead of leaving the AI stuck forever.
+    setTimeout(function(){
+        if(!stockfishReady){
+            alert("Stockfish never became ready — it likely failed to load the .wasm file. Check that stockfish-18-lite-single.wasm is uploaded correctly.");
+        }
+    }, 6000);
 
     stockfish.onmessage = function(e){
 
@@ -208,3 +218,4 @@ function makeAIMove(){
     stockfish.postMessage("go movetime " + settings.movetime);
 
 }
+     
