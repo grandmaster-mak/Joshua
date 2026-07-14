@@ -884,7 +884,7 @@ function executeMove(fromR, fromC, r, c, isAIMove){
     }
 
     const finish = function(){
-        completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove);
+        completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove, aiPromotionForThisMove);
     };
 
     if(isCastle){
