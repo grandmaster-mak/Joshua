@@ -1033,10 +1033,10 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
 
         if(isAIMove){
             pieces[r][c] = "w" + (aiPromotionForThisMove ? aiPromotionForThisMove.toUpperCase() : "Q");
-            finishTurn();
+            finishTurn(wasRemoteMove);
         }else if(gameMode === "online" && wasRemoteMove){
             pieces[r][c] = "w" + (promotionPieceForThisMove || "Q");
-            finishTurn();
+            finishTurn(wasRemoteMove);
         }else{
             promotionSquare = {r, c};
             promotionColor = "w";
@@ -1052,10 +1052,10 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
 
         if(isAIMove){
             pieces[r][c] = "b" + (aiPromotionForThisMove ? aiPromotionForThisMove.toUpperCase() : "Q");
-            finishTurn();
+            finishTurn(wasRemoteMove);
         }else if(gameMode === "online" && wasRemoteMove){
             pieces[r][c] = "b" + (promotionPieceForThisMove || "Q");
-            finishTurn();
+            finishTurn(wasRemoteMove);
         }else{
             promotionSquare = {r, c};
             promotionColor = "b";
@@ -1067,7 +1067,7 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
         return;
     }
 
-    finishTurn();
+    finishTurn(wasRemoteMove);
 }
 
 function choosePromotion(letter){
