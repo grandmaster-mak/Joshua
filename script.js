@@ -1346,6 +1346,13 @@ function handleRestartClick(){
         newGame();
     }
 }
+function handleNewGameClick(){
+    if(gameMode === "online" && !gameOver){
+        showOnlineGameMenu();
+    }else{
+        showTimeControl();
+    }
+}
 
 function showKingMarkers(loserColor){
 
