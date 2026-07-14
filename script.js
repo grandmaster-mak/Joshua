@@ -1089,7 +1089,7 @@ function choosePromotion(letter){
     promotionColor = null;
 
     closePromotion();
-    finishTurn();
+    finishTurn(false);
 }
 
 function finishTurn(){
