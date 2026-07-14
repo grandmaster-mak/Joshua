@@ -1070,9 +1070,8 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
         if(isAIMove){
             pieces[r][c] = "wQ";
             finishTurn();
-        }else if(gameMode === "online" && applyingRemoteMove){
-            pieces[r][c] = "w" + (remotePromotionPiece || "Q");
-            remotePromotionPiece = null;
+        }else if(gameMode === "online" && wasRemoteMove){
+            pieces[r][c] = "w" + (promotionPieceForThisMove || "Q");
             finishTurn();
         }else{
             promotionSquare = {r, c};
@@ -1090,9 +1089,8 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
         if(isAIMove){
             pieces[r][c] = "bQ";
             finishTurn();
-        }else if(gameMode === "online" && applyingRemoteMove){
-            pieces[r][c] = "b" + (remotePromotionPiece || "Q");
-            remotePromotionPiece = null;
+        }else if(gameMode === "online" && wasRemoteMove){
+            pieces[r][c] = "b" + (promotionPieceForThisMove || "Q");
             finishTurn();
         }else{
             promotionSquare = {r, c};
