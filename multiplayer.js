@@ -1,13 +1,5 @@
 // ============================================================
 // Online multiplayer via Firebase Realtime Database
-//
-// v1 scope, by design:
-//   - Room-code based (no accounts/usernames yet)
-//   - Each move is broadcast and replayed on the other device
-//   - Promotion choice is synced (each player picks their own piece)
-//   - Timers run locally on each device, not synced yet
-//   - Presence detection: opponent disconnecting ends the game
-//   - Resign / Abort / Draw offer supported via game events
 // ============================================================
 
 const firebaseConfig = {
@@ -22,12 +14,23 @@ const firebaseConfig = {
 };
 
 let db = null;
+let serverTimeOffset = 0;
+let clockData = null;
 
 try{
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
+
+    db.ref(".info/serverTimeOffset").on("value", function(snapshot){
+        serverTimeOffset = snapshot.val() || 0;
+    });
+
 }catch(err){
     console.error("Firebase failed to initialize:", err.message);
+}
+
+function getServerNow(){
+    return Date.now() + serverTimeOffset;
 }
 
 function generateRoomCode(){
@@ -134,7 +137,7 @@ function startOnlineGame(code){
             whiteTime: selectedTime,
             blackTime: selectedTime,
             turn: "white",
-            turnStartedAt: firebase.database.ServerValue.TIMESTAMP
+            turnStartedAt: getServerNow()
         });
     }
 
@@ -151,98 +154,6 @@ function listenForOpponentPresence(code){
             showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
         }
     });
-}
-let serverTimeOffset = 0;
-let clockData = null;
-
-db.ref(".info/serverTimeOffset").on("value", function(snapshot){
-    serverTimeOffset = snapshot.val() || 0;
-});
-
-function getServerNow(){
-    return Date.now() + serverTimeOffset;
-}
-
-function listenForClockSync(code){
-    db.ref("rooms/" + code + "/clock").on("value", function(snapshot){
-        clockData = snapshot.val();
-    });
-}
-
-function pushClockUpdate(moverColor){
-
-    if(!currentRoomCode || !db) return;
-
-    db.ref("rooms/" + currentRoomCode + "/clock").transaction(function(current){
-
-        if(!current) return current;
-
-        const now = getServerNow();
-        const elapsedSeconds = Math.max(0, Math.floor((now - current.turnStartedAt) / 1000));
-
-        let newWhiteTime = current.whiteTime;
-        let newBlackTime = current.blackTime;
-
-        if(current.whiteTime !== -1 && current.blackTime !== -1){
-            if(moverColor === "white"){
-                newWhiteTime = Math.max(0, current.whiteTime - elapsedSeconds);
-            }else{
-                newBlackTime = Math.max(0, current.blackTime - elapsedSeconds);
-            }
-        }
-
-        return {
-            whiteTime: newWhiteTime,
-            blackTime: newBlackTime,
-            turn: moverColor === "white" ? "black" : "white",
-            turnStartedAt: now
-        };
-
-    });
-
-}
-
-function startOnlineClockDisplay(){
-
-    clearInterval(timer);
-
-    timer = setInterval(function(){
-
-        if(!clockData || gameOver) return;
-
-        const now = getServerNow();
-        const elapsed = (now - clockData.turnStartedAt) / 1000;
-
-        let displayWhite = clockData.whiteTime;
-        let displayBlack = clockData.blackTime;
-
-        if(clockData.whiteTime !== -1){
-            if(clockData.turn === "white"){
-                displayWhite = Math.max(0, clockData.whiteTime - elapsed);
-            }else{
-                displayBlack = Math.max(0, clockData.blackTime - elapsed);
-            }
-        }
-
-        whiteTime = Math.ceil(displayWhite);
-        blackTime = Math.ceil(displayBlack);
-
-        updateTimers();
-
-        if(clockData.whiteTime !== -1 && displayWhite <= 0){
-            gameOver = true;
-            clearInterval(timer);
-            showPopup("⏰ TIME!", "Black wins on time!");
-        }
-
-        if(clockData.blackTime !== -1 && displayBlack <= 0){
-            gameOver = true;
-            clearInterval(timer);
-            showPopup("⏰ TIME!", "White wins on time!");
-        }
-
-    }, 500);
-
 }
 
 function sendGameEvent(type, extra){
@@ -333,4 +244,86 @@ function sendMoveToFirebase(fromR, fromC, toR, toC, promotion){
         time: Date.now()
     });
 
-        }             
+}
+
+function listenForClockSync(code){
+    db.ref("rooms/" + code + "/clock").on("value", function(snapshot){
+        clockData = snapshot.val();
+    });
+}
+
+function pushClockUpdate(moverColor){
+
+    if(!currentRoomCode || !db) return;
+
+    db.ref("rooms/" + currentRoomCode + "/clock").transaction(function(current){
+
+        if(!current) return current;
+
+        const now = getServerNow();
+        const elapsedSeconds = Math.max(0, Math.floor((now - current.turnStartedAt) / 1000));
+
+        let newWhiteTime = current.whiteTime;
+        let newBlackTime = current.blackTime;
+
+        if(current.whiteTime !== -1 && current.blackTime !== -1){
+            if(moverColor === "white"){
+                newWhiteTime = Math.max(0, current.whiteTime - elapsedSeconds);
+            }else{
+                newBlackTime = Math.max(0, current.blackTime - elapsedSeconds);
+            }
+        }
+
+        return {
+            whiteTime: newWhiteTime,
+            blackTime: newBlackTime,
+            turn: moverColor === "white" ? "black" : "white",
+            turnStartedAt: now
+        };
+
+    });
+
+}
+
+function startOnlineClockDisplay(){
+
+    clearInterval(timer);
+
+    timer = setInterval(function(){
+
+        if(!clockData || gameOver) return;
+
+        const now = getServerNow();
+        const elapsed = (now - clockData.turnStartedAt) / 1000;
+
+        let displayWhite = clockData.whiteTime;
+        let displayBlack = clockData.blackTime;
+
+        if(clockData.whiteTime !== -1 && clockData.blackTime !== -1){
+            if(clockData.turn === "white"){
+                displayWhite = Math.max(0, clockData.whiteTime - elapsed);
+            }else{
+                displayBlack = Math.max(0, clockData.blackTime - elapsed);
+            }
+        }
+
+        whiteTime = Math.ceil(displayWhite);
+        blackTime = Math.ceil(displayBlack);
+
+        updateTimers();
+
+        if(clockData.whiteTime !== -1 && displayWhite <= 0){
+            gameOver = true;
+            clearInterval(timer);
+            showPopup("⏰ TIME!", "Black wins on time!");
+        }
+
+        if(clockData.blackTime !== -1 && displayBlack <= 0){
+            gameOver = true;
+            clearInterval(timer);
+            showPopup("⏰ TIME!", "White wins on time!");
+        }
+
+    }, 500);
+
+}
