@@ -14,6 +14,7 @@ let lastMove = null;
 let animationRunning = false;
 let promotionSquare = null;
 let promotionColor = null;
+let aiPromotionPiece = null;
 let remotePromotionPiece = null;
 let pendingOnlinePromotionMove = null;
 let moveHistory = [];
