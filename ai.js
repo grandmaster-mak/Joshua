@@ -1,4 +1,4 @@
- // ============================================================
+// ============================================================
 // Stockfish integration
 //
 // Requires these two files in the SAME folder as this one:
@@ -10,17 +10,10 @@ let stockfish = null;
 let stockfishReady = false;
 let multiPvMoves = {};
 
-// UCI_LimitStrength + UCI_Elo pins Stockfish to an actual approximate
-// rating instead of just "playing worse" — this is far more reliable
-// at the low end than Skill Level alone. 1320 is Stockfish's own
-// built-in floor; it cannot be told to play weaker than this through
-// Elo limiting, so "easy" also uses MultiPV to occasionally pick a
-// second or third-best move instead of always the strongest one,
-// simulating a less consistent, beatable beginner.
 const difficultySettings = {
     easy:   { elo: 1320, movetime: 400,  multipv: 3 },
     medium: { elo: 1600, movetime: 700,  multipv: 1 },
-    hard:   { elo: 0,    movetime: 1200, multipv: 1 }  // elo 0 = full strength, no limiting
+    hard:   { elo: 0,    movetime: 1200, multipv: 1 }
 };
 
 try {
@@ -33,9 +26,6 @@ try {
         stockfish = null;
     };
 
-    // If we never hear back from the engine at all within 6 seconds,
-    // something silently failed (usually the .wasm file not loading
-    // correctly) — flag it instead of leaving the AI stuck forever.
     setTimeout(function(){
         if(!stockfishReady){
             alert("Stockfish never became ready — it likely failed to load the .wasm file. Check that stockfish-18-lite-single.wasm is uploaded correctly.");
@@ -56,9 +46,6 @@ try {
             return;
         }
 
-        // Capture each MultiPV candidate's current best line as the
-        // search deepens. By the time "bestmove" arrives, this holds
-        // the strongest move found so far for each rank (1st, 2nd, 3rd).
         if(line.indexOf("info") === 0 && line.indexOf(" pv ") !== -1){
 
             const tokens = line.split(" ");
@@ -76,8 +63,6 @@ try {
             return;
         }
 
-        // Diagnostic: log the engine's evaluation as it searches, so we
-        // can confirm it's actually using the intended settings.
         if(line.indexOf("info") === 0 && line.indexOf("score") !== -1){
             console.log("[Stockfish]", line);
         }
@@ -97,8 +82,6 @@ try {
                 }
 
                 if(candidates.length > 0){
-                    // Weighted pick: best move most likely, but real chance
-                    // of a weaker one — this is what makes "easy" beatable.
                     const roll = Math.random();
                     if(roll < 0.5){
                         uciMove = candidates[0];
@@ -141,8 +124,6 @@ function playStockfishMove(uciMove){
     const from = squareToCoords(uciMove.substring(0, 2));
     const to = squareToCoords(uciMove.substring(2, 4));
 
-    // A 5th character means Stockfish chose to underpromote
-    // (q/r/b/n) instead of the default queen.
     const promotion = uciMove.length > 4 ? uciMove[4] : null;
 
     setTimeout(function(){
@@ -221,5 +202,4 @@ function makeAIMove(){
     stockfish.postMessage("position fen " + boardToFEN());
     stockfish.postMessage("go movetime " + settings.movetime);
 
-}
-     
+     }
