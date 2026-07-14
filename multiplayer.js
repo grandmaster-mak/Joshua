@@ -122,6 +122,12 @@ function startOnlineGame(code){
     newGame();
 
     listenForRemoteMoves(code);
+
+    const myPresenceRef = db.ref("rooms/" + code + "/presence/" + myColor);
+    myPresenceRef.set(true);
+    myPresenceRef.onDisconnect().set(false);
+
+    listenForOpponentPresence(code);
 }
 
 function listenForRemoteMoves(code){
