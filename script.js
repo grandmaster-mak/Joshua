@@ -1232,7 +1232,11 @@ function newGame(){
     }
 
     updateTimers();
-    startTimer();
+
+    if(gameMode !== "online"){
+        startTimer();
+    }
+
     updateCaptured();
     updateTurn();
 
