@@ -170,28 +170,36 @@ function listenForClockSync(code){
 }
 
 function pushClockUpdate(moverColor){
-    if(!clockData || !currentRoomCode) return;
 
-    const now = getServerNow();
-    const elapsedSeconds = Math.max(0, Math.floor((now - clockData.turnStartedAt) / 1000));
+    if(!currentRoomCode || !db) return;
 
-    let newWhiteTime = clockData.whiteTime;
-    let newBlackTime = clockData.blackTime;
+    db.ref("rooms/" + currentRoomCode + "/clock").transaction(function(current){
 
-    if(clockData.whiteTime !== -1 && clockData.blackTime !== -1){
-        if(moverColor === "white"){
-            newWhiteTime = Math.max(0, clockData.whiteTime - elapsedSeconds);
-        }else{
-            newBlackTime = Math.max(0, clockData.blackTime - elapsedSeconds);
+        if(!current) return current;
+
+        const now = getServerNow();
+        const elapsedSeconds = Math.max(0, Math.floor((now - current.turnStartedAt) / 1000));
+
+        let newWhiteTime = current.whiteTime;
+        let newBlackTime = current.blackTime;
+
+        if(current.whiteTime !== -1 && current.blackTime !== -1){
+            if(moverColor === "white"){
+                newWhiteTime = Math.max(0, current.whiteTime - elapsedSeconds);
+            }else{
+                newBlackTime = Math.max(0, current.blackTime - elapsedSeconds);
+            }
         }
-    }
 
-    db.ref("rooms/" + currentRoomCode + "/clock").set({
-        whiteTime: newWhiteTime,
-        blackTime: newBlackTime,
-        turn: moverColor === "white" ? "black" : "white",
-        turnStartedAt: firebase.database.ServerValue.TIMESTAMP
+        return {
+            whiteTime: newWhiteTime,
+            blackTime: newBlackTime,
+            turn: moverColor === "white" ? "black" : "white",
+            turnStartedAt: now
+        };
+
     });
+
 }
 
 function startOnlineClockDisplay(){
