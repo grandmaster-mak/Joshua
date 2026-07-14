@@ -128,6 +128,7 @@ function startOnlineGame(code){
     myPresenceRef.onDisconnect().set(false);
 
     listenForOpponentPresence(code);
+    listenForGameEvents(code);
 }
 function listenForOpponentPresence(code){
     const opponentColor = myColor === "white" ? "black" : "white";
