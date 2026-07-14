@@ -141,8 +141,12 @@ function playStockfishMove(uciMove){
     const from = squareToCoords(uciMove.substring(0, 2));
     const to = squareToCoords(uciMove.substring(2, 4));
 
+    // A 5th character means Stockfish chose to underpromote
+    // (q/r/b/n) instead of the default queen.
+    const promotion = uciMove.length > 4 ? uciMove[4] : null;
+
     setTimeout(function(){
-        playAIMove(from.r, from.c, to.r, to.c);
+        playAIMove(from.r, from.c, to.r, to.c, promotion);
     }, 300);
 
 }
