@@ -1109,6 +1109,12 @@ function choosePromotion(letter){
 
     pieces[r][c] = promotionColor + letter;
 
+    if(pendingOnlinePromotionMove && typeof sendMoveToFirebase === "function"){
+        const m = pendingOnlinePromotionMove;
+        sendMoveToFirebase(m.fromR, m.fromC, m.toR, m.toC, letter);
+        pendingOnlinePromotionMove = null;
+    }
+
     promotionSquare = null;
     promotionColor = null;
 
