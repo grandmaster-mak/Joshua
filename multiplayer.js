@@ -129,6 +129,18 @@ function startOnlineGame(code){
 
     listenForOpponentPresence(code);
 }
+function listenForOpponentPresence(code){
+    const opponentColor = myColor === "white" ? "black" : "white";
+
+    db.ref("rooms/" + code + "/presence/" + opponentColor).on("value", function(snapshot){
+        if(snapshot.val() === false && !gameOver){
+            gameOver = true;
+            clearInterval(timer);
+            const winner = opponentColor === "white" ? "Black" : "White";
+            showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
+        }
+    });
+}
 
 function listenForRemoteMoves(code){
 
