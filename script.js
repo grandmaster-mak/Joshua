@@ -1231,6 +1231,11 @@ function startNewGame(){
 
 function newGame(){
 
+    if(gameMode === "online"){
+        showOnlineGameMenu();
+        return;
+    }
+
     pieces = [
         ["bR","bN","bB","bQ","bK","bB","bN","bR"],
         ["bP","bP","bP","bP","bP","bP","bP","bP"],
