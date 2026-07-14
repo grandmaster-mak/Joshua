@@ -336,3 +336,11 @@ button:hover{
 .promotionPiece:hover{
     transform:scale(1.15);
 }
+
+.resignFlag, .winnerCrown{
+    position:absolute;
+    top:-14px;
+    right:-6px;
+    font-size:22px;
+    pointer-events:none;
+}
