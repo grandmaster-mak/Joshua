@@ -1117,6 +1117,8 @@ function finishTurn(){
         return;
     }
 
+    const moverColor = currentPlayer;
+
     currentPlayer = currentPlayer === "white" ? "black" : "white";
 
     if(!hasLegalMoves(currentPlayer)){
@@ -1125,6 +1127,10 @@ function finishTurn(){
 
     updateTurn();
     createBoard();
+
+    if(gameMode === "online" && !wasRemoteMove && typeof pushClockUpdate === "function"){
+        pushClockUpdate(moverColor);
+    }
 
     if(gameMode === "ai" && currentPlayer === "black" && !gameOver){
         setTimeout(makeAIMove, 400);
