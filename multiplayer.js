@@ -31,8 +31,6 @@ try{
 }
 
 function generateRoomCode(){
-    // Avoids visually ambiguous characters (0/O, 1/I) since people
-    // will be reading this off one phone and typing it into another.
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let code = "";
     for(let i = 0; i < 5; i++){
@@ -167,8 +165,6 @@ function listenForGameEvents(code){
         const event = snapshot.val();
         if(!event) return;
 
-        // Ignore our own events — we already handled them locally
-        // the moment we sent them.
         if(event.by === myColor) return;
 
         if(event.type === "resign" && !gameOver){
@@ -177,6 +173,7 @@ function listenForGameEvents(code){
             const winner = event.by === "white" ? "Black" : "White";
             showPopup("🚩 Resignation", winner + " wins by resignation.");
             createBoard();
+            showKingMarkers(event.by);
         }
 
         if(event.type === "abort" && !gameOver){
@@ -185,6 +182,7 @@ function listenForGameEvents(code){
             const winner = event.by === "white" ? "Black" : "White";
             showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
             createBoard();
+            showKingMarkers(event.by);
         }
 
         if(event.type === "drawOffer" && !gameOver){
@@ -207,8 +205,6 @@ function listenForRemoteMoves(code){
 
         const move = snapshot.val();
 
-        // Skip echoes of our own moves — we already applied them
-        // locally the moment we made them.
         if(!move || move.by === myColor) return;
 
         applyingRemoteMove = true;
@@ -234,4 +230,4 @@ function sendMoveToFirebase(fromR, fromC, toR, toC, promotion){
         time: Date.now()
     });
 
-}
+        }             
