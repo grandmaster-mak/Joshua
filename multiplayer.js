@@ -141,6 +141,90 @@ function listenForOpponentPresence(code){
         }
     });
 }
+let serverTimeOffset = 0;
+let clockData = null;
+
+db.ref(".info/serverTimeOffset").on("value", function(snapshot){
+    serverTimeOffset = snapshot.val() || 0;
+});
+
+function getServerNow(){
+    return Date.now() + serverTimeOffset;
+}
+
+function listenForClockSync(code){
+    db.ref("rooms/" + code + "/clock").on("value", function(snapshot){
+        clockData = snapshot.val();
+    });
+}
+
+function pushClockUpdate(moverColor){
+    if(!clockData || !currentRoomCode) return;
+
+    const now = getServerNow();
+    const elapsedSeconds = Math.max(0, Math.floor((now - clockData.turnStartedAt) / 1000));
+
+    let newWhiteTime = clockData.whiteTime;
+    let newBlackTime = clockData.blackTime;
+
+    if(clockData.whiteTime !== -1 && clockData.blackTime !== -1){
+        if(moverColor === "white"){
+            newWhiteTime = Math.max(0, clockData.whiteTime - elapsedSeconds);
+        }else{
+            newBlackTime = Math.max(0, clockData.blackTime - elapsedSeconds);
+        }
+    }
+
+    db.ref("rooms/" + currentRoomCode + "/clock").set({
+        whiteTime: newWhiteTime,
+        blackTime: newBlackTime,
+        turn: moverColor === "white" ? "black" : "white",
+        turnStartedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+}
+
+function startOnlineClockDisplay(){
+
+    clearInterval(timer);
+
+    timer = setInterval(function(){
+
+        if(!clockData || gameOver) return;
+
+        const now = getServerNow();
+        const elapsed = (now - clockData.turnStartedAt) / 1000;
+
+        let displayWhite = clockData.whiteTime;
+        let displayBlack = clockData.blackTime;
+
+        if(clockData.whiteTime !== -1){
+            if(clockData.turn === "white"){
+                displayWhite = Math.max(0, clockData.whiteTime - elapsed);
+            }else{
+                displayBlack = Math.max(0, clockData.blackTime - elapsed);
+            }
+        }
+
+        whiteTime = Math.ceil(displayWhite);
+        blackTime = Math.ceil(displayBlack);
+
+        updateTimers();
+
+        if(clockData.whiteTime !== -1 && displayWhite <= 0){
+            gameOver = true;
+            clearInterval(timer);
+            showPopup("⏰ TIME!", "Black wins on time!");
+        }
+
+        if(clockData.blackTime !== -1 && displayBlack <= 0){
+            gameOver = true;
+            clearInterval(timer);
+            showPopup("⏰ TIME!", "White wins on time!");
+        }
+
+    }, 500);
+
+}
 
 function sendGameEvent(type, extra){
     if(!db || !currentRoomCode) return;
