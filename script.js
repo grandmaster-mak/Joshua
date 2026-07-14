@@ -850,10 +850,12 @@ function clickSquare(r, c){
 // Plays a move directly on the board, with no selection step and no
 // green highlight — used for the AI's moves, since the human should
 // never see the highlight flash for a move that isn't theirs.
-function playAIMove(fromR, fromC, toR, toC){
+function playAIMove(fromR, fromC, toR, toC, promotion){
 
     if(gameOver) return;
     if(promotionSquare) return;
+
+    aiPromotionPiece = promotion || null;
 
     executeMove(fromR, fromC, toR, toC, true);
 }
