@@ -1072,7 +1072,7 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
     if(movedPiece === "wP" && r === 0){
 
         if(isAIMove){
-            pieces[r][c] = "wQ";
+            pieces[r][c] = "w" + (aiPromotionForThisMove ? aiPromotionForThisMove.toUpperCase() : "Q");
             finishTurn();
         }else if(gameMode === "online" && wasRemoteMove){
             pieces[r][c] = "w" + (promotionPieceForThisMove || "Q");
@@ -1091,7 +1091,7 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
     if(movedPiece === "bP" && r === 7){
 
         if(isAIMove){
-            pieces[r][c] = "bQ";
+            pieces[r][c] = "b" + (aiPromotionForThisMove ? aiPromotionForThisMove.toUpperCase() : "Q");
             finishTurn();
         }else if(gameMode === "online" && wasRemoteMove){
             pieces[r][c] = "b" + (promotionPieceForThisMove || "Q");
