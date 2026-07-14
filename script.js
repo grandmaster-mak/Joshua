@@ -1377,7 +1377,68 @@ function undoMove(){
 
     createBoard();
 }
+function showOnlineGameMenu(){
+    document.getElementById("onlineMenuPopup").classList.add("show");
+}
 
+function closeOnlineMenu(){
+    document.getElementById("onlineMenuPopup").classList.remove("show");
+}
+
+function resignGame(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("resign");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    closeOnlineMenu();
+
+    const winner = myColor === "white" ? "Black" : "White";
+    showPopup("🚩 Resignation", winner + " wins by resignation.");
+    createBoard();
+}
+
+function abortGame(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("abort");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    closeOnlineMenu();
+
+    const winner = myColor === "white" ? "Black" : "White";
+    showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
+    createBoard();
+}
+
+function requestDraw(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("drawOffer");
+    }
+
+    closeOnlineMenu();
+}
+
+function respondToDraw(accepted){
+
+    document.getElementById("drawOfferPopup").classList.remove("show");
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("drawResponse", {accepted: accepted});
+    }
+
+    if(accepted){
+        gameOver = true;
+        clearInterval(timer);
+        showPopup("🤝 Draw", "Game drawn by agreement.");
+        createBoard();
+    }
+}
 function hasInsufficientMaterial(){
 
     let whitePieces = [];
