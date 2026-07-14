@@ -67,8 +67,6 @@ function createBoard(){
 
     board.innerHTML = "";
 
-    // In online mode, the player who's Black sees the board flipped —
-    // their own pieces at the bottom, just like a real physical board.
     const flipped = (gameMode === "online" && myColor === "black");
 
     for(let i = 0; i < 8; i++){
@@ -125,8 +123,6 @@ function createBoard(){
 
             }
 
-            // Labels sit on the visual bottom row / left column,
-            // regardless of whether the board is flipped.
             if(i === 7){
                 const file = document.createElement("span");
                 file.className = "fileLabel";
@@ -158,9 +154,6 @@ function isBlack(piece){
     return piece.startsWith("b");
 }
 
-// Squares a pawn currently threatens, regardless of what's on them.
-// Used for check / attack detection (a pawn attacks its diagonals
-// whether or not an enemy piece is actually sitting there).
 function getPawnAttackSquares(r, c, piece){
 
     let squares = [];
@@ -433,7 +426,6 @@ function getPossibleMoves(piece, r, c){
 
 }
 
-// Legal moves only: filters out anything that would leave your own king in check.
 function getLegalMoves(piece, r, c){
 
     const color = isWhite(piece) ? "white" : "black";
@@ -691,10 +683,6 @@ function formatTime(seconds){
     return minutes + ":" + String(secs).padStart(2, "0");
 }
 
-// Which color's info shows in the top box vs the bottom box.
-// Default: Black on top, White on bottom (matches the default
-// un-flipped board). If you're playing Black online, your own board
-// is flipped, so your info moves to the bottom to match.
 function getOrientation(){
 
     if(gameMode === "online" && myColor === "black"){
@@ -821,7 +809,6 @@ function clickSquare(r, c){
 
         if(!isPossibleMove(r,c)){
 
-            // Clicking another one of your own pieces re-selects instead of deselecting.
             if(piece !== "" &&
                ((currentPlayer === "white" && isWhite(piece)) ||
                 (currentPlayer === "black" && isBlack(piece)))
@@ -848,9 +835,6 @@ function clickSquare(r, c){
 
 }
 
-// Plays a move directly on the board, with no selection step and no
-// green highlight — used for the AI's moves, since the human should
-// never see the highlight flash for a move that isn't theirs.
 function playAIMove(fromR, fromC, toR, toC, promotion){
 
     if(gameOver) return;
@@ -861,20 +845,12 @@ function playAIMove(fromR, fromC, toR, toC, promotion){
     executeMove(fromR, fromC, toR, toC, true);
 }
 
-// Shared move-execution logic for both a human's confirmed click and
-// the AI's chosen move. Slides the piece(s) visually first, then
-// applies the real game-logic update once the slide finishes.
 function executeMove(fromR, fromC, r, c, isAIMove){
 
     const movedPiece = pieces[fromR][fromC];
     const isCastle = (movedPiece === "wK" || movedPiece === "bK") && Math.abs(c - fromC) === 2;
     const isPromotionMove = (movedPiece === "wP" && r === 0) || (movedPiece === "bP" && r === 7);
 
-    // Snapshot these NOW, synchronously — by the time the animation
-    // finishes and completeMove actually runs, the caller may already
-    // have reset applyingRemoteMove/remotePromotionPiece for the next
-    // move. Reading the live globals inside completeMove is what was
-    // causing the promotion mix-up.
     const wasRemoteMove = applyingRemoteMove;
     const aiPromotionForThisMove = aiPromotionPiece;
     const promotionPieceForThisMove = remotePromotionPiece;
@@ -903,17 +879,8 @@ function executeMove(fromR, fromC, r, c, isAIMove){
 
 }
 
-// Low-level: slides a single piece image from one square to another
-// using a CSS transform, without touching any game state. Returns
-// false if there was nothing to animate (so callers can skip straight
-// to finishing the move instead of waiting on a non-existent animation).
 function slidePieceVisual(fromR, fromC, toR, toC){
 
-    // createBoard() renders in visual order, not raw r/c order, when
-    // the board is flipped — so the DOM child index for a given square
-    // has to be computed the same way createBoard() placed it, or this
-    // grabs the wrong square entirely (causing a phantom animation on
-    // an unrelated square before the real board redraw "corrects" it).
     const flipped = (gameMode === "online" && myColor === "black");
 
     function domIndex(r, c){
@@ -942,8 +909,6 @@ function slidePieceVisual(fromR, fromC, toR, toC){
     pieceImg.style.zIndex = "10";
     pieceImg.style.transition = "transform 0.22s ease";
 
-    // Force layout so the browser registers the starting position
-    // before we animate to the new one.
     void pieceImg.offsetWidth;
 
     pieceImg.style.transform = "translate(" + dx + "px, " + dy + "px)";
@@ -951,7 +916,6 @@ function slidePieceVisual(fromR, fromC, toR, toC){
     return true;
 }
 
-// Animates a single piece move (the normal case).
 function animatePieceSlide(fromR, fromC, toR, toC, callback){
 
     const moved = slidePieceVisual(fromR, fromC, toR, toC);
@@ -970,8 +934,6 @@ function animatePieceSlide(fromR, fromC, toR, toC, callback){
 
 }
 
-// Animates castling: the king and the rook slide to their new squares
-// at the same time.
 function animateCastleSlide(kingFromR, kingFromC, kingToR, kingToC, rookFromR, rookFromC, rookToR, rookToC, callback){
 
     const kingMoved = slidePieceVisual(kingFromR, kingFromC, kingToR, kingToC);
@@ -1032,7 +994,6 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
     );
     updateHistory();
 
-    // Castling rook movement
     if(movedPiece === "wK" && fromC === 4 && c === 6){
         pieces[7][5] = pieces[7][7];
         pieces[7][7] = "";
@@ -1068,7 +1029,6 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
 
     updateCaptured();
 
-    // Promotion check
     if(movedPiece === "wP" && r === 0){
 
         if(isAIMove){
@@ -1210,8 +1170,6 @@ function updateGameMode(){
     document.getElementById("difficultyBox").style.display = mode === "ai" ? "block" : "none";
     document.getElementById("onlineBox").style.display = mode === "online" ? "block" : "none";
 
-    // Online mode is driven by the Create/Join buttons instead of
-    // "Start Game", and doesn't use a synced time control yet.
     document.getElementById("timeControlSection").style.display = mode === "online" ? "none" : "block";
     document.getElementById("startGameBtn").style.display = mode === "online" ? "none" : "block";
 
@@ -1230,11 +1188,6 @@ function startNewGame(){
 }
 
 function newGame(){
-
-    if(gameMode === "online"){
-        showOnlineGameMenu();
-        return;
-    }
 
     pieces = [
         ["bR","bN","bB","bQ","bK","bB","bN","bR"],
@@ -1285,7 +1238,6 @@ function newGame(){
 
     positionHistory = [getPositionKey()];
     createBoard();
-    if(gameMode === "online") return;
 }
 
 function createCoordinates(){
@@ -1339,7 +1291,6 @@ function undoMove(){
 
     if(gameOver) return;
 
-    // In AI mode, undo both the AI's move and your own in one press.
     if(gameMode === "ai" && undoStack.length >= 2){
         undoStack.pop();
     }
@@ -1377,6 +1328,47 @@ function undoMove(){
 
     createBoard();
 }
+
+function handleRestartClick(){
+    if(gameMode === "online"){
+        showOnlineGameMenu();
+    }else{
+        newGame();
+    }
+}
+
+function showKingMarkers(loserColor){
+
+    const loserKing = loserColor === "white" ? "wK" : "bK";
+    const winnerKing = loserColor === "white" ? "bK" : "wK";
+
+    for(let r = 0; r < 8; r++){
+        for(let c = 0; c < 8; c++){
+
+            if(pieces[r][c] === loserKing || pieces[r][c] === winnerKing){
+
+                const flipped = (gameMode === "online" && myColor === "black");
+                const domR = flipped ? 7 - r : r;
+                const domC = flipped ? 7 - c : c;
+                const square = board.children[domR * 8 + domC];
+                if(!square) continue;
+
+                const marker = document.createElement("span");
+
+                if(pieces[r][c] === loserKing){
+                    marker.textContent = "🚩";
+                    marker.className = "resignFlag";
+                }else{
+                    marker.textContent = "👑";
+                    marker.className = "winnerCrown";
+                }
+
+                square.appendChild(marker);
+            }
+        }
+    }
+}
+
 function showOnlineGameMenu(){
     document.getElementById("onlineMenuPopup").classList.add("show");
 }
@@ -1395,9 +1387,11 @@ function resignGame(){
     clearInterval(timer);
     closeOnlineMenu();
 
+    const loser = myColor;
     const winner = myColor === "white" ? "Black" : "White";
     showPopup("🚩 Resignation", winner + " wins by resignation.");
     createBoard();
+    showKingMarkers(loser);
 }
 
 function abortGame(){
@@ -1410,9 +1404,11 @@ function abortGame(){
     clearInterval(timer);
     closeOnlineMenu();
 
+    const loser = myColor;
     const winner = myColor === "white" ? "Black" : "White";
     showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
     createBoard();
+    showKingMarkers(loser);
 }
 
 function requestDraw(){
@@ -1439,6 +1435,7 @@ function respondToDraw(accepted){
         createBoard();
     }
 }
+
 function hasInsufficientMaterial(){
 
     let whitePieces = [];
