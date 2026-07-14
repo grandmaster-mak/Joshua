@@ -991,7 +991,7 @@ function animateCastleSlide(kingFromR, kingFromC, kingToR, kingToC, rookFromR, r
 
 }
 
-function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove){
+function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove, aiPromotionForThisMove){
 
     const movedPiece = pieces[fromR][fromC];
     const capturedPiece = pieces[r][c];
