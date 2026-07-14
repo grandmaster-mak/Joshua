@@ -207,6 +207,54 @@
 
     </div>
 
+    <!-- Online Game Menu Popup (Resign / Draw / Abort) -->
+    <div id="onlineMenuPopup" class="popup">
+
+        <div class="popupContent">
+
+            <h2>Game Options</h2>
+
+            <button onclick="requestDraw()">
+                Offer Draw
+            </button>
+
+            <button onclick="resignGame()">
+                Resign
+            </button>
+
+            <button onclick="abortGame()">
+                Abort Game
+            </button>
+
+            <button onclick="closeOnlineMenu()">
+                Cancel
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Draw Offer Received Popup -->
+    <div id="drawOfferPopup" class="popup">
+
+        <div class="popupContent">
+
+            <h2>Draw Offer</h2>
+
+            <p>Your opponent is offering a draw.</p>
+
+            <button onclick="respondToDraw(true)">
+                ✅ Accept
+            </button>
+
+            <button onclick="respondToDraw(false)">
+                ❌ Decline
+            </button>
+
+        </div>
+
+    </div>
+
     <!-- Firebase (compat build — works with plain script tags, no bundler needed) -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
