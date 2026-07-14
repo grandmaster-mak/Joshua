@@ -876,6 +876,7 @@ function executeMove(fromR, fromC, r, c, isAIMove){
     // move. Reading the live globals inside completeMove is what was
     // causing the promotion mix-up.
     const wasRemoteMove = applyingRemoteMove;
+    const aiPromotionForThisMove = aiPromotionPiece;
     const promotionPieceForThisMove = remotePromotionPiece;
 
     if(gameMode === "online" && !applyingRemoteMove && !isPromotionMove && typeof sendMoveToFirebase === "function"){
