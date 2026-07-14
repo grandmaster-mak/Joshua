@@ -4,11 +4,10 @@
 // v1 scope, by design:
 //   - Room-code based (no accounts/usernames yet)
 //   - Each move is broadcast and replayed on the other device
-//   - Promotions always auto-queen in online mode (both players) —
-//     avoids needing to sync a promotion-choice popup for now
+//   - Promotion choice is synced (each player picks their own piece)
 //   - Timers run locally on each device, not synced yet
-//   - No board flip for the joining player yet (both see White at
-//     the bottom for now)
+//   - Presence detection: opponent disconnecting ends the game
+//   - Resign / Abort / Draw offer supported via game events
 // ============================================================
 
 const firebaseConfig = {
@@ -129,7 +128,9 @@ function startOnlineGame(code){
 
     listenForOpponentPresence(code);
     listenForGameEvents(code);
+
 }
+
 function listenForOpponentPresence(code){
     const opponentColor = myColor === "white" ? "black" : "white";
 
@@ -140,6 +141,63 @@ function listenForOpponentPresence(code){
             const winner = opponentColor === "white" ? "Black" : "White";
             showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
         }
+    });
+}
+
+function sendGameEvent(type, extra){
+    if(!db || !currentRoomCode) return;
+
+    const payload = {
+        type: type,
+        by: myColor,
+        time: Date.now()
+    };
+
+    if(extra){
+        Object.assign(payload, extra);
+    }
+
+    db.ref("rooms/" + currentRoomCode + "/events").push(payload);
+}
+
+function listenForGameEvents(code){
+
+    db.ref("rooms/" + code + "/events").on("child_added", function(snapshot){
+
+        const event = snapshot.val();
+        if(!event) return;
+
+        // Ignore our own events — we already handled them locally
+        // the moment we sent them.
+        if(event.by === myColor) return;
+
+        if(event.type === "resign" && !gameOver){
+            gameOver = true;
+            clearInterval(timer);
+            const winner = event.by === "white" ? "Black" : "White";
+            showPopup("🚩 Resignation", winner + " wins by resignation.");
+            createBoard();
+        }
+
+        if(event.type === "abort" && !gameOver){
+            gameOver = true;
+            clearInterval(timer);
+            const winner = event.by === "white" ? "Black" : "White";
+            showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
+            createBoard();
+        }
+
+        if(event.type === "drawOffer" && !gameOver){
+            document.getElementById("drawOfferPopup").classList.add("show");
+        }
+
+        if(event.type === "drawResponse" && event.accepted && !gameOver){
+            gameOver = true;
+            clearInterval(timer);
+            showPopup("🤝 Draw", "Game drawn by agreement.");
+            createBoard();
+        }
+
     });
 }
 
