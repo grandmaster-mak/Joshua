@@ -126,6 +126,17 @@ function startOnlineGame(code){
 
     listenForOpponentPresence(code);
     listenForGameEvents(code);
+    listenForClockSync(code);
+    startOnlineClockDisplay();
+
+    if(myColor === "white"){
+        db.ref("rooms/" + code + "/clock").set({
+            whiteTime: selectedTime,
+            blackTime: selectedTime,
+            turn: "white",
+            turnStartedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+    }
 
 }
 
