@@ -867,12 +867,20 @@ function executeMove(fromR, fromC, r, c, isAIMove){
     const isCastle = (movedPiece === "wK" || movedPiece === "bK") && Math.abs(c - fromC) === 2;
     const isPromotionMove = (movedPiece === "wP" && r === 0) || (movedPiece === "bP" && r === 7);
 
+    // Snapshot these NOW, synchronously — by the time the animation
+    // finishes and completeMove actually runs, the caller may already
+    // have reset applyingRemoteMove/remotePromotionPiece for the next
+    // move. Reading the live globals inside completeMove is what was
+    // causing the promotion mix-up.
+    const wasRemoteMove = applyingRemoteMove;
+    const promotionPieceForThisMove = remotePromotionPiece;
+
     if(gameMode === "online" && !applyingRemoteMove && !isPromotionMove && typeof sendMoveToFirebase === "function"){
         sendMoveToFirebase(fromR, fromC, r, c, null);
     }
 
     const finish = function(){
-        completeMove(fromR, fromC, r, c, isAIMove);
+        completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove);
     };
 
     if(isCastle){
