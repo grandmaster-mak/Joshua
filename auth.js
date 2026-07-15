@@ -1,17 +1,22 @@
 // ============================================================
 // Player accounts via Firebase Authentication
-// Requires Email/Password sign-in to be enabled in the
-// Firebase Console under Authentication → Sign-in method.
 // ============================================================
 
 let auth = null;
 let currentUser = null;
 let currentUsername = null;
+let currentUserCountry = null;
+let currentUserFlag = "";
 
 try{
     auth = firebase.auth();
 }catch(err){
     console.error("Firebase Auth failed to initialize:", err.message);
+}
+
+function countryCodeToFlag(code){
+    if(!code) return "🏳️";
+    return String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt()));
 }
 
 function showAccountPopup(){
@@ -32,9 +37,10 @@ function signUp(){
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
     const username = document.getElementById("authUsername").value.trim();
+    const country = document.getElementById("authCountry").value;
 
-    if(!email || !password || !username){
-        document.getElementById("authStatus").textContent = "Please fill in email, password, and username.";
+    if(!email || !password || !username || !country){
+        document.getElementById("authStatus").textContent = "Please fill in all fields, including country.";
         return;
     }
 
@@ -47,6 +53,8 @@ function signUp(){
 
             return db.ref("users/" + uid).set({
                 username: username,
+                country: country,
+                flag: countryCodeToFlag(country),
                 createdAt: Date.now(),
                 rating: 1200,
                 wins: 0,
@@ -94,8 +102,6 @@ function logOut(){
     }
 }
 
-// Fires automatically whenever login state changes — on page load,
-// after signup, after login, and after logout.
 function initAuthListener(){
 
     if(!auth) return;
@@ -106,13 +112,25 @@ function initAuthListener(){
 
             currentUser = user;
 
-            db.ref("users/" + user.uid + "/username").once("value").then(function(snapshot){
+            db.ref("users/" + user.uid).once("value").then(function(snapshot){
 
-                currentUsername = snapshot.val() || "Player";
+                const data = snapshot.val() || {};
+
+                currentUsername = data.username || "Player";
+                currentUserCountry = data.country || "";
+                currentUserFlag = data.flag || countryCodeToFlag(data.country);
 
                 document.getElementById("loggedOutView").style.display = "none";
                 document.getElementById("loggedInView").style.display = "block";
-                document.getElementById("loggedInUsername").textContent = "Logged in as: " + currentUsername;
+                document.getElementById("loggedInUsername").textContent =
+                    currentUserFlag + " " + currentUsername;
+
+                const startTag = document.getElementById("startUserTag");
+                if(startTag){
+                    startTag.style.display = "inline-flex";
+                    startTag.innerHTML = '<span class="dot"></span> ' + currentUserFlag + " " + currentUsername +
+                        '<span class="ratingPill">' + (data.rating || 1200) + '</span>';
+                }
 
             });
 
@@ -120,9 +138,16 @@ function initAuthListener(){
 
             currentUser = null;
             currentUsername = null;
+            currentUserCountry = null;
+            currentUserFlag = "";
 
             document.getElementById("loggedOutView").style.display = "block";
             document.getElementById("loggedInView").style.display = "none";
+
+            const startTag = document.getElementById("startUserTag");
+            if(startTag){
+                startTag.style.display = "none";
+            }
 
         }
 
