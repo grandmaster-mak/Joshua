@@ -40,26 +40,19 @@ body{
 .screen{
     flex:1;
     width:100%;
-    padding:64px 24px 24px;
+    padding:64px 0 24px;
     box-sizing:border-box;
 }
 
 #homeScreen{
     display:flex;
     flex-direction:column;
-    align-items:center;
-    text-align:center;
 }
 
-#homeScreen h1{
-    font-size:38px;
-    font-weight:800;
-    letter-spacing:-.5px;
-    margin:14px 0 6px;
-}
-
-#homeScreen button{
-    max-width:320px;
+#friendsScreen,
+#accountScreen{
+    padding-left:24px;
+    padding-right:24px;
 }
 
 #friendsScreen h2,
@@ -67,6 +60,11 @@ body{
     font-size:20px;
     font-weight:700;
     margin-bottom:10px;
+}
+
+#tournamentBtn{
+    margin:12px 15px 0;
+    width:auto;
 }
 
 #settingsGear{
@@ -125,6 +123,7 @@ body{
 .navBtn.active{ color:#3b7bff; }
 .navBtn:hover{ color:#eef0f3; }
 .navBtn.active:hover{ color:#3b7bff; }
+
 .playerRow{
     display:flex;
     align-items:center;
@@ -139,39 +138,6 @@ body{
     white-space:nowrap;
     letter-spacing:.2px;
 }
-#startCard h1{
-    font-size:40px;
-    margin-bottom:6px;
-    font-weight:800;
-    letter-spacing:-.5px;
-}
-
-#startTagline{
-    color:#7d8492;
-    margin-bottom:26px;
-    font-size:14px;
-    font-weight:400;
-}
-
-#startUserTag{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    background:#1c2028;
-    border:1px solid rgba(255,255,255,0.07);
-    padding:8px 14px;
-    border-radius:30px;
-    font-size:13.5px;
-    font-weight:600;
-    margin-bottom:24px;
-}
-
-#startUserTag .dot{
-    width:8px; height:8px;
-    border-radius:50%;
-    background:#23c483;
-    box-shadow:0 0 8px rgba(35,196,131,.7);
-}
 
 .ratingPill{
     background:rgba(47,111,237,.15);
@@ -182,25 +148,6 @@ body{
     font-weight:700;
     margin-left:4px;
 }
-
-#startCard button{ display:block; width:100%; }
-
-#playBtn{
-    background:linear-gradient(135deg, #23c483, #189b68);
-    font-size:16px;
-    font-weight:700;
-    padding:16px;
-    box-shadow:0 8px 24px rgba(35,196,131,.3);
-}
-#playBtn:hover{ filter:brightness(1.08); }
-
-#accountBtn{
-    background:#1c2028;
-    color:#eef0f3;
-    border:1px solid rgba(255,255,255,0.07);
-    margin-bottom:12px;
-}
-#accountBtn:hover{ background:#22262f; }
 
 /* ===== Game Layout ===== */
 
@@ -597,7 +544,8 @@ input::placeholder{ color:#4a5060; }
     font-size:22px;
     pointer-events:none;
     }
-    /* ===== Home Header ===== */
+
+/* ===== Home Header ===== */
 
 .home-header{
     display:flex;
@@ -626,12 +574,14 @@ input::placeholder{ color:#4a5060; }
     border:2px solid #555;
     position:relative;
     overflow:hidden;
+    flex-shrink:0;
 }
 
 .profile-box img{
     width:100%;
     height:100%;
     object-fit:cover;
+    background:#1c2028;
 }
 
 .online-dot{
@@ -644,6 +594,7 @@ input::placeholder{ color:#4a5060; }
     border:2px solid #111;
     border-radius:50%;
     }
+
 /* ===== Quick Actions ===== */
 
 .quick-actions{
@@ -651,7 +602,7 @@ input::placeholder{ color:#4a5060; }
     gap:15px;
     overflow-x:auto;
     padding:10px 15px;
-    margin-top:20px;
+    margin-top:10px;
     scroll-behavior:smooth;
 }
 
@@ -660,31 +611,38 @@ input::placeholder{ color:#4a5060; }
 }
 
 .action-card{
-    flex:0 0 50px;
-    height:60px;
+    flex:0 0 110px;
+    min-height:110px;
     border-radius:12px;
-    padding:10px;
+    padding:14px 12px;
     color:white;
     display:flex;
     flex-direction:column;
     justify-content:space-between;
+    cursor:pointer;
+    transition:transform .12s ease, filter .15s ease;
 }
+.action-card:hover{ filter:brightness(1.08); }
+.action-card:active{ transform:scale(0.96); }
 
 .action-card .material-icons{
-    font-size:20px;
+    font-family:'Material Icons';
+    font-size:26px;
     display:block;
     margin-bottom:8px;
+    line-height:1;
 }
 
 .action-card h3{
-    font-size:12px;
-    margin-top:10px;
+    font-size:13px;
+    margin-top:6px;
 }
 
 .action-card p{
     color:#e0e0e0;
-    font-size:7px;
-    line-height:0.4;
+    font-size:11px;
+    line-height:1.3;
+    margin-top:2px;
 }
 
 .play-now{
@@ -698,31 +656,32 @@ input::placeholder{ color:#4a5060; }
 .friends{
     background:#F57C00;
 }
+
 /* ===== Your Stats ===== */
 
 .stats-section{
     background:#171717;
-    margin:10px 9px;
+    margin:10px 15px;
     border-radius:10px;
-    padding:10px;
+    padding:16px;
 }
 
 .stats-header{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:20px;
+    margin-bottom:16px;
 }
 
 .stats-header h2{
     color:#fff;
-    font-size:22px;
+    font-size:18px;
 }
 
 .stats-header a{
     color:#55c94b;
     text-decoration:none;
-    font-size:15px;
+    font-size:13px;
     font-weight:bold;
 }
 
@@ -737,19 +696,19 @@ input::placeholder{ color:#4a5060; }
 }
 
 .stat-icon{
-    font-size:30px;
-    margin-bottom:10px;
+    font-size:24px;
+    margin-bottom:8px;
 }
 
 .stat-item h3{
     color:white;
-    font-size:24px;
+    font-size:18px;
 }
 
 .stat-item p{
     color:#9c9c9c;
-    font-size:13px;
-    margin-top:5px;
+    font-size:11px;
+    margin-top:4px;
 }
 
 .rating{color:#49d64f;}
