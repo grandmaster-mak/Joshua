@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
+<body>
+
     <!-- Start Screen -->
     <div id="startScreen">
 
@@ -352,69 +354,5 @@
     <script src="multiplayer.js"></script>
     <script src="auth.js"></script>
 
-    <!-- Splash Screen -->
-    <div id="splashScreen" class="splash">
-        <div class="splashContent">
-            <div class="splashIcon">♟️</div>
-            <h1>Chess</h1>
-            <p>Play. Compete. Improve.</p>
-        </div>
-    </div>
-
-    <!-- Main App -->
-    <div id="mainApp" style="display: none;">
-
-        <!-- Bottom Navigation -->
-        <nav class="bottomNav">
-            <button onclick="switchTab(0)" class="navBtn active"><span>🏠</span><small>Home</small></button>
-            <button onclick="switchTab(1)" class="navBtn"><span>👥</span><small>Friends</small></button>
-            <button onclick="switchTab(2)" class="navBtn"><span>👤</span><small>Account</small></button>
-        </nav>
-
-        <!-- HOME TAB -->
-        <div id="tabHome" class="tab active">
-            <div class="userHeader" id="userHeader">
-                <!-- Filled by JS -->
-            </div>
-
-            <div class="playOptions">
-                <button onclick="startLocalGame('human')">👥 Two Players</button>
-                <button onclick="startLocalGame('ai')">🤖 Play vs AI</button>
-                <button onclick="startOnlineMode()">🌐 Play Online</button>
-                <button onclick="organizeTournament()">🏆 Organize Tournament</button>
-            </div>
-
-            <h2 style="padding:0 16px;">Incoming Challenges</h2>
-            <div id="challengesList" style="padding:0 16px;"></div>
-        </div>
-
-        <!-- FRIENDS TAB -->
-        <div id="tabFriends" class="tab">
-            <h2 style="padding:16px;">Friends</h2>
-            <div id="friendsList" style="padding:0 16px;"></div>
-        </div>
-
-        <!-- ACCOUNT TAB -->
-        <div id="tabAccount" class="tab">
-            <h2 style="padding:16px;">Account</h2>
-            <div id="accountContent" style="padding:0 16px;"></div>
-            
-            <h3 style="padding:0 16px;">Match History</h3>
-            <div id="matchHistoryList" style="padding:0 16px;"></div>
-        </div>
-    </div>
-
-    <!-- Your existing popups (time control, promotion, game over, etc.) go here -->
-    <!-- Copy all your old popup divs from previous index.html and paste them inside <body> -->
-
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-
-    <script src="script.js"></script>
-    <script src="ai.js"></script>
-    <script src="multiplayer.js"></script>
-    <script src="auth.js"></script>
 </body>
-</html>
+                        </html>
