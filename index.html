@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Game</title>
+    <title>Chess</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -16,6 +16,8 @@
 
             <h1>♟️ Chess</h1>
             <p id="startTagline">Play. Compete. Improve.</p>
+
+            <div id="startUserTag" style="display:none;"></div>
 
             <button id="accountBtn" onclick="showAccountPopup()">
                 👤 Account
@@ -75,15 +77,15 @@
 
             <div id="inGameControls">
 
-                <button id="newGame" onclick="handleNewGameClick()" title="New Game">
+                <button class="iconBtn" id="newGame" onclick="handleNewGameClick()" title="New Game">
                     🆕
                 </button>
 
-                <button id="restart" onclick="handleRestartClick()" title="Restart Game">
+                <button class="iconBtn" id="restart" onclick="handleRestartClick()" title="Restart Game">
                     🔄
                 </button>
 
-                <button id="undo" onclick="undoMove()" title="Undo Move">
+                <button class="iconBtn" id="undo" onclick="undoMove()" title="Undo Move">
                     ↩️
                 </button>
 
@@ -102,87 +104,58 @@
 
         <div class="popupContent">
 
+            <div class="badge blue">♟️</div>
             <h2>New Game</h2>
+            <p class="sub">Configure your match settings</p>
 
-            <label><b>Game Mode</b></label><br>
-
+            <span class="fieldLabel">Game Mode</span>
             <select id="gameMode" onchange="updateGameMode()">
-
                 <option value="human">Two Players</option>
-
                 <option value="ai">Play vs AI</option>
-
                 <option value="online">Play Online</option>
-
             </select>
 
-            <br><br>
-
             <div id="difficultyBox" style="display:none;">
-
-                <label><b>AI Difficulty</b></label><br>
-
+                <span class="fieldLabel">AI Difficulty</span>
                 <select id="aiDifficulty">
-
                     <option value="easy">Easy</option>
-
                     <option value="medium">Medium</option>
-
                     <option value="hard">Hard</option>
-
                 </select>
-
-                <br><br>
-
             </div>
 
             <div id="onlineBox" style="display:none;">
 
-                <button onclick="createOnlineRoom()">Create Room</button>
+                <button class="btnPrimary" onclick="createOnlineRoom()">Create Room</button>
 
-                <p id="roomCodeDisplay"></p>
+                <p id="roomCodeDisplay" class="sub"></p>
 
-                <br>
+                <span class="fieldLabel">Or Join a Room</span>
+                <input type="text" id="joinRoomInput" placeholder="Enter room code" maxlength="6" style="text-transform:uppercase;">
 
-                <label><b>Or Join a Room</b></label><br>
+                <button class="btnPrimary" onclick="joinOnlineRoom()">Join Room</button>
 
-                <input type="text" id="joinRoomInput" placeholder="Enter room code" maxlength="6">
-
-                <button onclick="joinOnlineRoom()">Join Room</button>
-
-                <p id="onlineStatus"></p>
+                <p id="onlineStatus" class="sub"></p>
 
             </div>
 
             <div id="timeControlSection">
-
-                <label><b>Time Control</b></label><br>
-
+                <span class="fieldLabel">Time Control</span>
                 <select id="timeControl">
-
                     <option value="60">1 Minute</option>
-
                     <option value="180">3 Minutes</option>
-
                     <option value="300">5 Minutes</option>
-
                     <option value="600" selected>10 Minutes</option>
-
                     <option value="900">15 Minutes</option>
-
                     <option value="-1">Unlimited</option>
-
                 </select>
-
             </div>
 
-            <br><br>
-
-            <button id="startGameBtn" onclick="startNewGame()">
+            <button class="btnPrimary" id="startGameBtn" onclick="startNewGame()">
                 Start Game
             </button>
 
-            <button class="secondaryBtn" onclick="closeTimeControl()">
+            <button class="btnSecondary" onclick="closeTimeControl()">
                 Cancel
             </button>
 
@@ -195,15 +168,15 @@
 
         <div class="popupContent">
 
+            <div class="badge gold">🏆</div>
             <h2 id="popupTitle"></h2>
+            <p class="sub" id="popupMessage"></p>
 
-            <p id="popupMessage"></p>
-
-            <button onclick="closePopup(); showTimeControl();">
+            <button class="btnPrimary" onclick="closePopup(); showTimeControl();">
                 New Game
             </button>
 
-            <button onclick="closePopup();">
+            <button class="btnSecondary" onclick="closePopup();">
                 Close
             </button>
 
@@ -216,15 +189,15 @@
 
         <div class="popupContent">
 
+            <div class="badge blue">♛</div>
             <h2>Choose Promotion</h2>
+            <p class="sub">Select a piece for your pawn</p>
 
             <div id="promotionChoices">
-
                 <img id="promoteQ" class="promotionPiece" onclick="choosePromotion('Q')">
                 <img id="promoteR" class="promotionPiece" onclick="choosePromotion('R')">
                 <img id="promoteB" class="promotionPiece" onclick="choosePromotion('B')">
                 <img id="promoteN" class="promotionPiece" onclick="choosePromotion('N')">
-
             </div>
 
         </div>
@@ -236,23 +209,17 @@
 
         <div class="popupContent">
 
+            <div class="badge gold">⚙️</div>
             <h2>Game Options</h2>
+            <p class="sub">Choose an action for this match</p>
 
-            <button onclick="requestDraw()">
-                🤝 Offer Draw
-            </button>
+            <button class="btnGold" onclick="requestDraw()">🤝 Offer Draw</button>
+            <button class="btnDanger" onclick="resignGame()">🚩 Resign</button>
+            <button class="btnDanger" onclick="abortGame()">🏳️ Abort Game</button>
 
-            <button onclick="resignGame()">
-                🚩 Resign
-            </button>
+            <div class="divider"></div>
 
-            <button onclick="abortGame()">
-                🏳️ Abort Game
-            </button>
-
-            <button class="secondaryBtn" onclick="closeOnlineMenu()">
-                Cancel
-            </button>
+            <button class="btnSecondary" onclick="closeOnlineMenu()">Cancel</button>
 
         </div>
 
@@ -263,17 +230,12 @@
 
         <div class="popupContent">
 
+            <div class="badge gold">🤝</div>
             <h2>Draw Offer</h2>
+            <p class="sub">Your opponent is offering a draw.</p>
 
-            <p>Your opponent is offering a draw.</p>
-
-            <button onclick="respondToDraw(true)">
-                ✅ Accept
-            </button>
-
-            <button onclick="respondToDraw(false)">
-                ❌ Decline
-            </button>
+            <button class="btnPrimary" onclick="respondToDraw(true)">✅ Accept</button>
+            <button class="btnDanger" onclick="respondToDraw(false)">❌ Decline</button>
 
         </div>
 
@@ -284,32 +246,33 @@
 
         <div class="popupContent">
 
+            <div class="badge blue">👤</div>
             <h2 id="accountTitle">Account</h2>
 
             <div id="loggedOutView">
 
+                <p class="sub">Sign in to save your progress and rating</p>
+
                 <input type="email" id="authEmail" placeholder="Email">
-
                 <input type="password" id="authPassword" placeholder="Password">
-
                 <input type="text" id="authUsername" placeholder="Username (for sign up only)">
 
-                <button onclick="signUp()">Sign Up</button>
-                <button onclick="logIn()">Log In</button>
+                <button class="btnPrimary" onclick="signUp()">Sign Up</button>
+                <button class="btnSecondary" onclick="logIn()">Log In</button>
 
-                <p id="authStatus"></p>
+                <p id="authStatus" class="sub"></p>
 
             </div>
 
             <div id="loggedInView" style="display:none;">
 
-                <p id="loggedInUsername"></p>
+                <p id="loggedInUsername" class="sub" style="font-size:16px; color:#eef0f3; font-weight:600;"></p>
 
-                <button onclick="logOut()">Log Out</button>
+                <button class="btnDanger" onclick="logOut()">Log Out</button>
 
             </div>
 
-            <button class="secondaryBtn" onclick="closeAccountPopup()">Close</button>
+            <button class="btnSecondary" onclick="closeAccountPopup()">Close</button>
 
         </div>
 
@@ -326,4 +289,4 @@
     <script src="auth.js"></script>
 
 </body>
-</html>
+                                                                         </html>
