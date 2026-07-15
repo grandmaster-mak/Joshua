@@ -6,345 +6,64 @@
     <title>Chess</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-    <!-- Start Screen -->
-    <div id="startScreen">
-
-        <div id="startCard">
-
-            <h1>♟️ Chess</h1>
-            <p id="startTagline">Play. Compete. Improve.</p>
-
-            <div id="startUserTag" style="display:none;"></div>
-
-            <button id="accountBtn" onclick="showAccountPopup()">
-                👤 Account
-            </button>
-
-            <button id="playBtn" onclick="showTimeControl()">
-                ▶ Play
-            </button>
-
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash">
+        <div class="splashContent">
+            <div class="splashIcon">♟️</div>
+            <h1>Chess</h1>
+            <p>Play. Compete. Improve.</p>
         </div>
-
     </div>
 
-    <div id="game" style="display:none;">
+    <!-- Main App -->
+    <div id="mainApp" style="display: none;">
 
-        <!-- Board Column: opponent bar, board, your bar -->
-        <div id="boardColumn">
+        <!-- Bottom Navigation -->
+        <nav class="bottomNav">
+            <button onclick="switchTab(0)" class="navBtn active"><span>🏠</span><small>Home</small></button>
+            <button onclick="switchTab(1)" class="navBtn"><span>👥</span><small>Friends</small></button>
+            <button onclick="switchTab(2)" class="navBtn"><span>👤</span><small>Account</small></button>
+        </nav>
 
-            <div id="topPlayerBox">
-                <div class="playerRow">
-                    <span id="topPlayerName" class="playerTag"></span>
-                    <p id="topTimer"></p>
-                </div>
-                <p>
-                    Captured:
-                    <span id="topCaptured"></span>
-                </p>
+        <!-- HOME TAB -->
+        <div id="tabHome" class="tab active">
+            <div class="userHeader" id="userHeader">
+                <!-- Filled by JS -->
             </div>
 
-            <!-- Chess Board -->
-            <div id="boardContainer">
-
-                <div id="filesTop"></div>
-
-                <div id="boardArea">
-
-                    <div id="ranksLeft"></div>
-
-                    <div id="board"></div>
-
-                </div>
-
+            <div class="playOptions">
+                <button onclick="startLocalGame('human')">👥 Two Players</button>
+                <button onclick="startLocalGame('ai')">🤖 Play vs AI</button>
+                <button onclick="startOnlineMode()">🌐 Play Online</button>
+                <button onclick="organizeTournament()">🏆 Organize Tournament</button>
             </div>
 
-            <div id="bottomPlayerBox">
-                <div class="playerRow">
-                    <span id="bottomPlayerName" class="playerTag"></span>
-                    <p id="bottomTimer"></p>
-                </div>
-                <p>
-                    Captured:
-                    <span id="bottomCaptured"></span>
-                </p>
-            </div>
-
+            <h2 style="padding:0 16px;">Incoming Challenges</h2>
+            <div id="challengesList" style="padding:0 16px;"></div>
         </div>
 
-        <!-- Right Panel -->
-        <div id="panel">
-
-            <h2>Game Info</h2>
-            <p id="turn">White to Move</p>
-
-            <div id="inGameControls">
-
-                <button class="iconBtn" id="newGame" onclick="handleNewGameClick()" title="New Game">
-                    🆕
-                </button>
-
-                <button class="iconBtn" id="restart" onclick="handleRestartClick()" title="Restart Game">
-                    🔄
-                </button>
-
-                <button class="iconBtn" id="undo" onclick="undoMove()" title="Undo Move">
-                    ↩️
-                </button>
-
-            </div>
-
-            <h3>Move History</h3>
-
-            <div id="history"></div>
-
+        <!-- FRIENDS TAB -->
+        <div id="tabFriends" class="tab">
+            <h2 style="padding:16px;">Friends</h2>
+            <div id="friendsList" style="padding:0 16px;"></div>
         </div>
 
+        <!-- ACCOUNT TAB -->
+        <div id="tabAccount" class="tab">
+            <h2 style="padding:16px;">Account</h2>
+            <div id="accountContent" style="padding:0 16px;"></div>
+            
+            <h3 style="padding:0 16px;">Match History</h3>
+            <div id="matchHistoryList" style="padding:0 16px;"></div>
+        </div>
     </div>
 
-    <!-- Time Control Popup -->
-    <div id="timeControlPopup" class="popup">
+    <!-- Your existing popups (time control, promotion, game over, etc.) go here -->
+    <!-- Copy all your old popup divs from previous index.html and paste them inside <body> -->
 
-        <div class="popupContent">
-
-            <div class="badge blue">♟️</div>
-            <h2>New Game</h2>
-            <p class="sub">Configure your match settings</p>
-
-            <span class="fieldLabel">Game Mode</span>
-            <select id="gameMode" onchange="updateGameMode()">
-                <option value="human">Two Players</option>
-                <option value="ai">Play vs AI</option>
-                <option value="online">Play Online</option>
-            </select>
-
-            <div id="difficultyBox" style="display:none;">
-                <span class="fieldLabel">AI Difficulty</span>
-                <select id="aiDifficulty">
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                </select>
-            </div>
-
-            <div id="onlineBox" style="display:none;">
-
-                <button class="btnPrimary" onclick="createOnlineRoom()">Create Room</button>
-
-                <p id="roomCodeDisplay" class="sub"></p>
-
-                <span class="fieldLabel">Or Join a Room</span>
-                <input type="text" id="joinRoomInput" placeholder="Enter room code" maxlength="6" style="text-transform:uppercase;">
-
-                <button class="btnPrimary" onclick="joinOnlineRoom()">Join Room</button>
-
-                <p id="onlineStatus" class="sub"></p>
-
-            </div>
-
-            <div id="timeControlSection">
-                <span class="fieldLabel">Time Control</span>
-                <select id="timeControl">
-                    <option value="60">1 Minute</option>
-                    <option value="180">3 Minutes</option>
-                    <option value="300">5 Minutes</option>
-                    <option value="600" selected>10 Minutes</option>
-                    <option value="900">15 Minutes</option>
-                    <option value="-1">Unlimited</option>
-                </select>
-            </div>
-
-            <button class="btnPrimary" id="startGameBtn" onclick="startNewGame()">
-                Start Game
-            </button>
-
-            <button class="btnSecondary" onclick="closeTimeControl()">
-                Cancel
-            </button>
-
-        </div>
-
-    </div>
-
-    <!-- Game Over Popup -->
-    <div id="gameOverPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge gold">🏆</div>
-            <h2 id="popupTitle"></h2>
-            <p class="sub" id="popupMessage"></p>
-
-            <button class="btnPrimary" onclick="closePopup(); showTimeControl();">
-                New Game
-            </button>
-
-            <button class="btnSecondary" onclick="closePopup();">
-                Close
-            </button>
-
-        </div>
-
-    </div>
-
-    <!-- Promotion Popup -->
-    <div id="promotionPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge blue">♛</div>
-            <h2>Choose Promotion</h2>
-            <p class="sub">Select a piece for your pawn</p>
-
-            <div id="promotionChoices">
-                <img id="promoteQ" class="promotionPiece" onclick="choosePromotion('Q')">
-                <img id="promoteR" class="promotionPiece" onclick="choosePromotion('R')">
-                <img id="promoteB" class="promotionPiece" onclick="choosePromotion('B')">
-                <img id="promoteN" class="promotionPiece" onclick="choosePromotion('N')">
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Online Game Menu Popup (Resign / Draw / Abort) -->
-    <div id="onlineMenuPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge gold">⚙️</div>
-            <h2>Game Options</h2>
-            <p class="sub">Choose an action for this match</p>
-
-            <button class="btnGold" onclick="requestDraw()">🤝 Offer Draw</button>
-            <button class="btnDanger" onclick="resignGame()">🚩 Resign</button>
-            <button class="btnDanger" onclick="abortGame()">🏳️ Abort Game</button>
-
-            <div class="divider"></div>
-
-            <button class="btnSecondary" onclick="closeOnlineMenu()">Cancel</button>
-
-        </div>
-
-    </div>
-
-    <!-- Draw Offer Received Popup -->
-    <div id="drawOfferPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge gold">🤝</div>
-            <h2>Draw Offer</h2>
-            <p class="sub">Your opponent is offering a draw.</p>
-
-            <button class="btnPrimary" onclick="respondToDraw(true)">✅ Accept</button>
-            <button class="btnDanger" onclick="respondToDraw(false)">❌ Decline</button>
-
-        </div>
-
-    </div>
-
-    <!-- Account Popup (Sign Up / Log In / Log Out) -->
-    <div id="accountPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge blue">👤</div>
-            <h2 id="accountTitle">Account</h2>
-
-            <div id="loggedOutView">
-
-                <p class="sub">Sign in to save your progress and rating</p>
-
-                <input type="email" id="authEmail" placeholder="Email">
-                <input type="password" id="authPassword" placeholder="Password">
-                <input type="text" id="authUsername" placeholder="Username (for sign up only)">
-
-                <select id="authCountry">
-                    <option value="">Select Country</option>
-                    <option value="US">United States</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="NG">Nigeria</option>
-                    <option value="GH">Ghana</option>
-                    <option value="ZA">South Africa</option>
-                    <option value="KE">Kenya</option>
-                    <option value="EG">Egypt</option>
-                    <option value="IN">India</option>
-                    <option value="PK">Pakistan</option>
-                    <option value="BD">Bangladesh</option>
-                    <option value="CN">China</option>
-                    <option value="JP">Japan</option>
-                    <option value="KR">South Korea</option>
-                    <option value="PH">Philippines</option>
-                    <option value="ID">Indonesia</option>
-                    <option value="VN">Vietnam</option>
-                    <option value="TH">Thailand</option>
-                    <option value="AE">United Arab Emirates</option>
-                    <option value="SA">Saudi Arabia</option>
-                    <option value="TR">Turkey</option>
-                    <option value="RU">Russia</option>
-                    <option value="DE">Germany</option>
-                    <option value="FR">France</option>
-                    <option value="ES">Spain</option>
-                    <option value="IT">Italy</option>
-                    <option value="PT">Portugal</option>
-                    <option value="NL">Netherlands</option>
-                    <option value="BE">Belgium</option>
-                    <option value="SE">Sweden</option>
-                    <option value="NO">Norway</option>
-                    <option value="DK">Denmark</option>
-                    <option value="FI">Finland</option>
-                    <option value="PL">Poland</option>
-                    <option value="UA">Ukraine</option>
-                    <option value="GR">Greece</option>
-                    <option value="IE">Ireland</option>
-                    <option value="CH">Switzerland</option>
-                    <option value="AT">Austria</option>
-                    <option value="CA">Canada</option>
-                    <option value="MX">Mexico</option>
-                    <option value="BR">Brazil</option>
-                    <option value="AR">Argentina</option>
-                    <option value="CO">Colombia</option>
-                    <option value="CL">Chile</option>
-                    <option value="PE">Peru</option>
-                    <option value="AU">Australia</option>
-                    <option value="NZ">New Zealand</option>
-                    <option value="CM">Cameroon</option>
-                    <option value="CI">Côte d'Ivoire</option>
-                    <option value="SN">Senegal</option>
-                    <option value="ET">Ethiopia</option>
-                    <option value="TZ">Tanzania</option>
-                    <option value="UG">Uganda</option>
-                    <option value="DZ">Algeria</option>
-                    <option value="MA">Morocco</option>
-                    <option value="TN">Tunisia</option>
-                </select>
-
-                <button class="btnPrimary" onclick="signUp()">Sign Up</button>
-                <button class="btnSecondary" onclick="logIn()">Log In</button>
-
-                <p id="authStatus" class="sub"></p>
-
-            </div>
-
-            <div id="loggedInView" style="display:none;">
-
-                <p id="loggedInUsername" class="sub" style="font-size:16px; color:#eef0f3; font-weight:600;"></p>
-
-                <button class="btnDanger" onclick="logOut()">Log Out</button>
-
-            </div>
-
-            <button class="btnSecondary" onclick="closeAccountPopup()">Close</button>
-
-        </div>
-
-    </div>
-
-    <!-- Firebase -->
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -353,7 +72,5 @@
     <script src="ai.js"></script>
     <script src="multiplayer.js"></script>
     <script src="auth.js"></script>
-
 </body>
-    </html>
-    
+</html>
