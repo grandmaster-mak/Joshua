@@ -1470,7 +1470,7 @@ function resignGame(){
     clearInterval(timer);
     closeOnlineMenu();
 
-    const loser = myColor;
+    const loser = gameMode === "online" ? myColor : currentPlayer;
     const winner = myColor === "white" ? "Black" : "White";
     showPopup("🚩 Resignation", winner + " wins by resignation.");
     createBoard();
@@ -1487,7 +1487,7 @@ function abortGame(){
     clearInterval(timer);
     closeOnlineMenu();
 
-    const loser = myColor;
+    const loser = gameMode === "online" ? myColor : currentPlayer;
     const winner = myColor === "white" ? "Black" : "White";
     showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
     createBoard();
