@@ -717,6 +717,20 @@ function updateTimers(){
         ? bottomIcon + " " + bottomLabel + ": Unlimited"
         : bottomIcon + " " + bottomLabel + ": " + formatTime(bottomTime);
 }
+function updatePlayerNames(){
+
+    const orientation = getOrientation();
+
+    const topName = orientation.top === "white" ? whitePlayer : blackPlayer;
+    const bottomName = orientation.bottom === "white" ? whitePlayer : blackPlayer;
+
+    const topFlag = orientation.top === "white" ? whiteFlag : blackFlag;
+    const bottomFlag = orientation.bottom === "white" ? whiteFlag : blackFlag;
+
+    document.getElementById("topPlayerName").textContent = (topFlag ? topFlag + " " : "") + topName;
+    document.getElementById("bottomPlayerName").textContent = (bottomFlag ? bottomFlag + " " : "") + bottomName;
+
+}
 
 function startTimer(){
 
