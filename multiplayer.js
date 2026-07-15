@@ -58,7 +58,10 @@ function createOnlineRoom(){
 
     myColor = "white";
     currentRoomCode = code;
-
+db.ref("rooms/" + code + "/players/white").set({
+        username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
+        flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️"
+    });
     document.getElementById("roomCodeDisplay").textContent = "Room code: " + code + " — share this with your opponent";
     document.getElementById("onlineStatus").textContent = "Waiting for opponent to join...";
 
