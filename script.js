@@ -713,9 +713,9 @@ function updateTimers(){
         : topIcon + " " + formatTime(topTime);
 
     document.getElementById("bottomTimer").textContent =
-        bottomTime === -1
-        ? bottomIcon + " " + bottomLabel + ": Unlimited"
-        : bottomIcon + " " + bottomLabel + ": " + formatTime(bottomTime);
+    bottomTime === -1
+    ? bottomIcon + " Unlimited"
+    : bottomIcon + " " + formatTime(bottomTime);
 
     updatePlayerNames();
 }
