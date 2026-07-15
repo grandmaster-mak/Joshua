@@ -660,8 +660,8 @@ input::placeholder{ color:#4a5060; }
 }
 
 .action-card{
-    flex:0 0 180px;
-    height:180px;
+    flex:0 0 145px;
+    height:165px;
     border-radius:22px;
     padding:20px;
     color:white;
