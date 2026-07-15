@@ -25,7 +25,13 @@ body{
     min-height:100vh;
     width:100%;
 }
+#filesTop, #ranksLeft{
+    display:none;
+}
 
+.iconBtn{
+    border:none;
+    }
 #startCard{
     background:#15181f;
     border:1px solid rgba(255,255,255,0.06);
