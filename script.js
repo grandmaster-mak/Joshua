@@ -709,13 +709,13 @@ function updateTimers(){
 
     document.getElementById("topTimer").textContent =
         topTime === -1
-        ? topIcon + " " + topLabel + ": Unlimited"
-        : topIcon + " " + topLabel + ": " + formatTime(topTime);
+        ? topIcon + " Unlimited"
+        : topIcon + " " + formatTime(topTime);
 
     document.getElementById("bottomTimer").textContent =
         bottomTime === -1
-        ? bottomIcon + " " + bottomLabel + ": Unlimited"
-        : bottomIcon + " " + bottomLabel + ": " + formatTime(bottomTime);
+        ? bottomIcon + " Unlimited"
+        : bottomIcon + " " + formatTime(bottomTime);
     document.getElementById("bottomTimer").textContent =
         bottomTime === -1
         ? bottomIcon + " " + bottomLabel + ": Unlimited"
