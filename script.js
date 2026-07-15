@@ -1244,7 +1244,18 @@ function newGame(){
 
     whiteCaptured = [];
     blackCaptured = [];
-
+if(gameMode === "ai"){
+        whitePlayer = (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "You";
+        blackPlayer = "Computer";
+        whiteFlag = (typeof currentUserFlag !== "undefined") ? currentUserFlag : "";
+        blackFlag = "🤖";
+    }else if(gameMode === "human"){
+        whitePlayer = "White";
+        blackPlayer = "Black";
+        whiteFlag = "";
+        blackFlag = "";
+    }
+    // For online mode, names/flags are set separately by multiplayer.js
     if(selectedTime === -1){
         whiteTime = -1;
         blackTime = -1;
