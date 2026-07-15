@@ -1,4 +1,4 @@
-const board = document.getElementById("board");
+.const board = document.getElementById("board");
 
 let currentPlayer = "white";
 let gameMode = "human";
