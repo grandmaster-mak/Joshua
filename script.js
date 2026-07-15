@@ -1559,6 +1559,7 @@ function resignGame(){
     showPopup("🚩 Resignation", winner + " wins by resignation.");
     createBoard();
     showKingMarkers(loser);
+    recordGameResult("loss", myOpponentName());
 }
 
 function abortGame(){
