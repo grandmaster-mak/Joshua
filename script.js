@@ -1413,7 +1413,7 @@ function handleRestartClick(){
     }
 }
 function handleNewGameClick(){
-    if(gameMode === "online" && !gameOver){
+    if(!gameOver){
         showOnlineGameMenu();
     }else{
         showTimeControl();
