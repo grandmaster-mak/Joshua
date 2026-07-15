@@ -1577,6 +1577,7 @@ function abortGame(){
     showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
     createBoard();
     showKingMarkers(loser);
+    recordGameResult("loss", myOpponentName());
 }
 
 function requestDraw(){
