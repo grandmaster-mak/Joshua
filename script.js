@@ -669,14 +669,16 @@ function updateTurn(){
             const winner = currentPlayer === "white" ? "Black" : "White";
 
             showPopup("🏆 CHECKMATE!", winner + " Wins!");
+            const winnerColor = currentPlayer === "white" ? "black" : "white";
+const iWon = gameMode === "ai" ? winnerColor === "white" : winnerColor === myColor;
+recordGameResult(iWon ? "win" : "loss", myOpponentName());
         }
     }else if(!hasLegalMoves(currentPlayer)){
         text += " - STALEMATE!";
         showPopup("🤝 DRAW", "Stalemate");
+        recordGameResult("draw", myOpponentName());
     }
-const winnerColor = currentPlayer === "white" ? "black" : "white";
-const iWon = gameMode === "ai" ? winnerColor === "white" : winnerColor === myColor;
-recordGameResult(iWon ? "win" : "loss", myOpponentName());
+
     document.getElementById("turn").textContent = text;
 }
 
