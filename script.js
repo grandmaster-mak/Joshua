@@ -1092,7 +1092,7 @@ function choosePromotion(letter){
     finishTurn(false);
 }
 
-function finishTurn(){
+function finishTurn(wasRemoteMove){
 
     positionHistory.push(getPositionKey());
 
