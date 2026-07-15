@@ -257,7 +257,41 @@
         </div>
 
     </div>
+<!-- Account Popup (Sign Up / Log In / Log Out) -->
+<div id="accountPopup" class="popup">
 
+    <div class="popupContent">
+
+        <h2 id="accountTitle">Account</h2>
+
+        <div id="loggedOutView">
+
+            <input type="email" id="authEmail" placeholder="Email" style="width:100%; padding:10px; margin-top:8px; border-radius:5px; border:none; text-align:center;">
+
+            <input type="password" id="authPassword" placeholder="Password" style="width:100%; padding:10px; margin-top:8px; border-radius:5px; border:none; text-align:center;">
+
+            <input type="text" id="authUsername" placeholder="Username (for sign up only)" style="width:100%; padding:10px; margin-top:8px; border-radius:5px; border:none; text-align:center;">
+
+            <button onclick="signUp()">Sign Up</button>
+            <button onclick="logIn()">Log In</button>
+
+            <p id="authStatus"></p>
+
+        </div>
+
+        <div id="loggedInView" style="display:none;">
+
+            <p id="loggedInUsername"></p>
+
+            <button onclick="logOut()">Log Out</button>
+
+        </div>
+
+        <button onclick="closeAccountPopup()">Close</button>
+
+    </div>
+
+</div>
     <!-- Firebase (compat build — works with plain script tags, no bundler needed) -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
