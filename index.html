@@ -4,83 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chess</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-<!-- Home Header -->
-<div class="home-header">
 
-    <div class="header-text">
-        <h1>Hello, <span id="username">player</span>! 👋</h1>
-        <p>What chess adventure awaits today?</p>
-    </div>
-
-    <div class="profile-box">
-        <img src="images/profile.png" alt="Profile">
-        <span class="online-dot"></span>
-    </div>
-
-</div>
-    <!-- Quick Actions -->
-<div class="quick-actions">
-
-    <div class="action-card play-now">
-        <span class="material-icons">sports_esports</span>
-        <h3>Play Now</h3>
-        <p>Start a quick match</p>
-    </div>
-
-    <div class="action-card computer">
-        <span class="material-icons">smart_toy</span>
-        <h3>Play Computer</h3>
-        <p>Challenge the AI</p>
-    </div>
-
-    <div class="action-card friends">
-        <span class="material-icons">groups</span>
-        <h3>Play with Friends</h3>
-        <p>Invite your friends</p>
-    </div>
-
-</div>
-    <!-- ===== Your Stats ===== -->
-<div class="stats-section">
-
-    <div class="stats-header">
-        <h2>Your Stats</h2>
-        <a href="#">View All Stats</a>
-    </div>
-
-    <div class="stats-grid">
-
-        <div class="stat-item">
-            <div class="stat-icon rating">♟</div>
-            <h3 id="playerRating">1200</h3>
-            <p>Rating</p>
-        </div>
-
-        <div class="stat-item">
-            <div class="stat-icon win">🏆</div>
-            <h3 id="gamesWon">0</h3>
-            <p>Games Won</p>
-        </div>
-
-        <div class="stat-item">
-            <div class="stat-icon streak">🔥</div>
-            <h3 id="winStreak">0</h3>
-            <p>Win Streak</p>
-        </div>
-
-        <div class="stat-item">
-            <div class="stat-icon time">⏱</div>
-            <h3 id="timePlayed">0h</h3>
-            <p>Time Played</p>
-        </div>
-
-    </div>
-
-</div>
     <!-- App Shell: Home / Friends / Account -->
     <div id="appShell">
 
@@ -89,14 +18,81 @@
         <!-- Home Screen -->
         <div id="homeScreen" class="screen">
 
-            <div id="startUserTag" style="display:none;"></div>
+            <!-- Home Header -->
+            <div class="home-header">
 
-            <h1>♟️ Chess</h1>
-            <p id="startTagline">Play. Compete. Improve.</p>
+                <div class="header-text">
+                    <h1>Hello, <span id="username">player</span>! 👋</h1>
+                    <p>What chess adventure awaits today?</p>
+                </div>
 
-            <button id="playBtn" class="btnPrimary" onclick="showTimeControl()">
-                ▶ Play
-            </button>
+                <div class="profile-box">
+                    <img src="images/profile.png" alt="Profile" id="homeProfileImg">
+                    <span class="online-dot"></span>
+                </div>
+
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+
+                <div class="action-card play-now" onclick="openPlaySetup('human')">
+                    <span class="material-icons">sports_esports</span>
+                    <h3>Play Now</h3>
+                    <p>Two players, one device</p>
+                </div>
+
+                <div class="action-card computer" onclick="openPlaySetup('ai')">
+                    <span class="material-icons">smart_toy</span>
+                    <h3>Play vs AI</h3>
+                    <p>Challenge the AI</p>
+                </div>
+
+                <div class="action-card friends" onclick="openPlaySetup('online')">
+                    <span class="material-icons">public</span>
+                    <h3>Play Online</h3>
+                    <p>Create or join a room</p>
+                </div>
+
+            </div>
+
+            <!-- ===== Your Stats ===== -->
+            <div class="stats-section">
+
+                <div class="stats-header">
+                    <h2>Your Stats</h2>
+                    <a href="#">View All Stats</a>
+                </div>
+
+                <div class="stats-grid">
+
+                    <div class="stat-item">
+                        <div class="stat-icon rating">♟</div>
+                        <h3 id="playerRating">1200</h3>
+                        <p>Rating</p>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-icon win">🏆</div>
+                        <h3 id="gamesWon">0</h3>
+                        <p>Games Won</p>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-icon streak">🔥</div>
+                        <h3 id="winStreak">0</h3>
+                        <p>Win Streak</p>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-icon time">⏱</div>
+                        <h3 id="timePlayed">0h</h3>
+                        <p>Time Played</p>
+                    </div>
+
+                </div>
+
+            </div>
 
             <button id="tournamentBtn" class="btnSecondary" onclick="showComingSoon()">
                 🏆 Tournaments
@@ -480,5 +476,4 @@
 
 </body>
     </html>
-
-                        
+    
