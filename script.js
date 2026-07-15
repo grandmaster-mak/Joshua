@@ -1,4 +1,4 @@
-.const board = document.getElementById("board");
+const board = document.getElementById("board");
 
 let currentPlayer = "white";
 let gameMode = "human";
@@ -1122,6 +1122,7 @@ function finishTurn(wasRemoteMove){
         createBoard();
         showPopup("🤝 DRAW", "Threefold Repetition");
         return;
+        recordGameResult("draw", myOpponentName());
     }
 
     if(hasInsufficientMaterial()){
@@ -1129,6 +1130,7 @@ function finishTurn(wasRemoteMove){
         createBoard();
         showPopup("🤝 DRAW", "Insufficient Material");
         return;
+        recordGameResult("draw", myOpponentName());
     }
 
     if(halfMoveClock >= 100){
@@ -1136,6 +1138,7 @@ function finishTurn(wasRemoteMove){
         createBoard();
         showPopup("🤝 DRAW", "50-Move Rule");
         return;
+        recordGameResult("draw", myOpponentName());
     }
 
     const moverColor = currentPlayer;
