@@ -1459,6 +1459,80 @@ function showOnlineGameMenu(){
 function closeOnlineMenu(){
     document.getElementById("onlineMenuPopup").classList.remove("show");
 }
+function recordGameResult(myResult, opponentName){
+
+    if(gameMode === "human") return;
+    if(typeof currentUser === "undefined" || !currentUser) return;
+    if(typeof db === "undefined" || !db) return;
+
+    const userRef = db.ref("users/" + currentUser.uid);
+
+    userRef.transaction(function(data){
+        if(!data) return data;
+        data.wins = data.wins || 0;
+        data.losses = data.losses || 0;
+        data.draws = data.draws || 0;
+        data.winStreak = data.winStreak || 0;
+
+        if(myResult === "win"){
+            data.wins++;
+            data.winStreak++;
+        }else if(myResult === "loss"){
+            data.losses++;
+            data.winStreak = 0;
+        }else{
+            data.draws++;
+            data.winStreak = 0;
+        }
+        return data;
+    });
+
+    userRef.child("history").push({
+        opponent: opponentName || "Unknown",
+        result: myResult,
+        mode: gameMode,
+        time: Date.now()
+    });
+
+    if(typeof loadRecentGames === "function") loadRecentGames();
+}
+
+function myOpponentName(){
+    if(gameMode === "ai") return "Computer";
+    return myColor === "white" ? blackPlayer : whitePlayer;
+}
+
+function loadRecentGames(){
+    if(!db || !currentUser) return;
+
+    db.ref("users/" + currentUser.uid + "/history")
+        .orderByChild("time")
+        .limitToLast(5)
+        .once("value")
+        .then(function(snapshot){
+            const list = document.getElementById("recentGamesList");
+            if(!list) return;
+
+            const entries = [];
+            snapshot.forEach(function(child){ entries.push(child.val()); });
+            entries.reverse();
+
+            if(entries.length === 0){
+                list.innerHTML = '<p class="sub">No games played yet.</p>';
+                return;
+            }
+
+            list.innerHTML = "";
+            entries.forEach(function(entry){
+                const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
+                const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+                const row = document.createElement("div");
+                row.className = "gameRow";
+                row.innerHTML = '<span class="gameOpponent">' + entry.opponent + '</span><span class="gameResult ' + cls + '">' + label + '</span>';
+                list.appendChild(row);
+            });
+        });
+        }
 function openPlaySetup(mode){
     document.getElementById("gameMode").value = mode;
     updateGameMode();
