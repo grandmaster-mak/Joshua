@@ -1610,6 +1610,7 @@ function respondToDraw(accepted){
         clearInterval(timer);
         showPopup("🤝 Draw", "Game drawn by agreement.");
         createBoard();
+        recordGameResult("draw", myOpponentName());
     }
 }
 
