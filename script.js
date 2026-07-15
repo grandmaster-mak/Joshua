@@ -1459,7 +1459,11 @@ function showOnlineGameMenu(){
 function closeOnlineMenu(){
     document.getElementById("onlineMenuPopup").classList.remove("show");
 }
-
+function openPlaySetup(mode){
+    document.getElementById("gameMode").value = mode;
+    updateGameMode();
+    showTimeControl();
+}
 function resignGame(){
 
     if(typeof sendGameEvent === "function"){
