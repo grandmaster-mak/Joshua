@@ -696,3 +696,61 @@ input::placeholder{ color:#4a5060; }
 .friends{
     background:#F57C00;
 }
+/* ===== Your Stats ===== */
+
+.stats-section{
+    background:#171717;
+    margin:20px 15px;
+    border-radius:18px;
+    padding:18px;
+}
+
+.stats-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.stats-header h2{
+    color:#fff;
+    font-size:22px;
+}
+
+.stats-header a{
+    color:#55c94b;
+    text-decoration:none;
+    font-size:15px;
+    font-weight:bold;
+}
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+}
+
+.stat-item{
+    text-align:center;
+}
+
+.stat-icon{
+    font-size:30px;
+    margin-bottom:10px;
+}
+
+.stat-item h3{
+    color:white;
+    font-size:24px;
+}
+
+.stat-item p{
+    color:#9c9c9c;
+    font-size:13px;
+    margin-top:5px;
+}
+
+.rating{color:#49d64f;}
+.win{color:#f7c62f;}
+.streak{color:#4aa7ff;}
+.time{color:#ff5b5b;}
