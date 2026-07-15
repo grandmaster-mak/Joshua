@@ -597,4 +597,50 @@ input::placeholder{ color:#4a5060; }
     font-size:22px;
     pointer-events:none;
     }
-    
+    /* ===== Home Header ===== */
+
+.home-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:20px 15px;
+}
+
+.header-text h1{
+    color:white;
+    font-size:32px;
+    font-weight:bold;
+    margin:0;
+}
+
+.header-text p{
+    color:#9e9e9e;
+    font-size:16px;
+    margin-top:8px;
+}
+
+.profile-box{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    border:2px solid #555;
+    position:relative;
+    overflow:hidden;
+}
+
+.profile-box img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.online-dot{
+    position:absolute;
+    right:4px;
+    bottom:4px;
+    width:16px;
+    height:16px;
+    background:#22c55e;
+    border:2px solid #111;
+    border-radius:50%;
+    }
