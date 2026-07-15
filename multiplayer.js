@@ -108,6 +108,10 @@ function joinOnlineRoom(){
 
         myColor = "black";
         currentRoomCode = code;
+        db.ref("rooms/" + code + "/players/black").set({
+            username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
+            flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️"
+        });
 
         db.ref("rooms/" + code + "/status").set("playing");
 
