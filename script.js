@@ -716,6 +716,12 @@ function updateTimers(){
         bottomTime === -1
         ? bottomIcon + " " + bottomLabel + ": Unlimited"
         : bottomIcon + " " + bottomLabel + ": " + formatTime(bottomTime);
+    document.getElementById("bottomTimer").textContent =
+        bottomTime === -1
+        ? bottomIcon + " " + bottomLabel + ": Unlimited"
+        : bottomIcon + " " + bottomLabel + ": " + formatTime(bottomTime);
+
+    updatePlayerNames();
 }
 function updatePlayerNames(){
 
