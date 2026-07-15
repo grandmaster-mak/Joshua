@@ -1278,7 +1278,7 @@ if(gameMode === "ai"){
     positionHistory = [getPositionKey()];
     createBoard();
 
-    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "none";
     document.getElementById("game").style.display = "flex";
 }
 
