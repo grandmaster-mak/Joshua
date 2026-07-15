@@ -1496,11 +1496,19 @@ function abortGame(){
 
 function requestDraw(){
 
-    if(typeof sendGameEvent === "function"){
-        sendGameEvent("drawOffer");
+    closeOnlineMenu();
+
+    if(gameMode === "online"){
+        if(typeof sendGameEvent === "function"){
+            sendGameEvent("drawOffer");
+        }
+        return;
     }
 
-    closeOnlineMenu();
+    gameOver = true;
+    clearInterval(timer);
+    showPopup("🤝 Draw", "Game drawn by agreement.");
+    createBoard();
 }
 
 function respondToDraw(accepted){
