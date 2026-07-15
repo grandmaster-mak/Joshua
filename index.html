@@ -9,9 +9,27 @@
 
 <body>
 
-    <h1>♟️ Chess Game</h1>
+    <!-- Start Screen -->
+    <div id="startScreen">
 
-    <div id="game">
+        <div id="startCard">
+
+            <h1>♟️ Chess</h1>
+            <p id="startTagline">Play. Compete. Improve.</p>
+
+            <button id="accountBtn" onclick="showAccountPopup()">
+                👤 Account
+            </button>
+
+            <button id="playBtn" onclick="showTimeControl()">
+                ▶ Play
+            </button>
+
+        </div>
+
+    </div>
+
+    <div id="game" style="display:none;">
 
         <!-- Board Column: opponent bar, board, your bar -->
         <div id="boardColumn">
@@ -52,23 +70,24 @@
         <!-- Right Panel -->
         <div id="panel">
 
-            <h2>Game Information</h2>
+            <h2>Game Info</h2>
             <p id="turn">White to Move</p>
 
-            <button id="newGame" onclick="handleNewGameClick()">
-    New Game
-            </button>
+            <div id="inGameControls">
 
-            <button id="restart" onclick="handleRestartClick()">
-                Restart Game
-            </button>
+                <button id="newGame" onclick="handleNewGameClick()" title="New Game">
+                    🆕
+                </button>
 
-            <button id="undo" onclick="undoMove()">
-                Undo Move
-            </button>
-            <button id="accountBtn" onclick="showAccountPopup()">
-    Account
-</button>
+                <button id="restart" onclick="handleRestartClick()" title="Restart Game">
+                    🔄
+                </button>
+
+                <button id="undo" onclick="undoMove()" title="Undo Move">
+                    ↩️
+                </button>
+
+            </div>
 
             <h3>Move History</h3>
 
@@ -127,7 +146,7 @@
 
                 <label><b>Or Join a Room</b></label><br>
 
-                <input type="text" id="joinRoomInput" placeholder="Enter room code" maxlength="6" style="width:100%; padding:10px; margin-top:8px; border-radius:5px; border:none; text-align:center; text-transform:uppercase;">
+                <input type="text" id="joinRoomInput" placeholder="Enter room code" maxlength="6">
 
                 <button onclick="joinOnlineRoom()">Join Room</button>
 
@@ -160,9 +179,11 @@
             <br><br>
 
             <button id="startGameBtn" onclick="startNewGame()">
-
                 Start Game
+            </button>
 
+            <button class="secondaryBtn" onclick="closeTimeControl()">
+                Cancel
             </button>
 
         </div>
@@ -179,7 +200,7 @@
             <p id="popupMessage"></p>
 
             <button onclick="closePopup(); showTimeControl();">
-    New Game
+                New Game
             </button>
 
             <button onclick="closePopup();">
@@ -218,18 +239,18 @@
             <h2>Game Options</h2>
 
             <button onclick="requestDraw()">
-                Offer Draw
+                🤝 Offer Draw
             </button>
 
             <button onclick="resignGame()">
-                Resign
+                🚩 Resign
             </button>
 
             <button onclick="abortGame()">
-                Abort Game
+                🏳️ Abort Game
             </button>
 
-            <button onclick="closeOnlineMenu()">
+            <button class="secondaryBtn" onclick="closeOnlineMenu()">
                 Cancel
             </button>
 
@@ -257,50 +278,52 @@
         </div>
 
     </div>
-<!-- Account Popup (Sign Up / Log In / Log Out) -->
-<div id="accountPopup" class="popup">
 
-    <div class="popupContent">
+    <!-- Account Popup (Sign Up / Log In / Log Out) -->
+    <div id="accountPopup" class="popup">
 
-        <h2 id="accountTitle">Account</h2>
+        <div class="popupContent">
 
-        <div id="loggedOutView">
+            <h2 id="accountTitle">Account</h2>
 
-            <input type="email" id="authEmail" placeholder="Email" style="width:100%; padding:10px; margin-top:8px; border-radius:5px; border:none; text-align:center;">
+            <div id="loggedOutView">
 
-            <input type="password" id="authPassword" placeholder="Password" style="width:100%; padding:10px; margin-top:8px; border-radius:5px; border:none; text-align:center;">
+                <input type="email" id="authEmail" placeholder="Email">
 
-            <input type="text" id="authUsername" placeholder="Username (for sign up only)" style="width:100%; padding:10px; margin-top:8px; border-radius:5px; border:none; text-align:center;">
+                <input type="password" id="authPassword" placeholder="Password">
 
-            <button onclick="signUp()">Sign Up</button>
-            <button onclick="logIn()">Log In</button>
+                <input type="text" id="authUsername" placeholder="Username (for sign up only)">
 
-            <p id="authStatus"></p>
+                <button onclick="signUp()">Sign Up</button>
+                <button onclick="logIn()">Log In</button>
+
+                <p id="authStatus"></p>
+
+            </div>
+
+            <div id="loggedInView" style="display:none;">
+
+                <p id="loggedInUsername"></p>
+
+                <button onclick="logOut()">Log Out</button>
+
+            </div>
+
+            <button class="secondaryBtn" onclick="closeAccountPopup()">Close</button>
 
         </div>
-
-        <div id="loggedInView" style="display:none;">
-
-            <p id="loggedInUsername"></p>
-
-            <button onclick="logOut()">Log Out</button>
-
-        </div>
-
-        <button onclick="closeAccountPopup()">Close</button>
 
     </div>
 
-</div>
-    <!-- Firebase (compat build — works with plain script tags, no bundler needed) -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 
     <script src="script.js"></script>
-<script src="ai.js"></script>
-<script src="multiplayer.js"></script>
-<script src="auth.js"></script>
+    <script src="ai.js"></script>
+    <script src="multiplayer.js"></script>
+    <script src="auth.js"></script>
 
 </body>
-    </html>
+</html>
