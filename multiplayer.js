@@ -162,7 +162,26 @@ function listenForOpponentPresence(code){
         }
     });
 }
+function listenForPlayerInfo(code){
+    db.ref("rooms/" + code + "/players").on("value", function(snapshot){
 
+        const players = snapshot.val();
+        if(!players) return;
+
+        if(players.white){
+            whitePlayer = players.white.username || "White";
+            whiteFlag = players.white.flag || "";
+        }
+
+        if(players.black){
+            blackPlayer = players.black.username || "Black";
+            blackFlag = players.black.flag || "";
+        }
+
+        updatePlayerNames();
+
+    });
+}
 function sendGameEvent(type, extra){
     if(!db || !currentRoomCode) return;
 
