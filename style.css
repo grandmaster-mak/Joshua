@@ -644,3 +644,55 @@ input::placeholder{ color:#4a5060; }
     border:2px solid #111;
     border-radius:50%;
     }
+/* ===== Quick Actions ===== */
+
+.quick-actions{
+    display:flex;
+    gap:15px;
+    overflow-x:auto;
+    padding:10px 15px;
+    margin-top:20px;
+    scroll-behavior:smooth;
+}
+
+.quick-actions::-webkit-scrollbar{
+    display:none;
+}
+
+.action-card{
+    flex:0 0 180px;
+    height:180px;
+    border-radius:22px;
+    padding:20px;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+
+.action-card .material-icons{
+    font-size:42px;
+}
+
+.action-card h3{
+    font-size:22px;
+    margin-top:10px;
+}
+
+.action-card p{
+    color:#e0e0e0;
+    font-size:14px;
+    line-height:1.4;
+}
+
+.play-now{
+    background:#2E7D32;
+}
+
+.computer{
+    background:#1565C0;
+}
+
+.friends{
+    background:#F57C00;
+}
