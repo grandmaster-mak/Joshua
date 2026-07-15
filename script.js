@@ -1327,7 +1327,41 @@ function showPromotion(color){
 function closePromotion(){
     document.getElementById("promotionPopup").classList.remove("show");
 }
+function switchScreen(name){
 
+    const screens = ["home", "friends", "account"];
+
+    screens.forEach(function(s){
+        document.getElementById(s + "Screen").style.display = (s === name) ? "flex" : "none";
+    });
+
+    document.querySelectorAll("#bottomNav .navBtn").forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.screen === name);
+    });
+
+}
+
+function showSettingsPopup(){
+    document.getElementById("settingsPopup").classList.add("show");
+}
+
+function closeSettingsPopup(){
+    document.getElementById("settingsPopup").classList.remove("show");
+}
+
+function showInfoPopup(title, message){
+    document.getElementById("infoPopupTitle").textContent = title;
+    document.getElementById("infoPopupMessage").textContent = message;
+    document.getElementById("infoPopup").classList.add("show");
+}
+
+function closeInfoPopup(){
+    document.getElementById("infoPopup").classList.remove("show");
+}
+
+function showComingSoon(){
+    showInfoPopup("🏆 Tournaments", "Tournaments are coming soon — stay tuned!");
+}
 function undoMove(){
     if(gameMode === "online") return;
 
