@@ -1248,6 +1248,9 @@ function newGame(){
 
     positionHistory = [getPositionKey()];
     createBoard();
+
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("game").style.display = "flex";
 }
 
 function createCoordinates(){
