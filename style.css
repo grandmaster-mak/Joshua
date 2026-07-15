@@ -50,9 +50,10 @@ body{
 }
 
 .playerTag{
-    font-weight:700;
-    font-size:14px;
+    font-weight:800;
+    font-size:19px;
     white-space:nowrap;
+    letter-spacing:.2px;
 }
 #startCard h1{
     font-size:40px;
