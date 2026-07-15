@@ -714,10 +714,6 @@ function updateTimers(){
 
     document.getElementById("bottomTimer").textContent =
         bottomTime === -1
-        ? bottomIcon + " Unlimited"
-        : bottomIcon + " " + formatTime(bottomTime);
-    document.getElementById("bottomTimer").textContent =
-        bottomTime === -1
         ? bottomIcon + " " + bottomLabel + ": Unlimited"
         : bottomIcon + " " + bottomLabel + ": " + formatTime(bottomTime);
 
