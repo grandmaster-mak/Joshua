@@ -5,9 +5,9 @@
 }
 
 body{
-    font-family:Arial, sans-serif;
-    background:#222;
-    color:white;
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:#12151c;
+    color:#e8e8e8;
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -15,9 +15,64 @@ body{
     min-height:100vh;
 }
 
-h1{
-    margin:20px;
+/* ===== Start Screen ===== */
+
+#startScreen{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    width:100%;
 }
+
+#startCard{
+    background:#1c2028;
+    border-radius:20px;
+    padding:50px 40px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);
+    width:90%;
+    max-width:360px;
+}
+
+#startCard h1{
+    font-size:42px;
+    margin-bottom:6px;
+}
+
+#startTagline{
+    color:#8a8f9c;
+    margin-bottom:30px;
+    font-size:14px;
+}
+
+#startCard button{
+    display:block;
+    width:100%;
+}
+
+#playBtn{
+    background:linear-gradient(135deg, #23c483, #189b68);
+    font-size:18px;
+    font-weight:600;
+    padding:16px;
+}
+
+#playBtn:hover{
+    background:linear-gradient(135deg, #1fae74, #148559);
+}
+
+#accountBtn{
+    background:#2a2f3a;
+    color:#e8e8e8;
+    margin-bottom:14px;
+}
+
+#accountBtn:hover{
+    background:#343a47;
+}
+
+/* ===== Game Layout ===== */
 
 #game{
     display:flex;
@@ -37,7 +92,9 @@ h1{
     display:grid;
     grid-template-columns:repeat(8,1fr);
     grid-template-rows:repeat(8,1fr);
-    border:5px solid #444;
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
 
 .square{
@@ -51,31 +108,49 @@ h1{
 }
 
 .light{
-    background:#f0d9b5;
+    background:#eeeed2;
 }
 
 .dark{
-    background:#b58863;
+    background:#769656;
 }
 
 .possible{
-    box-shadow:inset 0 0 0 5px lime;
+    box-shadow:inset 0 0 0 5px rgba(35,196,131,.85);
 }
 
 #panel{
-    width:220px;
-    background:#333;
-    padding:20px;
-    border-radius:10px;
+    width:240px;
+    background:#1c2028;
+    padding:22px;
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
 #panel h2{
-    margin-bottom:15px;
+    margin-bottom:14px;
+    font-size:18px;
+    color:#8a8f9c;
+    font-weight:600;
 }
 
 #turn{
-    margin:20px 0;
+    margin-bottom:18px;
+    font-size:17px;
+    font-weight:600;
+}
+
+#inGameControls{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+}
+
+#inGameControls button{
+    flex:1;
     font-size:20px;
+    padding:12px 0;
+    margin-top:0;
 }
 
 #topPlayerBox,
@@ -85,18 +160,18 @@ h1{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    background:#333;
-    padding:10px 16px;
-    border-radius:8px;
-    font-size:16px;
+    background:#1c2028;
+    padding:12px 18px;
+    border-radius:12px;
+    font-size:15px;
 }
 
 #topPlayerBox{
-    margin-bottom:6px;
+    margin-bottom:8px;
 }
 
 #bottomPlayerBox{
-    margin-top:6px;
+    margin-top:8px;
 }
 
 #topPlayerBox p,
@@ -108,16 +183,46 @@ button{
     width:100%;
     padding:12px;
     margin-top:10px;
-    font-size:16px;
+    font-size:15px;
     border:none;
-    border-radius:5px;
+    border-radius:10px;
     cursor:pointer;
-    background:#0078ff;
+    background:#2f6fed;
     color:white;
+    font-weight:500;
+    transition:background .15s ease, transform .1s ease;
 }
 
 button:hover{
-    background:#005fd1;
+    background:#255bcc;
+}
+
+button:active{
+    transform:scale(0.97);
+}
+
+.secondaryBtn{
+    background:#2a2f3a !important;
+}
+
+.secondaryBtn:hover{
+    background:#343a47 !important;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:10px;
+    border:none;
+    background:#2a2f3a;
+    color:#e8e8e8;
+    text-align:center;
+    font-size:14px;
+}
+
+input::placeholder{
+    color:#8a8f9c;
 }
 
 @media (max-width:900px){
@@ -139,7 +244,7 @@ button:hover{
     #topPlayerBox,
     #bottomPlayerBox{
         width:95vw;
-        font-size:14px;
+        font-size:13px;
         flex-direction:column;
         align-items:flex-start;
         gap:4px;
@@ -155,7 +260,6 @@ button:hover{
 
 }
 
-
 .piece{
     width:80%;
     height:80%;
@@ -167,12 +271,12 @@ button:hover{
 }
 
 .selected{
-    outline: 4px solid yellow;
-    outline-offset: -4px;
+    outline: 3px solid #ffd23f;
+    outline-offset: -3px;
 }
 
 .in-check{
-    background-color: red !important;
+    background-color: #e5484d !important;
 }
 
 .capturedPiece{
@@ -191,18 +295,20 @@ button:hover{
 }
 
 #history{
-    max-height:250px;
+    max-height:220px;
     overflow-y:auto;
 }
 
 .historyRow{
     display:flex;
     padding:4px 0;
+    font-size:14px;
 }
 
 .moveNumber{
-    width:35px;
+    width:32px;
     font-weight:bold;
+    color:#8a8f9c;
 }
 
 .whiteMove,
@@ -216,7 +322,7 @@ button:hover{
     right:3px;
     font-size:10px;
     font-weight:bold;
-    color:#6b4f2f;
+    color:#5a7a45;
     pointer-events:none;
 }
 
@@ -226,7 +332,7 @@ button:hover{
     left:3px;
     font-size:10px;
     font-weight:bold;
-    color:#f0d9b5;
+    color:#eeeed2;
     pointer-events:none;
 }
 
@@ -240,9 +346,11 @@ button:hover{
     width:100%;
     display:grid;
     grid-template-columns:repeat(8,1fr);
-    margin-bottom:5px;
+    margin-bottom:6px;
     font-weight:bold;
     text-align:center;
+    color:#8a8f9c;
+    font-size:13px;
 }
 
 #boardArea{
@@ -254,20 +362,21 @@ button:hover{
     width:20px;
     display:grid;
     grid-template-rows:repeat(8,1fr);
-    margin-right:0;
     font-weight:bold;
     text-align:center;
     align-items:center;
+    color:#8a8f9c;
+    font-size:13px;
 }
 
 .lastMove{
-    box-shadow: inset 0 0 0 5px gold;
+    box-shadow: inset 0 0 0 4px rgba(255,210,63,.9);
 }
 
 .popup{
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,.65);
+    background:rgba(0,0,0,.7);
     display:none;
     justify-content:center;
     align-items:center;
@@ -281,23 +390,24 @@ button:hover{
 .popupContent{
     width:90%;
     max-width:380px;
-    background:#2f2f2f;
+    background:#1c2028;
     color:#fff;
-    border-radius:16px;
-    padding:30px 25px;
+    border-radius:18px;
+    padding:32px 26px;
     text-align:center;
-    box-shadow:0 15px 40px rgba(0,0,0,.45);
-    animation:popupScale .25s ease;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);
+    animation:popupScale .22s ease;
 }
 
 .popupContent h2{
-    font-size:30px;
-    margin-bottom:12px;
+    font-size:24px;
+    margin-bottom:14px;
 }
 
 .popupContent p{
-    font-size:18px;
-    margin-bottom:25px;
+    font-size:15px;
+    margin-bottom:20px;
+    color:#c4c8d1;
 }
 
 .popupContent button{
@@ -307,7 +417,7 @@ button:hover{
 
 @keyframes popupScale{
     from{
-        transform:scale(.85);
+        transform:scale(.9);
         opacity:0;
     }
     to{
@@ -319,22 +429,23 @@ button:hover{
 #promotionChoices{
     display:flex;
     justify-content:center;
-    gap:15px;
-    margin-top:20px;
+    gap:14px;
+    margin-top:16px;
 }
 
 .promotionPiece{
     width:60px;
     height:60px;
     cursor:pointer;
-    transition:.2s;
-    background:#444;
-    border-radius:8px;
-    padding:5px;
+    transition:.15s;
+    background:#2a2f3a;
+    border-radius:12px;
+    padding:6px;
 }
 
 .promotionPiece:hover{
-    transform:scale(1.15);
+    transform:scale(1.1);
+    background:#343a47;
 }
 
 .resignFlag, .winnerCrown{
@@ -343,4 +454,4 @@ button:hover{
     right:-6px;
     font-size:22px;
     pointer-events:none;
-}
+    }
