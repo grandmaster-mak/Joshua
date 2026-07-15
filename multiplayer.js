@@ -138,6 +138,7 @@ function startOnlineGame(code){
     listenForGameEvents(code);
     listenForClockSync(code);
     startOnlineClockDisplay();
+    listenForPlayerInfo(code);
 
     if(myColor === "white"){
         db.ref("rooms/" + code + "/clock").set({
