@@ -215,6 +215,7 @@ function listenForGameEvents(code){
             showPopup("🚩 Resignation", winner + " wins by resignation.");
             createBoard();
             showKingMarkers(event.by);
+            recordGameResult("win", myOpponentName());
         }
 
         if(event.type === "abort" && !gameOver){
@@ -224,6 +225,7 @@ function listenForGameEvents(code){
             showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
             createBoard();
             showKingMarkers(event.by);
+            recordGameResult("win", myOpponentName());
         }
 
         if(event.type === "drawOffer" && !gameOver){
