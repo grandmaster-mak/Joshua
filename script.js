@@ -620,8 +620,6 @@ function updateHistory(){
 
 }
 
-}
-
 function updateTurn(){
 
     let text = (currentPlayer === "white" ? whitePlayer : blackPlayer) + " to Move";
