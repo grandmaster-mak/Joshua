@@ -139,6 +139,14 @@ function initAuthListener(){
                 if(winsEl){
                     winsEl.textContent = data.wins || 0;
                 }
+
+                const streakEl = document.getElementById("winStreak");
+                if(streakEl){
+                    streakEl.textContent = data.winStreak || 0;
+                }
+
+                if(typeof loadRecentGames === "function") loadRecentGames();
+
                 if(avatarImg && data.photoURL){
                     avatarImg.src = data.photoURL;
                 }
@@ -164,15 +172,10 @@ function initAuthListener(){
             if(winsEl) winsEl.textContent = "—";
 
         }
-const streakEl = document.getElementById("winStreak");
-if(streakEl){
-    streakEl.textContent = data.winStreak || 0;
-}
 
-if(typeof loadRecentGames === "function") loadRecentGames();
     });
 
 }
 
 initAuthListener();
-                    
+       
