@@ -253,7 +253,13 @@
 
             <div id="topPlayerBox">
                 <div class="playerRow">
-                    <span id="topPlayerName" class="playerTag"></span>
+                    <div class="playerIdentity">
+                        <div class="playerAvatar">👤</div>
+                        <div class="playerNameBlock">
+                            <span id="topPlayerName" class="playerTag"></span>
+                            <span id="topPlayerRating" class="playerRatingTag" style="display:none;"></span>
+                        </div>
+                    </div>
                     <p id="topTimer"></p>
                 </div>
                 <p>
@@ -279,7 +285,13 @@
 
             <div id="bottomPlayerBox">
                 <div class="playerRow">
-                    <span id="bottomPlayerName" class="playerTag"></span>
+                    <div class="playerIdentity">
+                        <div class="playerAvatar">👤</div>
+                        <div class="playerNameBlock">
+                            <span id="bottomPlayerName" class="playerTag"></span>
+                            <span id="bottomPlayerRating" class="playerRatingTag" style="display:none;"></span>
+                        </div>
+                    </div>
                     <p id="bottomTimer"></p>
                 </div>
                 <p>
@@ -296,27 +308,31 @@
             <h2>Game Info</h2>
             <p id="turn">White to Move</p>
 
-            <div id="inGameControls">
-
-                <button class="iconBtn" id="newGame" onclick="handleNewGameClick()" title="New Game">
-                    🆕
-                </button>
-
-                <button class="iconBtn" id="restart" onclick="handleRestartClick()" title="Restart Game">
-                    🔄
-                </button>
-
-                <button class="iconBtn" id="undo" onclick="undoMove()" title="Undo Move">
-                    ↩️
-                </button>
-
-            </div>
-
             <h3>Move History</h3>
 
             <div id="history"></div>
 
         </div>
+
+    </div>
+
+    <!-- Fixed in-game bottom toolbar -->
+    <div id="gameBottomBar" style="display:none;">
+
+        <button class="navBtn" onclick="handleNewGameClick()" title="New Game">
+            <span class="navIcon">🆕</span>
+            <span class="navLabel">New</span>
+        </button>
+
+        <button class="navBtn" onclick="handleRestartClick()" title="Restart Game">
+            <span class="navIcon">🔄</span>
+            <span class="navLabel">Restart</span>
+        </button>
+
+        <button class="navBtn" onclick="undoMove()" title="Undo Move">
+            <span class="navIcon">↩️</span>
+            <span class="navLabel">Undo</span>
+        </button>
 
     </div>
 
