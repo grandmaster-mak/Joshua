@@ -844,4 +844,719 @@ function clickSquare(r, c){
                 return;
             }
 
-            se
+            selected = null;
+            possibleMoves = [];
+            createBoard();
+            return;
+        }
+
+        const fromR = selected.r;
+        const fromC = selected.c;
+
+        executeMove(fromR, fromC, r, c, false);
+    }
+
+}
+
+function playAIMove(fromR, fromC, toR, toC, promotion){
+
+    if(gameOver) return;
+    if(promotionSquare) return;
+
+    aiPromotionPiece = promotion || null;
+
+    executeMove(fromR, fromC, toR, toC, true);
+}
+
+function executeMove(fromR, fromC, r, c, isAIMove){
+
+    const movedPiece = pieces[fromR][fromC];
+    const isCastle = (movedPiece === "wK" || movedPiece === "bK") && Math.abs(c - fromC) === 2;
+    const isPromotionMove = (movedPiece === "wP" && r === 0) || (movedPiece === "bP" && r === 7);
+
+    const wasRemoteMove = applyingRemoteMove;
+    const aiPromotionForThisMove = aiPromotionPiece;
+    const promotionPieceForThisMove = remotePromotionPiece;
+
+    if(gameMode === "online" && !applyingRemoteMove && !isPromotionMove && typeof sendMoveToFirebase === "function"){
+        sendMoveToFirebase(fromR, fromC, r, c, null);
+    }
+
+    const finish = function(){
+        completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove, aiPromotionForThisMove);
+    };
+
+    if(isCastle){
+
+        const kingsideCastle = c > fromC;
+        const rookFromC = kingsideCastle ? 7 : 0;
+        const rookToC = kingsideCastle ? 5 : 3;
+
+        animateCastleSlide(fromR, fromC, r, c, fromR, rookFromC, r, rookToC, finish);
+
+    }else{
+
+        animatePieceSlide(fromR, fromC, r, c, finish);
+
+    }
+
+}
+
+function slidePieceVisual(fromR, fromC, toR, toC){
+
+    const flipped = (gameMode === "online" && myColor === "black");
+
+    function domIndex(r, c){
+        if(flipped){
+            return (7 - r) * 8 + (7 - c);
+        }
+        return r * 8 + c;
+    }
+
+    const squares = board.children;
+    const fromSquare = squares[domIndex(fromR, fromC)];
+    const toSquare = squares[domIndex(toR, toC)];
+
+    if(!fromSquare || !toSquare) return false;
+
+    const pieceImg = fromSquare.querySelector(".piece");
+    if(!pieceImg) return false;
+
+    const fromRect = fromSquare.getBoundingClientRect();
+    const toRect = toSquare.getBoundingClientRect();
+
+    const dx = toRect.left - fromRect.left;
+    const dy = toRect.top - fromRect.top;
+
+    pieceImg.style.position = "relative";
+    pieceImg.style.zIndex = "10";
+    pieceImg.style.transition = "transform 0.22s ease";
+
+    void pieceImg.offsetWidth;
+
+    pieceImg.style.transform = "translate(" + dx + "px, " + dy + "px)";
+
+    return true;
+}
+
+function animatePieceSlide(fromR, fromC, toR, toC, callback){
+
+    const moved = slidePieceVisual(fromR, fromC, toR, toC);
+
+    if(!moved){
+        callback();
+        return;
+    }
+
+    animationRunning = true;
+
+    setTimeout(function(){
+        animationRunning = false;
+        callback();
+    }, 220);
+
+}
+
+function animateCastleSlide(kingFromR, kingFromC, kingToR, kingToC, rookFromR, rookFromC, rookToR, rookToC, callback){
+
+    const kingMoved = slidePieceVisual(kingFromR, kingFromC, kingToR, kingToC);
+    slidePieceVisual(rookFromR, rookFromC, rookToR, rookToC);
+
+    if(!kingMoved){
+        callback();
+        return;
+    }
+
+    animationRunning = true;
+
+    setTimeout(function(){
+        animationRunning = false;
+        callback();
+    }, 220);
+
+}
+
+function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove, aiPromotionForThisMove){
+
+    const movedPiece = pieces[fromR][fromC];
+    const capturedPiece = pieces[r][c];
+    const isCapture = capturedPiece !== "";
+
+    saveUndoState();
+
+    pieces[r][c] = movedPiece;
+    pieces[fromR][fromC] = "";
+
+    lastMove = {
+        from: {r: fromR, c: fromC},
+        to: {r, c}
+    };
+
+    if(isCapture){
+        captureSound.currentTime = 0;
+        captureSound.play();
+
+        if(isWhite(capturedPiece)){
+            blackCaptured.push(capturedPiece);
+        }else{
+            whiteCaptured.push(capturedPiece);
+        }
+    }else{
+        moveSound.currentTime = 0;
+        moveSound.play();
+    }
+
+    if(movedPiece.endsWith("P") || isCapture){
+        halfMoveClock = 0;
+    }else{
+        halfMoveClock++;
+    }
+
+    moveHistory.push(
+        getMoveNotation(movedPiece, fromR, fromC, r, c, isCapture)
+    );
+    updateHistory();
+
+    if(movedPiece === "wK" && fromC === 4 && c === 6){
+        pieces[7][5] = pieces[7][7];
+        pieces[7][7] = "";
+    }
+    if(movedPiece === "wK" && fromC === 4 && c === 2){
+        pieces[7][3] = pieces[7][0];
+        pieces[7][0] = "";
+    }
+    if(movedPiece === "bK" && fromC === 4 && c === 6){
+        pieces[0][5] = pieces[0][7];
+        pieces[0][7] = "";
+    }
+    if(movedPiece === "bK" && fromC === 4 && c === 2){
+        pieces[0][3] = pieces[0][0];
+        pieces[0][0] = "";
+    }
+
+    if(movedPiece === "wK") whiteKingMoved = true;
+    if(movedPiece === "bK") blackKingMoved = true;
+
+    if(movedPiece === "wR"){
+        if(fromR === 7 && fromC === 0) whiteLeftRookMoved = true;
+        if(fromR === 7 && fromC === 7) whiteRightRookMoved = true;
+    }
+
+    if(movedPiece === "bR"){
+        if(fromR === 0 && fromC === 0) blackLeftRookMoved = true;
+        if(fromR === 0 && fromC === 7) blackRightRookMoved = true;
+    }
+
+    selected = null;
+    possibleMoves = [];
+
+    updateCaptured();
+
+    if(movedPiece === "wP" && r === 0){
+
+        if(isAIMove){
+            pieces[r][c] = "w" + (aiPromotionForThisMove ? aiPromotionForThisMove.toUpperCase() : "Q");
+            finishTurn(wasRemoteMove);
+        }else if(gameMode === "online" && wasRemoteMove){
+            pieces[r][c] = "w" + (promotionPieceForThisMove || "Q");
+            finishTurn(wasRemoteMove);
+        }else{
+            promotionSquare = {r, c};
+            promotionColor = "w";
+            pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
+            createBoard();
+            showPromotion("w");
+        }
+
+        return;
+    }
+
+    if(movedPiece === "bP" && r === 7){
+
+        if(isAIMove){
+            pieces[r][c] = "b" + (aiPromotionForThisMove ? aiPromotionForThisMove.toUpperCase() : "Q");
+            finishTurn(wasRemoteMove);
+        }else if(gameMode === "online" && wasRemoteMove){
+            pieces[r][c] = "b" + (promotionPieceForThisMove || "Q");
+            finishTurn(wasRemoteMove);
+        }else{
+            promotionSquare = {r, c};
+            promotionColor = "b";
+            pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
+            createBoard();
+            showPromotion("b");
+        }
+
+        return;
+    }
+
+    finishTurn(wasRemoteMove);
+}
+
+function choosePromotion(letter){
+
+    if(!promotionSquare) return;
+
+    const r = promotionSquare.r;
+    const c = promotionSquare.c;
+
+    pieces[r][c] = promotionColor + letter;
+
+    if(pendingOnlinePromotionMove && typeof sendMoveToFirebase === "function"){
+        const m = pendingOnlinePromotionMove;
+        sendMoveToFirebase(m.fromR, m.fromC, m.toR, m.toC, letter);
+        pendingOnlinePromotionMove = null;
+    }
+
+    promotionSquare = null;
+    promotionColor = null;
+
+    closePromotion();
+    finishTurn(false);
+}
+
+function finishTurn(wasRemoteMove){
+
+    positionHistory.push(getPositionKey());
+
+    if(isThreefoldRepetition()){
+        gameOver = true;
+        createBoard();
+        showPopup("🤝 DRAW", "Threefold Repetition");
+        recordGameResult("draw", myOpponentName());
+        return;
+    }
+
+    if(hasInsufficientMaterial()){
+        gameOver = true;
+        createBoard();
+        showPopup("🤝 DRAW", "Insufficient Material");
+        recordGameResult("draw", myOpponentName());
+        return;
+    }
+
+    if(halfMoveClock >= 100){
+        gameOver = true;
+        createBoard();
+        showPopup("🤝 DRAW", "50-Move Rule");
+        recordGameResult("draw", myOpponentName());
+        return;
+    }
+
+    const moverColor = currentPlayer;
+
+    currentPlayer = currentPlayer === "white" ? "black" : "white";
+
+    if(!hasLegalMoves(currentPlayer)){
+        gameOver = true;
+    }
+
+    updateTurn();
+    createBoard();
+
+    if(gameMode === "online" && !wasRemoteMove && typeof pushClockUpdate === "function"){
+        pushClockUpdate(moverColor);
+    }
+
+    if(gameMode === "ai" && currentPlayer === "black" && !gameOver){
+        setTimeout(makeAIMove, 400);
+    }
+}
+
+function updateCaptured(){
+
+    const orientation = getOrientation();
+
+    const topBox = document.getElementById("topCaptured");
+    const bottomBox = document.getElementById("bottomCaptured");
+
+    const topList = orientation.top === "white" ? whiteCaptured : blackCaptured;
+    const bottomList = orientation.bottom === "white" ? whiteCaptured : blackCaptured;
+
+    topBox.innerHTML = "";
+    bottomBox.innerHTML = "";
+
+    topList.forEach(piece => {
+        topBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
+    });
+
+    bottomList.forEach(piece => {
+        bottomBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
+    });
+
+}
+
+function showTimeControl(){
+    updateGameMode();
+    document.getElementById("timeControlPopup").classList.add("show");
+}
+
+function closeTimeControl(){
+    document.getElementById("timeControlPopup").classList.remove("show");
+}
+
+function updateGameMode(){
+
+    const mode = document.getElementById("gameMode").value;
+
+    document.getElementById("difficultyBox").style.display = mode === "ai" ? "block" : "none";
+    document.getElementById("onlineBox").style.display = mode === "online" ? "block" : "none";
+
+    document.getElementById("timeControlSection").style.display = mode === "online" ? "none" : "block";
+    document.getElementById("startGameBtn").style.display = mode === "online" ? "none" : "block";
+
+    document.getElementById("roomCodeDisplay").textContent = "";
+    document.getElementById("onlineStatus").textContent = "";
+}
+
+function startNewGame(){
+
+    selectedTime = Number(document.getElementById("timeControl").value);
+    gameMode = document.getElementById("gameMode").value;
+    aiDifficulty = document.getElementById("aiDifficulty").value;
+
+    closeTimeControl();
+    newGame();
+}
+
+function openPlaySetup(mode){
+    document.getElementById("gameMode").value = mode;
+    updateGameMode();
+    showTimeControl();
+}
+
+function newGame(){
+
+    pieces = [
+        ["bR","bN","bB","bQ","bK","bB","bN","bR"],
+        ["bP","bP","bP","bP","bP","bP","bP","bP"],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["wP","wP","wP","wP","wP","wP","wP","wP"],
+        ["wR","wN","wB","wQ","wK","wB","wN","wR"]
+    ];
+
+    moveHistory = [];
+    updateHistory();
+    undoStack = [];
+
+    currentPlayer = "white";
+    selected = null;
+    possibleMoves = [];
+    gameOver = false;
+    halfMoveClock = 0;
+    lastMove = null;
+    promotionSquare = null;
+    promotionColor = null;
+
+    whiteKingMoved = false;
+    blackKingMoved = false;
+    whiteLeftRookMoved = false;
+    whiteRightRookMoved = false;
+    blackLeftRookMoved = false;
+    blackRightRookMoved = false;
+
+    whiteCaptured = [];
+    blackCaptured = [];
+if(gameMode === "ai"){
+        whitePlayer = (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "You";
+        blackPlayer = "Computer";
+        whiteFlag = (typeof currentUserFlag !== "undefined") ? currentUserFlag : "";
+        blackFlag = "🤖";
+    }else if(gameMode === "human"){
+        whitePlayer = "White";
+        blackPlayer = "Black";
+        whiteFlag = "";
+        blackFlag = "";
+    }
+    // For online mode, names/flags are set separately by multiplayer.js
+    if(selectedTime === -1){
+        whiteTime = -1;
+        blackTime = -1;
+    }else{
+        whiteTime = selectedTime;
+        blackTime = selectedTime;
+    }
+
+    updateTimers();
+
+    if(gameMode !== "online"){
+        startTimer();
+    }
+
+    updateCaptured();
+    updateTurn();
+
+    positionHistory = [getPositionKey()];
+    createBoard();
+
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("game").style.display = "flex";
+}
+
+function createCoordinates(){
+
+    const files = document.getElementById("filesTop");
+    const ranks = document.getElementById("ranksLeft");
+
+    files.innerHTML = "";
+    ranks.innerHTML = "";
+
+    ["a","b","c","d","e","f","g","h"].forEach(letter => {
+        const div = document.createElement("div");
+        div.textContent = letter;
+        files.appendChild(div);
+    });
+
+    for(let i = 8; i >= 1; i--){
+        const div = document.createElement("div");
+        div.textContent = i;
+        ranks.appendChild(div);
+    }
+
+}
+
+function showPopup(title, message){
+    document.getElementById("popupTitle").textContent = title;
+    document.getElementById("popupMessage").textContent = message;
+    document.getElementById("gameOverPopup").classList.add("show");
+}
+
+function closePopup(){
+    document.getElementById("gameOverPopup").classList.remove("show");
+}
+
+function showPromotion(color){
+
+    document.getElementById("promoteQ").src = "pieces/" + color + "Q.svg";
+    document.getElementById("promoteR").src = "pieces/" + color + "R.svg";
+    document.getElementById("promoteB").src = "pieces/" + color + "B.svg";
+    document.getElementById("promoteN").src = "pieces/" + color + "N.svg";
+
+    document.getElementById("promotionPopup").classList.add("show");
+}
+
+function closePromotion(){
+    document.getElementById("promotionPopup").classList.remove("show");
+}
+
+function undoMove(){
+    if(gameMode === "online") return;
+
+    if(gameOver) return;
+
+    if(gameMode === "ai" && undoStack.length >= 2){
+        undoStack.pop();
+    }
+
+    if(undoStack.length === 0) return;
+
+    const last = undoStack.pop();
+
+    pieces = last.pieces;
+    currentPlayer = last.currentPlayer;
+
+    whiteKingMoved = last.whiteKingMoved;
+    blackKingMoved = last.blackKingMoved;
+    whiteLeftRookMoved = last.whiteLeftRookMoved;
+    whiteRightRookMoved = last.whiteRightRookMoved;
+    blackLeftRookMoved = last.blackLeftRookMoved;
+    blackRightRookMoved = last.blackRightRookMoved;
+
+    whiteCaptured = last.whiteCaptured;
+    blackCaptured = last.blackCaptured;
+    moveHistory = last.moveHistory;
+    gameOver = last.gameOver;
+
+    if(positionHistory.length > 0) positionHistory.pop();
+
+    updateHistory();
+    updateCaptured();
+    updateTurn();
+
+    selected = null;
+    possibleMoves = [];
+    lastMove = null;
+    promotionSquare = null;
+    promotionColor = null;
+
+    createBoard();
+}
+
+function handleRestartClick(){
+    if(gameMode === "online"){
+        showOnlineGameMenu();
+    }else{
+        newGame();
+    }
+}
+function handleNewGameClick(){
+    if(!gameOver){
+        showOnlineGameMenu();
+    }else{
+        showTimeControl();
+    }
+}
+
+function showKingMarkers(loserColor){
+
+    const loserKing = loserColor === "white" ? "wK" : "bK";
+    const winnerKing = loserColor === "white" ? "bK" : "wK";
+
+    for(let r = 0; r < 8; r++){
+        for(let c = 0; c < 8; c++){
+
+            if(pieces[r][c] === loserKing || pieces[r][c] === winnerKing){
+
+                const flipped = (gameMode === "online" && myColor === "black");
+                const domR = flipped ? 7 - r : r;
+                const domC = flipped ? 7 - c : c;
+                const square = board.children[domR * 8 + domC];
+                if(!square) continue;
+
+                const marker = document.createElement("span");
+
+                if(pieces[r][c] === loserKing){
+                    marker.textContent = "🚩";
+                    marker.className = "resignFlag";
+                }else{
+                    marker.textContent = "👑";
+                    marker.className = "winnerCrown";
+                }
+
+                square.appendChild(marker);
+            }
+        }
+    }
+}
+
+function showOnlineGameMenu(){
+    document.getElementById("onlineMenuPopup").classList.add("show");
+}
+
+function closeOnlineMenu(){
+    document.getElementById("onlineMenuPopup").classList.remove("show");
+}
+
+function resignGame(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("resign");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    closeOnlineMenu();
+
+    const loser = gameMode === "online" ? myColor : currentPlayer;
+    const winner = loser === "white" ? "Black" : "White";
+    showPopup("🚩 Resignation", winner + " wins by resignation.");
+    createBoard();
+    showKingMarkers(loser);
+    recordGameResult("loss", myOpponentName());
+}
+
+function abortGame(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("abort");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    closeOnlineMenu();
+
+    const loser = gameMode === "online" ? myColor : currentPlayer;
+    const winner = loser === "white" ? "Black" : "White";
+    showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
+    createBoard();
+    showKingMarkers(loser);
+    recordGameResult("loss", myOpponentName());
+}
+
+function requestDraw(){
+
+    closeOnlineMenu();
+
+    if(gameMode === "online"){
+        if(typeof sendGameEvent === "function"){
+            sendGameEvent("drawOffer");
+        }
+        return;
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    showPopup("🤝 Draw", "Game drawn by agreement.");
+    createBoard();
+    recordGameResult("draw", myOpponentName());
+}
+
+function respondToDraw(accepted){
+
+    document.getElementById("drawOfferPopup").classList.remove("show");
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("drawResponse", {accepted: accepted});
+    }
+
+    if(accepted){
+        gameOver = true;
+        clearInterval(timer);
+        showPopup("🤝 Draw", "Game drawn by agreement.");
+        createBoard();
+        recordGameResult("draw", myOpponentName());
+    }
+}
+
+function hasInsufficientMaterial(){
+
+    let whitePieces = [];
+    let blackPieces = [];
+
+    for(let r = 0; r < 8; r++){
+        for(let c = 0; c < 8; c++){
+            const piece = pieces[r][c];
+            if(piece === "") continue;
+            if(isWhite(piece)){
+                whitePieces.push(piece);
+            }else{
+                blackPieces.push(piece);
+            }
+        }
+    }
+
+    if(whitePieces.length === 1 && blackPieces.length === 1){
+        return true;
+    }
+
+    if(whitePieces.length === 2 && blackPieces.length === 1){
+        if(whitePieces.includes("wB") || whitePieces.includes("wN")){
+            return true;
+        }
+    }
+
+    if(blackPieces.length === 2 && whitePieces.length === 1){
+        if(blackPieces.includes("bB") || blackPieces.includes("bN")){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function isThreefoldRepetition(){
+
+    const current = getPositionKey();
+    let count = 0;
+
+    for(const position of positionHistory){
+        if(position === current){
+            count++;
+        }
+    }
+
+    return count >= 3;
+        
