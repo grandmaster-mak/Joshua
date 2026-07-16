@@ -45,14 +45,27 @@ function signUp(){
         return;
     }
 
-    document.getElementById("authStatus").textContent = "Creating account...";
+    document.getElementById("authStatus").textContent = "Checking username...";
 
-    auth.createUserWithEmailAndPassword(email, password)
+    db.ref("usernames/" + username).once("value")
+        .then(function(nameSnap){
+
+            if(nameSnap.exists()){
+                document.getElementById("authStatus").textContent = "That username is already taken.";
+                return Promise.reject("username_taken");
+            }
+
+            document.getElementById("authStatus").textContent = "Creating account...";
+
+            return auth.createUserWithEmailAndPassword(email, password);
+
+        })
         .then(function(userCredential){
 
             const uid = userCredential.user.uid;
 
-            return db.ref("users/" + uid).set({
+            const updates = {};
+            updates["users/" + uid + "/public"] = {
                 username: username,
                 country: country,
                 flag: countryCodeToFlag(country),
@@ -60,14 +73,19 @@ function signUp(){
                 rating: 1200,
                 wins: 0,
                 losses: 0,
-                draws: 0
-            });
+                draws: 0,
+                winStreak: 0
+            };
+            updates["usernames/" + username] = uid;
+
+            return db.ref().update(updates);
 
         })
         .then(function(){
             document.getElementById("authStatus").textContent = "Account created! You're now logged in.";
         })
         .catch(function(error){
+            if(error === "username_taken") return;
             document.getElementById("authStatus").textContent = "Error: " + error.message;
         });
 
@@ -113,7 +131,7 @@ function initAuthListener(){
 
             currentUser = user;
 
-            db.ref("users/" + user.uid).once("value").then(function(snapshot){
+            db.ref("users/" + user.uid + "/public").once("value").then(function(snapshot){
 
                 const data = snapshot.val() || {};
 
