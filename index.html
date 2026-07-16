@@ -111,8 +111,27 @@
 
         <!-- Friends Screen -->
         <div id="friendsScreen" class="screen" style="display:none;">
+
             <h2>Friends</h2>
-            <p class="sub">Your friends list will show up here soon.</p>
+            <p class="sub">Find people by their username and send a friend request.</p>
+
+            <div id="friendSearchRow">
+                <input type="text" id="friendSearchInput" placeholder="Search by username">
+                <button class="btnPrimary" onclick="searchForFriend()">Search</button>
+            </div>
+
+            <div id="friendSearchResult"></div>
+
+            <div id="friendRequestsSection" style="display:none;">
+                <span class="fieldLabel">Friend Requests</span>
+                <div id="friendRequestsList"></div>
+            </div>
+
+            <span class="fieldLabel">Your Friends</span>
+            <div id="friendsList">
+                <p class="sub">Log in to see your friends.</p>
+            </div>
+
         </div>
 
         <!-- Account Screen -->
@@ -482,6 +501,7 @@
     <script src="ai.js"></script>
     <script src="multiplayer.js"></script>
     <script src="auth.js"></script>
+    <script src="friends.js"></script>
 
 </body>
 </html>
