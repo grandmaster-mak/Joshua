@@ -27,6 +27,8 @@ let whitePlayer = "White";
 let blackPlayer = "Black";
 let whiteFlag = "";
 let blackFlag = "";
+let whiteRating = null;
+let blackRating = null;
 let whiteLeftRookMoved = false;
 let whiteRightRookMoved = false;
 let whiteTime = 600;
@@ -734,8 +736,32 @@ function updatePlayerNames(){
     const topFlag = orientation.top === "white" ? whiteFlag : blackFlag;
     const bottomFlag = orientation.bottom === "white" ? whiteFlag : blackFlag;
 
+    const topRating = orientation.top === "white" ? whiteRating : blackRating;
+    const bottomRating = orientation.bottom === "white" ? whiteRating : blackRating;
+
     document.getElementById("topPlayerName").textContent = (topFlag ? topFlag + " " : "") + topName;
     document.getElementById("bottomPlayerName").textContent = (bottomFlag ? bottomFlag + " " : "") + bottomName;
+
+    const topRatingEl = document.getElementById("topPlayerRating");
+    const bottomRatingEl = document.getElementById("bottomPlayerRating");
+
+    if(topRatingEl){
+        if(topRating){
+            topRatingEl.textContent = "Rating " + topRating;
+            topRatingEl.style.display = "block";
+        }else{
+            topRatingEl.style.display = "none";
+        }
+    }
+
+    if(bottomRatingEl){
+        if(bottomRating){
+            bottomRatingEl.textContent = "Rating " + bottomRating;
+            bottomRatingEl.style.display = "block";
+        }else{
+            bottomRatingEl.style.display = "none";
+        }
+    }
 
 }
 
@@ -1265,13 +1291,17 @@ if(gameMode === "ai"){
         blackPlayer = "Computer";
         whiteFlag = (typeof currentUserFlag !== "undefined") ? currentUserFlag : "";
         blackFlag = "🤖";
+        whiteRating = (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null;
+        blackRating = null;
     }else if(gameMode === "human"){
         whitePlayer = "White";
         blackPlayer = "Black";
         whiteFlag = "";
         blackFlag = "";
+        whiteRating = null;
+        blackRating = null;
     }
-    // For online mode, names/flags are set separately by multiplayer.js
+    // For online mode, names/flags/ratings are set separately by multiplayer.js
     if(selectedTime === -1){
         whiteTime = -1;
         blackTime = -1;
@@ -1294,6 +1324,7 @@ if(gameMode === "ai"){
 
     document.getElementById("appShell").style.display = "none";
     document.getElementById("game").style.display = "flex";
+    document.getElementById("gameBottomBar").style.display = "flex";
 }
 
 function createCoordinates(){
@@ -1546,7 +1577,7 @@ function hasInsufficientMaterial(){
 
     return false;
 }
-        
+
 function isThreefoldRepetition(){
 
     const current = getPositionKey();
