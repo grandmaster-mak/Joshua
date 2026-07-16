@@ -51,6 +51,8 @@ body{
 
 #friendsScreen,
 #accountScreen{
+    display:flex;
+    flex-direction:column;
     padding-left:24px;
     padding-right:24px;
 }
