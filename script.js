@@ -1546,7 +1546,7 @@ function hasInsufficientMaterial(){
 
     return false;
 }
-
+        
 function isThreefoldRepetition(){
 
     const current = getPositionKey();
@@ -1559,4 +1559,155 @@ function isThreefoldRepetition(){
     }
 
     return count >= 3;
-        
+}
+
+function getAllMoves(color){
+
+    let allMoves = [];
+
+    for(let r = 0; r < 8; r++){
+
+        for(let c = 0; c < 8; c++){
+
+            let piece = pieces[r][c];
+
+            if(piece === "") continue;
+            if(color === "white" && !isWhite(piece)) continue;
+            if(color === "black" && !isBlack(piece)) continue;
+
+            let moves = getPossibleMoves(piece, r, c);
+
+            moves.sort((a, b) => {
+                const valueA = pieces[a.r][a.c] === "" ? 0 : pieceValues[pieces[a.r][a.c][1]];
+                const valueB = pieces[b.r][b.c] === "" ? 0 : pieceValues[pieces[b.r][b.c][1]];
+                return valueB - valueA;
+            });
+
+            for(let move of moves){
+                if(tryMove(r,c,move.r,move.c,color)){
+                    allMoves.push({
+                        from: {r:r, c:c},
+                        to: {r:move.r, c:move.c}
+                    });
+                }
+            }
+
+        }
+
+    }
+
+    return allMoves;
+}
+
+function switchScreen(name){
+
+    const screens = ["home", "friends", "account"];
+
+    screens.forEach(function(s){
+        document.getElementById(s + "Screen").style.display = (s === name) ? "flex" : "none";
+    });
+
+    document.querySelectorAll("#bottomNav .navBtn").forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.screen === name);
+    });
+
+}
+
+function showSettingsPopup(){
+    document.getElementById("settingsPopup").classList.add("show");
+}
+
+function closeSettingsPopup(){
+    document.getElementById("settingsPopup").classList.remove("show");
+}
+
+function showInfoPopup(title, message){
+    document.getElementById("infoPopupTitle").textContent = title;
+    document.getElementById("infoPopupMessage").textContent = message;
+    document.getElementById("infoPopup").classList.add("show");
+}
+
+function closeInfoPopup(){
+    document.getElementById("infoPopup").classList.remove("show");
+}
+
+function showComingSoon(){
+    showInfoPopup("🏆 Tournaments", "Tournaments are coming soon — stay tuned!");
+}
+
+function myOpponentName(){
+    if(gameMode === "ai") return "Computer";
+    return myColor === "white" ? blackPlayer : whitePlayer;
+}
+
+function recordGameResult(myResult, opponentName){
+
+    if(gameMode === "human") return;
+    if(typeof currentUser === "undefined" || !currentUser) return;
+    if(typeof db === "undefined" || !db) return;
+
+    const userRef = db.ref("users/" + currentUser.uid + "/public");
+
+    userRef.transaction(function(data){
+        if(!data) return data;
+        data.wins = data.wins || 0;
+        data.losses = data.losses || 0;
+        data.draws = data.draws || 0;
+        data.winStreak = data.winStreak || 0;
+
+        if(myResult === "win"){
+            data.wins++;
+            data.winStreak++;
+        }else if(myResult === "loss"){
+            data.losses++;
+            data.winStreak = 0;
+        }else{
+            data.draws++;
+            data.winStreak = 0;
+        }
+        return data;
+    });
+
+    db.ref("users/" + currentUser.uid + "/private/history").push({
+        opponent: opponentName || "Unknown",
+        result: myResult,
+        mode: gameMode,
+        time: Date.now()
+    });
+
+    if(typeof loadRecentGames === "function") loadRecentGames();
+}
+
+function loadRecentGames(){
+    if(!db || !currentUser) return;
+
+    db.ref("users/" + currentUser.uid + "/private/history")
+        .orderByChild("time")
+        .limitToLast(5)
+        .once("value")
+        .then(function(snapshot){
+            const list = document.getElementById("recentGamesList");
+            if(!list) return;
+
+            const entries = [];
+            snapshot.forEach(function(child){ entries.push(child.val()); });
+            entries.reverse();
+
+            if(entries.length === 0){
+                list.innerHTML = '<p class="sub">No games played yet.</p>';
+                return;
+            }
+
+            list.innerHTML = "";
+            entries.forEach(function(entry){
+                const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
+                const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+                const row = document.createElement("div");
+                row.className = "gameRow";
+                row.innerHTML = '<span class="gameOpponent">' + entry.opponent + '</span><span class="gameResult ' + cls + '">' + label + '</span>';
+                list.appendChild(row);
+            });
+        });
+}
+
+createCoordinates();
