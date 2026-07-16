@@ -690,22 +690,7 @@ input::placeholder{ color:#4a5060; }
     grid-template-columns:repeat(4,1fr);
     gap:12px;
 }
-.gameRow{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:10px 0;
-    border-bottom:1px solid rgba(255,255,255,0.05);
-    font-size:13.5px;
-}
-.gameRow:last-child{ border-bottom:none; }
 
-.gameOpponent{ font-weight:600; color:#eef0f3; }
-
-.gameResult{ font-weight:700; font-size:12.5px; }
-.gameWon{ color:#23c483; }
-.gameLost{ color:#e5484d; }
-.gameDrawn{ color:#7d8492; }
 .stat-item{
     text-align:center;
 }
@@ -730,3 +715,20 @@ input::placeholder{ color:#4a5060; }
 .win{color:#f7c62f;}
 .streak{color:#4aa7ff;}
 .time{color:#ff5b5b;}
+
+.gameRow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    font-size:13.5px;
+}
+.gameRow:last-child{ border-bottom:none; }
+
+.gameOpponent{ font-weight:600; color:#eef0f3; }
+
+.gameResult{ font-weight:700; font-size:12.5px; }
+.gameWon{ color:#23c483; }
+.gameLost{ color:#e5484d; }
+.gameDrawn{ color:#7d8492; }
