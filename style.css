@@ -182,11 +182,13 @@ body{
     width:100%;
     max-width:420px;
     display:flex;
+    gap:8px;
     background:#15181f;
     border-top:1px solid rgba(255,255,255,0.06);
     padding:10px 12px calc(10px + env(safe-area-inset-bottom));
     z-index:60;
 }
+
 .gameActionCard{
     flex:1;
     display:flex;
@@ -230,6 +232,7 @@ body{
 
 .cardPurple{ border-color:rgba(168,109,255,.4); }
 .cardPurple .cardIcon, .cardPurple .cardTitle{ color:#a86dff; }
+
 .ratingPill{
     background:rgba(47,111,237,.15);
     color:#7ba3ff;
@@ -246,7 +249,7 @@ body{
     display:flex;
     gap:30px;
     align-items:flex-start;
-    padding-bottom:82px;
+    padding-bottom:110px;
 }
 
 #boardColumn{
@@ -463,18 +466,16 @@ input::placeholder{ color:#4a5060; }
 }
 
 #history{
-    max-height:220px;
+    max-height:120px;
     overflow-y:auto;
-}
-
-.historyRow{
     display:flex;
-    padding:4px 0;
-    font-size:13.5px;
+    flex-wrap:wrap;
+    gap:6px 10px;
+    font-size:14px;
+    font-weight:600;
+    color:#c4c8d1;
+    line-height:1.6;
 }
-
-.moveNumber{ width:30px; font-weight:700; color:#7d8492; }
-.whiteMove, .blackMove{ width:70px; }
 
 .fileLabel{
     position:absolute;
@@ -850,3 +851,4 @@ input::placeholder{ color:#4a5060; }
 }
 
 .requestActions{ display:flex; gap:8px; }
+    
