@@ -7,6 +7,7 @@ let currentUser = null;
 let currentUsername = null;
 let currentUserCountry = null;
 let currentUserFlag = "";
+let currentUserRating = 1200;
 
 try{
     auth = firebase.auth();
@@ -119,6 +120,7 @@ function initAuthListener(){
                 currentUsername = data.username || "Player";
                 currentUserCountry = data.country || "";
                 currentUserFlag = data.flag || countryCodeToFlag(data.country);
+                currentUserRating = data.rating || 1200;
 
                 document.getElementById("loggedOutView").style.display = "none";
                 document.getElementById("loggedInView").style.display = "block";
@@ -146,6 +148,7 @@ function initAuthListener(){
                 }
 
                 if(typeof loadRecentGames === "function") loadRecentGames();
+                if(typeof loadFriendsData === "function") loadFriendsData();
 
                 if(avatarImg && data.photoURL){
                     avatarImg.src = data.photoURL;
@@ -159,6 +162,7 @@ function initAuthListener(){
             currentUsername = null;
             currentUserCountry = null;
             currentUserFlag = "";
+            currentUserRating = 1200;
 
             document.getElementById("loggedOutView").style.display = "block";
             document.getElementById("loggedInView").style.display = "none";
@@ -171,6 +175,14 @@ function initAuthListener(){
             if(ratingEl) ratingEl.textContent = "—";
             if(winsEl) winsEl.textContent = "—";
 
+            const friendsListEl = document.getElementById("friendsList");
+            const requestsSectionEl = document.getElementById("friendRequestsSection");
+            const searchResultEl = document.getElementById("friendSearchResult");
+
+            if(friendsListEl) friendsListEl.innerHTML = '<p class="sub">Log in to see your friends.</p>';
+            if(requestsSectionEl) requestsSectionEl.style.display = "none";
+            if(searchResultEl) searchResultEl.innerHTML = "";
+
         }
 
     });
@@ -178,4 +190,3 @@ function initAuthListener(){
 }
 
 initAuthListener();
-       
