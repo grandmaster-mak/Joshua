@@ -187,7 +187,49 @@ body{
     padding:10px 12px calc(10px + env(safe-area-inset-bottom));
     z-index:60;
 }
+.gameActionCard{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    border-radius:14px;
+    padding:12px 8px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid;
+    cursor:pointer;
+    width:auto;
+    margin-top:0;
+}
 
+.gameActionCard .cardIcon{
+    font-size:20px;
+    line-height:1;
+    margin-bottom:4px;
+}
+
+.gameActionCard .cardTitle{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.4px;
+}
+
+.gameActionCard .cardSub{
+    font-size:9.5px;
+    color:#9099a6;
+    font-weight:500;
+    text-align:center;
+}
+
+.cardGreen{ border-color:rgba(35,196,131,.4); }
+.cardGreen .cardIcon, .cardGreen .cardTitle{ color:#23c483; }
+
+.cardBlue{ border-color:rgba(59,123,255,.4); }
+.cardBlue .cardIcon, .cardBlue .cardTitle{ color:#3b7bff; }
+
+.cardPurple{ border-color:rgba(168,109,255,.4); }
+.cardPurple .cardIcon, .cardPurple .cardTitle{ color:#a86dff; }
 .ratingPill{
     background:rgba(47,111,237,.15);
     color:#7ba3ff;
