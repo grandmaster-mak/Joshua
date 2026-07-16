@@ -60,7 +60,8 @@ function createOnlineRoom(){
     currentRoomCode = code;
 db.ref("rooms/" + code + "/players/white").set({
         username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
-        flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️"
+        flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
+        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null
     });
     document.getElementById("roomCodeDisplay").textContent = "Room code: " + code + " — share this with your opponent";
     document.getElementById("onlineStatus").textContent = "Waiting for opponent to join...";
@@ -110,7 +111,8 @@ function joinOnlineRoom(){
         currentRoomCode = code;
         db.ref("rooms/" + code + "/players/black").set({
             username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
-            flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️"
+            flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
+            rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null
         });
 
         db.ref("rooms/" + code + "/status").set("playing");
@@ -172,11 +174,13 @@ function listenForPlayerInfo(code){
         if(players.white){
             whitePlayer = players.white.username || "White";
             whiteFlag = players.white.flag || "";
+            whiteRating = players.white.rating || null;
         }
 
         if(players.black){
             blackPlayer = players.black.username || "Black";
             blackFlag = players.black.flag || "";
+            blackRating = players.black.rating || null;
         }
 
         updatePlayerNames();
