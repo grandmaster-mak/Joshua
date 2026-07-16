@@ -318,19 +318,22 @@
     <!-- Fixed in-game bottom toolbar -->
     <div id="gameBottomBar" style="display:none;">
 
-        <button class="navBtn" onclick="handleNewGameClick()" title="New Game">
-            <span class="navIcon">🆕</span>
-            <span class="navLabel">New</span>
+        <button class="gameActionCard cardGreen" onclick="handleNewGameClick()">
+            <span class="cardIcon">⊕</span>
+            <span class="cardTitle">NEW GAME</span>
+            <span class="cardSub">Start a new match</span>
         </button>
 
-        <button class="navBtn" onclick="handleRestartClick()" title="Restart Game">
-            <span class="navIcon">🔄</span>
-            <span class="navLabel">Restart</span>
+        <button class="gameActionCard cardBlue" onclick="handleRestartClick()">
+            <span class="cardIcon">↻</span>
+            <span class="cardTitle">RESTART GAME</span>
+            <span class="cardSub">Reset current game</span>
         </button>
 
-        <button class="navBtn" onclick="undoMove()" title="Undo Move">
-            <span class="navIcon">↩️</span>
-            <span class="navLabel">Undo</span>
+        <button class="gameActionCard cardPurple" onclick="undoMove()">
+            <span class="cardIcon">↩</span>
+            <span class="cardTitle">UNDO MOVE</span>
+            <span class="cardSub">Take back a move</span>
         </button>
 
     </div>
