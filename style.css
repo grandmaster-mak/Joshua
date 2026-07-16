@@ -145,7 +145,7 @@ body{
     width:34px;
     height:34px;
     border-radius:50%;
-    background:#1c2028;
+    background:rgba(255,255,255,0.15);
     border:1px solid rgba(255,255,255,0.08);
     display:flex;
     align-items:center;
@@ -162,7 +162,7 @@ body{
 
 .playerRatingTag{
     font-size:11.5px;
-    color:#7d8492;
+    color:rgba(255,255,255,0.65);
     font-weight:600;
     margin-top:1px;
 }
@@ -279,8 +279,8 @@ body{
     position:relative;
 }
 
-.light{ background:#eeeed2; }
-.dark{ background:#769656; }
+.light{ background:#ffffff; }
+.dark{ background:#e08a3e; }
 
 .possible{
     box-shadow:inset 0 0 0 5px rgba(59,123,255,.85);
@@ -336,8 +336,8 @@ body{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    background:#15181f;
-    border:1px solid rgba(255,255,255,0.06);
+    background:#1b5e3a;
+    border:1px solid rgba(255,255,255,0.08);
     padding:12px 18px;
     border-radius:14px;
     font-size:14px;
@@ -481,7 +481,7 @@ input::placeholder{ color:#4a5060; }
     position:absolute;
     bottom:2px; right:3px;
     font-size:10px; font-weight:bold;
-    color:#5a7a45;
+    color:#8a4a12;
     pointer-events:none;
 }
 
@@ -489,7 +489,7 @@ input::placeholder{ color:#4a5060; }
     position:absolute;
     top:2px; left:3px;
     font-size:10px; font-weight:bold;
-    color:#eeeed2;
+    color:#8a4a12;
     pointer-events:none;
 }
 
@@ -851,4 +851,3 @@ input::placeholder{ color:#4a5060; }
 }
 
 .requestActions{ display:flex; gap:8px; }
-    
