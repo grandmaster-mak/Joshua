@@ -164,7 +164,12 @@ function initAuthListener(){
             if(winsEl) winsEl.textContent = "—";
 
         }
+const streakEl = document.getElementById("winStreak");
+if(streakEl){
+    streakEl.textContent = data.winStreak || 0;
+}
 
+if(typeof loadRecentGames === "function") loadRecentGames();
     });
 
 }
