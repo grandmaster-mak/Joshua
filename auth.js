@@ -125,11 +125,22 @@ function initAuthListener(){
                 document.getElementById("loggedInUsername").textContent =
                     currentUserFlag + " " + currentUsername;
 
-                const startTag = document.getElementById("startUserTag");
-                if(startTag){
-                    startTag.style.display = "inline-flex";
-                    startTag.innerHTML = '<span class="dot"></span> ' + currentUserFlag + " " + currentUsername +
-                        '<span class="ratingPill">' + (data.rating || 1200) + '</span>';
+                const usernameEl = document.getElementById("username");
+                const ratingEl = document.getElementById("playerRating");
+                const winsEl = document.getElementById("gamesWon");
+                const avatarImg = document.getElementById("homeProfileImg");
+
+                if(usernameEl){
+                    usernameEl.textContent = currentUsername;
+                }
+                if(ratingEl){
+                    ratingEl.textContent = data.rating || 1200;
+                }
+                if(winsEl){
+                    winsEl.textContent = data.wins || 0;
+                }
+                if(avatarImg && data.photoURL){
+                    avatarImg.src = data.photoURL;
                 }
 
             });
@@ -144,10 +155,13 @@ function initAuthListener(){
             document.getElementById("loggedOutView").style.display = "block";
             document.getElementById("loggedInView").style.display = "none";
 
-            const startTag = document.getElementById("startUserTag");
-            if(startTag){
-                startTag.style.display = "none";
-            }
+            const usernameEl = document.getElementById("username");
+            const ratingEl = document.getElementById("playerRating");
+            const winsEl = document.getElementById("gamesWon");
+
+            if(usernameEl) usernameEl.textContent = "player";
+            if(ratingEl) ratingEl.textContent = "—";
+            if(winsEl) winsEl.textContent = "—";
 
         }
 
@@ -156,3 +170,4 @@ function initAuthListener(){
 }
 
 initAuthListener();
+                    
