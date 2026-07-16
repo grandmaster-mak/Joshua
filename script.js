@@ -616,31 +616,9 @@ function getMoveNotation(piece, fromR, fromC, toR, toC, isCapture){
 function updateHistory(){
 
     const history = document.getElementById("history");
-    history.innerHTML = "";
+    history.innerHTML = moveHistory.join(" ");
 
-    for(let i = 0; i < moveHistory.length; i += 2){
-
-        const row = document.createElement("div");
-        row.className = "historyRow";
-
-        const number = document.createElement("span");
-        number.className = "moveNumber";
-        number.textContent = (i / 2 + 1) + ".";
-
-        const whiteMove = document.createElement("span");
-        whiteMove.className = "whiteMove";
-        whiteMove.textContent = moveHistory[i] || "";
-
-        const blackMove = document.createElement("span");
-        blackMove.className = "blackMove";
-        blackMove.textContent = moveHistory[i + 1] || "";
-
-        row.appendChild(number);
-        row.appendChild(whiteMove);
-        row.appendChild(blackMove);
-
-        history.appendChild(row);
-    }
+}
 
 }
 
