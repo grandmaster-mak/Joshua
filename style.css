@@ -732,3 +732,35 @@ input::placeholder{ color:#4a5060; }
 .gameWon{ color:#23c483; }
 .gameLost{ color:#e5484d; }
 .gameDrawn{ color:#7d8492; }
+
+#friendSearchRow{
+    display:flex;
+    gap:8px;
+    margin-top:4px;
+}
+#friendSearchRow input{ flex:1; margin-top:0; }
+#friendSearchRow button{ width:auto; margin-top:0; white-space:nowrap; padding:0 18px; }
+
+.friendCard, .requestCard{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#15181f;
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-top:10px;
+}
+
+.friendInfo{ display:flex; flex-direction:column; }
+.friendName{ font-weight:700; font-size:14.5px; }
+.friendRating{ font-size:12px; color:#7d8492; margin-top:2px; }
+
+.friendCard button, .requestCard button{
+    width:auto;
+    margin-top:0;
+    padding:8px 14px;
+    font-size:13px;
+}
+
+.requestActions{ display:flex; gap:8px; }
