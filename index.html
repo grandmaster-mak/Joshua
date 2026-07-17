@@ -216,6 +216,16 @@
 
             <div id="loggedInView" style="display:none;">
 
+                <div class="profile-box" style="margin:0 auto 16px;">
+                    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" alt="Profile" id="accountProfileImg">
+                </div>
+
+                <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelect(event)">
+
+                <button class="btnSecondary" onclick="document.getElementById('profilePhotoInput').click()">
+                    📷 Change Profile Picture
+                </button>
+
                 <p id="loggedInUsername" class="sub" style="font-size:16px; color:#eef0f3; font-weight:600;"></p>
 
             </div>
@@ -520,5 +530,5 @@
     <script src="friends.js"></script>
 
 </body>
-                    </html>
-                        
+    </html>
+                                        
