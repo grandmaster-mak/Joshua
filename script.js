@@ -1199,6 +1199,21 @@ function updateCaptured(){
         bottomBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
     });
 
+    const pieceWorth = { P:1, N:3, B:3, R:5, Q:9, K:0 };
+
+    function materialSum(list){
+        return list.reduce(function(sum, piece){
+            return sum + (pieceWorth[piece[1]] || 0);
+        }, 0);
+    }
+
+    const whiteAdv = materialSum(whiteCaptured) - materialSum(blackCaptured);
+    const topAdv = orientation.top === "white" ? whiteAdv : -whiteAdv;
+    const bottomAdv = orientation.bottom === "white" ? whiteAdv : -whiteAdv;
+
+    document.getElementById("topMaterialAdv").textContent = topAdv > 0 ? "+" + topAdv : "";
+    document.getElementById("bottomMaterialAdv").textContent = bottomAdv > 0 ? "+" + bottomAdv : "";
+
 }
 
 function showTimeControl(){
