@@ -150,6 +150,7 @@ function initAuthListener(){
                 const ratingEl = document.getElementById("playerRating");
                 const winsEl = document.getElementById("gamesWon");
                 const avatarImg = document.getElementById("homeProfileImg");
+                const accountAvatarImg = document.getElementById("accountProfileImg");
 
                 if(usernameEl){
                     usernameEl.textContent = currentUsername;
@@ -169,8 +170,9 @@ function initAuthListener(){
                 if(typeof loadRecentGames === "function") loadRecentGames();
                 if(typeof loadFriendsData === "function") loadFriendsData();
 
-                if(avatarImg && data.photoURL){
-                    avatarImg.src = data.photoURL;
+                if(data.photoURL){
+                    if(avatarImg) avatarImg.src = data.photoURL;
+                    if(accountAvatarImg) accountAvatarImg.src = data.photoURL;
                 }
 
             });
@@ -209,4 +211,63 @@ function initAuthListener(){
 }
 
 initAuthListener();
-            
+
+function handleProfilePhotoSelect(event){
+
+    const file = event.target.files[0];
+    if(!file) return;
+
+    if(!currentUser || !db){
+        alert("Please log in first.");
+        return;
+    }
+
+    if(!file.type.startsWith("image/")){
+        alert("Please choose an image file.");
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        const img = new Image();
+
+        img.onload = function(){
+
+            const size = 200;
+            const canvas = document.createElement("canvas");
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext("2d");
+
+            const scale = Math.max(size / img.width, size / img.height);
+            const drawW = img.width * scale;
+            const drawH = img.height * scale;
+            const offsetX = (size - drawW) / 2;
+            const offsetY = (size - drawH) / 2;
+
+            ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+
+            db.ref("users/" + currentUser.uid + "/public/photoURL").set(dataUrl)
+                .then(function(){
+                    const homeAvatar = document.getElementById("homeProfileImg");
+                    const accountAvatar = document.getElementById("accountProfileImg");
+                    if(homeAvatar) homeAvatar.src = dataUrl;
+                    if(accountAvatar) accountAvatar.src = dataUrl;
+                })
+                .catch(function(err){
+                    alert("Could not save photo: " + err.message);
+                });
+
+        };
+
+        img.src = e.target.result;
+
+    };
+
+    reader.readAsDataURL(file);
+
+}
