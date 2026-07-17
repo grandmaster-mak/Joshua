@@ -528,4 +528,63 @@
 
     </div>
 
-    <!-- Chall
+    <!-- Challenge Received Popup -->
+    <div id="challengePopup" class="popup">
+
+        <div class="popupContent">
+
+            <div class="badge gold">⚔️</div>
+            <h2>Challenge!</h2>
+            <p class="sub"><span id="challengeFromName"></span> wants to play you.</p>
+
+            <button class="btnPrimary" onclick="respondToChallenge(true)">✅ Accept</button>
+            <button class="btnDanger" onclick="respondToChallenge(false)">❌ Decline</button>
+
+        </div>
+
+    </div>
+
+    <!-- Settings Popup -->
+    <div id="settingsPopup" class="popup">
+
+        <div class="popupContent">
+
+            <div class="badge blue">⚙️</div>
+            <h2>Settings</h2>
+            <p class="sub">More settings are coming soon.</p>
+
+            <button class="btnSecondary" onclick="closeSettingsPopup()">Close</button>
+
+        </div>
+
+    </div>
+
+    <!-- Info Popup (Tournaments, etc.) -->
+    <div id="infoPopup" class="popup">
+
+        <div class="popupContent">
+
+            <div class="badge gold" id="infoPopupBadge">🏆</div>
+            <h2 id="infoPopupTitle"></h2>
+            <p class="sub" id="infoPopupMessage"></p>
+
+            <button class="btnSecondary" onclick="closeInfoPopup()">Close</button>
+
+        </div>
+
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+
+    <script src="script.js"></script>
+    <script src="ai.js"></script>
+    <script src="multiplayer.js"></script>
+    <script src="auth.js"></script>
+    <script src="friends.js"></script>
+    <script src="chat.js"></script>
+
+</body>
+</html>
