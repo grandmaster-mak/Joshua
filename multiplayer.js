@@ -61,7 +61,8 @@ function createOnlineRoom(){
 db.ref("rooms/" + code + "/players/white").set({
         username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
         flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
-        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null
+        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null,
+        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
     });
     document.getElementById("roomCodeDisplay").textContent = "Room code: " + code + " — share this with your opponent";
     document.getElementById("onlineStatus").textContent = "Waiting for opponent to join...";
@@ -112,7 +113,8 @@ function joinOnlineRoom(){
         db.ref("rooms/" + code + "/players/black").set({
             username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
             flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
-            rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null
+            rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null,
+            photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
         });
 
         db.ref("rooms/" + code + "/status").set("playing");
@@ -175,12 +177,14 @@ function listenForPlayerInfo(code){
             whitePlayer = players.white.username || "White";
             whiteFlag = players.white.flag || "";
             whiteRating = players.white.rating || null;
+            whitePhoto = players.white.photo || null;
         }
 
         if(players.black){
             blackPlayer = players.black.username || "Black";
             blackFlag = players.black.flag || "";
             blackRating = players.black.rating || null;
+            blackPhoto = players.black.photo || null;
         }
 
         updatePlayerNames();
