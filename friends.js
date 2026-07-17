@@ -200,18 +200,29 @@ function loadFriendsList(){
                 const data = userSnap.val();
                 if(!data) return;
 
-                const row = document.createElement("div");
-                row.className = "friendCard";
-                row.innerHTML =
-                    '<div class="friendIdentity">' +
-                        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
-                        '<div class="friendInfo">' +
-                            '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
-                            '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
-                        '</div>' +
-                    '</div>';
+                db.ref("presence/" + uid).once("value").then(function(presenceSnap){
 
-                list.appendChild(row);
+                    const isOnline = presenceSnap.val() === true;
+
+                    const row = document.createElement("div");
+                    row.className = "friendCard";
+                    row.innerHTML =
+                        '<div class="friendIdentity">' +
+                            '<div class="friendAvatarWrap">' +
+                                '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                                (isOnline ? '<span class="onlineDotSmall"></span>' : '') +
+                            '</div>' +
+                            '<div class="friendInfo">' +
+                                '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
+                                '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="btnPrimary" onclick="challengeFriend(\'' + uid + '\', \'' + data.username + '\')">⚔️ Challenge</button>';
+
+                    list.appendChild(row);
+
+                });
+
             });
         });
 
@@ -222,4 +233,106 @@ function loadFriendsList(){
 function loadFriendsData(){
     loadFriendRequests();
     loadFriendsList();
+}
+
+function challengeFriend(friendUid, friendUsername){
+
+    if(!db || !currentUser) return;
+
+    const code = generateRoomCode();
+
+    myColor = "white";
+    currentRoomCode = code;
+
+    db.ref("rooms/" + code).set({
+        status: "waiting",
+        createdAt: Date.now()
+    });
+
+    db.ref("rooms/" + code + "/players/white").set({
+        username: currentUsername,
+        flag: currentUserFlag,
+        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
+        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+    });
+
+    db.ref("users/" + friendUid + "/private/incomingChallenges/" + currentUser.uid).set({
+        username: currentUsername,
+        flag: currentUserFlag,
+        code: code,
+        time: Date.now()
+    });
+
+    const statusRef = db.ref("rooms/" + code + "/status");
+
+    statusRef.on("value", function(snapshot){
+        if(snapshot.val() === "playing"){
+            statusRef.off();
+            startOnlineGame(code);
+        }
+    });
+
+    alert("Challenge sent to " + friendUsername + " — waiting for them to accept.");
+
+}
+
+function listenForChallenges(){
+
+    if(!db || !currentUser) return;
+
+    db.ref("users/" + currentUser.uid + "/private/incomingChallenges").on("child_added", function(snapshot){
+
+        const challenge = snapshot.val();
+        const fromUid = snapshot.key;
+        if(!challenge) return;
+
+        showChallengePopup(challenge, fromUid);
+
+    });
+
+}
+
+function showChallengePopup(challenge, fromUid){
+
+    const nameEl = document.getElementById("challengeFromName");
+    const popup = document.getElementById("challengePopup");
+    if(!nameEl || !popup) return;
+
+    nameEl.textContent = (challenge.flag || "") + " " + challenge.username;
+    popup.dataset.fromUid = fromUid;
+    popup.dataset.code = challenge.code;
+    popup.classList.add("show");
+
+}
+
+function respondToChallenge(accepted){
+
+    const popup = document.getElementById("challengePopup");
+    if(!popup) return;
+
+    const fromUid = popup.dataset.fromUid;
+    const code = popup.dataset.code;
+
+    popup.classList.remove("show");
+
+    if(db && currentUser){
+        db.ref("users/" + currentUser.uid + "/private/incomingChallenges/" + fromUid).remove();
+    }
+
+    if(!accepted) return;
+
+    myColor = "black";
+    currentRoomCode = code;
+
+    db.ref("rooms/" + code + "/players/black").set({
+        username: currentUsername,
+        flag: currentUserFlag,
+        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
+        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+    });
+
+    db.ref("rooms/" + code + "/status").set("playing");
+
+    startOnlineGame(code);
+
 }
