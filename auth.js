@@ -1,367 +1,226 @@
 // ============================================================
-// Online multiplayer via Firebase Realtime Database
+// Friends: search by username, send/accept/decline requests
 // ============================================================
 
-const firebaseConfig = {
-    apiKey: "AIzaSyCsb7bLtPIrILSVK07aKNkGNEWslK8EJxs",
-    authDomain: "my-chess-app-f1436.firebaseapp.com",
-    databaseURL: "https://my-chess-app-f1436-default-rtdb.firebaseio.com",
-    projectId: "my-chess-app-f1436",
-    storageBucket: "my-chess-app-f1436.firebasestorage.app",
-    messagingSenderId: "712701324531",
-    appId: "1:712701324531:web:262abb4dfd881652a39b86",
-    measurementId: "G-NKNHKLSQ5P"
-};
+function searchForFriend(){
 
-let db = null;
-let serverTimeOffset = 0;
-let clockData = null;
+    const query = document.getElementById("friendSearchInput").value.trim();
+    const resultBox = document.getElementById("friendSearchResult");
 
-try{
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-
-    db.ref(".info/serverTimeOffset").on("value", function(snapshot){
-        serverTimeOffset = snapshot.val() || 0;
-    });
-
-}catch(err){
-    console.error("Firebase failed to initialize:", err.message);
-}
-
-function getServerNow(){
-    return Date.now() + serverTimeOffset;
-}
-
-function generateRoomCode(){
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let code = "";
-    for(let i = 0; i < 5; i++){
-        code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
-}
-
-function createOnlineRoom(){
-
-    if(!db){
-        document.getElementById("onlineStatus").textContent = "Could not connect — check your internet connection.";
+    if(!query){
+        resultBox.innerHTML = '<p class="sub">Enter a username to search.</p>';
         return;
     }
 
-    const code = generateRoomCode();
+    if(!db || !currentUser){
+        resultBox.innerHTML = '<p class="sub">Please log in to add friends.</p>';
+        return;
+    }
 
-    db.ref("rooms/" + code).set({
-        status: "waiting",
-        createdAt: Date.now()
-    });
+    resultBox.innerHTML = '<p class="sub">Searching...</p>';
 
-    myColor = "white";
-    currentRoomCode = code;
-db.ref("rooms/" + code + "/players/white").set({
-        username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
-        flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
-        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null,
-        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
-    });
-    document.getElementById("roomCodeDisplay").textContent = "Room code: " + code + " — share this with your opponent";
-    document.getElementById("onlineStatus").textContent = "Waiting for opponent to join...";
+    db.ref("usernames/" + query).once("value")
+        .then(function(snapshot){
 
-    const statusRef = db.ref("rooms/" + code + "/status");
+            if(!snapshot.exists()){
+                resultBox.innerHTML = '<p class="sub">No user found with that username.</p>';
+                return;
+            }
 
-    statusRef.on("value", function(snapshot){
-        if(snapshot.val() === "playing"){
-            statusRef.off();
-            startOnlineGame(code);
-        }
+            const foundUid = snapshot.val();
+
+            if(foundUid === currentUser.uid){
+                resultBox.innerHTML = '<p class="sub">That\'s your own username.</p>';
+                return;
+            }
+
+            return db.ref("users/" + foundUid + "/public").once("value").then(function(userSnap){
+                renderSearchResult(foundUid, userSnap.val() || {});
+            });
+
+        })
+        .catch(function(err){
+            resultBox.innerHTML = '<p class="sub">Search failed: ' + err.message + '</p>';
+        });
+
+}
+
+function renderSearchResult(uid, data){
+
+    const resultBox = document.getElementById("friendSearchResult");
+
+    db.ref("users/" + currentUser.uid + "/private/friends/" + uid).once("value").then(function(friendSnap){
+
+        const isFriend = friendSnap.exists();
+
+        db.ref("users/" + currentUser.uid + "/private/friendRequestsOutgoing/" + uid).once("value").then(function(reqSnap){
+
+            const alreadyRequested = reqSnap.exists();
+
+            let buttonHtml;
+
+            if(isFriend){
+                buttonHtml = '<button class="btnSecondary" disabled>Already Friends</button>';
+            }else if(alreadyRequested){
+                buttonHtml = '<button class="btnSecondary" disabled>Request Sent</button>';
+            }else{
+                buttonHtml = '<button class="btnPrimary" onclick="sendFriendRequest(\'' + uid + '\', \'' + data.username + '\')">Add Friend</button>';
+            }
+
+            resultBox.innerHTML =
+                '<div class="friendCard">' +
+                    '<div class="friendIdentity">' +
+                        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                        '<div class="friendInfo">' +
+                            '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
+                            '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    buttonHtml +
+                '</div>';
+
+        });
+
     });
 
 }
 
-function joinOnlineRoom(){
+function sendFriendRequest(targetUid, targetUsername){
 
-    if(!db){
-        document.getElementById("onlineStatus").textContent = "Could not connect — check your internet connection.";
-        return;
+    if(!currentUser || !db) return;
+
+    db.ref("users/" + targetUid + "/private/friendRequestsIncoming/" + currentUser.uid).set({
+        username: currentUsername,
+        flag: currentUserFlag,
+        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 1200,
+        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
+        time: Date.now()
+    });
+
+    db.ref("users/" + currentUser.uid + "/private/friendRequestsOutgoing/" + targetUid).set(true);
+
+    const resultBox = document.getElementById("friendSearchResult");
+    if(resultBox){
+        resultBox.innerHTML = '<p class="sub">Friend request sent to ' + targetUsername + '.</p>';
     }
+}
 
-    const code = document.getElementById("joinRoomInput").value.trim().toUpperCase();
+function loadFriendRequests(){
 
-    if(!code){
-        document.getElementById("onlineStatus").textContent = "Please enter a room code.";
-        return;
-    }
+    if(!db || !currentUser) return;
 
-    document.getElementById("onlineStatus").textContent = "Joining...";
+    db.ref("users/" + currentUser.uid + "/private/friendRequestsIncoming").once("value").then(function(snapshot){
 
-    db.ref("rooms/" + code).once("value", function(snapshot){
+        const section = document.getElementById("friendRequestsSection");
+        const list = document.getElementById("friendRequestsList");
+        if(!section || !list) return;
 
         if(!snapshot.exists()){
-            document.getElementById("onlineStatus").textContent = "Room not found. Check the code and try again.";
+            section.style.display = "none";
             return;
         }
 
-        const room = snapshot.val();
+        section.style.display = "block";
+        list.innerHTML = "";
 
-        if(room.status !== "waiting"){
-            document.getElementById("onlineStatus").textContent = "That room is no longer available.";
+        snapshot.forEach(function(child){
+
+            const fromUid = child.key;
+            const req = child.val();
+
+            const row = document.createElement("div");
+            row.className = "requestCard";
+            row.innerHTML =
+                '<div class="friendIdentity">' +
+                    '<img class="friendAvatarImg" src="' + (req.photo || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                    '<div class="friendInfo">' +
+                        '<span class="friendName">' + (req.flag || "") + ' ' + req.username + '</span>' +
+                        '<span class="friendRating">Rating ' + (req.rating || 1200) + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="requestActions">' +
+                    '<button class="btnPrimary" onclick="acceptFriendRequest(\'' + fromUid + '\')">Accept</button>' +
+                    '<button class="btnSecondary" onclick="declineFriendRequest(\'' + fromUid + '\')">Decline</button>' +
+                '</div>';
+
+            list.appendChild(row);
+
+        });
+
+    });
+
+}
+
+function acceptFriendRequest(fromUid){
+
+    if(!db || !currentUser) return;
+
+    db.ref("users/" + currentUser.uid + "/private/friends/" + fromUid).set(true);
+    db.ref("users/" + fromUid + "/private/friends/" + currentUser.uid).set(true);
+
+    db.ref("users/" + currentUser.uid + "/private/friendRequestsIncoming/" + fromUid).remove();
+    db.ref("users/" + fromUid + "/private/friendRequestsOutgoing/" + currentUser.uid).remove();
+
+    loadFriendRequests();
+    loadFriendsList();
+}
+
+function declineFriendRequest(fromUid){
+
+    if(!db || !currentUser) return;
+
+    db.ref("users/" + currentUser.uid + "/private/friendRequestsIncoming/" + fromUid).remove();
+    db.ref("users/" + fromUid + "/private/friendRequestsOutgoing/" + currentUser.uid).remove();
+
+    loadFriendRequests();
+}
+
+function loadFriendsList(){
+
+    if(!db || !currentUser) return;
+
+    const list = document.getElementById("friendsList");
+    if(!list) return;
+
+    db.ref("users/" + currentUser.uid + "/private/friends").once("value").then(function(snapshot){
+
+        if(!snapshot.exists()){
+            list.innerHTML = '<p class="sub">You haven\'t added any friends yet.</p>';
             return;
         }
 
-        myColor = "black";
-        currentRoomCode = code;
-        db.ref("rooms/" + code + "/players/black").set({
-            username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
-            flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
-            rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null,
-            photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+        const uids = [];
+        snapshot.forEach(function(child){ uids.push(child.key); });
+
+        list.innerHTML = "";
+
+        uids.forEach(function(uid){
+            db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
+
+                const data = userSnap.val();
+                if(!data) return;
+
+                const row = document.createElement("div");
+                row.className = "friendCard";
+                row.innerHTML =
+                    '<div class="friendIdentity">' +
+                        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                        '<div class="friendInfo">' +
+                            '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
+                            '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
+                        '</div>' +
+                    '</div>';
+
+                list.appendChild(row);
+            });
         });
 
-        db.ref("rooms/" + code + "/status").set("playing");
-
-        startOnlineGame(code);
-
     });
 
 }
 
-function startOnlineGame(code){
-
-    closeTimeControl();
-
-    gameMode = "online";
-    newGame();
-
-    listenForRemoteMoves(code);
-
-    const myPresenceRef = db.ref("rooms/" + code + "/presence/" + myColor);
-    myPresenceRef.set(true);
-    myPresenceRef.onDisconnect().set(false);
-
-    listenForOpponentPresence(code);
-    listenForGameEvents(code);
-    listenForClockSync(code);
-    startOnlineClockDisplay();
-    listenForPlayerInfo(code);
-
-    if(myColor === "white"){
-        db.ref("rooms/" + code + "/clock").set({
-            whiteTime: selectedTime,
-            blackTime: selectedTime,
-            turn: "white",
-            turnStartedAt: getServerNow()
-        });
-    }
-
-}
-
-function listenForOpponentPresence(code){
-    const opponentColor = myColor === "white" ? "black" : "white";
-
-    db.ref("rooms/" + code + "/presence/" + opponentColor).on("value", function(snapshot){
-        if(snapshot.val() === false && !gameOver){
-            gameOver = true;
-            clearInterval(timer);
-            const winner = opponentColor === "white" ? "Black" : "White";
-            showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
-        }
-    });
-}
-function listenForPlayerInfo(code){
-    db.ref("rooms/" + code + "/players").on("value", function(snapshot){
-
-        const players = snapshot.val();
-        if(!players) return;
-
-        if(players.white){
-            whitePlayer = players.white.username || "White";
-            whiteFlag = players.white.flag || "";
-            whiteRating = players.white.rating || null;
-            whitePhoto = players.white.photo || null;
-        }
-
-        if(players.black){
-            blackPlayer = players.black.username || "Black";
-            blackFlag = players.black.flag || "";
-            blackRating = players.black.rating || null;
-            blackPhoto = players.black.photo || null;
-        }
-
-        updatePlayerNames();
-
-    });
-}
-function sendGameEvent(type, extra){
-    if(!db || !currentRoomCode) return;
-
-    const payload = {
-        type: type,
-        by: myColor,
-        time: Date.now()
-    };
-
-    if(extra){
-        Object.assign(payload, extra);
-    }
-
-    db.ref("rooms/" + currentRoomCode + "/events").push(payload);
-}
-
-function listenForGameEvents(code){
-
-    db.ref("rooms/" + code + "/events").on("child_added", function(snapshot){
-
-        const event = snapshot.val();
-        if(!event) return;
-
-        if(event.by === myColor) return;
-
-        if(event.type === "resign" && !gameOver){
-            gameOver = true;
-            clearInterval(timer);
-            const winner = event.by === "white" ? "Black" : "White";
-            showPopup("🚩 Resignation", winner + " wins by resignation.");
-            createBoard();
-            showKingMarkers(event.by);
-            recordGameResult("win", myOpponentName());
-        }
-
-        if(event.type === "abort" && !gameOver){
-            gameOver = true;
-            clearInterval(timer);
-            const winner = event.by === "white" ? "Black" : "White";
-            showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
-            createBoard();
-            showKingMarkers(event.by);
-            recordGameResult("win", myOpponentName());
-        }
-
-        if(event.type === "drawOffer" && !gameOver){
-            document.getElementById("drawOfferPopup").classList.add("show");
-        }
-
-        if(event.type === "drawResponse" && event.accepted && !gameOver){
-            gameOver = true;
-            clearInterval(timer);
-            showPopup("🤝 Draw", "Game drawn by agreement.");
-            createBoard();
-            recordGameResult("draw", myOpponentName());
-        }
-
-    });
-}
-
-function listenForRemoteMoves(code){
-
-    db.ref("rooms/" + code + "/moves").on("child_added", function(snapshot){
-
-        const move = snapshot.val();
-
-        if(!move || move.by === myColor) return;
-
-        applyingRemoteMove = true;
-        remotePromotionPiece = move.promotion || null;
-        executeMove(move.fromR, move.fromC, move.toR, move.toC, false);
-        applyingRemoteMove = false;
-
-    });
-
-}
-
-function sendMoveToFirebase(fromR, fromC, toR, toC, promotion){
-
-    if(!db || !currentRoomCode) return;
-
-    db.ref("rooms/" + currentRoomCode + "/moves").push({
-        fromR: fromR,
-        fromC: fromC,
-        toR: toR,
-        toC: toC,
-        by: myColor,
-        promotion: promotion || null,
-        time: Date.now()
-    });
-
-}
-
-function listenForClockSync(code){
-    db.ref("rooms/" + code + "/clock").on("value", function(snapshot){
-        clockData = snapshot.val();
-    });
-}
-
-function pushClockUpdate(moverColor){
-
-    if(!currentRoomCode || !db) return;
-
-    db.ref("rooms/" + currentRoomCode + "/clock").transaction(function(current){
-
-        if(!current) return current;
-
-        const now = getServerNow();
-        const elapsedSeconds = Math.max(0, Math.floor((now - current.turnStartedAt) / 1000));
-
-        let newWhiteTime = current.whiteTime;
-        let newBlackTime = current.blackTime;
-
-        if(current.whiteTime !== -1 && current.blackTime !== -1){
-            if(moverColor === "white"){
-                newWhiteTime = Math.max(0, current.whiteTime - elapsedSeconds);
-            }else{
-                newBlackTime = Math.max(0, current.blackTime - elapsedSeconds);
-            }
-        }
-
-        return {
-            whiteTime: newWhiteTime,
-            blackTime: newBlackTime,
-            turn: moverColor === "white" ? "black" : "white",
-            turnStartedAt: now
-        };
-
-    });
-
-}
-
-function startOnlineClockDisplay(){
-
-    clearInterval(timer);
-
-    timer = setInterval(function(){
-
-        if(!clockData || gameOver) return;
-
-        const now = getServerNow();
-        const elapsed = (now - clockData.turnStartedAt) / 1000;
-
-        let displayWhite = clockData.whiteTime;
-        let displayBlack = clockData.blackTime;
-
-        if(clockData.whiteTime !== -1 && clockData.blackTime !== -1){
-            if(clockData.turn === "white"){
-                displayWhite = Math.max(0, clockData.whiteTime - elapsed);
-            }else{
-                displayBlack = Math.max(0, clockData.blackTime - elapsed);
-            }
-        }
-
-        whiteTime = Math.ceil(displayWhite);
-        blackTime = Math.ceil(displayBlack);
-
-        updateTimers();
-
-        if(clockData.whiteTime !== -1 && displayWhite <= 0){
-            gameOver = true;
-            clearInterval(timer);
-            showPopup("⏰ TIME!", "Black wins on time!");
-        }
-
-        if(clockData.blackTime !== -1 && displayBlack <= 0){
-            gameOver = true;
-            clearInterval(timer);
-            showPopup("⏰ TIME!", "White wins on time!");
-        }
-
-    }, 500);
-
-}
+function loadFriendsData(){
+    loadFriendRequests();
+    loadFriendsList();
+                }
+                
