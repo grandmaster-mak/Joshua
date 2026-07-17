@@ -11,6 +11,7 @@ let currentUserRating = 1200;
 
 try{
     auth = firebase.auth();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 }catch(err){
     console.error("Firebase Auth failed to initialize:", err.message);
 }
@@ -208,3 +209,4 @@ function initAuthListener(){
 }
 
 initAuthListener();
+            
