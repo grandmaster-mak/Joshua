@@ -865,6 +865,9 @@ input::placeholder{ color:#4a5060; }
     margin-left:6px;
     font-size:12.5px;
 }
+
+.ratingDelta.up{ color:#23c483; }
+.ratingDelta.down{ color:#e5484d; }
 .friendName{ font-weight:700; font-size:14.5px; }
 .friendRating{ font-size:12px; color:#7d8492; margin-top:2px; }
 
