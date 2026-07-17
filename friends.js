@@ -217,7 +217,10 @@ function loadFriendsList(){
                                 '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
                             '</div>' +
                         '</div>' +
-                        '<button class="btnPrimary" onclick="challengeFriend(\'' + uid + '\', \'' + data.username + '\')">⚔️ Challenge</button>';
+                        '<div class="friendActions">' +
+                            '<button class="friendMessageBtn" onclick="openFriendChat(\'' + uid + '\', \'' + data.username + '\')" title="Message">💬</button>' +
+                            '<button class="btnPrimary" onclick="challengeFriend(\'' + uid + '\', \'' + data.username + '\')">⚔️ Challenge</button>' +
+                        '</div>';
 
                     list.appendChild(row);
 
@@ -335,4 +338,5 @@ function respondToChallenge(accepted){
 
     startOnlineGame(code);
 
-}
+                }
+           
