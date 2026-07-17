@@ -69,9 +69,12 @@ function renderSearchResult(uid, data){
 
             resultBox.innerHTML =
                 '<div class="friendCard">' +
-                    '<div class="friendInfo">' +
-                        '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
-                        '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
+                    '<div class="friendIdentity">' +
+                        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                        '<div class="friendInfo">' +
+                            '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
+                            '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
+                        '</div>' +
                     '</div>' +
                     buttonHtml +
                 '</div>';
@@ -90,6 +93,7 @@ function sendFriendRequest(targetUid, targetUsername){
         username: currentUsername,
         flag: currentUserFlag,
         rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 1200,
+        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
         time: Date.now()
     });
 
@@ -127,9 +131,12 @@ function loadFriendRequests(){
             const row = document.createElement("div");
             row.className = "requestCard";
             row.innerHTML =
-                '<div class="friendInfo">' +
-                    '<span class="friendName">' + (req.flag || "") + ' ' + req.username + '</span>' +
-                    '<span class="friendRating">Rating ' + (req.rating || 1200) + '</span>' +
+                '<div class="friendIdentity">' +
+                    '<img class="friendAvatarImg" src="' + (req.photo || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                    '<div class="friendInfo">' +
+                        '<span class="friendName">' + (req.flag || "") + ' ' + req.username + '</span>' +
+                        '<span class="friendRating">Rating ' + (req.rating || 1200) + '</span>' +
+                    '</div>' +
                 '</div>' +
                 '<div class="requestActions">' +
                     '<button class="btnPrimary" onclick="acceptFriendRequest(\'' + fromUid + '\')">Accept</button>' +
@@ -196,9 +203,12 @@ function loadFriendsList(){
                 const row = document.createElement("div");
                 row.className = "friendCard";
                 row.innerHTML =
-                    '<div class="friendInfo">' +
-                        '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
-                        '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
+                    '<div class="friendIdentity">' +
+                        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                        '<div class="friendInfo">' +
+                            '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
+                            '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
+                        '</div>' +
                     '</div>';
 
                 list.appendChild(row);
@@ -212,5 +222,4 @@ function loadFriendsList(){
 function loadFriendsData(){
     loadFriendRequests();
     loadFriendsList();
-               }
-    
+}
