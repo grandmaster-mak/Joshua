@@ -8,6 +8,7 @@ let currentUsername = null;
 let currentUserCountry = null;
 let currentUserFlag = "";
 let currentUserRating = 1200;
+let currentUserPhotoURL = null;
 
 try{
     auth = firebase.auth();
@@ -140,6 +141,7 @@ function initAuthListener(){
                 currentUserCountry = data.country || "";
                 currentUserFlag = data.flag || countryCodeToFlag(data.country);
                 currentUserRating = data.rating || 1200;
+                currentUserPhotoURL = data.photoURL || null;
 
                 document.getElementById("loggedOutView").style.display = "none";
                 document.getElementById("loggedInView").style.display = "block";
@@ -184,6 +186,7 @@ function initAuthListener(){
             currentUserCountry = null;
             currentUserFlag = "";
             currentUserRating = 1200;
+            currentUserPhotoURL = null;
 
             document.getElementById("loggedOutView").style.display = "block";
             document.getElementById("loggedInView").style.display = "none";
@@ -253,6 +256,7 @@ function handleProfilePhotoSelect(event){
 
             db.ref("users/" + currentUser.uid + "/public/photoURL").set(dataUrl)
                 .then(function(){
+                    currentUserPhotoURL = dataUrl;
                     const homeAvatar = document.getElementById("homeProfileImg");
                     const accountAvatar = document.getElementById("accountProfileImg");
                     if(homeAvatar) homeAvatar.src = dataUrl;
