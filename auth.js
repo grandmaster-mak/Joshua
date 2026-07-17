@@ -160,6 +160,9 @@ function logIn(){
 }
 
 function logOut(){
+    if(auth && currentUser && db){
+        db.ref("presence/" + currentUser.uid).set(false);
+    }
     if(auth){
         auth.signOut();
     }
@@ -174,6 +177,12 @@ function initAuthListener(){
         if(user){
 
             currentUser = user;
+
+            if(db){
+                const presenceRef = db.ref("presence/" + user.uid);
+                presenceRef.set(true);
+                presenceRef.onDisconnect().set(false);
+            }
 
             db.ref("users/" + user.uid + "/public").once("value").then(function(snapshot){
 
@@ -215,6 +224,7 @@ function initAuthListener(){
 
                 if(typeof loadRecentGames === "function") loadRecentGames();
                 if(typeof loadFriendsData === "function") loadFriendsData();
+                if(typeof listenForChallenges === "function") listenForChallenges();
 
                 if(data.photoURL){
                     if(avatarImg) avatarImg.src = data.photoURL;
@@ -321,5 +331,4 @@ function handleProfilePhotoSelect(event){
 
     reader.readAsDataURL(file);
 
-                    }
-                    
+}
