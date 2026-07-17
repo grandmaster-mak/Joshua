@@ -29,6 +29,10 @@ let whiteFlag = "";
 let blackFlag = "";
 let whiteRating = null;
 let blackRating = null;
+let whitePhoto = null;
+let blackPhoto = null;
+
+const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
 let whiteLeftRookMoved = false;
 let whiteRightRookMoved = false;
 let whiteTime = 600;
@@ -715,8 +719,17 @@ function updatePlayerNames(){
     const topRating = orientation.top === "white" ? whiteRating : blackRating;
     const bottomRating = orientation.bottom === "white" ? whiteRating : blackRating;
 
+    const topPhoto = orientation.top === "white" ? whitePhoto : blackPhoto;
+    const bottomPhoto = orientation.bottom === "white" ? whitePhoto : blackPhoto;
+
     document.getElementById("topPlayerName").textContent = (topFlag ? topFlag + " " : "") + topName;
     document.getElementById("bottomPlayerName").textContent = (bottomFlag ? bottomFlag + " " : "") + bottomName;
+
+    const topAvatarImg = document.getElementById("topPlayerAvatarImg");
+    const bottomAvatarImg = document.getElementById("bottomPlayerAvatarImg");
+
+    if(topAvatarImg) topAvatarImg.src = topPhoto || DEFAULT_AVATAR_SRC;
+    if(bottomAvatarImg) bottomAvatarImg.src = bottomPhoto || DEFAULT_AVATAR_SRC;
 
     const topRatingEl = document.getElementById("topPlayerRating");
     const bottomRatingEl = document.getElementById("bottomPlayerRating");
@@ -1269,6 +1282,8 @@ if(gameMode === "ai"){
         blackFlag = "🤖";
         whiteRating = (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null;
         blackRating = null;
+        whitePhoto = (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null;
+        blackPhoto = null;
     }else if(gameMode === "human"){
         whitePlayer = "White";
         blackPlayer = "Black";
@@ -1276,8 +1291,10 @@ if(gameMode === "ai"){
         blackFlag = "";
         whiteRating = null;
         blackRating = null;
+        whitePhoto = null;
+        blackPhoto = null;
     }
-    // For online mode, names/flags/ratings are set separately by multiplayer.js
+    // For online mode, names/flags/ratings/photos are set separately by multiplayer.js
     if(selectedTime === -1){
         whiteTime = -1;
         blackTime = -1;
