@@ -73,7 +73,7 @@ function renderSearchResult(uid, data){
                         '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
                         '<div class="friendInfo">' +
                             '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
-                            '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
+                            '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
                         '</div>' +
                     '</div>' +
                     buttonHtml +
@@ -92,7 +92,7 @@ function sendFriendRequest(targetUid, targetUsername){
     db.ref("users/" + targetUid + "/private/friendRequestsIncoming/" + currentUser.uid).set({
         username: currentUsername,
         flag: currentUserFlag,
-        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 1200,
+        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
         photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
         time: Date.now()
     });
@@ -135,7 +135,7 @@ function loadFriendRequests(){
                     '<img class="friendAvatarImg" src="' + (req.photo || DEFAULT_AVATAR_SRC) + '" alt="">' +
                     '<div class="friendInfo">' +
                         '<span class="friendName">' + (req.flag || "") + ' ' + req.username + '</span>' +
-                        '<span class="friendRating">Rating ' + (req.rating || 1200) + '</span>' +
+                        '<span class="friendRating">Rating ' + (req.rating || 100) + '</span>' +
                     '</div>' +
                 '</div>' +
                 '<div class="requestActions">' +
@@ -207,7 +207,7 @@ function loadFriendsList(){
                         '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
                         '<div class="friendInfo">' +
                             '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
-                            '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
+                            '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
                         '</div>' +
                     '</div>';
 
