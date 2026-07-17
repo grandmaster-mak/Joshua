@@ -10,6 +10,48 @@ let currentUserFlag = "";
 let currentUserRating = 1200;
 let currentUserPhotoURL = null;
 
+function cacheProfile(data){
+    try{
+        localStorage.setItem("cachedProfile", JSON.stringify({
+            username: data.username || "",
+            flag: data.flag || "",
+            rating: data.rating || 1200,
+            wins: data.wins || 0,
+            winStreak: data.winStreak || 0,
+            photoURL: data.photoURL || null
+        }));
+    }catch(e){}
+}
+
+function loadCachedProfile(){
+    try{
+        const cached = JSON.parse(localStorage.getItem("cachedProfile") || "null");
+        if(!cached) return;
+
+        currentUsername = cached.username || null;
+        currentUserFlag = cached.flag || "";
+        currentUserRating = cached.rating || 1200;
+        currentUserPhotoURL = cached.photoURL || null;
+
+        const usernameEl = document.getElementById("username");
+        const ratingEl = document.getElementById("playerRating");
+        const winsEl = document.getElementById("gamesWon");
+        const streakEl = document.getElementById("winStreak");
+        const homeAvatar = document.getElementById("homeProfileImg");
+        const accountAvatar = document.getElementById("accountProfileImg");
+
+        if(usernameEl && cached.username) usernameEl.textContent = cached.username;
+        if(ratingEl) ratingEl.textContent = cached.rating;
+        if(winsEl) winsEl.textContent = cached.wins;
+        if(streakEl) streakEl.textContent = cached.winStreak;
+
+        if(cached.photoURL){
+            if(homeAvatar) homeAvatar.src = cached.photoURL;
+            if(accountAvatar) accountAvatar.src = cached.photoURL;
+        }
+    }catch(e){}
+}
+
 try{
     auth = firebase.auth();
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
@@ -137,6 +179,8 @@ function initAuthListener(){
 
                 const data = snapshot.val() || {};
 
+                cacheProfile(data);
+
                 currentUsername = data.username || "Player";
                 currentUserCountry = data.country || "";
                 currentUserFlag = data.flag || countryCodeToFlag(data.country);
@@ -177,6 +221,8 @@ function initAuthListener(){
                     if(accountAvatarImg) accountAvatarImg.src = data.photoURL;
                 }
 
+            }).catch(function(err){
+                console.log("Offline — showing cached profile instead.");
             });
 
         }else{
@@ -214,6 +260,7 @@ function initAuthListener(){
 }
 
 initAuthListener();
+loadCachedProfile();
 
 function handleProfilePhotoSelect(event){
 
@@ -274,4 +321,5 @@ function handleProfilePhotoSelect(event){
 
     reader.readAsDataURL(file);
 
-}
+               }
+                
