@@ -1,226 +1,325 @@
 // ============================================================
-// Friends: search by username, send/accept/decline requests
+// Player accounts via Firebase Authentication
 // ============================================================
 
-function searchForFriend(){
+let auth = null;
+let currentUser = null;
+let currentUsername = null;
+let currentUserCountry = null;
+let currentUserFlag = "";
+let currentUserRating = 100;
+let currentUserPhotoURL = null;
 
-    const query = document.getElementById("friendSearchInput").value.trim();
-    const resultBox = document.getElementById("friendSearchResult");
+function cacheProfile(data){
+    try{
+        localStorage.setItem("cachedProfile", JSON.stringify({
+            username: data.username || "",
+            flag: data.flag || "",
+            rating: data.rating || 100,
+            wins: data.wins || 0,
+            winStreak: data.winStreak || 0,
+            photoURL: data.photoURL || null
+        }));
+    }catch(e){}
+}
 
-    if(!query){
-        resultBox.innerHTML = '<p class="sub">Enter a username to search.</p>';
+function loadCachedProfile(){
+    try{
+        const cached = JSON.parse(localStorage.getItem("cachedProfile") || "null");
+        if(!cached) return;
+
+        currentUsername = cached.username || null;
+        currentUserFlag = cached.flag || "";
+        currentUserRating = cached.rating || 100;
+        currentUserPhotoURL = cached.photoURL || null;
+
+        const usernameEl = document.getElementById("username");
+        const ratingEl = document.getElementById("playerRating");
+        const winsEl = document.getElementById("gamesWon");
+        const streakEl = document.getElementById("winStreak");
+        const homeAvatar = document.getElementById("homeProfileImg");
+        const accountAvatar = document.getElementById("accountProfileImg");
+
+        if(usernameEl && cached.username) usernameEl.textContent = cached.username;
+        if(ratingEl) ratingEl.textContent = cached.rating;
+        if(winsEl) winsEl.textContent = cached.wins;
+        if(streakEl) streakEl.textContent = cached.winStreak;
+
+        if(cached.photoURL){
+            if(homeAvatar) homeAvatar.src = cached.photoURL;
+            if(accountAvatar) accountAvatar.src = cached.photoURL;
+        }
+    }catch(e){}
+}
+
+try{
+    auth = firebase.auth();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+}catch(err){
+    console.error("Firebase Auth failed to initialize:", err.message);
+}
+
+function countryCodeToFlag(code){
+    if(!code) return "🏳️";
+    return String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt()));
+}
+
+function showAccountPopup(){
+    document.getElementById("accountPopup").classList.add("show");
+}
+
+function closeAccountPopup(){
+    document.getElementById("accountPopup").classList.remove("show");
+}
+
+function signUp(){
+
+    if(!auth){
+        document.getElementById("authStatus").textContent = "Could not connect to account system.";
         return;
     }
 
-    if(!db || !currentUser){
-        resultBox.innerHTML = '<p class="sub">Please log in to add friends.</p>';
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    const username = document.getElementById("authUsername").value.trim();
+    const country = document.getElementById("authCountry").value;
+
+    if(!email || !password || !username || !country){
+        document.getElementById("authStatus").textContent = "Please fill in all fields, including country.";
         return;
     }
 
-    resultBox.innerHTML = '<p class="sub">Searching...</p>';
+    document.getElementById("authStatus").textContent = "Checking username...";
 
-    db.ref("usernames/" + query).once("value")
-        .then(function(snapshot){
+    db.ref("usernames/" + username).once("value")
+        .then(function(nameSnap){
 
-            if(!snapshot.exists()){
-                resultBox.innerHTML = '<p class="sub">No user found with that username.</p>';
-                return;
+            if(nameSnap.exists()){
+                document.getElementById("authStatus").textContent = "That username is already taken.";
+                return Promise.reject("username_taken");
             }
 
-            const foundUid = snapshot.val();
+            document.getElementById("authStatus").textContent = "Creating account...";
 
-            if(foundUid === currentUser.uid){
-                resultBox.innerHTML = '<p class="sub">That\'s your own username.</p>';
-                return;
-            }
-
-            return db.ref("users/" + foundUid + "/public").once("value").then(function(userSnap){
-                renderSearchResult(foundUid, userSnap.val() || {});
-            });
+            return auth.createUserWithEmailAndPassword(email, password);
 
         })
-        .catch(function(err){
-            resultBox.innerHTML = '<p class="sub">Search failed: ' + err.message + '</p>';
+        .then(function(userCredential){
+
+            const uid = userCredential.user.uid;
+
+            const updates = {};
+            updates["users/" + uid + "/public"] = {
+                username: username,
+                country: country,
+                flag: countryCodeToFlag(country),
+                createdAt: Date.now(),
+                rating: 100,
+                wins: 0,
+                losses: 0,
+                draws: 0,
+                winStreak: 0
+            };
+            updates["usernames/" + username] = uid;
+
+            return db.ref().update(updates);
+
+        })
+        .then(function(){
+            document.getElementById("authStatus").textContent = "Account created! You're now logged in.";
+        })
+        .catch(function(error){
+            if(error === "username_taken") return;
+            document.getElementById("authStatus").textContent = "Error: " + error.message;
         });
 
 }
 
-function renderSearchResult(uid, data){
+function logIn(){
 
-    const resultBox = document.getElementById("friendSearchResult");
+    if(!auth){
+        document.getElementById("authStatus").textContent = "Could not connect to account system.";
+        return;
+    }
 
-    db.ref("users/" + currentUser.uid + "/private/friends/" + uid).once("value").then(function(friendSnap){
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
 
-        const isFriend = friendSnap.exists();
+    if(!email || !password){
+        document.getElementById("authStatus").textContent = "Please enter your email and password.";
+        return;
+    }
 
-        db.ref("users/" + currentUser.uid + "/private/friendRequestsOutgoing/" + uid).once("value").then(function(reqSnap){
+    document.getElementById("authStatus").textContent = "Logging in...";
 
-            const alreadyRequested = reqSnap.exists();
-
-            let buttonHtml;
-
-            if(isFriend){
-                buttonHtml = '<button class="btnSecondary" disabled>Already Friends</button>';
-            }else if(alreadyRequested){
-                buttonHtml = '<button class="btnSecondary" disabled>Request Sent</button>';
-            }else{
-                buttonHtml = '<button class="btnPrimary" onclick="sendFriendRequest(\'' + uid + '\', \'' + data.username + '\')">Add Friend</button>';
-            }
-
-            resultBox.innerHTML =
-                '<div class="friendCard">' +
-                    '<div class="friendIdentity">' +
-                        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
-                        '<div class="friendInfo">' +
-                            '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
-                            '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
-                        '</div>' +
-                    '</div>' +
-                    buttonHtml +
-                '</div>';
-
+    auth.signInWithEmailAndPassword(email, password)
+        .catch(function(error){
+            document.getElementById("authStatus").textContent = "Error: " + error.message;
         });
-
-    });
 
 }
 
-function sendFriendRequest(targetUid, targetUsername){
-
-    if(!currentUser || !db) return;
-
-    db.ref("users/" + targetUid + "/private/friendRequestsIncoming/" + currentUser.uid).set({
-        username: currentUsername,
-        flag: currentUserFlag,
-        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 1200,
-        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
-        time: Date.now()
-    });
-
-    db.ref("users/" + currentUser.uid + "/private/friendRequestsOutgoing/" + targetUid).set(true);
-
-    const resultBox = document.getElementById("friendSearchResult");
-    if(resultBox){
-        resultBox.innerHTML = '<p class="sub">Friend request sent to ' + targetUsername + '.</p>';
+function logOut(){
+    if(auth){
+        auth.signOut();
     }
 }
 
-function loadFriendRequests(){
+function initAuthListener(){
 
-    if(!db || !currentUser) return;
+    if(!auth) return;
 
-    db.ref("users/" + currentUser.uid + "/private/friendRequestsIncoming").once("value").then(function(snapshot){
+    auth.onAuthStateChanged(function(user){
 
-        const section = document.getElementById("friendRequestsSection");
-        const list = document.getElementById("friendRequestsList");
-        if(!section || !list) return;
+        if(user){
 
-        if(!snapshot.exists()){
-            section.style.display = "none";
-            return;
-        }
+            currentUser = user;
 
-        section.style.display = "block";
-        list.innerHTML = "";
+            db.ref("users/" + user.uid + "/public").once("value").then(function(snapshot){
 
-        snapshot.forEach(function(child){
+                const data = snapshot.val() || {};
 
-            const fromUid = child.key;
-            const req = child.val();
+                cacheProfile(data);
 
-            const row = document.createElement("div");
-            row.className = "requestCard";
-            row.innerHTML =
-                '<div class="friendIdentity">' +
-                    '<img class="friendAvatarImg" src="' + (req.photo || DEFAULT_AVATAR_SRC) + '" alt="">' +
-                    '<div class="friendInfo">' +
-                        '<span class="friendName">' + (req.flag || "") + ' ' + req.username + '</span>' +
-                        '<span class="friendRating">Rating ' + (req.rating || 1200) + '</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="requestActions">' +
-                    '<button class="btnPrimary" onclick="acceptFriendRequest(\'' + fromUid + '\')">Accept</button>' +
-                    '<button class="btnSecondary" onclick="declineFriendRequest(\'' + fromUid + '\')">Decline</button>' +
-                '</div>';
+                currentUsername = data.username || "Player";
+                currentUserCountry = data.country || "";
+                currentUserFlag = data.flag || countryCodeToFlag(data.country);
+                currentUserRating = data.rating || 100;
+                currentUserPhotoURL = data.photoURL || null;
 
-            list.appendChild(row);
+                document.getElementById("loggedOutView").style.display = "none";
+                document.getElementById("loggedInView").style.display = "block";
+                document.getElementById("loggedInUsername").textContent =
+                    currentUserFlag + " " + currentUsername;
 
-        });
+                const usernameEl = document.getElementById("username");
+                const ratingEl = document.getElementById("playerRating");
+                const winsEl = document.getElementById("gamesWon");
+                const avatarImg = document.getElementById("homeProfileImg");
+                const accountAvatarImg = document.getElementById("accountProfileImg");
 
-    });
-
-}
-
-function acceptFriendRequest(fromUid){
-
-    if(!db || !currentUser) return;
-
-    db.ref("users/" + currentUser.uid + "/private/friends/" + fromUid).set(true);
-    db.ref("users/" + fromUid + "/private/friends/" + currentUser.uid).set(true);
-
-    db.ref("users/" + currentUser.uid + "/private/friendRequestsIncoming/" + fromUid).remove();
-    db.ref("users/" + fromUid + "/private/friendRequestsOutgoing/" + currentUser.uid).remove();
-
-    loadFriendRequests();
-    loadFriendsList();
-}
-
-function declineFriendRequest(fromUid){
-
-    if(!db || !currentUser) return;
-
-    db.ref("users/" + currentUser.uid + "/private/friendRequestsIncoming/" + fromUid).remove();
-    db.ref("users/" + fromUid + "/private/friendRequestsOutgoing/" + currentUser.uid).remove();
-
-    loadFriendRequests();
-}
-
-function loadFriendsList(){
-
-    if(!db || !currentUser) return;
-
-    const list = document.getElementById("friendsList");
-    if(!list) return;
-
-    db.ref("users/" + currentUser.uid + "/private/friends").once("value").then(function(snapshot){
-
-        if(!snapshot.exists()){
-            list.innerHTML = '<p class="sub">You haven\'t added any friends yet.</p>';
-            return;
-        }
-
-        const uids = [];
-        snapshot.forEach(function(child){ uids.push(child.key); });
-
-        list.innerHTML = "";
-
-        uids.forEach(function(uid){
-            db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
-
-                const data = userSnap.val();
-                if(!data) return;
-
-                const row = document.createElement("div");
-                row.className = "friendCard";
-                row.innerHTML =
-                    '<div class="friendIdentity">' +
-                        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
-                        '<div class="friendInfo">' +
-                            '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
-                            '<span class="friendRating">Rating ' + (data.rating || 1200) + '</span>' +
-                        '</div>' +
-                    '</div>';
-
-                list.appendChild(row);
-            });
-        });
-
-    });
-
-}
-
-function loadFriendsData(){
-    loadFriendRequests();
-    loadFriendsList();
+                if(usernameEl){
+                    usernameEl.textContent = currentUsername;
                 }
-                
+                if(ratingEl){
+                    ratingEl.textContent = data.rating || 100;
+                }
+                if(winsEl){
+                    winsEl.textContent = data.wins || 0;
+                }
+
+                const streakEl = document.getElementById("winStreak");
+                if(streakEl){
+                    streakEl.textContent = data.winStreak || 0;
+                }
+
+                if(typeof loadRecentGames === "function") loadRecentGames();
+                if(typeof loadFriendsData === "function") loadFriendsData();
+
+                if(data.photoURL){
+                    if(avatarImg) avatarImg.src = data.photoURL;
+                    if(accountAvatarImg) accountAvatarImg.src = data.photoURL;
+                }
+
+            }).catch(function(err){
+                console.log("Offline — showing cached profile instead.");
+            });
+
+        }else{
+
+            currentUser = null;
+            currentUsername = null;
+            currentUserCountry = null;
+            currentUserFlag = "";
+            currentUserRating = 100;
+            currentUserPhotoURL = null;
+
+            document.getElementById("loggedOutView").style.display = "block";
+            document.getElementById("loggedInView").style.display = "none";
+
+            const usernameEl = document.getElementById("username");
+            const ratingEl = document.getElementById("playerRating");
+            const winsEl = document.getElementById("gamesWon");
+
+            if(usernameEl) usernameEl.textContent = "player";
+            if(ratingEl) ratingEl.textContent = "—";
+            if(winsEl) winsEl.textContent = "—";
+
+            const friendsListEl = document.getElementById("friendsList");
+            const requestsSectionEl = document.getElementById("friendRequestsSection");
+            const searchResultEl = document.getElementById("friendSearchResult");
+
+            if(friendsListEl) friendsListEl.innerHTML = '<p class="sub">Log in to see your friends.</p>';
+            if(requestsSectionEl) requestsSectionEl.style.display = "none";
+            if(searchResultEl) searchResultEl.innerHTML = "";
+
+        }
+
+    });
+
+}
+
+initAuthListener();
+loadCachedProfile();
+
+function handleProfilePhotoSelect(event){
+
+    const file = event.target.files[0];
+    if(!file) return;
+
+    if(!currentUser || !db){
+        alert("Please log in first.");
+        return;
+    }
+
+    if(!file.type.startsWith("image/")){
+        alert("Please choose an image file.");
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        const img = new Image();
+
+        img.onload = function(){
+
+            const size = 200;
+            const canvas = document.createElement("canvas");
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext("2d");
+
+            const scale = Math.max(size / img.width, size / img.height);
+            const drawW = img.width * scale;
+            const drawH = img.height * scale;
+            const offsetX = (size - drawW) / 2;
+            const offsetY = (size - drawH) / 2;
+
+            ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+
+            db.ref("users/" + currentUser.uid + "/public/photoURL").set(dataUrl)
+                .then(function(){
+                    currentUserPhotoURL = dataUrl;
+                    const homeAvatar = document.getElementById("homeProfileImg");
+                    const accountAvatar = document.getElementById("accountProfileImg");
+                    if(homeAvatar) homeAvatar.src = dataUrl;
+                    if(accountAvatar) accountAvatar.src = dataUrl;
+                })
+                .catch(function(err){
+                    alert("Could not save photo: " + err.message);
+                });
+
+        };
+
+        img.src = e.target.result;
+
+    };
+
+    reader.readAsDataURL(file);
+
+                    }
+                    
