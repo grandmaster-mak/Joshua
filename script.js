@@ -1693,18 +1693,31 @@ function recordGameResult(myResult, opponentName){
         data.losses = data.losses || 0;
         data.draws = data.draws || 0;
         data.winStreak = data.winStreak || 0;
+        data.rating = data.rating || 100;
 
         if(myResult === "win"){
             data.wins++;
             data.winStreak++;
+            data.rating += 8;
         }else if(myResult === "loss"){
             data.losses++;
             data.winStreak = 0;
+            data.rating = Math.max(0, data.rating - 8);
         }else{
             data.draws++;
             data.winStreak = 0;
         }
         return data;
+    }).then(function(result){
+
+        if(result.committed && result.snapshot.exists()){
+            const updated = result.snapshot.val();
+            currentUserRating = updated.rating;
+
+            const ratingEl = document.getElementById("playerRating");
+            if(ratingEl) ratingEl.textContent = updated.rating;
+        }
+
     });
 
     db.ref("users/" + currentUser.uid + "/private/history").push({
