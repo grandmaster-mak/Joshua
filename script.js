@@ -1679,6 +1679,51 @@ function myOpponentName(){
     return myColor === "white" ? blackPlayer : whitePlayer;
 }
 
+function updateRatingDisplay(myResult){
+
+    if(gameMode !== "online") return;
+    if(myResult === "draw") return;
+
+    const delta = myResult === "win" ? 8 : -8;
+
+    const myOldRating = (myColor === "white" ? whiteRating : blackRating) || 100;
+    const oppOldRating = (myColor === "white" ? blackRating : whiteRating) || 100;
+
+    const myNewRating = Math.max(0, myOldRating + delta);
+    const oppNewRating = Math.max(0, oppOldRating - delta);
+
+    if(myColor === "white"){
+        whiteRating = myNewRating;
+        blackRating = oppNewRating;
+    }else{
+        blackRating = myNewRating;
+        whiteRating = oppNewRating;
+    }
+
+    updatePlayerNames();
+
+    const orientation = getOrientation();
+    const myBadgeId = (orientation.top === myColor) ? "topPlayerRating" : "bottomPlayerRating";
+    const oppBadgeId = (orientation.top === myColor) ? "bottomPlayerRating" : "topPlayerRating";
+
+    const myBadge = document.getElementById(myBadgeId);
+    const oppBadge = document.getElementById(oppBadgeId);
+
+    const myDeltaCls = delta > 0 ? "up" : "down";
+    if(myBadge){
+        myBadge.style.display = "block";
+        myBadge.innerHTML = "Rating " + myNewRating + ' <span class="ratingDelta ' + myDeltaCls + '">(' + (delta > 0 ? "+" : "") + delta + ")</span>";
+    }
+
+    const oppDelta = -delta;
+    const oppDeltaCls = oppDelta > 0 ? "up" : "down";
+    if(oppBadge){
+        oppBadge.style.display = "block";
+        oppBadge.innerHTML = "Rating " + oppNewRating + ' <span class="ratingDelta ' + oppDeltaCls + '">(' + (oppDelta > 0 ? "+" : "") + oppDelta + ")</span>";
+    }
+
+}
+
 function recordGameResult(myResult, opponentName){
 
     if(gameMode === "human") return;
@@ -1698,11 +1743,11 @@ function recordGameResult(myResult, opponentName){
         if(myResult === "win"){
             data.wins++;
             data.winStreak++;
-            data.rating += 8;
+            if(gameMode !== "ai") data.rating += 8;
         }else if(myResult === "loss"){
             data.losses++;
             data.winStreak = 0;
-            data.rating = Math.max(0, data.rating - 8);
+            if(gameMode !== "ai") data.rating = Math.max(0, data.rating - 8);
         }else{
             data.draws++;
             data.winStreak = 0;
@@ -1710,6 +1755,7 @@ function recordGameResult(myResult, opponentName){
         return data;
     }).then(function(result){
 
+        updateRatingDisplay(myResult);
         if(result.committed && result.snapshot.exists()){
             const updated = result.snapshot.val();
             currentUserRating = updated.rating;
