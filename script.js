@@ -1333,6 +1333,9 @@ if(gameMode === "ai"){
     document.getElementById("appShell").style.display = "none";
     document.getElementById("game").style.display = "flex";
     document.getElementById("gameBottomBar").style.display = "flex";
+
+    const chatCard = document.getElementById("chatActionCard");
+    if(chatCard) chatCard.style.display = (gameMode === "online") ? "flex" : "none";
 }
 
 function createCoordinates(){
