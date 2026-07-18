@@ -10,6 +10,37 @@
 
 <body>
 
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <div id="splashVignette"></div>
+
+        <div id="splashPieceStage">
+
+            <div class="splashPieceWrap splashKnightWrap splashKnightLeftWrap">
+                <span class="splashPiece splashKnight splashKnightLeft">&#9822;</span>
+            </div>
+
+            <div class="splashPieceWrap splashKingWrap">
+                <span class="splashPiece splashKing">&#9818;</span>
+            </div>
+
+            <div class="splashPieceWrap splashKnightWrap splashKnightRightWrap">
+                <span class="splashPiece splashKnight splashKnightRight">&#9822;</span>
+            </div>
+
+        </div>
+
+        <div id="splashWordmark">CHESS</div>
+        <div id="splashTagline">Play &middot; Compete &middot; Improve</div>
+
+        <div id="splashLoadingDots">
+            <div class="splashDot"></div>
+            <div class="splashDot"></div>
+            <div class="splashDot"></div>
+        </div>
+    </div>
+
+
     <!-- App Shell: Home / Friends / Account -->
     <div id="appShell">
 
@@ -258,8 +289,6 @@
 
     <div id="game" style="display:none;">
 
-        <button id="gameHomeBtn" class="iconBtn" onclick="goHomeFromGame()" title="Home">🏠</button>
-
         <!-- Board Column: opponent bar, board, your bar -->
         <div id="boardColumn">
 
@@ -348,7 +377,7 @@
             <span class="cardSub">Reset current game</span>
         </button>
 
-        <button class="gameActionCard cardPurple" onclick="undoMove()">
+        <button class="gameActionCard cardPurple" id="undoActionCard" onclick="undoMove()">
             <span class="cardIcon">↩</span>
             <span class="cardTitle">UNDO MOVE</span>
             <span class="cardSub">Take back a move</span>
