@@ -5,6 +5,7 @@
 let activeChatPath = null;
 let activeChatRef = null;
 let activeChatPartnerName = "";
+let activeChatReadKey = null;
 
 function buildDirectChatId(uidA, uidB){
     return [uidA, uidB].sort().join("_");
@@ -19,7 +20,7 @@ function openGameChat(){
     gameChatUnread = 0;
     updateGameChatBadge();
 
-    openChat("rooms/" + currentRoomCode + "/chat", partnerName);
+    openChat("rooms/" + currentRoomCode + "/chat", partnerName, "room_" + currentRoomCode);
 
 }
 
@@ -32,11 +33,16 @@ function openFriendChat(friendUid, friendUsername){
 
     const chatId = buildDirectChatId(currentUser.uid, friendUid);
 
-    openChat("messages/" + chatId, friendUsername);
+    openChat("messages/" + chatId, friendUsername, chatId);
 
 }
 
-function openChat(path, partnerName){
+function markChatRead(readKey){
+    if(!currentUser || !db || !readKey) return;
+    db.ref("users/" + currentUser.uid + "/private/chatLastRead/" + readKey).set(Date.now());
+}
+
+function openChat(path, partnerName, readKey){
 
     if(!db) return;
 
@@ -44,16 +50,20 @@ function openChat(path, partnerName){
 
     activeChatPath = path;
     activeChatPartnerName = partnerName || "Chat";
+    activeChatReadKey = readKey || null;
 
     document.getElementById("chatWithName").textContent = activeChatPartnerName;
     document.getElementById("chatMessages").innerHTML = "";
     document.getElementById("chatInput").value = "";
     document.getElementById("chatScreen").style.display = "flex";
 
+    markChatRead(readKey);
+
     activeChatRef = db.ref(activeChatPath).orderByChild("time").limitToLast(100);
 
     activeChatRef.on("child_added", function(snapshot){
         renderChatMessage(snapshot.val());
+        markChatRead(readKey);
     });
 
 }
@@ -64,6 +74,7 @@ function closeChatListener(){
         activeChatRef = null;
     }
     activeChatPath = null;
+    activeChatReadKey = null;
 }
 
 function closeChat(){
@@ -123,24 +134,32 @@ function startGameChatWatcher(){
 
     stopGameChatWatcher();
 
-    if(gameMode !== "online" || !currentRoomCode || !db) return;
+    if(gameMode !== "online" || !currentRoomCode || !db || !currentUser) return;
 
     const watchedRoomCode = currentRoomCode;
+    const readKey = "room_" + watchedRoomCode;
 
-    gameChatBgRef = db.ref("rooms/" + watchedRoomCode + "/chat").orderByChild("time").limitToLast(50);
+    db.ref("users/" + currentUser.uid + "/private/chatLastRead/" + readKey).once("value").then(function(lastReadSnap){
 
-    gameChatBgRef.on("child_added", function(snapshot){
+        const lastRead = lastReadSnap.val() || 0;
 
-        const msg = snapshot.val();
-        if(!msg || !currentUser || msg.from === currentUser.uid) return;
+        gameChatBgRef = db.ref("rooms/" + watchedRoomCode + "/chat").orderByChild("time").limitToLast(50);
 
-        const isChatOpen = document.getElementById("chatScreen").style.display === "flex" &&
-            activeChatPath === ("rooms/" + watchedRoomCode + "/chat");
+        gameChatBgRef.on("child_added", function(snapshot){
 
-        if(!isChatOpen){
-            gameChatUnread++;
-            updateGameChatBadge();
-        }
+            const msg = snapshot.val();
+            if(!msg || !currentUser || msg.from === currentUser.uid) return;
+            if(msg.time <= lastRead) return;
+
+            const isChatOpen = document.getElementById("chatScreen").style.display === "flex" &&
+                activeChatPath === ("rooms/" + watchedRoomCode + "/chat");
+
+            if(!isChatOpen){
+                gameChatUnread++;
+                updateGameChatBadge();
+            }
+
+        });
 
     });
 
@@ -184,22 +203,29 @@ function startFriendChatWatchers(friendUids){
 
         const chatId = buildDirectChatId(currentUser.uid, friendUid);
         const chatPath = "messages/" + chatId;
-        const ref = db.ref(chatPath).orderByChild("time").limitToLast(50);
 
-        friendChatWatchers[friendUid] = ref;
+        db.ref("users/" + currentUser.uid + "/private/chatLastRead/" + chatId).once("value").then(function(lastReadSnap){
 
-        ref.on("child_added", function(snapshot){
+            const lastRead = lastReadSnap.val() || 0;
 
-            const msg = snapshot.val();
-            if(!msg || msg.from === currentUser.uid) return;
+            const ref = db.ref(chatPath).orderByChild("time").limitToLast(50);
+            friendChatWatchers[friendUid] = ref;
 
-            const isChatOpen = document.getElementById("chatScreen").style.display === "flex" &&
-                activeChatPath === chatPath;
+            ref.on("child_added", function(snapshot){
 
-            if(!isChatOpen){
-                friendChatUnread[friendUid] = (friendChatUnread[friendUid] || 0) + 1;
-                updateFriendChatBadge(friendUid);
-            }
+                const msg = snapshot.val();
+                if(!msg || msg.from === currentUser.uid) return;
+                if(msg.time <= lastRead) return;
+
+                const isChatOpen = document.getElementById("chatScreen").style.display === "flex" &&
+                    activeChatPath === chatPath;
+
+                if(!isChatOpen){
+                    friendChatUnread[friendUid] = (friendChatUnread[friendUid] || 0) + 1;
+                    updateFriendChatBadge(friendUid);
+                }
+
+            });
 
         });
 
@@ -217,4 +243,4 @@ function updateFriendChatBadge(friendUid){
     }else{
         badge.style.display = "none";
     }
-                    }
+}
