@@ -1129,5 +1129,765 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
     }
 
     finishTurn(wasRemoteMove);
+}
+
+function choosePromotion(letter){
+
+    if(!promotionSquare) return;
+
+    const r = promotionSquare.r;
+    const c = promotionSquare.c;
+
+    pieces[r][c] = promotionColor + letter;
+
+    if(pendingOnlinePromotionMove && typeof sendMoveToFirebase === "function"){
+        const m = pendingOnlinePromotionMove;
+        sendMoveToFirebase(m.fromR, m.fromC, m.toR, m.toC, letter);
+        pendingOnlinePromotionMove = null;
+    }
+
+    promotionSquare = null;
+    promotionColor = null;
+
+    closePromotion();
+    finishTurn(false);
+}
+
+function finishTurn(wasRemoteMove){
+
+    positionHistory.push(getPositionKey());
+
+    if(isThreefoldRepetition()){
+        gameOver = true;
+        createBoard();
+        showPopup("🤝 DRAW", "Threefold Repetition");
+        recordGameResult("draw", myOpponentName());
+        return;
+    }
+
+    if(hasInsufficientMaterial()){
+        gameOver = true;
+        createBoard();
+        showPopup("🤝 DRAW", "Insufficient Material");
+        recordGameResult("draw", myOpponentName());
+        return;
+    }
+
+    if(halfMoveClock >= 100){
+        gameOver = true;
+        createBoard();
+        showPopup("🤝 DRAW", "50-Move Rule");
+        recordGameResult("draw", myOpponentName());
+        return;
+    }
+
+    const moverColor = currentPlayer;
+
+    currentPlayer = currentPlayer === "white" ? "black" : "white";
+
+    if(!hasLegalMoves(currentPlayer)){
+        gameOver = true;
+    }
+
+    updateTurn();
+    createBoard();
+
+    if(gameMode === "online" && !wasRemoteMove && typeof pushClockUpdate === "function"){
+        pushClockUpdate(moverColor);
+    }
+
+    if(gameMode === "ai" && currentPlayer === "black" && !gameOver){
+        setTimeout(makeAIMove, 400);
+    }
+}
+
+function updateCaptured(){
+
+    const orientation = getOrientation();
+
+    const topBox = document.getElementById("topCaptured");
+    const bottomBox = document.getElementById("bottomCaptured");
+
+    const topList = orientation.top === "white" ? whiteCaptured : blackCaptured;
+    const bottomList = orientation.bottom === "white" ? whiteCaptured : blackCaptured;
+
+    topBox.innerHTML = "";
+    bottomBox.innerHTML = "";
+
+    topList.forEach(piece => {
+        topBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
+    });
+
+    bottomList.forEach(piece => {
+        bottomBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
+    });
+
+    const pieceWorth = { P:1, N:3, B:3, R:5, Q:9, K:0 };
+
+    function materialSum(list){
+        return list.reduce(function(sum, piece){
+            return sum + (pieceWorth[piece[1]] || 0);
+        }, 0);
+    }
+
+    const whiteAdv = materialSum(whiteCaptured) - materialSum(blackCaptured);
+    const topAdv = orientation.top === "white" ? whiteAdv : -whiteAdv;
+    const bottomAdv = orientation.bottom === "white" ? whiteAdv : -whiteAdv;
+
+    document.getElementById("topMaterialAdv").textContent = topAdv > 0 ? "+" + topAdv : "";
+    document.getElementById("bottomMaterialAdv").textContent = bottomAdv > 0 ? "+" + bottomAdv : "";
+
+}
+
+function showTimeControl(){
+    updateGameMode();
+    document.getElementById("timeControlPopup").classList.add("show");
+}
+
+function closeTimeControl(){
+    document.getElementById("timeControlPopup").classList.remove("show");
+}
+
+function updateGameMode(){
+
+    const mode = document.getElementById("gameMode").value;
+
+    document.getElementById("difficultyBox").style.display = mode === "ai" ? "block" : "none";
+    document.getElementById("onlineBox").style.display = mode === "online" ? "block" : "none";
+
+    document.getElementById("timeControlSection").style.display = mode === "online" ? "none" : "block";
+    document.getElementById("startGameBtn").style.display = mode === "online" ? "none" : "block";
+
+    document.getElementById("roomCodeDisplay").textContent = "";
+    document.getElementById("onlineStatus").textContent = "";
+}
+
+function startNewGame(){
+
+    selectedTime = Number(document.getElementById("timeControl").value);
+    gameMode = document.getElementById("gameMode").value;
+    aiDifficulty = document.getElementById("aiDifficulty").value;
+
+    closeTimeControl();
+    newGame();
+}
+
+function openPlaySetup(mode){
+    document.getElementById("gameMode").value = mode;
+    updateGameMode();
+    showTimeControl();
+}
+
+function newGame(){
+
+    pieces = [
+        ["bR","bN","bB","bQ","bK","bB","bN","bR"],
+        ["bP","bP","bP","bP","bP","bP","bP","bP"],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["wP","wP","wP","wP","wP","wP","wP","wP"],
+        ["wR","wN","wB","wQ","wK","wB","wN","wR"]
+    ];
+
+    moveHistory = [];
+    updateHistory();
+    undoStack = [];
+
+    currentPlayer = "white";
+    selected = null;
+    possibleMoves = [];
+    gameOver = false;
+    halfMoveClock = 0;
+    lastMove = null;
+    promotionSquare = null;
+    promotionColor = null;
+
+    whiteKingMoved = false;
+    blackKingMoved = false;
+    whiteLeftRookMoved = false;
+    whiteRightRookMoved = false;
+    blackLeftRookMoved = false;
+    blackRightRookMoved = false;
+
+    whiteCaptured = [];
+    blackCaptured = [];
+if(gameMode === "ai"){
+        whitePlayer = (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "You";
+        blackPlayer = "Computer";
+        whiteFlag = (typeof currentUserFlag !== "undefined") ? currentUserFlag : "";
+        blackFlag = "🤖";
+        whiteRating = (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null;
+        blackRating = null;
+        whitePhoto = (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null;
+        blackPhoto = null;
+    }else if(gameMode === "human"){
+        whitePlayer = "White";
+        blackPlayer = "Black";
+        whiteFlag = "";
+        blackFlag = "";
+        whiteRating = null;
+        blackRating = null;
+        whitePhoto = null;
+        blackPhoto = null;
+    }
+    // For online mode, names/flags/ratings/photos are set separately by multiplayer.js
+    if(selectedTime === -1){
+        whiteTime = -1;
+        blackTime = -1;
+    }else{
+        whiteTime = selectedTime;
+        blackTime = selectedTime;
+    }
+
+    updateTimers();
+
+    if(gameMode !== "online"){
+        startTimer();
+    }
+
+    updateCaptured();
+    updateTurn();
+
+    positionHistory = [getPositionKey()];
+    createBoard();
+
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("game").style.display = "flex";
+    document.getElementById("gameBottomBar").style.display = "flex";
+
+    stopBgMusic();
+
+    const chatCard = document.getElementById("chatActionCard");
+    if(chatCard) chatCard.style.display = (gameMode === "online") ? "flex" : "none";
+
+    const undoCard = document.getElementById("undoActionCard");
+    if(undoCard) undoCard.style.display = (gameMode === "online") ? "none" : "flex";
+
+    history.pushState({ screen: "game" }, "", "#game");
+}
+
+function createCoordinates(){
+
+    const files = document.getElementById("filesTop");
+    const ranks = document.getElementById("ranksLeft");
+
+    files.innerHTML = "";
+    ranks.innerHTML = "";
+
+    ["a","b","c","d","e","f","g","h"].forEach(letter => {
+        const div = document.createElement("div");
+        div.textContent = letter;
+        files.appendChild(div);
+    });
+
+    for(let i = 8; i >= 1; i--){
+        const div = document.createElement("div");
+        div.textContent = i;
+        ranks.appendChild(div);
+    }
+
+}
+
+function showPopup(title, message){
+    document.getElementById("popupTitle").textContent = title;
+    document.getElementById("popupMessage").textContent = message;
+    document.getElementById("gameOverPopup").classList.add("show");
+}
+
+function closePopup(){
+    document.getElementById("gameOverPopup").classList.remove("show");
+}
+
+function showPromotion(color){
+
+    document.getElementById("promoteQ").src = "pieces/" + color + "Q.svg";
+    document.getElementById("promoteR").src = "pieces/" + color + "R.svg";
+    document.getElementById("promoteB").src = "pieces/" + color + "B.svg";
+    document.getElementById("promoteN").src = "pieces/" + color + "N.svg";
+
+    document.getElementById("promotionPopup").classList.add("show");
+}
+
+function closePromotion(){
+    document.getElementById("promotionPopup").classList.remove("show");
+}
+
+function undoMove(){
+    if(gameMode === "online") return;
+
+    if(gameOver) return;
+
+    if(gameMode === "ai" && undoStack.length >= 2){
+        undoStack.pop();
+    }
+
+    if(undoStack.length === 0) return;
+
+    const last = undoStack.pop();
+
+    pieces = last.pieces;
+    currentPlayer = last.currentPlayer;
+
+    whiteKingMoved = last.whiteKingMoved;
+    blackKingMoved = last.blackKingMoved;
+    whiteLeftRookMoved = last.whiteLeftRookMoved;
+    whiteRightRookMoved = last.whiteRightRookMoved;
+    blackLeftRookMoved = last.blackLeftRookMoved;
+    blackRightRookMoved = last.blackRightRookMoved;
+
+    whiteCaptured = last.whiteCaptured;
+    blackCaptured = last.blackCaptured;
+    moveHistory = last.moveHistory;
+    gameOver = last.gameOver;
+
+    if(positionHistory.length > 0) positionHistory.pop();
+
+    updateHistory();
+    updateCaptured();
+    updateTurn();
+
+    selected = null;
+    possibleMoves = [];
+    lastMove = null;
+    promotionSquare = null;
+    promotionColor = null;
+
+    createBoard();
+}
+
+function handleRestartClick(){
+    if(gameMode === "online"){
+        showOnlineGameMenu();
+    }else{
+        newGame();
+    }
+}
+function handleNewGameClick(){
+    if(!gameOver){
+        showOnlineGameMenu();
+    }else{
+        showTimeControl();
+    }
+}
+
+function showKingMarkers(loserColor){
+
+    const loserKing = loserColor === "white" ? "wK" : "bK";
+    const winnerKing = loserColor === "white" ? "bK" : "wK";
+
+    for(let r = 0; r < 8; r++){
+        for(let c = 0; c < 8; c++){
+
+            if(pieces[r][c] === loserKing || pieces[r][c] === winnerKing){
+
+                const flipped = (gameMode === "online" && myColor === "black");
+                const domR = flipped ? 7 - r : r;
+                const domC = flipped ? 7 - c : c;
+                const square = board.children[domR * 8 + domC];
+                if(!square) continue;
+
+                const marker = document.createElement("span");
+
+                if(pieces[r][c] === loserKing){
+                    marker.textContent = "🚩";
+                    marker.className = "resignFlag";
+                }else{
+                    marker.textContent = "👑";
+                    marker.className = "winnerCrown";
+                }
+
+                square.appendChild(marker);
+            }
         }
-   
+    }
+}
+
+function showOnlineGameMenu(){
+    document.getElementById("onlineMenuPopup").classList.add("show");
+}
+
+function closeOnlineMenu(){
+    document.getElementById("onlineMenuPopup").classList.remove("show");
+}
+
+function resignGame(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("resign");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    closeOnlineMenu();
+
+    const loser = gameMode === "online" ? myColor : currentPlayer;
+    const winner = loser === "white" ? "Black" : "White";
+    showPopup("🚩 Resignation", winner + " wins by resignation.");
+    createBoard();
+    showKingMarkers(loser);
+    recordGameResult("loss", myOpponentName());
+}
+
+function abortGame(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("abort");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    closeOnlineMenu();
+
+    const loser = gameMode === "online" ? myColor : currentPlayer;
+    const winner = loser === "white" ? "Black" : "White";
+    showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
+    createBoard();
+    showKingMarkers(loser);
+    recordGameResult("loss", myOpponentName());
+}
+
+function requestDraw(){
+
+    closeOnlineMenu();
+
+    if(gameMode === "online"){
+        if(typeof sendGameEvent === "function"){
+            sendGameEvent("drawOffer");
+        }
+        return;
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    showPopup("🤝 Draw", "Game drawn by agreement.");
+    createBoard();
+    recordGameResult("draw", myOpponentName());
+}
+
+function respondToDraw(accepted){
+
+    document.getElementById("drawOfferPopup").classList.remove("show");
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("drawResponse", {accepted: accepted});
+    }
+
+    if(accepted){
+        gameOver = true;
+        clearInterval(timer);
+        showPopup("🤝 Draw", "Game drawn by agreement.");
+        createBoard();
+        recordGameResult("draw", myOpponentName());
+    }
+}
+
+function hasInsufficientMaterial(){
+
+    let whitePieces = [];
+    let blackPieces = [];
+
+    for(let r = 0; r < 8; r++){
+        for(let c = 0; c < 8; c++){
+            const piece = pieces[r][c];
+            if(piece === "") continue;
+            if(isWhite(piece)){
+                whitePieces.push(piece);
+            }else{
+                blackPieces.push(piece);
+            }
+        }
+    }
+
+    if(whitePieces.length === 1 && blackPieces.length === 1){
+        return true;
+    }
+
+    if(whitePieces.length === 2 && blackPieces.length === 1){
+        if(whitePieces.includes("wB") || whitePieces.includes("wN")){
+            return true;
+        }
+    }
+
+    if(blackPieces.length === 2 && whitePieces.length === 1){
+        if(blackPieces.includes("bB") || blackPieces.includes("bN")){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function isThreefoldRepetition(){
+
+    const current = getPositionKey();
+    let count = 0;
+
+    for(const position of positionHistory){
+        if(position === current){
+            count++;
+        }
+    }
+
+    return count >= 3;
+}
+
+function getAllMoves(color){
+
+    let allMoves = [];
+
+    for(let r = 0; r < 8; r++){
+
+        for(let c = 0; c < 8; c++){
+
+            let piece = pieces[r][c];
+
+            if(piece === "") continue;
+            if(color === "white" && !isWhite(piece)) continue;
+            if(color === "black" && !isBlack(piece)) continue;
+
+            let moves = getPossibleMoves(piece, r, c);
+
+            moves.sort((a, b) => {
+                const valueA = pieces[a.r][a.c] === "" ? 0 : pieceValues[pieces[a.r][a.c][1]];
+                const valueB = pieces[b.r][b.c] === "" ? 0 : pieceValues[pieces[b.r][b.c][1]];
+                return valueB - valueA;
+            });
+
+            for(let move of moves){
+                if(tryMove(r,c,move.r,move.c,color)){
+                    allMoves.push({
+                        from: {r:r, c:c},
+                        to: {r:move.r, c:move.c}
+                    });
+                }
+            }
+
+        }
+
+    }
+
+    return allMoves;
+}
+
+function switchScreen(name){
+
+    const screens = ["home", "friends", "account"];
+
+    screens.forEach(function(s){
+        document.getElementById(s + "Screen").style.display = (s === name) ? "flex" : "none";
+    });
+
+    document.querySelectorAll("#bottomNav .navBtn").forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.screen === name);
+    });
+
+}
+
+function showSettingsPopup(){
+    document.getElementById("settingsPopup").classList.add("show");
+}
+
+function closeSettingsPopup(){
+    document.getElementById("settingsPopup").classList.remove("show");
+}
+
+function showInfoPopup(title, message){
+    document.getElementById("infoPopupTitle").textContent = title;
+    document.getElementById("infoPopupMessage").textContent = message;
+    document.getElementById("infoPopup").classList.add("show");
+}
+
+function closeInfoPopup(){
+    document.getElementById("infoPopup").classList.remove("show");
+}
+
+function showComingSoon(){
+    showInfoPopup("🏆 Tournaments", "Tournaments are coming soon — stay tuned!");
+}
+
+function myOpponentName(){
+    if(gameMode === "ai") return "Computer";
+    return myColor === "white" ? blackPlayer : whitePlayer;
+}
+
+function updateRatingDisplay(myResult){
+
+    if(gameMode !== "online") return;
+    if(myResult === "draw") return;
+
+    const delta = myResult === "win" ? 8 : -8;
+
+    const myOldRating = (myColor === "white" ? whiteRating : blackRating) || 100;
+    const oppOldRating = (myColor === "white" ? blackRating : whiteRating) || 100;
+
+    const myNewRating = Math.max(0, myOldRating + delta);
+    const oppNewRating = Math.max(0, oppOldRating - delta);
+
+    if(myColor === "white"){
+        whiteRating = myNewRating;
+        blackRating = oppNewRating;
+    }else{
+        blackRating = myNewRating;
+        whiteRating = oppNewRating;
+    }
+
+    updatePlayerNames();
+
+    const orientation = getOrientation();
+    const myBadgeId = (orientation.top === myColor) ? "topPlayerRating" : "bottomPlayerRating";
+    const oppBadgeId = (orientation.top === myColor) ? "bottomPlayerRating" : "topPlayerRating";
+
+    const myBadge = document.getElementById(myBadgeId);
+    const oppBadge = document.getElementById(oppBadgeId);
+
+    const myDeltaCls = delta > 0 ? "up" : "down";
+    if(myBadge){
+        myBadge.style.display = "block";
+        myBadge.innerHTML = "Rating " + myNewRating + ' <span class="ratingDelta ' + myDeltaCls + '">(' + (delta > 0 ? "+" : "") + delta + ")</span>";
+    }
+
+    const oppDelta = -delta;
+    const oppDeltaCls = oppDelta > 0 ? "up" : "down";
+    if(oppBadge){
+        oppBadge.style.display = "block";
+        oppBadge.innerHTML = "Rating " + oppNewRating + ' <span class="ratingDelta ' + oppDeltaCls + '">(' + (oppDelta > 0 ? "+" : "") + oppDelta + ")</span>";
+    }
+
+}
+
+function recordGameResult(myResult, opponentName){
+
+    if(gameMode === "human") return;
+    if(typeof currentUser === "undefined" || !currentUser) return;
+    if(typeof db === "undefined" || !db) return;
+
+    const userRef = db.ref("users/" + currentUser.uid + "/public");
+
+    userRef.transaction(function(data){
+        if(!data) return data;
+        data.wins = data.wins || 0;
+        data.losses = data.losses || 0;
+        data.draws = data.draws || 0;
+        data.winStreak = data.winStreak || 0;
+        data.rating = data.rating || 100;
+
+        if(myResult === "win"){
+            data.wins++;
+            data.winStreak++;
+            if(gameMode !== "ai") data.rating += 8;
+        }else if(myResult === "loss"){
+            data.losses++;
+            data.winStreak = 0;
+            if(gameMode !== "ai") data.rating = Math.max(0, data.rating - 8);
+        }else{
+            data.draws++;
+            data.winStreak = 0;
+        }
+        return data;
+    }).then(function(result){
+
+        updateRatingDisplay(myResult);
+        if(result.committed && result.snapshot.exists()){
+            const updated = result.snapshot.val();
+            currentUserRating = updated.rating;
+
+            const ratingEl = document.getElementById("playerRating");
+            if(ratingEl) ratingEl.textContent = updated.rating;
+        }
+
+    });
+
+    db.ref("users/" + currentUser.uid + "/private/history").push({
+        opponent: opponentName || "Unknown",
+        result: myResult,
+        mode: gameMode,
+        time: Date.now()
+    });
+
+    if(typeof loadRecentGames === "function") loadRecentGames();
+}
+
+function loadRecentGames(){
+    if(!db || !currentUser) return;
+
+    db.ref("users/" + currentUser.uid + "/private/history")
+        .orderByChild("time")
+        .limitToLast(5)
+        .once("value")
+        .then(function(snapshot){
+            const list = document.getElementById("recentGamesList");
+            if(!list) return;
+
+            const entries = [];
+            snapshot.forEach(function(child){ entries.push(child.val()); });
+            entries.reverse();
+
+            if(entries.length === 0){
+                list.innerHTML = '<p class="sub">No games played yet.</p>';
+                return;
+            }
+
+            list.innerHTML = "";
+            entries.forEach(function(entry){
+                const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
+                const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+                const row = document.createElement("div");
+                row.className = "gameRow";
+                row.innerHTML = '<span class="gameOpponent">' + entry.opponent + '</span><span class="gameResult ' + cls + '">' + label + '</span>';
+                list.appendChild(row);
+            });
+        });
+}
+
+function leaveGameToHome(){
+
+    gameOver = true;
+    clearInterval(timer);
+
+    if(typeof stopGameChatWatcher === "function") stopGameChatWatcher();
+
+    document.getElementById("game").style.display = "none";
+    document.getElementById("gameBottomBar").style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
+
+    playBgMusic();
+
+    switchScreen("home");
+
+}
+
+function goHomeFromGame(){
+
+    leaveGameToHome();
+
+    if(history.state && history.state.screen === "game"){
+        history.back();
+    }
+
+}
+
+window.addEventListener("popstate", function(event){
+
+    const gameEl = document.getElementById("game");
+    const gameVisible = gameEl && gameEl.style.display === "flex";
+
+    if(!gameVisible) return;
+
+    if(!gameOver){
+
+        // Game still in progress: don't leave, show the Resign/Draw/Abort menu instead,
+        // and re-trap the back button so a second press doesn't skip past it.
+        showOnlineGameMenu();
+        history.pushState({ screen: "game" }, "", "#game");
+
+    }else{
+
+        leaveGameToHome();
+
+    }
+
+});
+
+createCoordinates();
