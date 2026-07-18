@@ -823,4 +823,311 @@ function saveUndoState(){
         pieces: JSON.parse(JSON.stringify(pieces)),
         currentPlayer,
         whiteKingMoved,
+        blackKingMoved,
+        whiteLeftRookMoved,
+        whiteRightRookMoved,
+        blackLeftRookMoved,
+        blackRightRookMoved,
+        whiteCaptured: [...whiteCaptured],
+        blackCaptured: [...blackCaptured],
+        moveHistory: [...moveHistory],
+        gameOver
+    });
+
+}
+
+function clickSquare(r, c){
+
+    if(gameMode === "ai" && currentPlayer === "black"){
+        return;
+    }
+
+    if(gameMode === "online" && currentPlayer !== myColor){
+        return;
+    }
+
+    if(animationRunning) return;
+    if(gameOver) return;
+    if(promotionSquare) return;
+
+    const piece = pieces[r][c];
+
+    if(selected == null){
+
+        if(piece === "") return;
+        if(currentPlayer === "white" && !isWhite(piece)) return;
+        if(currentPlayer === "black" && !isBlack(piece)) return;
+
+        selected = {r,c};
+        selectSound.currentTime = 0;
+        selectSound.play();
+
+        possibleMoves = getLegalMoves(piece, r, c);
+
+        createBoard();
+
+    }else{
+
+        if(!isPossibleMove(r,c)){
+
+            if(piece !== "" &&
+               ((currentPlayer === "white" && isWhite(piece)) ||
+                (currentPlayer === "black" && isBlack(piece)))
+            ){
+                selected = {r,c};
+                selectSound.currentTime = 0;
+                selectSound.play();
+                possibleMoves = getLegalMoves(piece, r, c);
+                createBoard();
+                return;
+            }
+
+            selected = null;
+            possibleMoves = [];
+            createBoard();
+            return;
+        }
+
+        const fromR = selected.r;
+        const fromC = selected.c;
+
+        executeMove(fromR, fromC, r, c, false);
+    }
+
+}
+
+function playAIMove(fromR, fromC, toR, toC, promotion){
+
+    if(gameOver) return;
+    if(promotionSquare) return;
+
+    aiPromotionPiece = promotion || null;
+
+    executeMove(fromR, fromC, toR, toC, true);
+}
+
+function executeMove(fromR, fromC, r, c, isAIMove){
+
+    const movedPiece = pieces[fromR][fromC];
+    const isCastle = (movedPiece === "wK" || movedPiece === "bK") && Math.abs(c - fromC) === 2;
+    const isPromotionMove = (movedPiece === "wP" && r === 0) || (movedPiece === "bP" && r === 7);
+
+    const wasRemoteMove = applyingRemoteMove;
+    const aiPromotionForThisMove = aiPromotionPiece;
+    const promotionPieceForThisMove = remotePromotionPiece;
+
+    if(gameMode === "online" && !applyingRemoteMove && !isPromotionMove && typeof sendMoveToFirebase === "function"){
+        sendMoveToFirebase(fromR, fromC, r, c, null);
+    }
+
+    const finish = function(){
+        completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove, aiPromotionForThisMove);
+    };
+
+    if(isCastle){
+
+        const kingsideCastle = c > fromC;
+        const rookFromC = kingsideCastle ? 7 : 0;
+        const rookToC = kingsideCastle ? 5 : 3;
+
+        animateCastleSlide(fromR, fromC, r, c, fromR, rookFromC, r, rookToC, finish);
+
+    }else{
+
+        animatePieceSlide(fromR, fromC, r, c, finish);
+
+    }
+
+}
+
+function slidePieceVisual(fromR, fromC, toR, toC){
+
+    const flipped = (gameMode === "online" && myColor === "black");
+
+    function domIndex(r, c){
+        if(flipped){
+            return (7 - r) * 8 + (7 - c);
+        }
+        return r * 8 + c;
+    }
+
+    const squares = board.children;
+    const fromSquare = squares[domIndex(fromR, fromC)];
+    const toSquare = squares[domIndex(toR, toC)];
+
+    if(!fromSquare || !toSquare) return false;
+
+    const pieceImg = fromSquare.querySelector(".piece");
+    if(!pieceImg) return false;
+
+    const fromRect = fromSquare.getBoundingClientRect();
+    const toRect = toSquare.getBoundingClientRect();
+
+    const dx = toRect.left - fromRect.left;
+    const dy = toRect.top - fromRect.top;
+
+    pieceImg.style.position = "relative";
+    pieceImg.style.zIndex = "10";
+    pieceImg.style.transition = "transform 0.22s ease";
+
+    void pieceImg.offsetWidth;
+
+    pieceImg.style.transform = "translate(" + dx + "px, " + dy + "px)";
+
+    return true;
+}
+
+function animatePieceSlide(fromR, fromC, toR, toC, callback){
+
+    const moved = slidePieceVisual(fromR, fromC, toR, toC);
+
+    if(!moved){
+        callback();
+        return;
+    }
+
+    animationRunning = true;
+
+    setTimeout(function(){
+        animationRunning = false;
+        callback();
+    }, 220);
+
+}
+
+function animateCastleSlide(kingFromR, kingFromC, kingToR, kingToC, rookFromR, rookFromC, rookToR, rookToC, callback){
+
+    const kingMoved = slidePieceVisual(kingFromR, kingFromC, kingToR, kingToC);
+    slidePieceVisual(rookFromR, rookFromC, rookToR, rookToC);
+
+    if(!kingMoved){
+        callback();
+        return;
+    }
+
+    animationRunning = true;
+
+    setTimeout(function(){
+        animationRunning = false;
+        callback();
+    }, 220);
+
+}
+
+function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove, aiPromotionForThisMove){
+
+    const movedPiece = pieces[fromR][fromC];
+    const capturedPiece = pieces[r][c];
+    const isCapture = capturedPiece !== "";
+
+    saveUndoState();
+
+    pieces[r][c] = movedPiece;
+    pieces[fromR][fromC] = "";
+
+    lastMove = {
+        from: {r: fromR, c: fromC},
+        to: {r, c}
+    };
+
+    if(isCapture){
+        captureSound.currentTime = 0;
+        captureSound.play();
+
+        if(isWhite(capturedPiece)){
+            blackCaptured.push(capturedPiece);
+        }else{
+            whiteCaptured.push(capturedPiece);
+        }
+    }else{
+        moveSound.currentTime = 0;
+        moveSound.play();
+    }
+
+    if(movedPiece.endsWith("P") || isCapture){
+        halfMoveClock = 0;
+    }else{
+        halfMoveClock++;
+    }
+
+    moveHistory.push(
+        getMoveNotation(movedPiece, fromR, fromC, r, c, isCapture)
+    );
+    updateHistory();
+
+    if(movedPiece === "wK" && fromC === 4 && c === 6){
+        pieces[7][5] = pieces[7][7];
+        pieces[7][7] = "";
+    }
+    if(movedPiece === "wK" && fromC === 4 && c === 2){
+        pieces[7][3] = pieces[7][0];
+        pieces[7][0] = "";
+    }
+    if(movedPiece === "bK" && fromC === 4 && c === 6){
+        pieces[0][5] = pieces[0][7];
+        pieces[0][7] = "";
+    }
+    if(movedPiece === "bK" && fromC === 4 && c === 2){
+        pieces[0][3] = pieces[0][0];
+        pieces[0][0] = "";
+    }
+
+    if(movedPiece === "wK") whiteKingMoved = true;
+    if(movedPiece === "bK") blackKingMoved = true;
+
+    if(movedPiece === "wR"){
+        if(fromR === 7 && fromC === 0) whiteLeftRookMoved = true;
+        if(fromR === 7 && fromC === 7) whiteRightRookMoved = true;
+    }
+
+    if(movedPiece === "bR"){
+        if(fromR === 0 && fromC === 0) blackLeftRookMoved = true;
+        if(fromR === 0 && fromC === 7) blackRightRookMoved = true;
+    }
+
+    selected = null;
+    possibleMoves = [];
+
+    updateCaptured();
+
+    if(movedPiece === "wP" && r === 0){
+
+        if(isAIMove){
+            pieces[r][c] = "w" + (aiPromotionForThisMove ? aiPromotionForThisMove.toUpperCase() : "Q");
+            finishTurn(wasRemoteMove);
+        }else if(gameMode === "online" && wasRemoteMove){
+            pieces[r][c] = "w" + (promotionPieceForThisMove || "Q");
+            finishTurn(wasRemoteMove);
+        }else{
+            promotionSquare = {r, c};
+            promotionColor = "w";
+            pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
+            createBoard();
+            showPromotion("w");
+        }
+
+        return;
+    }
+
+    if(movedPiece === "bP" && r === 7){
+
+        if(isAIMove){
+            pieces[r][c] = "b" + (aiPromotionForThisMove ? aiPromotionForThisMove.toUpperCase() : "Q");
+            finishTurn(wasRemoteMove);
+        }else if(gameMode === "online" && wasRemoteMove){
+            pieces[r][c] = "b" + (promotionPieceForThisMove || "Q");
+            finishTurn(wasRemoteMove);
+        }else{
+            promotionSquare = {r, c};
+            promotionColor = "b";
+            pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
+            createBoard();
+            showPromotion("b");
+        }
+
+        return;
+    }
+
+    finishTurn(wasRemoteMove);
+        }
    
