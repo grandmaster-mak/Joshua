@@ -81,7 +81,19 @@ function playBgMusic(){
 function stopBgMusic(){
     bgMusic.pause();
 }
+document.addEventListener("visibilitychange", function(){
 
+    if(document.hidden){
+        bgMusic.pause();
+    }else{
+        const gameEl = document.getElementById("game");
+        const gameVisible = gameEl && gameEl.style.display === "flex";
+        if(bgMusicStarted && !gameVisible){
+            playBgMusic();
+        }
+    }
+
+});
 document.addEventListener("click", tryStartBgMusic, { once: true });
 document.addEventListener("touchstart", tryStartBgMusic, { once: true });
 
