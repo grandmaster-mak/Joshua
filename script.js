@@ -62,7 +62,7 @@ const selectSound = new Audio("sounds/Select.ogg");
 const checkSound = new Audio("sounds/check.mp3");
 const checkmateSound = new Audio("sounds/check mate.mp3");
 
-const bgMusic = new Audio("sounds/Background.mp3");
+const bgMusic = new Audio("sounds/freebeatsofficial-comedy-cartoon-background-music-514448.mp3");
 bgMusic.loop = true;
 bgMusic.volume = 0.4;
 let bgMusicStarted = false;
@@ -1891,3 +1891,16 @@ window.addEventListener("popstate", function(event){
 });
 
 createCoordinates();
+
+setTimeout(function(){
+
+    const splash = document.getElementById("splashScreen");
+    if(!splash) return;
+
+    splash.classList.add("splashFadeOut");
+
+    setTimeout(function(){
+        splash.style.display = "none";
+    }, 650);
+
+}, 2800);
