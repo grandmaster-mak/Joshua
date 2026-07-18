@@ -1336,6 +1336,8 @@ if(gameMode === "ai"){
 
     const chatCard = document.getElementById("chatActionCard");
     if(chatCard) chatCard.style.display = (gameMode === "online") ? "flex" : "none";
+
+    history.pushState({ screen: "game" }, "", "#game");
 }
 
 function createCoordinates(){
@@ -1810,5 +1812,45 @@ function loadRecentGames(){
             });
         });
 }
+
+function leaveGameToHome(){
+
+    if(gameMode === "online" && !gameOver){
+        if(typeof sendGameEvent === "function") sendGameEvent("abort");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+
+    if(typeof stopGameChatWatcher === "function") stopGameChatWatcher();
+
+    document.getElementById("game").style.display = "none";
+    document.getElementById("gameBottomBar").style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
+
+    switchScreen("home");
+
+}
+
+function goHomeFromGame(){
+
+    leaveGameToHome();
+
+    if(history.state && history.state.screen === "game"){
+        history.back();
+    }
+
+}
+
+window.addEventListener("popstate", function(event){
+
+    const gameEl = document.getElementById("game");
+    const gameVisible = gameEl && gameEl.style.display === "flex";
+
+    if(gameVisible){
+        leaveGameToHome();
+    }
+
+});
 
 createCoordinates();
