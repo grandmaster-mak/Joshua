@@ -1,4 +1,4 @@
-        // ============================================================
+// ============================================================
 // Online multiplayer via Firebase Realtime Database
 // ============================================================
 
@@ -135,8 +135,13 @@ function startOnlineGame(code){
     listenForRemoteMoves(code);
 
     const myPresenceRef = db.ref("rooms/" + code + "/presence/" + myColor);
-    myPresenceRef.set(true);
-    myPresenceRef.onDisconnect().set(false);
+
+    db.ref(".info/connected").on("value", function(connSnap){
+        if(connSnap.val() === true){
+            myPresenceRef.onDisconnect().set(false);
+            myPresenceRef.set(true);
+        }
+    });
 
     listenForOpponentPresence(code);
     listenForGameEvents(code);
@@ -158,15 +163,36 @@ function startOnlineGame(code){
 }
 
 function listenForOpponentPresence(code){
+
     const opponentColor = myColor === "white" ? "black" : "white";
+    let abandonTimeout = null;
 
     db.ref("rooms/" + code + "/presence/" + opponentColor).on("value", function(snapshot){
+
         if(snapshot.val() === false && !gameOver){
-            gameOver = true;
-            clearInterval(timer);
-            const winner = opponentColor === "white" ? "Black" : "White";
-            showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
+
+            if(abandonTimeout) clearTimeout(abandonTimeout);
+
+            abandonTimeout = setTimeout(function(){
+
+                db.ref("rooms/" + code + "/presence/" + opponentColor).once("value").then(function(recheck){
+
+                    if(recheck.val() === false && !gameOver){
+                        gameOver = true;
+                        clearInterval(timer);
+                        const winner = opponentColor === "white" ? "Black" : "White";
+                        showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
+                    }
+
+                });
+
+            }, 10000);
+
+        }else if(snapshot.val() === true && abandonTimeout){
+            clearTimeout(abandonTimeout);
+            abandonTimeout = null;
         }
+
     });
 }
 function listenForPlayerInfo(code){
@@ -367,4 +393,4 @@ function startOnlineClockDisplay(){
     }, 500);
 
                 }
-                      
+            
