@@ -258,6 +258,8 @@
 
     <div id="game" style="display:none;">
 
+        <button id="gameHomeBtn" class="iconBtn" onclick="goHomeFromGame()" title="Home">🏠</button>
+
         <!-- Board Column: opponent bar, board, your bar -->
         <div id="boardColumn">
 
@@ -437,7 +439,7 @@
                 New Game
             </button>
 
-            <button class="btnSecondary" onclick="closePopup();">
+            <button class="btnSecondary" onclick="closePopup(); goHomeFromGame();">
                 Close
             </button>
 
@@ -521,16 +523,6 @@
             <button onclick="insertEmoji('😢')">😢</button>
             <button onclick="insertEmoji('🎉')">🎉</button>
             <button onclick="insertEmoji('♟️')">♟️</button>
-            <button onclick="insertEmoji('💥')">💥</button>
-            <button onclick="insertEmoji('😭')">😭</button>
-            <button onclick="insertEmoji('🛜')">🛜</button>
-            <button onclick="insertEmoji('✅')">✅</button>
-            <button onclick="insertEmoji('⛳')">⛳</button>
-            <button onclick="insertEmoji('⚔️')">⚔️</button>
-            <button onclick="insertEmoji('🤔')">🤔</button>
-            <button onclick="insertEmoji('👎')">👎</button>
-            <button onclick="insertEmoji('🤛')">🤛</button>
-            <button onclick="insertEmoji('🙆')">🙆</button>
         </div>
 
         <div id="chatInputRow">
