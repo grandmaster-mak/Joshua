@@ -1,4 +1,4 @@
-// ============================================================
+        // ============================================================
 // Online multiplayer via Firebase Realtime Database
 // ============================================================
 
@@ -143,6 +143,8 @@ function startOnlineGame(code){
     listenForClockSync(code);
     startOnlineClockDisplay();
     listenForPlayerInfo(code);
+
+    if(typeof startGameChatWatcher === "function") startGameChatWatcher();
 
     if(myColor === "white"){
         db.ref("rooms/" + code + "/clock").set({
@@ -364,4 +366,5 @@ function startOnlineClockDisplay(){
 
     }, 500);
 
-}
+                }
+                      
