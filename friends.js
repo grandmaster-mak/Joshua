@@ -113,6 +113,19 @@ function loadFriendRequests(){
 
         const section = document.getElementById("friendRequestsSection");
         const list = document.getElementById("friendRequestsList");
+
+        const navBadge = document.getElementById("friendsNavBadge");
+        const requestCount = snapshot.exists() ? snapshot.numChildren() : 0;
+
+        if(navBadge){
+            if(requestCount > 0){
+                navBadge.textContent = requestCount;
+                navBadge.style.display = "flex";
+            }else{
+                navBadge.style.display = "none";
+            }
+        }
+
         if(!section || !list) return;
 
         if(!snapshot.exists()){
@@ -194,6 +207,8 @@ function loadFriendsList(){
 
         list.innerHTML = "";
 
+        if(typeof startFriendChatWatchers === "function") startFriendChatWatchers(uids);
+
         uids.forEach(function(uid){
             db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
 
@@ -218,7 +233,7 @@ function loadFriendsList(){
                             '</div>' +
                         '</div>' +
                         '<div class="friendActions">' +
-                            '<button class="friendMessageBtn" onclick="openFriendChat(\'' + uid + '\', \'' + data.username + '\')" title="Message">💬</button>' +
+                            '<button class="friendMessageBtn" onclick="openFriendChat(\'' + uid + '\', \'' + data.username + '\')" title="Message">💬<span class="cardBadge" id="friendChatBadge_' + uid + '" style="display:none;"></span></button>' +
                             '<button class="btnPrimary" onclick="challengeFriend(\'' + uid + '\', \'' + data.username + '\')">⚔️ Challenge</button>' +
                         '</div>';
 
@@ -338,5 +353,4 @@ function respondToChallenge(accepted){
 
     startOnlineGame(code);
 
-                }
-           
+}
