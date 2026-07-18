@@ -16,6 +16,9 @@ function openGameChat(){
 
     const partnerName = myColor === "white" ? blackPlayer : whitePlayer;
 
+    gameChatUnread = 0;
+    updateGameChatBadge();
+
     openChat("rooms/" + currentRoomCode + "/chat", partnerName);
 
 }
@@ -23,6 +26,9 @@ function openGameChat(){
 function openFriendChat(friendUid, friendUsername){
 
     if(!currentUser) return;
+
+    friendChatUnread[friendUid] = 0;
+    updateFriendChatBadge(friendUid);
 
     const chatId = buildDirectChatId(currentUser.uid, friendUid);
 
@@ -107,3 +113,108 @@ function insertEmoji(emoji){
     input.value += emoji;
     input.focus();
 }
+
+// ===== Unread badge tracking: in-game chat =====
+
+let gameChatUnread = 0;
+let gameChatBgRef = null;
+
+function startGameChatWatcher(){
+
+    stopGameChatWatcher();
+
+    if(gameMode !== "online" || !currentRoomCode || !db) return;
+
+    const watchedRoomCode = currentRoomCode;
+
+    gameChatBgRef = db.ref("rooms/" + watchedRoomCode + "/chat").orderByChild("time").limitToLast(50);
+
+    gameChatBgRef.on("child_added", function(snapshot){
+
+        const msg = snapshot.val();
+        if(!msg || !currentUser || msg.from === currentUser.uid) return;
+
+        const isChatOpen = document.getElementById("chatScreen").style.display === "flex" &&
+            activeChatPath === ("rooms/" + watchedRoomCode + "/chat");
+
+        if(!isChatOpen){
+            gameChatUnread++;
+            updateGameChatBadge();
+        }
+
+    });
+
+}
+
+function stopGameChatWatcher(){
+    if(gameChatBgRef){
+        gameChatBgRef.off();
+        gameChatBgRef = null;
+    }
+    gameChatUnread = 0;
+    updateGameChatBadge();
+}
+
+function updateGameChatBadge(){
+    const badge = document.getElementById("gameChatBadge");
+    if(!badge) return;
+    if(gameChatUnread > 0){
+        badge.textContent = gameChatUnread;
+        badge.style.display = "flex";
+    }else{
+        badge.style.display = "none";
+    }
+}
+
+// ===== Unread badge tracking: friend direct messages =====
+
+let friendChatUnread = {};
+let friendChatWatchers = {};
+
+function startFriendChatWatchers(friendUids){
+
+    Object.keys(friendChatWatchers).forEach(function(uid){
+        if(friendChatWatchers[uid]) friendChatWatchers[uid].off();
+    });
+    friendChatWatchers = {};
+
+    if(!currentUser || !db) return;
+
+    friendUids.forEach(function(friendUid){
+
+        const chatId = buildDirectChatId(currentUser.uid, friendUid);
+        const chatPath = "messages/" + chatId;
+        const ref = db.ref(chatPath).orderByChild("time").limitToLast(50);
+
+        friendChatWatchers[friendUid] = ref;
+
+        ref.on("child_added", function(snapshot){
+
+            const msg = snapshot.val();
+            if(!msg || msg.from === currentUser.uid) return;
+
+            const isChatOpen = document.getElementById("chatScreen").style.display === "flex" &&
+                activeChatPath === chatPath;
+
+            if(!isChatOpen){
+                friendChatUnread[friendUid] = (friendChatUnread[friendUid] || 0) + 1;
+                updateFriendChatBadge(friendUid);
+            }
+
+        });
+
+    });
+
+}
+
+function updateFriendChatBadge(friendUid){
+    const badge = document.getElementById("friendChatBadge_" + friendUid);
+    if(!badge) return;
+    const count = friendChatUnread[friendUid] || 0;
+    if(count > 0){
+        badge.textContent = count;
+        badge.style.display = "flex";
+    }else{
+        badge.style.display = "none";
+    }
+                    }
