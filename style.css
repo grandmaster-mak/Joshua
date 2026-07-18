@@ -64,6 +64,22 @@ body{
     margin-bottom:10px;
 }
 
+#friendsHeader{
+    text-align:center;
+    margin-bottom:6px;
+}
+
+#friendsHeader h2{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:-.3px;
+    margin-bottom:6px;
+}
+
+#friendsHeader .sub{
+    margin-bottom:0;
+}
+
 #tournamentBtn{
     margin:12px 15px 0;
     width:auto;
@@ -120,7 +136,25 @@ body{
     transition:color .15s ease;
 }
 
-.navBtn .navIcon{ font-size:20px; }
+.navBtn .navIcon{ font-size:20px; position:relative; display:inline-block; }
+
+.navBadge{
+    position:absolute;
+    top:-6px;
+    right:-11px;
+    background:#e5484d;
+    color:#fff;
+    font-size:10px;
+    font-weight:800;
+    min-width:16px;
+    height:16px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 4px;
+    line-height:1;
+}
 
 .navBtn.active{ color:#3b7bff; }
 .navBtn:hover{ color:#eef0f3; }
@@ -216,6 +250,26 @@ body{
     font-size:20px;
     line-height:1;
     margin-bottom:4px;
+    position:relative;
+    display:inline-block;
+}
+
+.cardBadge{
+    position:absolute;
+    top:-8px;
+    right:-13px;
+    background:#e5484d;
+    color:#fff;
+    font-size:10px;
+    font-weight:800;
+    min-width:16px;
+    height:16px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 4px;
+    line-height:1;
 }
 
 .gameActionCard .cardTitle{
@@ -1002,31 +1056,4 @@ input::placeholder{ color:#4a5060; }
 #chatInputRow button{
     width:auto;
     margin-top:0;
-    padding:12px 20px;
-    flex-shrink:0;
-}
-
-.friendMessageBtn{
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    background:#1c2028;
-    border:1px solid rgba(255,255,255,0.07);
-    color:#c4c8d1;
-    font-size:15px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    flex-shrink:0;
-    margin:0 0 0 8px;
-    padding:0;
-}
-.friendMessageBtn:hover{ background:#22262f; }
-
-.friendActions{
-    display:flex;
-    align-items:center;
-    flex-shrink:0;
-    }
-    
+    padd
