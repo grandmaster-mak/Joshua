@@ -112,8 +112,10 @@
         <!-- Friends Screen -->
         <div id="friendsScreen" class="screen" style="display:none;">
 
-            <h2>Friends</h2>
-            <p class="sub">Find people by their username and send a friend request.</p>
+            <div id="friendsHeader">
+                <h2>Friends</h2>
+                <p class="sub">Find people by their username and send a friend request.</p>
+            </div>
 
             <div id="friendSearchRow">
                 <input type="text" id="friendSearchInput" placeholder="Search by username">
@@ -241,7 +243,7 @@
             </button>
 
             <button class="navBtn" data-screen="friends" onclick="switchScreen('friends')">
-                <span class="navIcon">👥</span>
+                <span class="navIcon">👥<span class="navBadge" id="friendsNavBadge" style="display:none;"></span></span>
                 <span class="navLabel">Friends</span>
             </button>
 
@@ -351,7 +353,7 @@
         </button>
 
         <button class="gameActionCard cardTeal" id="chatActionCard" onclick="openGameChat()" style="display:none;">
-            <span class="cardIcon">💬</span>
+            <span class="cardIcon">💬<span class="cardBadge" id="gameChatBadge" style="display:none;"></span></span>
             <span class="cardTitle">CHAT</span>
             <span class="cardSub">Message opponent</span>
         </button>
@@ -519,6 +521,16 @@
             <button onclick="insertEmoji('😢')">😢</button>
             <button onclick="insertEmoji('🎉')">🎉</button>
             <button onclick="insertEmoji('♟️')">♟️</button>
+            <button onclick="insertEmoji('💥')">💥</button>
+            <button onclick="insertEmoji('😭')">😭</button>
+            <button onclick="insertEmoji('🛜')">🛜</button>
+            <button onclick="insertEmoji('✅')">✅</button>
+            <button onclick="insertEmoji('⛳')">⛳</button>
+            <button onclick="insertEmoji('⚔️')">⚔️</button>
+            <button onclick="insertEmoji('🤔')">🤔</button>
+            <button onclick="insertEmoji('👎')">👎</button>
+            <button onclick="insertEmoji('🤛')">🤛</button>
+            <button onclick="insertEmoji('🙆')">🙆</button>
         </div>
 
         <div id="chatInputRow">
