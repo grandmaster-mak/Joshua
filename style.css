@@ -1084,7 +1084,37 @@ input::placeholder{ color:#4a5060; }
     align-items:center;
     flex-shrink:0;
 }
+#accountStatsRow{
+    display:flex;
+    justify-content:center;
+    gap:28px;
+    margin-bottom:20px;
+}
 
+.accountStatItem{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+.accountStatValue{
+    font-size:20px;
+    font-weight:800;
+    color:#eef0f3;
+}
+
+.accountStatLabel{
+    font-size:11px;
+    color:#7d8492;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    margin-top:2px;
+}
+
+#accountHistoryList{
+    max-height:260px;
+    overflow-y:auto;
+}
 /* ===== Splash Screen ===== */
 
 #splashScreen{
