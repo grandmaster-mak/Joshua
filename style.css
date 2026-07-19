@@ -1037,3 +1037,520 @@ input::placeholder{ color:#4a5060; }
 }
 
 .chatBubbleMine{
+align-self:flex-end;
+    background:linear-gradient(135deg, #3b7bff, #2158d6);
+    color:#fff;
+    border-bottom-right-radius:4px;
+}
+
+.chatBubbleTheirs{
+    align-self:flex-start;
+    background:#1c2028;
+    color:#eef0f3;
+    border:1px solid rgba(255,255,255,0.06);
+    border-bottom-left-radius:4px;
+}
+
+#emojiRow{
+    display:flex;
+    gap:6px;
+    padding:8px 12px;
+    overflow-x:auto;
+    background:#0e1015;
+    border-top:1px solid rgba(255,255,255,0.05);
+    flex-shrink:0;
+}
+
+#emojiRow button{
+    width:auto;
+    margin-top:0;
+    padding:6px 8px;
+    font-size:19px;
+    background:none;
+    border:none;
+    flex-shrink:0;
+}
+
+#chatInputRow{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    background:#15181f;
+    border-top:1px solid rgba(255,255,255,0.06);
+    flex-shrink:0;
+}
+
+#chatInputRow input{
+    flex:1;
+    margin-top:0;
+}
+
+#chatInputRow button{
+    width:auto;
+    margin-top:0;
+    padding:12px 20px;
+    flex-shrink:0;
+}
+
+.friendMessageBtn{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:#1c2028;
+    border:1px solid rgba(255,255,255,0.07);
+    color:#c4c8d1;
+    font-size:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+    margin:0 0 0 8px;
+    padding:0;
+    position:relative;
+}
+.friendMessageBtn:hover{ background:#22262f; }
+
+.friendActions{
+    display:flex;
+    align-items:center;
+    flex-shrink:0;
+}
+
+/* ===== Splash Screen ===== */
+
+#splashScreen{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    width:100%;
+    max-width:480px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:
+        radial-gradient(circle at 50% 36%, rgba(212,175,55,0.16), transparent 42%),
+        radial-gradient(circle at 15% 88%, rgba(47,111,237,0.09), transparent 45%),
+        radial-gradient(circle at 88% 85%, rgba(35,196,131,0.07), transparent 45%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.022) 0px, rgba(255,255,255,0.022) 2px, transparent 2px, transparent 32px),
+        repeating-linear-gradient(-45deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 2px, transparent 2px, transparent 32px),
+        #0a0c10;
+    overflow:hidden;
+    opacity:1;
+    transition:opacity 0.6s ease;
+}
+
+#splashScreen.splashFadeOut{
+    opacity:0;
+    pointer-events:none;
+}
+
+#splashVignette{
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at 50% 42%, transparent 38%, rgba(0,0,0,0.6) 100%);
+    pointer-events:none;
+    z-index:1;
+}
+
+#splashPieceStage{
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:2;
+}
+
+.splashPieceWrap{
+    position:relative;
+    opacity:0;
+}
+
+.splashPieceWrap::after{
+    content:"";
+    position:absolute;
+    bottom:6px;
+    left:50%;
+    width:70%;
+    height:14px;
+    background:radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 72%);
+    transform:translateX(-50%);
+    filter:blur(2px);
+}
+
+.splashPiece{
+    font-size:150px;
+    line-height:1;
+    display:block;
+    filter:drop-shadow(0 12px 16px rgba(0,0,0,0.55));
+}
+
+.splashKingWrap{
+    z-index:3;
+    transform:translateY(40px) scale(0.85);
+    animation:splashRiseKing 1.15s cubic-bezier(.2,.8,.25,1) 0.15s forwards;
+}
+
+.splashKing{
+    font-size:216px;
+    background:
+        linear-gradient(180deg,
+            #fffbe8 0%,
+            #fff3c4 8%,
+            #f6d772 20%,
+            #d9ab2f 38%,
+            #edc65a 50%,
+            #b8811f 64%,
+            #a06f16 76%,
+            #f4de8e 86%,
+            #6b4c0e 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    filter:
+        drop-shadow(0 0 30px rgba(212,175,55,0.5))
+        drop-shadow(0 16px 22px rgba(0,0,0,0.6));
+}
+
+.splashKnightWrap{
+    z-index:2;
+    transform:translateY(40px) scale(0.85);
+}
+
+.splashKnightLeftWrap{
+    margin-right:-20px;
+    animation:splashRiseLeft 1.15s cubic-bezier(.2,.8,.25,1) 0.4s forwards;
+}
+
+.splashKnightRightWrap{
+    margin-left:-20px;
+    animation:splashRiseRight 1.15s cubic-bezier(.2,.8,.25,1) 0.4s forwards;
+}
+
+.splashKnight{
+    background:
+        linear-gradient(180deg,
+            #ffffff 0%,
+            #f3f3f3 10%,
+            #d4d4d4 24%,
+            #a8a8a8 40%,
+            #f0f0f0 52%,
+            #8c8c8c 68%,
+            #6e6e6e 82%,
+            #dedede 90%,
+            #4d4d4d 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    filter:
+        drop-shadow(0 0 16px rgba(255,255,255,0.12))
+        drop-shadow(0 12px 16px rgba(0,0,0,0.55));
+}
+
+.splashKnightLeft{
+    transform:rotate(-10deg) scaleX(-1);
+    display:inline-block;
+}
+
+.splashKnightRight{
+    transform:rotate(10deg);
+    display:inline-block;
+}
+
+@keyframes splashRiseKing{
+    from{ opacity:0; transform:translateY(40px) scale(0.85); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes splashRiseLeft{
+    from{ opacity:0; transform:translateY(40px) scale(0.85); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes splashRiseRight{
+    from{ opacity:0; transform:translateY(40px) scale(0.85); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+#splashWordmark{
+    position:relative;
+    z-index:2;
+    margin-top:22px;
+    font-size:34px;
+    font-weight:800;
+    letter-spacing:6px;
+    color:#f1eddf;
+    opacity:0;
+    animation:splashFadeUp 0.9s ease 1.15s forwards;
+}
+
+#splashTagline{
+    position:relative;
+    z-index:2;
+    margin-top:8px;
+    font-size:12.5px;
+    letter-spacing:2.5px;
+    color:#9099a6;
+    text-transform:uppercase;
+    opacity:0;
+    animation:splashFadeUp 0.9s ease 1.35s forwards;
+}
+
+@keyframes splashFadeUp{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:translateY(0); }
+}
+
+#splashLoadingDots{
+    position:absolute;
+    bottom:60px;
+    z-index:2;
+    display:flex;
+    gap:8px;
+    opacity:0;
+    animation:splashFadeUp 0.9s ease 1.55s forwards;
+}
+
+.splashDot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#d4af37;
+    animation:splashPulse 1.2s ease-in-out infinite;
+}
+.splashDot:nth-child(2){ animation-delay:0.15s; }
+.splashDot:nth-child(3){ animation-delay:0.3s; }
+
+@keyframes splashPulse{
+    0%, 100%{ opacity:0.25; transform:scale(0.8); }
+    50%{ opacity:1; transform:scale(1.15); }
+}
+
+#accountStatsRow{
+    display:flex;
+    justify-content:center;
+    gap:28px;
+    margin-bottom:20px;
+}
+
+.accountStatItem{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+.accountStatValue{
+    font-size:20px;
+    font-weight:800;
+    color:#eef0f3;
+}
+
+.accountStatLabel{
+    font-size:11px;
+    color:#7d8492;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    margin-top:2px;
+}
+
+#accountHistoryList{
+    max-height:260px;
+    overflow-y:auto;
+}
+
+/* ===== Tournaments Screen ===== */
+
+#tournamentsScreen{
+    position:fixed;
+    inset:0;
+    z-index:200;
+    background:#0a0c10;
+    display:flex;
+    flex-direction:column;
+    max-width:480px;
+    margin:0 auto;
+}
+
+#tournamentsBody{
+    flex:1;
+    overflow-y:auto;
+    padding:16px 18px;
+}
+
+.tournamentCard{
+    background:#15181f;
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-top:10px;
+    cursor:pointer;
+}
+.tournamentCard:active{ background:#1c2028; }
+
+.tournamentCardName{ font-weight:700; font-size:15px; }
+.tournamentCardMeta{ font-size:12px; color:#7d8492; margin-top:4px; }
+
+.standingRow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    font-size:13.5px;
+}
+.standingRow:last-child{ border-bottom:none; }
+.standingRank{ width:26px; font-weight:800; color:#7d8492; }
+.standingName{ flex:1; font-weight:600; }
+.standingPoints{ font-weight:800; color:#d4af37; }
+
+.pairingRow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    font-size:13.5px;
+}
+.pairingRow:last-child{ border-bottom:none; }
+.pairingNames{ font-weight:600; }
+.pairingResult{ font-size:12px; color:#7d8492; }
+
+/* ===== Home redesign additions ===== */
+
+.cardBigIcon{
+    font-family:'Material Icons';
+    font-size:34px !important;
+    margin-bottom:6px;
+}
+
+.cardPlayPill{
+    width:auto;
+    align-self:flex-start;
+    margin-top:10px;
+    padding:8px 18px;
+    background:#fff;
+    color:#111;
+    font-weight:700;
+    font-size:13px;
+    border-radius:20px;
+    border:none;
+}
+
+.quickLinksGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.quickLinkTile{
+    background:#171717;
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px;
+    padding:14px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+}
+
+.quickLinkTile:active{ background:#1f1f1f; }
+
+.quickLinkIcon{ font-size:22px; margin-bottom:6px; }
+.quickLinkLabel{ font-weight:700; font-size:14px; }
+.quickLinkSub{ font-size:11.5px; color:#9099a6; margin-top:2px; }
+
+.recentGameRowRich{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.recentGameRowRich:last-child{ border-bottom:none; }
+
+.recentGameAvatarWrap{ position:relative; flex-shrink:0; }
+
+.recentGameAvatarImg{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    object-fit:cover;
+    border:1px solid rgba(255,255,255,0.08);
+}
+
+.recentGameOnlineDot{
+    position:absolute;
+    bottom:-1px;
+    right:-1px;
+    width:10px;
+    height:10px;
+    background:#22c55e;
+    border:2px solid #0a0c10;
+    border-radius:50%;
+}
+
+.recentGameName{ font-weight:700; font-size:13.5px; flex:1; }
+
+.recentGameChallengeBtn{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:#1c2028;
+    border:1px solid rgba(255,255,255,0.07);
+    color:#c4c8d1;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+    padding:0;
+    margin:0;
+}
+
+.onlineFriendsStrip{
+    display:flex;
+    gap:14px;
+    overflow-x:auto;
+    padding-bottom:4px;
+}
+
+.onlineFriendItem{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    flex-shrink:0;
+    width:56px;
+    cursor:pointer;
+}
+
+.onlineFriendAvatarWrap{ position:relative; }
+
+.onlineFriendAvatarImg{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid #22c55e;
+}
+
+.onlineFriendDot{
+    position:absolute;
+    bottom:0;
+    right:0;
+    width:12px;
+    height:12px;
+    background:#22c55e;
+    border:2px solid #0a0c10;
+    border-radius:50%;
+}
+
+.onlineFriendName{
+    font-size:11px;
+    margin-top:4px;
+    color:#c4c8d1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:56px;
+    }
