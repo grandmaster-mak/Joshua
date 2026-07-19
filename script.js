@@ -1852,7 +1852,41 @@ function loadRecentGames(){
             });
         });
 }
+function loadAccountHistory(){
 
+    if(!db || !currentUser) return;
+
+    db.ref("users/" + currentUser.uid + "/private/history")
+        .orderByChild("time")
+        .limitToLast(50)
+        .once("value")
+        .then(function(snapshot){
+
+            const list = document.getElementById("accountHistoryList");
+            if(!list) return;
+
+            const entries = [];
+            snapshot.forEach(function(child){ entries.push(child.val()); });
+            entries.reverse();
+
+            if(entries.length === 0){
+                list.innerHTML = '<p class="sub">No games played yet.</p>';
+                return;
+            }
+
+            list.innerHTML = "";
+            entries.forEach(function(entry){
+                const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
+                const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+                const row = document.createElement("div");
+                row.className = "gameRow";
+                row.innerHTML = '<span class="gameOpponent">' + entry.opponent + '</span><span class="gameResult ' + cls + '">' + label + '</span>';
+                list.appendChild(row);
+            });
+
+        });
+
+}
 function leaveGameToHome(){
 
     gameOver = true;
