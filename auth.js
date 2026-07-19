@@ -224,6 +224,7 @@ function initAuthListener(){
 
                 if(typeof loadRecentGames === "function") loadRecentGames();
                 if(typeof loadFriendsData === "function") loadFriendsData();
+                if(typeof loadAccountHistory === "function") loadAccountHistory();
                 if(typeof listenForChallenges === "function") listenForChallenges();
 
                 if(data.photoURL){
