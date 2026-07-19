@@ -1758,6 +1758,9 @@ function updateRatingDisplay(myResult){
 }
 
 function recordGameResult(myResult, opponentName){
+    if(typeof activeTournamentId !== "undefined" && activeTournamentId && typeof recordTournamentGameResult === "function"){
+    recordTournamentGameResult(myResult);
+}
 
     if(gameMode === "human") return;
     if(typeof currentUser === "undefined" || !currentUser) return;
