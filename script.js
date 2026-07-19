@@ -31,6 +31,8 @@ let whiteRating = null;
 let blackRating = null;
 let whitePhoto = null;
 let blackPhoto = null;
+let whiteUid = null;
+let blackUid = null;
 
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
 let whiteLeftRookMoved = false;
@@ -1712,6 +1714,11 @@ function myOpponentName(){
     return myColor === "white" ? blackPlayer : whitePlayer;
 }
 
+function myOpponentUid(){
+    if(gameMode !== "online") return null;
+    return myColor === "white" ? blackUid : whiteUid;
+}
+
 function updateRatingDisplay(myResult){
 
     if(gameMode !== "online") return;
@@ -1805,6 +1812,7 @@ function recordGameResult(myResult, opponentName){
 
     db.ref("users/" + currentUser.uid + "/private/history").push({
         opponent: opponentName || "Unknown",
+        opponentUid: (typeof myOpponentUid === "function") ? myOpponentUid() : null,
         result: myResult,
         mode: gameMode,
         time: Date.now()
@@ -1834,13 +1842,56 @@ function loadRecentGames(){
             }
 
             list.innerHTML = "";
+
             entries.forEach(function(entry){
+
                 const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
                 const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+
                 const row = document.createElement("div");
-                row.className = "gameRow";
-                row.innerHTML = '<span class="gameOpponent">' + entry.opponent + '</span><span class="gameResult ' + cls + '">' + label + '</span>';
-                list.appendChild(row);
+                row.className = "recentGameRowRich";
+
+                if(entry.opponentUid){
+
+                    row.innerHTML =
+                        '<div class="recentGameAvatarWrap">' +
+                            '<img class="recentGameAvatarImg" src="' + DEFAULT_AVATAR_SRC + '" alt="">' +
+                        '</div>' +
+                        '<span class="recentGameName">' + entry.opponent + '</span>' +
+                        '<button class="recentGameChallengeBtn" onclick="challengeFriend(\'' + entry.opponentUid + '\', \'' + entry.opponent + '\')">⚔️</button>' +
+                        '<span class="gameResult ' + cls + '">' + label + '</span>';
+
+                    list.appendChild(row);
+
+                    const avatarImg = row.querySelector(".recentGameAvatarImg");
+                    const avatarWrap = row.querySelector(".recentGameAvatarWrap");
+
+                    db.ref("users/" + entry.opponentUid + "/public").once("value").then(function(userSnap){
+                        const data = userSnap.val();
+                        if(data && data.photoURL && avatarImg) avatarImg.src = data.photoURL;
+                    });
+
+                    db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
+                        if(presenceSnap.val() === true && avatarWrap){
+                            const dot = document.createElement("span");
+                            dot.className = "recentGameOnlineDot";
+                            avatarWrap.appendChild(dot);
+                        }
+                    });
+
+                }else{
+
+                    row.innerHTML =
+                        '<div class="recentGameAvatarWrap">' +
+                            '<span style="font-size:22px;">🤖</span>' +
+                        '</div>' +
+                        '<span class="recentGameName">' + entry.opponent + '</span>' +
+                        '<span class="gameResult ' + cls + '">' + label + '</span>';
+
+                    list.appendChild(row);
+
+                }
+
             });
         });
 }
