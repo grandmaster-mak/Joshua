@@ -562,6 +562,70 @@
             <button id="chatBackBtn" class="iconBtn" onclick="closeChat()" title="Back">←</button>
             <span id="chatWithName">Chat</span>
         </div>
+        <!-- Tournaments Screen -->
+<div id="tournamentsScreen" style="display:none;">
+
+    <div id="chatHeader">
+        <button class="iconBtn" onclick="closeTournaments()" title="Back">←</button>
+        <span>Tournaments</span>
+    </div>
+
+    <div id="tournamentsBody">
+
+        <div id="tournamentsListView">
+            <button class="btnPrimary" onclick="showCreateTournament()">+ Create Tournament</button>
+            <span class="fieldLabel">Open Tournaments</span>
+            <div id="tournamentsList"><p class="sub">Loading...</p></div>
+        </div>
+
+        <div id="tournamentCreateView" style="display:none;">
+            <span class="fieldLabel">Tournament Name</span>
+            <input type="text" id="tournamentNameInput" placeholder="e.g. Weekend Blitz">
+
+            <span class="fieldLabel">Number of Rounds</span>
+            <select id="tournamentRoundsInput">
+                <option value="4">4 Rounds</option>
+                <option value="5">5 Rounds</option>
+                <option value="6" selected>6 Rounds</option>
+                <option value="7">7 Rounds</option>
+                <option value="8">8 Rounds</option>
+                <option value="9">9 Rounds</option>
+                <option value="10">10 Rounds</option>
+            </select>
+
+            <span class="fieldLabel">Time Control</span>
+            <select id="tournamentTimeInput">
+                <option value="180">3 Minutes</option>
+                <option value="300">5 Minutes</option>
+                <option value="600" selected>10 Minutes</option>
+                <option value="900">15 Minutes</option>
+                <option value="-1">Unlimited</option>
+            </select>
+
+            <button class="btnPrimary" onclick="createTournament()">Create</button>
+            <button class="btnSecondary" onclick="showTournamentsList()">Cancel</button>
+        </div>
+
+        <div id="tournamentDetailView" style="display:none;">
+            <h2 id="tournamentDetailName"></h2>
+            <p class="sub" id="tournamentDetailStatus"></p>
+
+            <button class="btnPrimary" id="tournamentJoinBtn" onclick="joinTournament()" style="display:none;">Join Tournament</button>
+            <button class="btnGold" id="tournamentStartBtn" onclick="startTournament()" style="display:none;">Start Tournament</button>
+            <button class="btnGold" id="tournamentNextRoundBtn" onclick="advanceTournamentRound()" style="display:none;">Start Next Round</button>
+
+            <span class="fieldLabel">Standings</span>
+            <div id="tournamentStandings"></div>
+
+            <span class="fieldLabel">Current Round Pairings</span>
+            <div id="tournamentPairings"></div>
+
+            <button class="btnSecondary" onclick="showTournamentsList()">Back to List</button>
+        </div>
+
+    </div>
+
+</div>
 
         <div id="chatMessages"></div>
 
