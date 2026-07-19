@@ -44,13 +44,6 @@ function loadCachedProfile(){
         if(ratingEl) ratingEl.textContent = cached.rating;
         if(winsEl) winsEl.textContent = cached.wins;
         if(streakEl) streakEl.textContent = cached.winStreak;
-        const accountRatingEl = document.getElementById("accountRatingValue");
-const accountWinsEl = document.getElementById("accountWinsValue");
-const accountStreakEl = document.getElementById("accountStreakValue");
-
-if(accountRatingEl) accountRatingEl.textContent = data.rating || 100;
-if(accountWinsEl) accountWinsEl.textContent = data.wins || 0;
-if(accountStreakEl) accountStreakEl.textContent = data.winStreak || 0;
 
         if(cached.photoURL){
             if(homeAvatar) homeAvatar.src = cached.photoURL;
@@ -229,10 +222,18 @@ function initAuthListener(){
                     streakEl.textContent = data.winStreak || 0;
                 }
 
+                const accountRatingEl = document.getElementById("accountRatingValue");
+                const accountWinsEl = document.getElementById("accountWinsValue");
+                const accountStreakEl = document.getElementById("accountStreakValue");
+
+                if(accountRatingEl) accountRatingEl.textContent = data.rating || 100;
+                if(accountWinsEl) accountWinsEl.textContent = data.wins || 0;
+                if(accountStreakEl) accountStreakEl.textContent = data.winStreak || 0;
+
                 if(typeof loadRecentGames === "function") loadRecentGames();
                 if(typeof loadFriendsData === "function") loadFriendsData();
-                if(typeof loadAccountHistory === "function") loadAccountHistory();
                 if(typeof listenForChallenges === "function") listenForChallenges();
+                if(typeof loadAccountHistory === "function") loadAccountHistory();
 
                 if(data.photoURL){
                     if(avatarImg) avatarImg.src = data.photoURL;
@@ -339,4 +340,5 @@ function handleProfilePhotoSelect(event){
 
     reader.readAsDataURL(file);
 
-}
+            }
+    
