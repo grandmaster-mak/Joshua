@@ -208,6 +208,7 @@ function loadFriendsList(){
         list.innerHTML = "";
 
         if(typeof startFriendChatWatchers === "function") startFriendChatWatchers(uids);
+        if(typeof loadOnlineFriendsStrip === "function") loadOnlineFriendsStrip(uids);
 
         uids.forEach(function(uid){
             db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
@@ -352,5 +353,62 @@ function respondToChallenge(accepted){
     db.ref("rooms/" + code + "/status").set("playing");
 
     startOnlineGame(code);
+
+}
+
+function loadOnlineFriendsStrip(friendUids){
+
+    const strip = document.getElementById("onlineFriendsStrip");
+    if(!strip || !db) return;
+
+    if(!friendUids || friendUids.length === 0){
+        strip.innerHTML = "";
+        return;
+    }
+
+    const promises = friendUids.map(function(uid){
+
+        return db.ref("presence/" + uid).once("value").then(function(presenceSnap){
+
+            if(presenceSnap.val() !== true) return null;
+
+            return db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
+                const data = userSnap.val();
+                if(!data) return null;
+                return { uid: uid, username: data.username, photoURL: data.photoURL };
+            });
+
+        });
+
+    });
+
+    Promise.all(promises).then(function(results){
+
+        const online = results.filter(function(r){ return r !== null; });
+
+        if(online.length === 0){
+            strip.innerHTML = "";
+            return;
+        }
+
+        strip.innerHTML = "";
+
+        online.forEach(function(friend){
+
+            const item = document.createElement("div");
+            item.className = "onlineFriendItem";
+            item.onclick = function(){ openFriendChat(friend.uid, friend.username); };
+            item.innerHTML =
+                '<div class="onlineFriendAvatarWrap">' +
+                    '<img class="onlineFriendAvatarImg" src="' + (friend.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                    '<span class="onlineFriendDot"></span>' +
+                '</div>' +
+                '<span class="onlineFriendName">' + friend.username + '</span>';
+
+            strip.appendChild(item);
+
+        });
+
+    });
 
 }
