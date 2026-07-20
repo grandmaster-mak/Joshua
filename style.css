@@ -5,8 +5,11 @@
 body{
     font-family:'Inter', system-ui, -apple-system, sans-serif;
     background:
-        radial-gradient(circle at 20% 0%, rgba(47,111,237,0.08), transparent 40%),
-        radial-gradient(circle at 80% 100%, rgba(35,196,131,0.06), transparent 40%),
+        radial-gradient(circle at 25% 8%, rgba(59,123,255,0.16), transparent 38%),
+        radial-gradient(circle at 85% 20%, rgba(124,58,237,0.13), transparent 40%),
+        radial-gradient(circle at 15% 55%, rgba(35,196,131,0.09), transparent 42%),
+        radial-gradient(circle at 90% 75%, rgba(35,196,131,0.08), transparent 40%),
+        radial-gradient(circle at 50% 100%, rgba(212,175,55,0.06), transparent 45%),
         #0a0c10;
     color:#eef0f3;
     min-height:100vh;
@@ -709,13 +712,11 @@ input::placeholder{ color:#4a5060; }
 
 #headerKingPiece{
     position:absolute;
-    top:-20px;
-    right:70px;
-    height:150px;
-    opacity:0.9;
-    filter:
-        brightness(0) saturate(100%) invert(48%) sepia(78%) saturate(2476%) hue-rotate(202deg) brightness(101%) contrast(101%)
-        drop-shadow(0 0 22px rgba(59,123,255,0.65));
+    top:10px;
+    right:0px;
+    height:110px;
+    opacity:0.35;
+    filter:drop-shadow(0 0 24px rgba(59,123,255,0.55));
     pointer-events:none;
     z-index:0;
 }
@@ -792,20 +793,42 @@ input::placeholder{ color:#4a5060; }
 }
 
 .action-card{
+    position:relative;
+    overflow:hidden;
     flex:1 1 0;
     min-width:0;
     min-height:150px;
     border-radius:12px;
-    padding:12px 10px;
+    padding:0;
     color:white;
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-start;
     cursor:pointer;
     transition:transform .12s ease, filter .15s ease;
 }
 .action-card:hover{ filter:brightness(1.08); }
 .action-card:active{ transform:scale(0.96); }
+
+.cardBgImage{
+    position:absolute;
+    top:0;
+    right:0;
+    width:75%;
+    height:100%;
+    object-fit:contain;
+    object-position:right center;
+    opacity:0.32;
+    pointer-events:none;
+    z-index:0;
+}
+
+.cardContent{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    height:100%;
+    padding:12px 10px;
+}
 
 .action-card .material-icons{
     font-family:'Material Icons';
@@ -894,6 +917,13 @@ input::placeholder{ color:#4a5060; }
     color:#9c9c9c;
     font-size:11px;
     margin-top:4px;
+}
+
+.statSubtitle{
+    display:block;
+    font-size:10px;
+    color:#7d8492;
+    margin-top:2px;
 }
 
 .rating{color:#49d64f;}
@@ -1430,12 +1460,15 @@ input::placeholder{ color:#4a5060; }
     align-self:flex-start;
     margin-top:8px;
     padding:6px 14px;
-    background:#fff;
-    color:#111;
+    background:rgba(255,255,255,0.16);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+    color:#fff;
     font-weight:700;
     font-size:12px;
     border-radius:20px;
-    border:none;
+    border:1px solid rgba(255,255,255,0.35);
+    box-shadow:0 0 14px rgba(255,255,255,0.25);
 }
 
 .quickLinksGrid{
