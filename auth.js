@@ -159,11 +159,14 @@ function logIn(){
 
 }
 
+let userExplicitlyLoggedOut = false;
+
 function logOut(){
     if(auth && currentUser && db){
         db.ref("presence/" + currentUser.uid).set(false);
     }
     if(auth){
+        userExplicitlyLoggedOut = true;
         auth.signOut();
     }
 }
@@ -222,6 +225,17 @@ function initAuthListener(){
                     streakEl.textContent = data.winStreak || 0;
                 }
 
+                const totalGames = (data.wins || 0) + (data.losses || 0) + (data.draws || 0);
+                const winRateEl = document.getElementById("winRateSubtitle");
+                if(winRateEl){
+                    winRateEl.textContent = totalGames > 0 ? Math.round((data.wins || 0) / totalGames * 100) + "% Win Rate" : "";
+                }
+
+                const bestStreakEl = document.getElementById("bestStreakSubtitle");
+                if(bestStreakEl){
+                    bestStreakEl.textContent = data.bestStreak ? "Best: " + data.bestStreak : "";
+                }
+
                 const accountRatingEl = document.getElementById("accountRatingValue");
                 const accountWinsEl = document.getElementById("accountWinsValue");
                 const accountStreakEl = document.getElementById("accountStreakValue");
@@ -247,11 +261,18 @@ function initAuthListener(){
         }else{
 
             currentUser = null;
+
+            if(!userExplicitlyLoggedOut){
+                console.log("Auth check came back empty, but this wasn't an explicit logout — keeping the cached profile displayed rather than resetting to placeholders (likely a network hiccup).");
+                return;
+            }
+
             currentUsername = null;
             currentUserCountry = null;
             currentUserFlag = "";
             currentUserRating = 100;
             currentUserPhotoURL = null;
+            userExplicitlyLoggedOut = false;
 
             document.getElementById("loggedOutView").style.display = "block";
             document.getElementById("loggedInView").style.display = "none";
@@ -340,5 +361,4 @@ function handleProfilePhotoSelect(event){
 
     reader.readAsDataURL(file);
 
-            }
-    
+}
