@@ -1037,7 +1037,7 @@ input::placeholder{ color:#4a5060; }
 }
 
 .chatBubbleMine{
-align-self:flex-end;
+    align-self:flex-end;
     background:linear-gradient(135deg, #3b7bff, #2158d6);
     color:#fff;
     border-bottom-right-radius:4px;
@@ -1553,4 +1553,4 @@ align-self:flex-end;
     overflow:hidden;
     text-overflow:ellipsis;
     max-width:56px;
-    }
+}
