@@ -1782,11 +1782,13 @@ function recordGameResult(myResult, opponentName){
         data.losses = data.losses || 0;
         data.draws = data.draws || 0;
         data.winStreak = data.winStreak || 0;
+        data.bestStreak = data.bestStreak || 0;
         data.rating = data.rating || 100;
 
         if(myResult === "win"){
             data.wins++;
             data.winStreak++;
+            if(data.winStreak > data.bestStreak) data.bestStreak = data.winStreak;
             if(gameMode !== "ai") data.rating += 8;
         }else if(myResult === "loss"){
             data.losses++;
