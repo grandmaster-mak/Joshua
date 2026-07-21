@@ -676,7 +676,7 @@
                 </select>
 
                 <button class="btnPrimary" onclick="createTournament()">Create</button>
-                <button class="btnSecondary" onclick="showTournamentsList()">Cancel</button>
+                <button class="btnSecondary" onclick="history.back()">Cancel</button>
             </div>
 
             <div id="tournamentDetailView" style="display:none;">
@@ -693,7 +693,7 @@
                 <span class="fieldLabel">Current Round Pairings</span>
                 <div id="tournamentPairings"></div>
 
-                <button class="btnSecondary" onclick="showTournamentsList()">Back to List</button>
+                <button class="btnSecondary" onclick="history.back()">Back to List</button>
             </div>
 
         </div>
