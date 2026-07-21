@@ -59,7 +59,16 @@ body{
     padding-left:24px;
     padding-right:24px;
 }
-
+#puzzleScreen{
+    position:fixed;
+    inset:0;
+    z-index:200;
+    background:#0a0c10;
+    display:flex;
+    flex-direction:column;
+    max-width:480px;
+    margin:0 auto;
+}
 #friendsScreen h2,
 #accountScreen h2{
     font-size:20px;
