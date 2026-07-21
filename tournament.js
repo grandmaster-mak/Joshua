@@ -8,24 +8,35 @@ let currentViewedTournamentId = null;
 
 function openTournaments(){
     document.getElementById("tournamentsScreen").style.display = "flex";
+    history.pushState({ screen: "tournaments", view: "list" }, "", "#tournaments");
     showTournamentsList();
 }
 
 function closeTournaments(){
     document.getElementById("tournamentsScreen").style.display = "none";
+    if(history.state && history.state.screen === "tournaments"){
+        history.back();
+    }
 }
 
 function showTournamentsList(){
     document.getElementById("tournamentsListView").style.display = "block";
     document.getElementById("tournamentCreateView").style.display = "none";
     document.getElementById("tournamentDetailView").style.display = "none";
+    stopTournamentDetailListener();
     loadTournamentsList();
 }
 
 function showCreateTournament(){
+    history.pushState({ screen: "tournaments", view: "create" }, "", "#tournaments-create");
+    renderCreateTournamentView();
+}
+
+function renderCreateTournamentView(){
     document.getElementById("tournamentsListView").style.display = "none";
     document.getElementById("tournamentCreateView").style.display = "block";
     document.getElementById("tournamentDetailView").style.display = "none";
+    stopTournamentDetailListener();
 }
 
 function loadTournamentsList(){
@@ -108,12 +119,27 @@ function createTournament(){
         currentRound: 0,
         players: playerEntry
     }).then(function(){
-        openTournamentDetail(newRef.key);
+        history.replaceState({ screen: "tournaments", view: "detail", id: newRef.key }, "", "#tournaments-detail");
+        renderTournamentDetailView(newRef.key);
     });
 
 }
 
+let currentTournamentDetailRef = null;
+
+function stopTournamentDetailListener(){
+    if(currentTournamentDetailRef){
+        currentTournamentDetailRef.off();
+        currentTournamentDetailRef = null;
+    }
+}
+
 function openTournamentDetail(tournamentId){
+    history.pushState({ screen: "tournaments", view: "detail", id: tournamentId }, "", "#tournaments-detail");
+    renderTournamentDetailView(tournamentId);
+}
+
+function renderTournamentDetailView(tournamentId){
 
     currentViewedTournamentId = tournamentId;
 
@@ -121,7 +147,11 @@ function openTournamentDetail(tournamentId){
     document.getElementById("tournamentCreateView").style.display = "none";
     document.getElementById("tournamentDetailView").style.display = "block";
 
-    db.ref("tournaments/" + tournamentId).on("value", function(snapshot){
+    stopTournamentDetailListener();
+
+    currentTournamentDetailRef = db.ref("tournaments/" + tournamentId);
+
+    currentTournamentDetailRef.on("value", function(snapshot){
 
         if(currentViewedTournamentId !== tournamentId) return;
 
