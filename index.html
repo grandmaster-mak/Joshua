@@ -159,27 +159,6 @@
                         <span class="quickLinkLabel">Tournaments</span>
                         <span class="quickLinkSub">Compete &amp; Win</span>
                     </div>
-                    <!-- Daily Puzzle Screen -->
-<div id="puzzleScreen" style="display:none;">
-
-    <div id="chatHeader">
-        <button class="iconBtn" onclick="closePuzzle()" title="Back">←</button>
-        <span>Daily Puzzle</span>
-    </div>
-
-    <div style="padding:20px; text-align:center;">
-
-        <p class="sub" id="puzzleDescription" style="margin-bottom:16px;"></p>
-
-        <div id="puzzleBoard" style="width:340px; height:340px; margin:0 auto; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border-radius:10px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.5);"></div>
-
-        <p id="puzzleFeedback" style="margin-top:16px; font-weight:700; font-size:15px;"></p>
-
-    </div>
-
-</div>
-
-<!-- Tournaments Screen -->
 
                     <div class="quickLinkTile" onclick="openDailyPuzzle()">
                         <span class="quickLinkIcon">🧩</span>
@@ -655,6 +634,27 @@
         </div>
 
     </div>
+    <!-- Daily Puzzle Screen -->
+<div id="puzzleScreen" style="display:none;">
+
+    <div id="chatHeader">
+        <button class="iconBtn" onclick="closePuzzle()" title="Back">←</button>
+        <span>Daily Puzzle</span>
+    </div>
+
+    <div style="padding:20px; text-align:center;">
+
+        <p class="sub" id="puzzleDescription" style="margin-bottom:16px;"></p>
+
+        <div id="puzzleBoard" style="width:340px; height:340px; margin:0 auto; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border-radius:10px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.5);"></div>
+
+        <p id="puzzleFeedback" style="margin-top:16px; font-weight:700; font-size:15px;"></p>
+
+    </div>
+
+</div>
+
+<!-- Tournaments Screen -->
 
     <!-- Tournaments Screen -->
     <div id="tournamentsScreen" style="display:none;">
