@@ -57,6 +57,8 @@ function openChat(path, partnerName, readKey){
     document.getElementById("chatInput").value = "";
     document.getElementById("chatScreen").style.display = "flex";
 
+    history.pushState({ screen: "chat" }, "", "#chat");
+
     markChatRead(readKey);
 
     activeChatRef = db.ref(activeChatPath).orderByChild("time").limitToLast(100);
@@ -80,6 +82,9 @@ function closeChatListener(){
 function closeChat(){
     closeChatListener();
     document.getElementById("chatScreen").style.display = "none";
+    if(history.state && history.state.screen === "chat"){
+        history.back();
+    }
 }
 
 function renderChatMessage(msg){
