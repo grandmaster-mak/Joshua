@@ -1963,6 +1963,41 @@ function goHomeFromGame(){
 
 window.addEventListener("popstate", function(event){
 
+    const state = event.state;
+
+    // Tournaments: re-render whichever sub-view we've landed back on
+    if(state && state.screen === "tournaments"){
+
+        document.getElementById("tournamentsScreen").style.display = "flex";
+
+        if(state.view === "list"){
+            if(typeof showTournamentsList === "function") showTournamentsList();
+        }else if(state.view === "create"){
+            if(typeof renderCreateTournamentView === "function") renderCreateTournamentView();
+        }else if(state.view === "detail"){
+            if(typeof renderTournamentDetailView === "function") renderTournamentDetailView(state.id);
+        }
+
+        return;
+
+    }
+
+    // We've popped out of the Tournaments screen entirely
+    const tournamentsEl = document.getElementById("tournamentsScreen");
+    if(tournamentsEl && tournamentsEl.style.display === "flex"){
+        tournamentsEl.style.display = "none";
+        if(typeof stopTournamentDetailListener === "function") stopTournamentDetailListener();
+    }
+
+    const chatEl = document.getElementById("chatScreen");
+    const chatVisible = chatEl && chatEl.style.display === "flex";
+
+    if(chatVisible){
+        if(typeof closeChatListener === "function") closeChatListener();
+        chatEl.style.display = "none";
+        return;
+    }
+
     const gameEl = document.getElementById("game");
     const gameVisible = gameEl && gameEl.style.display === "flex";
 
