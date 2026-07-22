@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,37 +9,6 @@
 </head>
 
 <body>
-
-    <!-- Splash Screen -->
-    <div id="splashScreen">
-        <div id="splashVignette"></div>
-
-        <div id="splashPieceStage">
-
-            <div class="splashPieceWrap splashKnightWrap splashKnightLeftWrap">
-                <span class="splashPiece splashKnight splashKnightLeft">&#9822;</span>
-            </div>
-
-            <div class="splashPieceWrap splashKingWrap">
-                <span class="splashPiece splashKing">&#9818;</span>
-            </div>
-
-            <div class="splashPieceWrap splashKnightWrap splashKnightRightWrap">
-                <span class="splashPiece splashKnight splashKnightRight">&#9822;</span>
-            </div>
-
-        </div>
-
-        <div id="splashWordmark">CHESS</div>
-        <div id="splashTagline">Play &middot; Compete &middot; Improve</div>
-
-        <div id="splashLoadingDots">
-            <div class="splashDot"></div>
-            <div class="splashDot"></div>
-            <div class="splashDot"></div>
-        </div>
-    </div>
-
 
     <!-- App Shell: Home / Friends / Account -->
     <div id="appShell">
@@ -52,14 +21,12 @@
             <!-- Home Header -->
             <div class="home-header">
 
-                <img src="images/king-piece.png" alt="" id="headerKingPiece" onerror="this.style.display='none'">
-
                 <div class="header-text">
                     <h1>Hello, <span id="username">player</span>! 👋</h1>
                     <p>What chess adventure awaits today?</p>
                 </div>
 
-                <div class="profile-box profile-box-glow">
+                <div class="profile-box">
                     <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" alt="Profile" id="homeProfileImg">
                     <span class="online-dot"></span>
                 </div>
@@ -69,34 +36,22 @@
             <!-- Quick Actions -->
             <div class="quick-actions">
 
-                <div class="action-card play-now">
-                    <img src="images/play-now-icon.png" alt="" class="cardBgImage" onerror="this.style.display='none'">
-                    <div class="cardContent">
-                        <span class="material-icons cardBigIcon">sports_esports</span>
-                        <h3>Play Now</h3>
-                        <p>Two players, one device</p>
-                        <button class="cardPlayPill" onclick="openPlaySetup('human')">▶ Play</button>
-                    </div>
+                <div class="action-card play-now" onclick="openPlaySetup('human')">
+                    <span class="material-icons">sports_esports</span>
+                    <h3>Play Now</h3>
+                    <p>Two players, one device</p>
                 </div>
 
-                <div class="action-card computer">
-                    <img src="images/ai-icon.png" alt="" class="cardBgImage" onerror="this.style.display='none'">
-                    <div class="cardContent">
-                        <span class="material-icons cardBigIcon">smart_toy</span>
-                        <h3>Play vs AI</h3>
-                        <p>Challenge the AI</p>
-                        <button class="cardPlayPill" onclick="openPlaySetup('ai')">▶ Play</button>
-                    </div>
+                <div class="action-card computer" onclick="openPlaySetup('ai')">
+                    <span class="material-icons">smart_toy</span>
+                    <h3>Play vs AI</h3>
+                    <p>Challenge the AI</p>
                 </div>
 
-                <div class="action-card friends">
-                    <img src="images/online-icon.png" alt="" class="cardBgImage" onerror="this.style.display='none'">
-                    <div class="cardContent">
-                        <span class="material-icons cardBigIcon">public</span>
-                        <h3>Play Online</h3>
-                        <p>Find an opponent</p>
-                        <button class="cardPlayPill" onclick="openPlaySetup('online')">▶ Play</button>
-                    </div>
+                <div class="action-card friends" onclick="openPlaySetup('online')">
+                    <span class="material-icons">public</span>
+                    <h3>Play Online</h3>
+                    <p>Create or join a room</p>
                 </div>
 
             </div>
@@ -113,7 +68,7 @@
 
                     <div class="stat-item">
                         <div class="stat-icon rating">♟</div>
-                        <h3 id="playerRating">100</h3>
+                        <h3 id="playerRating">1200</h3>
                         <p>Rating</p>
                     </div>
 
@@ -121,14 +76,12 @@
                         <div class="stat-icon win">🏆</div>
                         <h3 id="gamesWon">0</h3>
                         <p>Games Won</p>
-                        <span class="statSubtitle" id="winRateSubtitle"></span>
                     </div>
 
                     <div class="stat-item">
                         <div class="stat-icon streak">🔥</div>
                         <h3 id="winStreak">0</h3>
                         <p>Win Streak</p>
-                        <span class="statSubtitle" id="bestStreakSubtitle"></span>
                     </div>
 
                     <div class="stat-item">
@@ -150,50 +103,17 @@
                 </div>
             </div>
 
-            <!-- Quick Links -->
-            <div class="stats-section">
-                <div class="quickLinksGrid">
+            <button id="tournamentBtn" class="btnSecondary" onclick="showComingSoon()">
+                🏆 Tournaments
+            </button>
 
-    <div class="quickLinkTile" onclick="openTournaments()">
-        <span class="quickLinkIcon">🏆</span>
-        <span class="quickLinkLabel">Tournaments</span>
-        <span class="quickLinkSub">Compete &amp; Win</span>
-    </div>
-
-    <div class="quickLinkTile" onclick="openDailyPuzzle()">
-        <span class="quickLinkIcon">🧩</span>
-        <span class="quickLinkLabel">Puzzles</span>
-        <span class="quickLinkSub">Train Your Brain</span>
-    </div>
-
-    <div class="quickLinkTile" onclick="openLessonsScreen()">
-        <span class="quickLinkIcon">🎓</span>
-        <span class="quickLinkLabel">Lessons</span>
-        <span class="quickLinkSub">Learn to Play</span>
-    </div>
-
-    <div class="quickLinkTile" onclick="showInfoPopup('👑 Leaderboards', 'Leaderboards are coming soon — stay tuned!')">
-        <span class="quickLinkIcon">👑</span>
-        <span class="quickLinkLabel">Leaderboards</span>
-        <span class="quickLinkSub">See Top Players</span>
-    </div>
-
-    <div class="quickLinkTile" onclick="showInfoPopup('🎁 Daily Rewards', 'Daily rewards are coming soon — stay tuned!')">
-        <span class="quickLinkIcon">🎁</span>
-        <span class="quickLinkLabel">Daily Rewards</span>
-        <span class="quickLinkSub">Claim Now</span>
-    </div>
-
-</div>
         </div>
 
         <!-- Friends Screen -->
         <div id="friendsScreen" class="screen" style="display:none;">
 
-            <div id="friendsHeader">
-                <h2>Friends</h2>
-                <p class="sub">Find people by their username and send a friend request.</p>
-            </div>
+            <h2>Friends</h2>
+            <p class="sub">Find people by their username and send a friend request.</p>
 
             <div id="friendSearchRow">
                 <input type="text" id="friendSearchInput" placeholder="Search by username">
@@ -296,39 +216,9 @@
 
             <div id="loggedInView" style="display:none;">
 
-                <div class="profile-box" style="margin:0 auto 16px;">
-                    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" alt="Profile" id="accountProfileImg">
-                </div>
+                <p id="loggedInUsername" class="sub" style="font-size:16px; color:#eef0f3; font-weight:600;"></p>
 
-                <p id="loggedInUsername" class="sub" style="font-size:18px; color:#eef0f3; font-weight:700; text-align:center; margin-bottom:12px;"></p>
-
-                <div id="accountStatsRow">
-                    <div class="accountStatItem">
-                        <span class="accountStatValue" id="accountRatingValue">100</span>
-                        <span class="accountStatLabel">Rating</span>
-                    </div>
-                    <div class="accountStatItem">
-                        <span class="accountStatValue" id="accountWinsValue">0</span>
-                        <span class="accountStatLabel">Wins</span>
-                    </div>
-                    <div class="accountStatItem">
-                        <span class="accountStatValue" id="accountStreakValue">0</span>
-                        <span class="accountStatLabel">Streak</span>
-                    </div>
-                </div>
-
-                <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelect(event)">
-
-                <button class="btnSecondary" onclick="document.getElementById('profilePhotoInput').click()">
-                    📷 Change Profile Picture
-                </button>
-
-                <div id="accountHistorySection">
-                    <span class="fieldLabel">Match History</span>
-                    <div id="accountHistoryList">
-                        <p class="sub">No games played yet.</p>
-                    </div>
-                </div>
+                <button class="btnDanger" onclick="logOut()">Log Out</button>
 
             </div>
 
@@ -343,7 +233,7 @@
             </button>
 
             <button class="navBtn" data-screen="friends" onclick="switchScreen('friends')">
-                <span class="navIcon">👥<span class="navBadge" id="friendsNavBadge" style="display:none;"></span></span>
+                <span class="navIcon">👥</span>
                 <span class="navLabel">Friends</span>
             </button>
 
@@ -363,21 +253,12 @@
 
             <div id="topPlayerBox">
                 <div class="playerRow">
-                    <div class="playerIdentity">
-                        <div class="playerAvatar">
-                            <img id="topPlayerAvatarImg" src="" alt="">
-                        </div>
-                        <div class="playerNameBlock">
-                            <span id="topPlayerName" class="playerTag"></span>
-                            <span id="topPlayerRating" class="playerRatingTag" style="display:none;"></span>
-                        </div>
-                    </div>
+                    <span id="topPlayerName" class="playerTag"></span>
                     <p id="topTimer"></p>
                 </div>
                 <p>
                     Captured:
                     <span id="topCaptured"></span>
-                    <span id="topMaterialAdv" class="materialAdv"></span>
                 </p>
             </div>
 
@@ -398,21 +279,12 @@
 
             <div id="bottomPlayerBox">
                 <div class="playerRow">
-                    <div class="playerIdentity">
-                        <div class="playerAvatar">
-                            <img id="bottomPlayerAvatarImg" src="" alt="">
-                        </div>
-                        <div class="playerNameBlock">
-                            <span id="bottomPlayerName" class="playerTag"></span>
-                            <span id="bottomPlayerRating" class="playerRatingTag" style="display:none;"></span>
-                        </div>
-                    </div>
+                    <span id="bottomPlayerName" class="playerTag"></span>
                     <p id="bottomTimer"></p>
                 </div>
                 <p>
                     Captured:
                     <span id="bottomCaptured"></span>
-                    <span id="bottomMaterialAdv" class="materialAdv"></span>
                 </p>
             </div>
 
@@ -421,42 +293,30 @@
         <!-- Right Panel -->
         <div id="panel">
 
-            <p id="turn" style="display:none;">White to Move</p>
+            <h2>Game Info</h2>
+            <p id="turn">White to Move</p>
+
+            <div id="inGameControls">
+
+                <button class="iconBtn" id="newGame" onclick="handleNewGameClick()" title="New Game">
+                    🆕
+                </button>
+
+                <button class="iconBtn" id="restart" onclick="handleRestartClick()" title="Restart Game">
+                    🔄
+                </button>
+
+                <button class="iconBtn" id="undo" onclick="undoMove()" title="Undo Move">
+                    ↩️
+                </button>
+
+            </div>
 
             <h3>Move History</h3>
 
             <div id="history"></div>
 
         </div>
-
-    </div>
-
-    <!-- Fixed in-game bottom toolbar -->
-    <div id="gameBottomBar" style="display:none;">
-
-        <button class="gameActionCard cardGreen" onclick="handleNewGameClick()">
-            <span class="cardIcon">⊕</span>
-            <span class="cardTitle">NEW GAME</span>
-            <span class="cardSub">Start a new match</span>
-        </button>
-
-        <button class="gameActionCard cardBlue" onclick="handleRestartClick()">
-            <span class="cardIcon">↻</span>
-            <span class="cardTitle">RESTART GAME</span>
-            <span class="cardSub">Reset current game</span>
-        </button>
-
-        <button class="gameActionCard cardPurple" id="undoActionCard" onclick="undoMove()">
-            <span class="cardIcon">↩</span>
-            <span class="cardTitle">UNDO MOVE</span>
-            <span class="cardSub">Take back a move</span>
-        </button>
-
-        <button class="gameActionCard cardTeal" id="chatActionCard" onclick="openGameChat()" style="display:none;">
-            <span class="cardIcon">💬<span class="cardBadge" id="gameChatBadge" style="display:none;"></span></span>
-            <span class="cardTitle">CHAT</span>
-            <span class="cardSub">Message opponent</span>
-        </button>
 
     </div>
 
@@ -602,170 +462,6 @@
 
     </div>
 
-    <!-- Chat Screen (shared by in-game chat and friend DMs) -->
-    <div id="chatScreen" style="display:none;">
-
-        <div id="chatHeader">
-            <button id="chatBackBtn" class="iconBtn" onclick="closeChat()" title="Back">←</button>
-            <span id="chatWithName">Chat</span>
-        </div>
-
-        <div id="chatMessages"></div>
-
-        <div id="emojiRow">
-            <button onclick="insertEmoji('😀')">😀</button>
-            <button onclick="insertEmoji('😂')">😂</button>
-            <button onclick="insertEmoji('😍')">😍</button>
-            <button onclick="insertEmoji('👍')">👍</button>
-            <button onclick="insertEmoji('🔥')">🔥</button>
-            <button onclick="insertEmoji('😢')">😢</button>
-            <button onclick="insertEmoji('🎉')">🎉</button>
-            <button onclick="insertEmoji('♟️')">♟️</button>
-        </div>
-
-        <div id="chatInputRow">
-            <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter'){ sendChatMessage(); }">
-            <button class="btnPrimary" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
-        </div>
-
-    </div>
-    <!-- Daily Puzzle Screen -->
-<div id="puzzleScreen" style="display:none;">
-
-    <div id="chatHeader">
-        <button class="iconBtn" onclick="closePuzzle()" title="Back">←</button>
-        <span>Daily Puzzle</span>
-    </div>
-
-    <div id="puzzleBody">
-
-        <div id="puzzleCoachRow">
-            <div id="puzzleCoachAvatar">🧔</div>
-            <div id="puzzleCoachBubble">
-                <p class="sub" id="puzzleDescription"></p>
-                <p id="puzzleFeedback"></p>
-            </div>
-        </div>
-
-        <div id="puzzleBoard"></div>
-
-    </div>
-
-</div>
-<!-- Chess Lessons Screen -->
-<div id="lessonsScreen" style="display:none;">
-
-    <div id="chatHeader">
-        <button class="iconBtn" onclick="closeLessons()" title="Back">←</button>
-        <span>Chess Lessons</span>
-    </div>
-
-    <div id="lessonsListView" style="padding:20px;">
-        <div id="lessonsList"></div>
-    </div>
-
-    <div id="lessonActiveView" style="display:none;">
-
-        <div id="lessonBody">
-
-            <h2 id="lessonTitle" style="text-align:center; margin-bottom:4px;"></h2>
-            <p class="sub" id="lessonStepCounter" style="text-align:center; margin-bottom:16px;"></p>
-
-            <div id="lessonCoachRow">
-                <div id="lessonCoachAvatar">🧑‍🏫</div>
-                <div id="lessonCoachBubble">
-                    <p class="sub" id="lessonDescription"></p>
-                    <p id="lessonFeedback"></p>
-                </div>
-            </div>
-
-            <div id="lessonBoard"></div>
-
-        </div>
-
-    </div>
-</div>
-    <!-- Tournaments Screen -->
-    <div id="tournamentsScreen" style="display:none;">
-
-        <div id="chatHeader">
-            <button class="iconBtn" onclick="closeTournaments()" title="Back">←</button>
-            <span>Tournaments</span>
-        </div>
-
-        <div id="tournamentsBody">
-
-            <div id="tournamentsListView">
-                <button class="btnPrimary" onclick="showCreateTournament()">+ Create Tournament</button>
-                <span class="fieldLabel">Open Tournaments</span>
-                <div id="tournamentsList"><p class="sub">Loading...</p></div>
-            </div>
-
-            <div id="tournamentCreateView" style="display:none;">
-                <span class="fieldLabel">Tournament Name</span>
-                <input type="text" id="tournamentNameInput" placeholder="e.g. Weekend Blitz">
-
-                <span class="fieldLabel">Number of Rounds</span>
-                <select id="tournamentRoundsInput">
-                    <option value="4">4 Rounds</option>
-                    <option value="5">5 Rounds</option>
-                    <option value="6" selected>6 Rounds</option>
-                    <option value="7">7 Rounds</option>
-                    <option value="8">8 Rounds</option>
-                    <option value="9">9 Rounds</option>
-                    <option value="10">10 Rounds</option>
-                </select>
-
-                <span class="fieldLabel">Time Control</span>
-                <select id="tournamentTimeInput">
-                    <option value="180">3 Minutes</option>
-                    <option value="300">5 Minutes</option>
-                    <option value="600" selected>10 Minutes</option>
-                    <option value="900">15 Minutes</option>
-                    <option value="-1">Unlimited</option>
-                </select>
-
-                <button class="btnPrimary" onclick="createTournament()">Create</button>
-                <button class="btnSecondary" onclick="history.back()">Cancel</button>
-            </div>
-
-            <div id="tournamentDetailView" style="display:none;">
-                <h2 id="tournamentDetailName"></h2>
-                <p class="sub" id="tournamentDetailStatus"></p>
-
-                <button class="btnPrimary" id="tournamentJoinBtn" onclick="joinTournament()" style="display:none;">Join Tournament</button>
-                <button class="btnGold" id="tournamentStartBtn" onclick="startTournament()" style="display:none;">Start Tournament</button>
-                <button class="btnGold" id="tournamentNextRoundBtn" onclick="advanceTournamentRound()" style="display:none;">Start Next Round</button>
-
-                <span class="fieldLabel">Standings</span>
-                <div id="tournamentStandings"></div>
-
-                <span class="fieldLabel">Current Round Pairings</span>
-                <div id="tournamentPairings"></div>
-
-                <button class="btnSecondary" onclick="history.back()">Back to List</button>
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Challenge Received Popup -->
-    <div id="challengePopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge gold">⚔️</div>
-            <h2>Challenge!</h2>
-            <p class="sub"><span id="challengeFromName"></span> wants to play you.</p>
-
-            <button class="btnPrimary" onclick="respondToChallenge(true)">✅ Accept</button>
-            <button class="btnDanger" onclick="respondToChallenge(false)">❌ Decline</button>
-
-        </div>
-
-    </div>
-
     <!-- Settings Popup -->
     <div id="settingsPopup" class="popup">
 
@@ -806,10 +502,6 @@
     <script src="multiplayer.js"></script>
     <script src="auth.js"></script>
     <script src="friends.js"></script>
-    <script src="chat.js"></script>
-    <script src="tournament.js"></script>
-    <script src="puzzles.js"></script>
-    <script src="lessons.js"></script>
 
 </body>
 </html>
