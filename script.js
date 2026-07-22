@@ -1398,3 +1398,314 @@ function handleNewGameClick(){
         showTimeControl();
     }
 }
+function showKingMarkers(loserColor){
+
+    const loserKing = loserColor === "white" ? "wK" : "bK";
+    const winnerKing = loserColor === "white" ? "bK" : "wK";
+
+    for(let r = 0; r < 8; r++){
+        for(let c = 0; c < 8; c++){
+
+            if(pieces[r][c] === loserKing || pieces[r][c] === winnerKing){
+
+                const flipped = (gameMode === "online" && myColor === "black");
+                const domR = flipped ? 7 - r : r;
+                const domC = flipped ? 7 - c : c;
+                const square = board.children[domR * 8 + domC];
+                if(!square) continue;
+
+                const marker = document.createElement("span");
+
+                if(pieces[r][c] === loserKing){
+                    marker.textContent = "🚩";
+                    marker.className = "resignFlag";
+                }else{
+                    marker.textContent = "👑";
+                    marker.className = "winnerCrown";
+                }
+
+                square.appendChild(marker);
+            }
+        }
+    }
+}
+
+function showOnlineGameMenu(){
+    document.getElementById("onlineMenuPopup").classList.add("show");
+}
+
+function closeOnlineMenu(){
+    document.getElementById("onlineMenuPopup").classList.remove("show");
+}
+
+function resignGame(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("resign");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    closeOnlineMenu();
+
+    const loser = gameMode === "online" ? myColor : currentPlayer;
+    const winner = loser === "white" ? "Black" : "White";
+    showPopup("🚩 Resignation", winner + " wins by resignation.");
+    createBoard();
+    showKingMarkers(loser);
+    recordGameResult("loss", myOpponentName());
+}
+
+function abortGame(){
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("abort");
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    closeOnlineMenu();
+
+    const loser = gameMode === "online" ? myColor : currentPlayer;
+    const winner = loser === "white" ? "Black" : "White";
+    showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
+    createBoard();
+    showKingMarkers(loser);
+    recordGameResult("loss", myOpponentName());
+}
+
+function requestDraw(){
+
+    closeOnlineMenu();
+
+    if(gameMode === "online"){
+        if(typeof sendGameEvent === "function"){
+            sendGameEvent("drawOffer");
+        }
+        return;
+    }
+
+    gameOver = true;
+    clearInterval(timer);
+    showPopup("🤝 Draw", "Game drawn by agreement.");
+    createBoard();
+    recordGameResult("draw", myOpponentName());
+}
+
+function respondToDraw(accepted){
+
+    document.getElementById("drawOfferPopup").classList.remove("show");
+
+    if(typeof sendGameEvent === "function"){
+        sendGameEvent("drawResponse", {accepted: accepted});
+    }
+
+    if(accepted){
+        gameOver = true;
+        clearInterval(timer);
+        showPopup("🤝 Draw", "Game drawn by agreement.");
+        createBoard();
+        recordGameResult("draw", myOpponentName());
+    }
+}
+
+function hasInsufficientMaterial(){
+
+    let whitePieces = [];
+    let blackPieces = [];
+
+    for(let r = 0; r < 8; r++){
+        for(let c = 0; c < 8; c++){
+            const piece = pieces[r][c];
+            if(piece === "") continue;
+            if(isWhite(piece)){
+                whitePieces.push(piece);
+            }else{
+                blackPieces.push(piece);
+            }
+        }
+    }
+
+    if(whitePieces.length === 1 && blackPieces.length === 1){
+        return true;
+    }
+
+    if(whitePieces.length === 2 && blackPieces.length === 1){
+        if(whitePieces.includes("wB") || whitePieces.includes("wN")){
+            return true;
+        }
+    }
+
+    if(blackPieces.length === 2 && whitePieces.length === 1){
+        if(blackPieces.includes("bB") || blackPieces.includes("bN")){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function isThreefoldRepetition(){
+
+    const current = getPositionKey();
+    let count = 0;
+
+    for(const position of positionHistory){
+        if(position === current){
+            count++;
+        }
+    }
+
+    return count >= 3;
+}
+
+function getAllMoves(color){
+
+    let allMoves = [];
+
+    for(let r = 0; r < 8; r++){
+
+        for(let c = 0; c < 8; c++){
+
+            let piece = pieces[r][c];
+
+            if(piece === "") continue;
+            if(color === "white" && !isWhite(piece)) continue;
+            if(color === "black" && !isBlack(piece)) continue;
+
+            let moves = getPossibleMoves(piece, r, c);
+
+            moves.sort((a, b) => {
+                const valueA = pieces[a.r][a.c] === "" ? 0 : pieceValues[pieces[a.r][a.c][1]];
+                const valueB = pieces[b.r][b.c] === "" ? 0 : pieceValues[pieces[b.r][b.c][1]];
+                return valueB - valueA;
+            });
+
+            for(let move of moves){
+                if(tryMove(r,c,move.r,move.c,color)){
+                    allMoves.push({
+                        from: {r:r, c:c},
+                        to: {r:move.r, c:move.c}
+                    });
+                }
+            }
+
+        }
+
+    }
+
+    return allMoves;
+}
+
+function switchScreen(name){
+
+    const screens = ["home", "friends", "account"];
+
+    screens.forEach(function(s){
+        document.getElementById(s + "Screen").style.display = (s === name) ? "flex" : "none";
+    });
+
+    document.querySelectorAll("#bottomNav .navBtn").forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.screen === name);
+    });
+
+}
+
+function showSettingsPopup(){
+    document.getElementById("settingsPopup").classList.add("show");
+}
+
+function closeSettingsPopup(){
+    document.getElementById("settingsPopup").classList.remove("show");
+}
+
+function showInfoPopup(title, message){
+    document.getElementById("infoPopupTitle").textContent = title;
+    document.getElementById("infoPopupMessage").textContent = message;
+    document.getElementById("infoPopup").classList.add("show");
+}
+
+function closeInfoPopup(){
+    document.getElementById("infoPopup").classList.remove("show");
+}
+
+function showComingSoon(){
+    showInfoPopup("🏆 Tournaments", "Tournaments are coming soon — stay tuned!");
+}
+
+function myOpponentName(){
+    if(gameMode === "ai") return "Computer";
+    return myColor === "white" ? blackPlayer : whitePlayer;
+}
+
+function recordGameResult(myResult, opponentName){
+
+    if(gameMode === "human") return;
+    if(typeof currentUser === "undefined" || !currentUser) return;
+    if(typeof db === "undefined" || !db) return;
+
+    const userRef = db.ref("users/" + currentUser.uid);
+
+    userRef.transaction(function(data){
+        if(!data) return data;
+        data.wins = data.wins || 0;
+        data.losses = data.losses || 0;
+        data.draws = data.draws || 0;
+        data.winStreak = data.winStreak || 0;
+
+        if(myResult === "win"){
+            data.wins++;
+            data.winStreak++;
+        }else if(myResult === "loss"){
+            data.losses++;
+            data.winStreak = 0;
+        }else{
+            data.draws++;
+            data.winStreak = 0;
+        }
+        return data;
+    });
+
+    userRef.child("history").push({
+        opponent: opponentName || "Unknown",
+        result: myResult,
+        mode: gameMode,
+        time: Date.now()
+    });
+
+    if(typeof loadRecentGames === "function") loadRecentGames();
+}
+
+function loadRecentGames(){
+    if(!db || !currentUser) return;
+
+    db.ref("users/" + currentUser.uid + "/history")
+        .orderByChild("time")
+        .limitToLast(5)
+        .once("value")
+        .then(function(snapshot){
+            const list = document.getElementById("recentGamesList");
+            if(!list) return;
+
+            const entries = [];
+            snapshot.forEach(function(child){ entries.push(child.val()); });
+            entries.reverse();
+
+            if(entries.length === 0){
+                list.innerHTML = '<p class="sub">No games played yet.</p>';
+                return;
+            }
+
+            list.innerHTML = "";
+            entries.forEach(function(entry){
+                const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
+                const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+                const row = document.createElement("div");
+                row.className = "gameRow";
+                row.innerHTML = '<span class="gameOpponent">' + entry.opponent + '</span><span class="gameResult ' + cls + '">' + label + '</span>';
+                list.appendChild(row);
+            });
+        });
+}
+
+createCoordinates();
