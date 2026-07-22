@@ -1687,10 +1687,10 @@ input::placeholder{ color:#4a5060; }
 }
 
 #puzzleBoard{
-    width:340px;
-    height:340px;
-    max-width:90vw;
-    max-height:90vw;
+    width:480px;
+    height:480px;
+    max-width:98vw;
+    max-height:98vw;
     display:grid;
     grid-template-columns:repeat(8,1fr);
     grid-template-rows:repeat(8,1fr);
