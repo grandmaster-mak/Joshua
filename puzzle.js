@@ -31,6 +31,27 @@ function todayDateString(){
     return y + "-" + m + "-" + d;
 }
 
+// ---- Coach speech bubble: only one line shown at a time ----
+// Showing a status message (feedback) replaces the puzzle description
+// instead of stacking underneath it.
+
+function showCoachDescription(text){
+    const descEl = document.getElementById("puzzleDescription");
+    const feedbackEl = document.getElementById("puzzleFeedback");
+    descEl.textContent = text;
+    descEl.style.display = "block";
+    feedbackEl.textContent = "";
+    feedbackEl.style.display = "none";
+}
+
+function showCoachFeedback(text){
+    const descEl = document.getElementById("puzzleDescription");
+    const feedbackEl = document.getElementById("puzzleFeedback");
+    descEl.style.display = "none";
+    feedbackEl.textContent = text;
+    feedbackEl.style.display = "block";
+}
+
 // ---- Loading the pool from Firebase — Firebase is fully in control ----
 
 function loadPuzzlePool(){
@@ -144,7 +165,9 @@ function openDailyPuzzle(){
     possibleMoves = [];
 
     document.getElementById("puzzleDescription").textContent = "Loading today's puzzle...";
+    document.getElementById("puzzleDescription").style.display = "block";
     document.getElementById("puzzleFeedback").textContent = "";
+    document.getElementById("puzzleFeedback").style.display = "none";
     document.getElementById("puzzleBoard").innerHTML = "";
 
     document.getElementById("appShell").style.display = "none";
@@ -165,7 +188,7 @@ function openDailyPuzzle(){
         pieces = fenToPieces(currentPuzzle.fen);
         currentPlayer = currentPuzzle.fen.split(" ")[1] === "w" ? "white" : "black";
 
-        document.getElementById("puzzleDescription").textContent = currentPuzzle.description;
+        showCoachDescription(currentPuzzle.description);
         updatePuzzleStatsDisplay();
         createPuzzleBoard();
 
@@ -175,6 +198,8 @@ function openDailyPuzzle(){
             ? "No puzzles have been added yet — add one under 'puzzles' in Firebase."
             : "Couldn't load today's puzzle — check your connection and try again.";
         document.getElementById("puzzleDescription").textContent = message;
+        document.getElementById("puzzleDescription").style.display = "block";
+        document.getElementById("puzzleFeedback").style.display = "none";
     });
 
 }
@@ -257,7 +282,7 @@ function clickPuzzleSquare(r, c){
 
     if(uciMove !== expectedMove){
         puzzleMistakeMade = true;
-        document.getElementById("puzzleFeedback").textContent = "❌ Not quite — try again!";
+        showCoachFeedback("❌ Not quite — try again!");
         createPuzzleBoard();
         return;
     }
@@ -269,13 +294,13 @@ function clickPuzzleSquare(r, c){
 
     if(puzzleMoveIndex >= currentPuzzle.solution.length){
         puzzleSolved = true;
-        document.getElementById("puzzleFeedback").textContent = "✅ Solved! Well played.";
+        showCoachFeedback("✅ Solved! Well played.");
         createPuzzleBoard();
         recordPuzzleResult();
         return;
     }
 
-    document.getElementById("puzzleFeedback").textContent = "✅ Correct! Keep going...";
+    showCoachFeedback("✅ Correct! Keep going...");
     currentPlayer = currentPlayer === "white" ? "black" : "white";
     createPuzzleBoard();
 
@@ -296,7 +321,7 @@ function clickPuzzleSquare(r, c){
 
         if(puzzleMoveIndex >= currentPuzzle.solution.length){
             puzzleSolved = true;
-            document.getElementById("puzzleFeedback").textContent = "✅ Solved! Well played.";
+            showCoachFeedback("✅ Solved! Well played.");
             recordPuzzleResult();
         }
 
@@ -391,5 +416,5 @@ function updatePuzzleStatsDisplay(){
 
     });
 
-            }
-            
+        }
+                                        
