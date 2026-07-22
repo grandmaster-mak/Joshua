@@ -657,7 +657,40 @@
     </div>
 
 </div>
+<!-- Chess Lessons Screen -->
+<div id="lessonsScreen" style="display:none;">
 
+    <div id="chatHeader">
+        <button class="iconBtn" onclick="closeLessons()" title="Back">←</button>
+        <span>Chess Lessons</span>
+    </div>
+
+    <div id="lessonsListView" style="padding:20px;">
+        <div id="lessonsList"></div>
+    </div>
+
+    <div id="lessonActiveView" style="display:none;">
+
+        <div id="lessonBody">
+
+            <h2 id="lessonTitle" style="text-align:center; margin-bottom:4px;"></h2>
+            <p class="sub" id="lessonStepCounter" style="text-align:center; margin-bottom:16px;"></p>
+
+            <div id="lessonCoachRow">
+                <div id="lessonCoachAvatar">🧑‍🏫</div>
+                <div id="lessonCoachBubble">
+                    <p class="sub" id="lessonDescription"></p>
+                    <p id="lessonFeedback"></p>
+                </div>
+            </div>
+
+            <div id="lessonBoard"></div>
+
+        </div>
+
+    </div>
+
+</div>
     <!-- Tournaments Screen -->
     <div id="tournamentsScreen" style="display:none;">
 
@@ -782,6 +815,7 @@
     <script src="chat.js"></script>
     <script src="tournament.js"></script>
     <script src="puzzle.js"></script>
+    <script src="lesson.js"></script>
 
 </body>
 </html>
