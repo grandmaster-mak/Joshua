@@ -1,29 +1,113 @@
 // ============================================================
-// Daily Puzzle: rotates through a set of real puzzles by date
+// Daily Puzzle — Firebase-controlled
+// ============================================================
+//
+// Firebase structure this file expects/creates:
+//
+//   puzzles/{pushId}            -> { fen, solution:[...], description, rating }
+//   dailyPuzzles/{YYYY-MM-DD}   -> { puzzleId }   (which puzzle is "today's puzzle")
+//   users/{uid}/public/puzzleRating       -> number (default 800)
+//   users/{uid}/public/puzzleStreak       -> number
+//   users/{uid}/public/puzzleBestStreak   -> number
+//   users/{uid}/private/puzzleLastSolved  -> "YYYY-MM-DD"
+//   users/{uid}/private/puzzleHistory/{pushId} -> { puzzleId, result, ratingChange, time }
+//
+// Firebase is the ONLY source of truth for puzzles — there is no local
+// fallback pool. Add/edit puzzle entries directly under `puzzles/` in the
+// Firebase console (see the JSON structure above).
 // ============================================================
 
-const PUZZLE_POOL = [
-    { fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", solution: ["a1a8"], description: "White to move. Find the checkmate in one." },
-    { fen: "6k1/6pp/8/8/8/8/6PP/4R1K1 w - - 0 1", solution: ["e1e8"], description: "White to move. Deliver checkmate in one." },
-    { fen: "r5k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", solution: ["a1a8"], description: "White to move. Trade rooks into a winning endgame — find the check." },
-    { fen: "8/8/8/8/8/6k1/6p1/6K1 w - - 0 1", solution: ["g1f2"], description: "White to move. Hold the draw — find the only safe king move." },
-    { fen: "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", solution: ["b5c6", "d7c6", "f3e5"], description: "White to move. Win a pawn with a simple tactic." },
-    { fen: "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 2 2", solution: ["d1h5"], description: "White to move. Threaten mate on f7." },
-    { fen: "4r1k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1", solution: ["e1e8"], description: "White to move. Trade into a won king and pawn endgame." },
-    { fen: "6k1/pp4pp/8/8/8/8/PP4PP/2R3K1 w - - 0 1", solution: ["c1c8"], description: "White to move. Find the back-rank mate." },
-    { fen: "r3k2r/ppp2ppp/8/8/8/8/PPP2PPP/R3K2R w KQkq - 0 1", solution: ["a1a8"], description: "White to move. Win material with a pin along the back rank." },
-    { fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", solution: ["e3d4"], description: "White to move. Escort the pawn home — find the key square." }
-];
-
 let currentPuzzle = null;
+let puzzlePool = [];
 let puzzleMoveIndex = 0;
 let puzzleSolved = false;
+let puzzleMistakeMade = false;
 
-function getTodayPuzzleIndex(){
+function todayDateString(){
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+}
+
+// ---- Loading the pool from Firebase — Firebase is fully in control ----
+
+function loadPuzzlePool(){
+
+    if(!db){
+        return Promise.reject(new Error("Not connected to Firebase."));
+    }
+
+    return db.ref("puzzles").once("value").then(function(snapshot){
+
+        if(!snapshot.exists()){
+            return [];
+        }
+
+        const out = [];
+        snapshot.forEach(function(child){
+            out.push(Object.assign({ id: child.key }, child.val()));
+        });
+        return out;
+
+    }).catch(function(err){
+        console.error("Failed to load puzzles from Firebase:", err.message);
+        throw err;
+    });
+
+}
+
+// ---- Picking "today's" puzzle, shared by everyone, stored in Firebase ----
+
+function pickDeterministicPuzzle(pool){
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 0);
     const dayOfYear = Math.floor((now - start) / 86400000);
-    return dayOfYear % PUZZLE_POOL.length;
+    return pool[dayOfYear % pool.length];
+}
+
+function loadTodaysPuzzle(pool){
+
+    if(!pool || pool.length === 0){
+        return Promise.reject(new Error("No puzzles found in Firebase."));
+    }
+
+    const dateKey = todayDateString();
+
+    if(!db){
+        return Promise.reject(new Error("Not connected to Firebase."));
+    }
+
+    const dailyRef = db.ref("dailyPuzzles/" + dateKey);
+
+    return dailyRef.once("value").then(function(snapshot){
+
+        if(snapshot.exists()){
+            const puzzleId = snapshot.val().puzzleId;
+            const found = pool.find(function(p){ return p.id === puzzleId; });
+            if(found) return found;
+        }
+
+        // Nobody has claimed today's puzzle yet — pick one deterministically
+        // and write it, guarded by a transaction so simultaneous visitors
+        // all converge on the same puzzle (like chess.com's puzzle of the day).
+        const chosen = pickDeterministicPuzzle(pool);
+
+        return dailyRef.transaction(function(current){
+            if(current) return current;
+            return { puzzleId: chosen.id };
+        }).then(function(result){
+            const finalId = result.snapshot.val() ? result.snapshot.val().puzzleId : chosen.id;
+            const found = pool.find(function(p){ return p.id === finalId; });
+            return found || chosen;
+        });
+
+    }).catch(function(err){
+        console.error("Failed to load today's puzzle:", err.message);
+        return pickDeterministicPuzzle(pool);
+    });
+
 }
 
 function fenToPieces(fen){
@@ -52,25 +136,46 @@ function fenToPieces(fen){
 
 function openDailyPuzzle(){
 
-    const index = getTodayPuzzleIndex();
-    currentPuzzle = PUZZLE_POOL[index];
+    currentPuzzle = null;
     puzzleMoveIndex = 0;
     puzzleSolved = false;
-
-    pieces = fenToPieces(currentPuzzle.fen);
-    currentPlayer = currentPuzzle.fen.split(" ")[1] === "w" ? "white" : "black";
+    puzzleMistakeMade = false;
     selected = null;
     possibleMoves = [];
 
-    document.getElementById("puzzleDescription").textContent = currentPuzzle.description;
+    document.getElementById("puzzleDescription").textContent = "Loading today's puzzle...";
     document.getElementById("puzzleFeedback").textContent = "";
+    document.getElementById("puzzleBoard").innerHTML = "";
 
     document.getElementById("appShell").style.display = "none";
     document.getElementById("puzzleScreen").style.display = "flex";
 
-    createPuzzleBoard();
-
     history.pushState({ screen: "puzzle" }, "", "#puzzle");
+
+    loadPuzzlePool().then(function(pool){
+
+        puzzlePool = pool;
+
+        return loadTodaysPuzzle(pool);
+
+    }).then(function(puzzle){
+
+        currentPuzzle = puzzle;
+
+        pieces = fenToPieces(currentPuzzle.fen);
+        currentPlayer = currentPuzzle.fen.split(" ")[1] === "w" ? "white" : "black";
+
+        document.getElementById("puzzleDescription").textContent = currentPuzzle.description;
+        updatePuzzleStatsDisplay();
+        createPuzzleBoard();
+
+    }).catch(function(err){
+        console.error("Failed to open daily puzzle:", err.message);
+        const message = (err && err.message === "No puzzles found in Firebase.")
+            ? "No puzzles have been added yet — add one under 'puzzles' in Firebase."
+            : "Couldn't load today's puzzle — check your connection and try again.";
+        document.getElementById("puzzleDescription").textContent = message;
+    });
 
 }
 
@@ -118,6 +223,7 @@ function createPuzzleBoard(){
 function clickPuzzleSquare(r, c){
 
     if(puzzleSolved) return;
+    if(!currentPuzzle) return;
 
     const piece = pieces[r][c];
 
@@ -150,6 +256,7 @@ function clickPuzzleSquare(r, c){
     possibleMoves = [];
 
     if(uciMove !== expectedMove){
+        puzzleMistakeMade = true;
         document.getElementById("puzzleFeedback").textContent = "❌ Not quite — try again!";
         createPuzzleBoard();
         return;
@@ -164,6 +271,7 @@ function clickPuzzleSquare(r, c){
         puzzleSolved = true;
         document.getElementById("puzzleFeedback").textContent = "✅ Solved! Well played.";
         createPuzzleBoard();
+        recordPuzzleResult();
         return;
     }
 
@@ -189,8 +297,99 @@ function clickPuzzleSquare(r, c){
         if(puzzleMoveIndex >= currentPuzzle.solution.length){
             puzzleSolved = true;
             document.getElementById("puzzleFeedback").textContent = "✅ Solved! Well played.";
+            recordPuzzleResult();
         }
 
     }, 500);
 
 }
+
+// ---- Recording results to Firebase: rating + streak, like chess.com ----
+
+function recordPuzzleResult(){
+
+    if(typeof currentUser === "undefined" || !currentUser) return;
+    if(typeof db === "undefined" || !db) return;
+    if(!currentPuzzle) return;
+
+    const dateKey = todayDateString();
+    const ratingChange = puzzleMistakeMade ? 3 : 8;
+
+    const userPublicRef = db.ref("users/" + currentUser.uid + "/public");
+    const userPrivateRef = db.ref("users/" + currentUser.uid + "/private");
+
+    userPublicRef.transaction(function(data){
+
+        if(!data) return data;
+
+        data.puzzleRating = (data.puzzleRating || 800) + ratingChange;
+        data.puzzleStreak = data.puzzleStreak || 0;
+        data.puzzleBestStreak = data.puzzleBestStreak || 0;
+
+        return data;
+
+    });
+
+    userPrivateRef.child("puzzleLastSolved").once("value").then(function(snapshot){
+
+        const lastSolved = snapshot.val();
+
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayKey = yesterday.getFullYear() + "-" + String(yesterday.getMonth() + 1).padStart(2, "0") + "-" + String(yesterday.getDate()).padStart(2, "0");
+
+        if(lastSolved === dateKey){
+            // Already recorded today's solve — don't double count the streak.
+            updatePuzzleStatsDisplay();
+            return;
+        }
+
+        const continuesStreak = (lastSolved === yesterdayKey);
+
+        userPublicRef.transaction(function(data){
+
+            if(!data) return data;
+
+            data.puzzleStreak = continuesStreak ? (data.puzzleStreak || 0) + 1 : 1;
+            if(data.puzzleStreak > (data.puzzleBestStreak || 0)){
+                data.puzzleBestStreak = data.puzzleStreak;
+            }
+
+            return data;
+
+        }).then(function(){
+            updatePuzzleStatsDisplay();
+        });
+
+        userPrivateRef.child("puzzleLastSolved").set(dateKey);
+
+        userPrivateRef.child("puzzleHistory").push({
+            puzzleId: currentPuzzle.id,
+            result: puzzleMistakeMade ? "solved-with-mistakes" : "solved",
+            ratingChange: ratingChange,
+            time: Date.now()
+        });
+
+    });
+
+}
+
+function updatePuzzleStatsDisplay(){
+
+    const ratingEl = document.getElementById("puzzleRatingValue");
+    const streakEl = document.getElementById("puzzleStreakValue");
+
+    if(!ratingEl && !streakEl) return;
+    if(typeof currentUser === "undefined" || !currentUser || !db) return;
+
+    db.ref("users/" + currentUser.uid + "/public").once("value").then(function(snapshot){
+
+        const data = snapshot.val() || {};
+
+        if(ratingEl) ratingEl.textContent = data.puzzleRating || 800;
+        if(streakEl) streakEl.textContent = data.puzzleStreak || 0;
+
+    });
+
+            }
+            
