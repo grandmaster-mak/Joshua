@@ -156,13 +156,6 @@ function createBoard(){
 
             }
 
-            if(j === 0){
-                const rank = document.createElement("span");
-                rank.className = "rankLabel";
-                rank.textContent = 8 - r;
-                square.appendChild(rank);
-            }
-
             square.onclick = () => clickSquare(r, c);
 
             board.appendChild(square);
