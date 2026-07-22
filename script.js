@@ -156,13 +156,6 @@ function createBoard(){
 
             }
 
-            if(i === 7){
-                const file = document.createElement("span");
-                file.className = "fileLabel";
-                file.textContent = "abcdefgh"[c];
-                square.appendChild(file);
-            }
-
             if(j === 0){
                 const rank = document.createElement("span");
                 rank.className = "rankLabel";
