@@ -1797,8 +1797,21 @@ window.addEventListener("popstate", function(event){
     // its state right back on and surface the same resign/draw/abort
     // options the in-game menu icon shows.
     if(document.getElementById("game").style.display === "flex"){
-        history.pushState({ screen: "game" }, "", "#game");
-        showOnlineGameMenu();
+
+        if(!gameOver){
+            // Game still in progress — protect it, ask before leaving.
+            history.pushState({ screen: "game" }, "", "#game");
+            showOnlineGameMenu();
+            return;
+        }
+
+        // Game already finished (resigned/aborted/drawn/checkmated/timed
+        // out) — nothing left to protect, so just leave the board and any
+        // leftover result popup, straight back to Home.
+        closePopup();
+        document.getElementById("game").style.display = "none";
+        document.getElementById("appShell").style.display = "flex";
+        switchScreen("home");
         return;
     }
 
