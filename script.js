@@ -1771,5 +1771,58 @@ function formatRelativeTime(timestamp){
     const days = Math.floor(hours / 24);
     return days + "d ago";
 }
+// ===== Physical/phone back-button support =====
+// Every open___() function already does history.pushState({screen, view}, ...).
+// This is the missing piece: it listens for the back button itself (which
+// doesn't call our close___() functions) and re-syncs the visible screen to
+// match, so back steps through detail -> list -> Home, same as the in-app
+// back arrows.
+window.addEventListener("popstate", function(event){
 
+    const state = event.state;
+
+    if(!state || !state.screen){
+        document.getElementById("tournamentsScreen").style.display = "none";
+        document.getElementById("puzzleScreen").style.display = "none";
+        document.getElementById("leaderboardScreen").style.display = "none";
+        document.getElementById("dailyRewardsScreen").style.display = "none";
+        document.getElementById("chatScreen").style.display = "none";
+        document.getElementById("appShell").style.display = "flex";
+        switchScreen("home");
+        return;
+    }
+
+    if(state.screen === "tournaments"){
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("tournamentsScreen").style.display = "flex";
+        if(state.view === "create") renderCreateTournamentView();
+        else if(state.view === "detail") renderTournamentDetailView(state.id);
+        else showTournamentsList();
+        return;
+    }
+
+    if(state.screen === "puzzle"){
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("puzzleScreen").style.display = "flex";
+        return;
+    }
+
+    if(state.screen === "leaderboard"){
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("leaderboardScreen").style.display = "flex";
+        return;
+    }
+
+    if(state.screen === "dailyRewards"){
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("dailyRewardsScreen").style.display = "flex";
+        return;
+    }
+
+    if(state.screen === "chat"){
+        document.getElementById("chatScreen").style.display = "flex";
+        return;
+    }
+
+});
 createCoordinates();
