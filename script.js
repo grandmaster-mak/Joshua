@@ -4,6 +4,7 @@
 // no history entry at all, and back exits the page immediately.
 history.replaceState({ screen: null }, "", location.href);
 history.pushState({ screen: null }, "", location.href);
+
 const board = document.getElementById("board");
 
 let currentPlayer = "white";
@@ -1307,6 +1308,10 @@ if(gameMode === "ai"){
     positionHistory = [getPositionKey()];
     createBoard();
 
+    if(document.getElementById("game").style.display !== "flex"){
+        history.pushState({ screen: "game" }, "", "#game");
+    }
+
     document.getElementById("appShell").style.display = "none";
     document.getElementById("game").style.display = "flex";
 }
@@ -1777,15 +1782,25 @@ function formatRelativeTime(timestamp){
     const days = Math.floor(hours / 24);
     return days + "d ago";
 }
+
 // ===== Physical/phone back-button support =====
-// Every open___() function already does history.pushState({screen, view}, ...).
-// This is the missing piece: it listens for the back button itself (which
-// doesn't call our close___() functions) and re-syncs the visible screen to
-// match, so back steps through detail -> list -> Home, same as the in-app
-// back arrows.
+// Every open___() function already does history.pushState({screen, view}, ...),
+// and newGame() does the same for the board. This listens for the back
+// button itself (which doesn't call our close___() functions) and re-syncs
+// the visible screen to match, so back steps through detail -> list -> Home,
+// same as the in-app back arrows — and never silently drops a live game.
 window.addEventListener("popstate", function(event){
 
     const state = event.state;
+
+    // A live game must never be silently left by the back button — push
+    // its state right back on and surface the same resign/draw/abort
+    // options the in-game menu icon shows.
+    if(document.getElementById("game").style.display === "flex"){
+        history.pushState({ screen: "game" }, "", "#game");
+        showOnlineGameMenu();
+        return;
+    }
 
     if(!state || !state.screen){
         document.getElementById("tournamentsScreen").style.display = "none";
@@ -1831,4 +1846,5 @@ window.addEventListener("popstate", function(event){
     }
 
 });
+
 createCoordinates();
