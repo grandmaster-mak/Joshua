@@ -1,3 +1,9 @@
+// Give the page a JS-tracked history entry from the moment it loads, so
+// the phone's physical back button always has something of ours to pop
+// first — otherwise, sitting on Home with nothing opened yet, there's
+// no history entry at all, and back exits the page immediately.
+history.replaceState({ screen: null }, "", location.href);
+history.pushState({ screen: null }, "", location.href);
 const board = document.getElementById("board");
 
 let currentPlayer = "white";
