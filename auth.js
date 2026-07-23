@@ -94,7 +94,6 @@ function applyHomeHeader(data){
     const avatarImg = document.getElementById("homeProfileImg");
     const accountAvatarImg = document.getElementById("accountProfileImg");
     const greetingEl = document.getElementById("greetingLine");
-    const titleEl = document.getElementById("playerTitle");
     const starsEl = document.getElementById("playerStars");
     const coinEl = document.getElementById("coinBalance");
     const gemEl = document.getElementById("gemBalance");
@@ -109,10 +108,6 @@ function applyHomeHeader(data){
     if(gemEl) gemEl.textContent = (typeof data.gems === "number") ? data.gems : 0;
 
     const tier = getPlayerTitle(data.rating || 100);
-    if(titleEl){
-        titleEl.textContent = tier.title;
-        titleEl.style.display = "block";
-    }
     if(starsEl){
         starsEl.innerHTML = "★".repeat(tier.stars) + "☆".repeat(5 - tier.stars) + '<span class="eliteLabel">' + tier.title + '</span>';
         starsEl.style.display = "block";
@@ -339,18 +334,12 @@ function initAuthListener(){
             const ratingEl = document.getElementById("playerRating");
             const ratingBadgeEl = document.getElementById("playerRatingBadge");
             const winsEl = document.getElementById("gamesWon");
-            const coinEl = document.getElementById("coinBalance");
-            const gemEl = document.getElementById("gemBalance");
-            const titleEl = document.getElementById("playerTitle");
             const starsEl = document.getElementById("playerStars");
 
             if(usernameEl) usernameEl.textContent = "player";
             if(ratingEl) ratingEl.textContent = "—";
             if(ratingBadgeEl) ratingBadgeEl.textContent = "—";
             if(winsEl) winsEl.textContent = "—";
-            if(coinEl) coinEl.textContent = "0";
-            if(gemEl) gemEl.textContent = "0";
-            if(titleEl) titleEl.style.display = "none";
             if(starsEl) starsEl.style.display = "none";
 
             const friendsListEl = document.getElementById("friendsList");
