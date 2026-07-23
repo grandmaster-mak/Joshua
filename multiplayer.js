@@ -1,4 +1,3 @@
-        
 // ============================================================
 // Online multiplayer via Firebase Realtime Database
 // ============================================================
@@ -18,12 +17,24 @@ let db = null;
 let serverTimeOffset = 0;
 let clockData = null;
 
+// Whether we've heard back from Firebase at least once about how far off
+// this device's own clock is. Every device — regardless of what its own
+// clock says — corrects against this same offset, which is what keeps
+// both phones' game clocks in agreement instead of drifting apart.
+let serverTimeSynced = false;
+let resolveServerTimeReady;
+const serverTimeReady = new Promise(function(resolve){ resolveServerTimeReady = resolve; });
+
 try{
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
 
     db.ref(".info/serverTimeOffset").on("value", function(snapshot){
         serverTimeOffset = snapshot.val() || 0;
+        if(!serverTimeSynced){
+            serverTimeSynced = true;
+            resolveServerTimeReady();
+        }
     });
 
 }catch(err){
@@ -32,6 +43,19 @@ try{
 
 function getServerNow(){
     return Date.now() + serverTimeOffset;
+}
+
+// Resolves as soon as the clock correction above has been confirmed, or
+// after maxWaitMs — whichever comes first — so a slow/offline connection
+// can't hang a game start forever. Used to make sure the very first
+// clock timestamp of an online game is written with a confirmed offset,
+// not a default of 0, which is what caused the two-phones-disagree bug.
+function waitForServerTime(maxWaitMs){
+    if(serverTimeSynced) return Promise.resolve();
+    return Promise.race([
+        serverTimeReady,
+        new Promise(function(resolve){ setTimeout(resolve, maxWaitMs); })
+    ]);
 }
 
 function generateRoomCode(){
@@ -135,6 +159,13 @@ function startOnlineGame(code){
     gameMode = "online";
     newGame();
 
+    // Board and clock UI show up immediately; only the timing-sensitive
+    // part below (writing the first clock timestamp) waits on the sync.
+    if(!serverTimeSynced){
+        const timerEl = document.getElementById("topTimer");
+        if(timerEl) timerEl.textContent = "Syncing clock...";
+    }
+
     listenForRemoteMoves(code);
 
     const myPresenceRef = db.ref("rooms/" + code + "/presence/" + myColor);
@@ -155,11 +186,13 @@ function startOnlineGame(code){
     if(typeof startGameChatWatcher === "function") startGameChatWatcher();
 
     if(myColor === "white"){
-        db.ref("rooms/" + code + "/clock").set({
-            whiteTime: selectedTime,
-            blackTime: selectedTime,
-            turn: "white",
-            turnStartedAt: getServerNow()
+        waitForServerTime(3000).then(function(){
+            db.ref("rooms/" + code + "/clock").set({
+                whiteTime: selectedTime,
+                blackTime: selectedTime,
+                turn: "white",
+                turnStartedAt: getServerNow()
+            });
         });
     }
 
@@ -327,6 +360,14 @@ function pushClockUpdate(moverColor){
 
     if(!currentRoomCode || !db) return;
 
+    waitForServerTime(3000).then(function(){
+        pushClockUpdateNow(moverColor);
+    });
+
+}
+
+function pushClockUpdateNow(moverColor){
+
     db.ref("rooms/" + currentRoomCode + "/clock").transaction(function(current){
 
         if(!current) return current;
@@ -397,5 +438,4 @@ function startOnlineClockDisplay(){
 
     }, 500);
 
-        }
-        
+}
