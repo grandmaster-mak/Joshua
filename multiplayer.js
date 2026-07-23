@@ -218,6 +218,7 @@ function listenForOpponentPresence(code){
                         clearInterval(timer);
                         const winner = opponentColor === "white" ? "Black" : "White";
                         showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
+                        recordGameResult("win", myOpponentName());
                     }
 
                 });
@@ -428,12 +429,14 @@ function startOnlineClockDisplay(){
             gameOver = true;
             clearInterval(timer);
             showPopup("⏰ TIME!", "Black wins on time!");
+            recordGameResult(myColor === "black" ? "win" : "loss", myOpponentName());
         }
 
         if(clockData.blackTime !== -1 && displayBlack <= 0){
             gameOver = true;
             clearInterval(timer);
             showPopup("⏰ TIME!", "White wins on time!");
+            recordGameResult(myColor === "white" ? "win" : "loss", myOpponentName());
         }
 
     }, 500);
