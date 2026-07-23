@@ -7,6 +7,7 @@ let activeTournamentPairingId = null;
 let currentViewedTournamentId = null;
 
 function openTournaments(){
+    document.getElementById("appShell").style.display = "none";
     document.getElementById("tournamentsScreen").style.display = "flex";
     history.pushState({ screen: "tournaments", view: "list" }, "", "#tournaments");
     showTournamentsList();
@@ -14,6 +15,7 @@ function openTournaments(){
 
 function closeTournaments(){
     document.getElementById("tournamentsScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
     if(history.state && history.state.screen === "tournaments"){
         history.back();
     }
@@ -71,7 +73,7 @@ function loadTournamentsList(){
             card.className = "tournamentCard";
             card.onclick = function(){ openTournamentDetail(item.id); };
             card.innerHTML =
-                '<div class="tournamentCardName">🏆 ' + t.name + '</div>' +
+                '<div class="tournamentCardName">🏆 ' + escapeHtml(t.name) + '</div>' +
                 '<div class="tournamentCardMeta">' + playerCount + ' players &middot; ' + t.rounds + ' rounds &middot; ' + statusLabel + '</div>';
 
             list.appendChild(card);
@@ -205,7 +207,7 @@ function renderTournamentDetail(tournamentId, t){
         row.className = "standingRow";
         row.innerHTML =
             '<span class="standingRank">' + (index + 1) + '</span>' +
-            '<span class="standingName">' + (p.data.flag || "") + ' ' + p.data.username + '</span>' +
+            '<span class="standingName">' + escapeHtml(p.data.flag || "") + ' ' + escapeHtml(p.data.username) + '</span>' +
             '<span class="standingPoints">' + (p.data.points || 0) + '</span>';
         standingsBox.appendChild(row);
     });
@@ -233,10 +235,10 @@ function renderTournamentDetail(tournamentId, t){
 
             const isMyGame = currentUser && (p.white === currentUser.uid || p.black === currentUser.uid);
             const playBtn = (isMyGame && !p.result) ?
-                '<button class="btnPrimary" style="width:auto;padding:6px 14px;font-size:12px;" onclick="joinTournamentMatch(\'' + tournamentId + '\', \'' + pid + '\')">Play</button>' : '';
+                '<button class="btnPrimary" style="width:auto;padding:6px 14px;font-size:12px;" data-tid="' + tournamentId + '" data-pid="' + pid + '" onclick="joinTournamentMatch(this.dataset.tid, this.dataset.pid)">Play</button>' : '';
 
             row.innerHTML =
-                '<div><div class="pairingNames">' + whiteName + ' vs ' + blackName + '</div>' +
+                '<div><div class="pairingNames">' + escapeHtml(whiteName) + ' vs ' + escapeHtml(blackName) + '</div>' +
                 '<div class="pairingResult">' + resultLabel + '</div></div>' + playBtn;
 
             pairingsBox.appendChild(row);
@@ -246,7 +248,7 @@ function renderTournamentDetail(tournamentId, t){
         if(roundInfo.bye && players[roundInfo.bye]){
             const byeRow = document.createElement("div");
             byeRow.className = "pairingRow";
-            byeRow.innerHTML = '<div class="pairingNames">' + players[roundInfo.bye].username + '</div><div class="pairingResult">Bye (free point)</div>';
+            byeRow.innerHTML = '<div class="pairingNames">' + escapeHtml(players[roundInfo.bye].username) + '</div><div class="pairingResult">Bye (free point)</div>';
             pairingsBox.appendChild(byeRow);
         }
 
