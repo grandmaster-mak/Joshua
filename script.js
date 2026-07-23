@@ -39,6 +39,16 @@ let whiteCaptured = [];
 let blackCaptured = [];
 let halfMoveClock = 0;
 
+// Online opponent metadata (populated by multiplayer.js listenForPlayerInfo)
+let whiteRating = null;
+let blackRating = null;
+let whitePhoto = null;
+let blackPhoto = null;
+let whiteUid = null;
+let blackUid = null;
+
+const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
+
 let pieces = [
 ["bR","bN","bB","bQ","bK","bB","bN","bR"],
 ["bP","bP","bP","bP","bP","bP","bP","bP"],
@@ -1609,6 +1619,10 @@ function switchScreen(name){
         btn.classList.toggle("active", btn.dataset.screen === name);
     });
 
+    if(name === "friends" && typeof loadFriendsData === "function"){
+        loadFriendsData();
+    }
+
 }
 
 function showSettingsPopup(){
@@ -1638,6 +1652,12 @@ function myOpponentName(){
     return myColor === "white" ? blackPlayer : whitePlayer;
 }
 
+function myOpponentUidAndPhoto(){
+    if(gameMode === "ai") return { uid: null, photo: null };
+    if(myColor === "white") return { uid: (typeof blackUid !== "undefined" ? blackUid : null), photo: (typeof blackPhoto !== "undefined" ? blackPhoto : null) };
+    return { uid: (typeof whiteUid !== "undefined" ? whiteUid : null), photo: (typeof whitePhoto !== "undefined" ? whitePhoto : null) };
+}
+
 function recordGameResult(myResult, opponentName){
 
     if(gameMode === "human") return;
@@ -1645,6 +1665,7 @@ function recordGameResult(myResult, opponentName){
     if(typeof db === "undefined" || !db) return;
 
     const userRef = db.ref("users/" + currentUser.uid);
+    const opponentInfo = myOpponentUidAndPhoto();
 
     userRef.transaction(function(data){
         if(!data) return data;
@@ -1652,10 +1673,12 @@ function recordGameResult(myResult, opponentName){
         data.losses = data.losses || 0;
         data.draws = data.draws || 0;
         data.winStreak = data.winStreak || 0;
+        data.bestStreak = data.bestStreak || 0;
 
         if(myResult === "win"){
             data.wins++;
             data.winStreak++;
+            if(data.winStreak > data.bestStreak) data.bestStreak = data.winStreak;
         }else if(myResult === "loss"){
             data.losses++;
             data.winStreak = 0;
@@ -1668,11 +1691,15 @@ function recordGameResult(myResult, opponentName){
 
     userRef.child("history").push({
         opponent: opponentName || "Unknown",
+        opponentPhoto: opponentInfo.photo || null,
+        opponentUid: opponentInfo.uid || null,
         result: myResult,
         mode: gameMode,
         time: Date.now()
     });
 
+    if(typeof recordTournamentGameResult === "function") recordTournamentGameResult(myResult);
+    if(typeof recordDailyChallengeProgress === "function") recordDailyChallengeProgress(myResult, gameMode);
     if(typeof loadRecentGames === "function") loadRecentGames();
 }
 
@@ -1698,14 +1725,51 @@ function loadRecentGames(){
 
             list.innerHTML = "";
             entries.forEach(function(entry){
+
                 const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
                 const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+                const dotCls = entry.result === "win" ? "win" : entry.result === "loss" ? "loss" : "draw";
+                const dotIcon = entry.result === "win" ? "✓" : entry.result === "loss" ? "✕" : "–";
+
+                const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
+                const timeLabel = formatRelativeTime(entry.time);
+
                 const row = document.createElement("div");
                 row.className = "gameRow";
-                row.innerHTML = '<span class="gameOpponent">' + entry.opponent + '</span><span class="gameResult ' + cls + '">' + label + '</span>';
+
+                row.innerHTML =
+                    '<div class="gameOpponentInfo">' +
+                        '<div class="gameAvatarWrap">' +
+                            '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
+                            '<span class="gameResultDot ' + dotCls + '">' + dotIcon + '</span>' +
+                        '</div>' +
+                        '<div class="gameOpponentText">' +
+                            '<span class="gameOpponent"></span>' +
+                            '<span class="gameMeta">' + (entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online" : "Local") + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="gameResultCol">' +
+                        '<span class="gameResult ' + cls + '">' + label + '</span>' +
+                        '<span class="gameTime">' + timeLabel + '</span>' +
+                    '</div>';
+
+                row.querySelector(".gameOpponent").textContent = entry.opponent || "Unknown";
+
                 list.appendChild(row);
             });
         });
+}
+
+function formatRelativeTime(timestamp){
+    if(!timestamp) return "";
+    const diffMs = Date.now() - timestamp;
+    const mins = Math.floor(diffMs / 60000);
+    if(mins < 1) return "just now";
+    if(mins < 60) return mins + " min ago";
+    const hours = Math.floor(mins / 60);
+    if(hours < 24) return hours + "h ago";
+    const days = Math.floor(hours / 24);
+    return days + "d ago";
 }
 
 createCoordinates();
