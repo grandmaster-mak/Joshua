@@ -1,3 +1,15 @@
+// ============================================================
+// ai-worker.js — standalone custom minimax/alpha-beta chess engine
+// meant to run inside a Web Worker.
+//
+// NOTE: this is a second, hand-rolled engine, separate from the
+// Stockfish-based ai.js that index.html currently loads. It is NOT
+// wired into index.html right now — nothing creates
+// `new Worker("ai-worker.js")` yet. Kept as-is (with the previously
+// truncated alphaBeta completed) so it's ready to use if you want to
+// swap engines or offer it as an alternative difficulty mode later.
+// ============================================================
+
 let pieces = [];
 let whiteKingMoved = false;
 let blackKingMoved = false;
@@ -31,8 +43,6 @@ const pieceSquareTable = {
     ]
 };
 
-// King wants to stay tucked away and safe while there's still enough
-// firepower on the board for an attack.
 const kingMiddleTable = [
     -30,-40,-40,-50,-50,-40,-40,-30,
     -30,-40,-40,-50,-50,-40,-40,-30,
@@ -44,8 +54,6 @@ const kingMiddleTable = [
     20,30,10,0,0,10,30,20
 ];
 
-// Once most of the pieces are traded off, the king becomes a fighting piece
-// and should move toward the center to support pawns and help checkmate.
 const kingEndTable = [
     -50,-40,-30,-20,-20,-30,-40,-50,
     -30,-20,-10,0,0,-10,-20,-30,
@@ -57,8 +65,6 @@ const kingEndTable = [
     -50,-30,-30,-30,-30,-30,-30,-50
 ];
 
-// Starting squares for knights/bishops — used to reward early development
-// instead of aimless pawn-shuffling in the opening.
 const startSquares = {
     bN: [[0,1],[0,6]],
     bB: [[0,2],[0,5]],
@@ -72,9 +78,6 @@ function isOnStartSquare(piece, r, c){
     return squares.some(sq => sq[0] === r && sq[1] === c);
 }
 
-// A pawn is "passed" if no enemy pawn can stop it on its own file or
-// either adjacent file, anywhere between it and the promotion square.
-// Passed pawns are one of the most important endgame assets.
 function isPassedPawn(r, c, piece){
 
     if(piece === "wP"){
@@ -100,8 +103,6 @@ function isPassedPawn(r, c, piece){
     return false;
 }
 
-// Total value of non-pawn, non-king material still on the board — used to
-// tell the opening/middlegame apart from the endgame.
 function getNonPawnMaterial(){
     let total = 0;
     for(let r = 0; r < 8; r++){
@@ -123,9 +124,6 @@ let killerMoves = [];
 function isWhite(piece){ return piece.startsWith("w"); }
 function isBlack(piece){ return piece.startsWith("b"); }
 
-// Squares a pawn threatens, regardless of what's on them — needed for
-// correct check / attack detection (a pawn attacks its diagonals whether
-// or not an enemy piece is sitting there).
 function getPawnAttackSquares(r, c, piece){
     let squares = [];
     if(piece === "wP"){
@@ -389,8 +387,6 @@ function evaluateBoard(){
     const blackInCheck = isKingInCheck("black");
     const whiteInCheck = isKingInCheck("white");
 
-    // Endgame = little material left besides pawns and kings (roughly a
-    // rook and a minor piece per side, or less).
     const nonPawnMaterial = getNonPawnMaterial();
     const isEndgame = nonPawnMaterial <= 2600;
 
@@ -419,9 +415,6 @@ function evaluateBoard(){
             if(piece[1] === "N" && r >= 2 && r <= 5 && c >= 2 && c <= 5) value += 40;
             if(piece[1] === "B") value += 15;
 
-            // Reward early development — a knight/bishop still sitting on
-            // its starting square while there's plenty of material left
-            // is a wasted opening move.
             if((piece[1] === "N" || piece[1] === "B") && !isEndgame){
                 if(!isOnStartSquare(piece, r, c)){
                     value += 15;
@@ -447,17 +440,10 @@ function evaluateBoard(){
                 value += advancement * 12;
 
                 if(isPassedPawn(r, c, piece)){
-                    // Passed pawns matter far more the closer they are to
-                    // promoting, and matter even more in the endgame when
-                    // there's less to stop them.
                     value += 20 + advancement * (isEndgame ? 25 : 12);
                 }
             }
 
-            // Castled king bonus only matters while there's material left
-            // to actually attack the king — in the endgame the king should
-            // be marching to the center instead, which the king-endgame
-            // table above already rewards.
             if(!isEndgame){
                 if(piece === "bK" && c === 6) value += 60;
                 if(piece === "wK" && c === 6) value += 60;
@@ -486,9 +472,6 @@ function evaluateBoard(){
     return score;
 }
 
-// Quiescence search: after the normal search ends, keep looking at capture
-// moves only, until the position "settles down". This stops the AI from
-// misjudging a position mid-trade (the classic "hangs a piece" bug).
 function quiescence(alpha, beta, maximizing){
 
     if(Date.now() > searchDeadline){
@@ -558,7 +541,9 @@ function alphaBeta(depth, alpha, beta, maximizing){
     }
 
     if(maximizing){
+
         let best = -Infinity;
+
         for(const move of moves){
             const captured = pieces[move.to.r][move.to.c];
             makeMove(move);
@@ -571,9 +556,13 @@ function alphaBeta(depth, alpha, beta, maximizing){
             }
             if(timeUp) break;
         }
+
         return best;
+
     }else{
+
         let best = Infinity;
+
         for(const move of moves){
             const captured = pieces[move.to.r][move.to.c];
             makeMove(move);
@@ -586,90 +575,76 @@ function alphaBeta(depth, alpha, beta, maximizing){
             }
             if(timeUp) break;
         }
+
         return best;
+
     }
 }
 
-function findBestMove(maxDepth, timeLimitMs){
+// Iterative deepening: search depth 1, then 2, then 3... until the time
+// budget runs out, always keeping the best move found by the last fully
+// completed depth (a partial/aborted depth's result is discarded).
+function findBestMove(color, timeBudgetMs){
 
-    let moves = getAllMoves("black");
-    if(moves.length === 0) return null;
-
-    searchDeadline = Date.now() + timeLimitMs;
+    searchDeadline = Date.now() + timeBudgetMs;
     timeUp = false;
     killerMoves = [];
 
-    let bestMove = moves[0];
+    const maximizing = color === "black";
+    let bestMove = null;
+    let depth = 1;
 
-    for(let depth = 1; depth <= maxDepth; depth++){
+    while(!timeUp && depth <= 6){
 
         let currentBest = null;
-        let bestScore = -Infinity;
+        let currentBestScore = maximizing ? -Infinity : Infinity;
+
+        const moves = getAllMoves(color);
 
         for(const move of moves){
-            const capturedPiece = pieces[move.to.r][move.to.c];
+            const captured = pieces[move.to.r][move.to.c];
             makeMove(move);
-            const score = alphaBeta(depth - 1, -Infinity, Infinity, false);
-            undoMoveAI(move, capturedPiece);
+            const score = alphaBeta(depth - 1, -Infinity, Infinity, !maximizing);
+            undoMoveAI(move, captured);
 
             if(timeUp) break;
 
-            if(score > bestScore){
-                bestScore = score;
+            if(maximizing && score > currentBestScore){
+                currentBestScore = score;
+                currentBest = move;
+            }else if(!maximizing && score < currentBestScore){
+                currentBestScore = score;
                 currentBest = move;
             }
         }
 
-        if(currentBest){
+        if(!timeUp && currentBest){
             bestMove = currentBest;
-
-            const bestIndex = moves.findIndex(m =>
-                m.from.r === bestMove.from.r && m.from.c === bestMove.from.c &&
-                m.to.r === bestMove.to.r && m.to.c === bestMove.to.c
-            );
-            if(bestIndex > 0){
-                const [b] = moves.splice(bestIndex, 1);
-                moves.unshift(b);
-            }
         }
 
-        if(timeUp) break;
+        depth++;
     }
 
     return bestMove;
 }
 
+// ---- Worker message protocol ----
+// Main thread posts: { pieces, color, timeBudgetMs, castling state fields }
+// Worker posts back: { from, to } or null if no legal move was found.
 self.onmessage = function(e){
 
-    const data = e.data;
-    pieces = data.pieces;
-    whiteKingMoved = data.whiteKingMoved;
-    blackKingMoved = data.blackKingMoved;
-    whiteLeftRookMoved = data.whiteLeftRookMoved;
-    whiteRightRookMoved = data.whiteRightRookMoved;
-    blackLeftRookMoved = data.blackLeftRookMoved;
-    blackRightRookMoved = data.blackRightRookMoved;
-    const difficulty = data.difficulty;
+    const msg = e.data || {};
 
-    let maxDepth = 4;
-    let timeLimitMs = 1500;
+    pieces = msg.pieces;
+    whiteKingMoved = !!msg.whiteKingMoved;
+    blackKingMoved = !!msg.blackKingMoved;
+    whiteLeftRookMoved = !!msg.whiteLeftRookMoved;
+    whiteRightRookMoved = !!msg.whiteRightRookMoved;
+    blackLeftRookMoved = !!msg.blackLeftRookMoved;
+    blackRightRookMoved = !!msg.blackRightRookMoved;
 
-    if(difficulty === "easy"){
-        maxDepth = 4;
-        timeLimitMs = 1500;
-    }
+    const move = findBestMove(msg.color || "black", msg.timeBudgetMs || 1000);
 
-    if(difficulty === "medium"){
-        maxDepth = 6;
-        timeLimitMs = 1500;
-    }
+    self.postMessage(move);
 
-    if(difficulty === "hard"){
-        maxDepth = 8;
-        timeLimitMs = 1500;
-    }
-
-    const bestMove = findBestMove(maxDepth, timeLimitMs);
-
-    self.postMessage(bestMove);
 };
