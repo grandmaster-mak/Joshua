@@ -10,6 +10,31 @@ let currentUserFlag = "";
 let currentUserRating = 100;
 let currentUserPhotoURL = null;
 
+// ---- Title / star-rating tiers, shown under the player's name on Home ----
+// (Purely cosmetic — derived from rating, not stored separately.)
+const PLAYER_TITLE_TIERS = [
+    { min: 0,    title: "Beginner",     stars: 1 },
+    { min: 400,  title: "Novice",       stars: 2 },
+    { min: 800,  title: "Intermediate", stars: 3 },
+    { min: 1200, title: "Advanced",     stars: 4 },
+    { min: 1600, title: "Elite Player", stars: 5 }
+];
+
+function getPlayerTitle(rating){
+    let result = PLAYER_TITLE_TIERS[0];
+    for(const tier of PLAYER_TITLE_TIERS){
+        if(rating >= tier.min) result = tier;
+    }
+    return result;
+}
+
+function getGreeting(){
+    const hour = new Date().getHours();
+    if(hour < 12) return "Good morning ☀️";
+    if(hour < 18) return "Good afternoon 🌤️";
+    return "Good evening 🌙";
+}
+
 function cacheProfile(data){
     try{
         localStorage.setItem("cachedProfile", JSON.stringify({
@@ -18,6 +43,13 @@ function cacheProfile(data){
             rating: data.rating || 100,
             wins: data.wins || 0,
             winStreak: data.winStreak || 0,
+            bestStreak: data.bestStreak || 0,
+            losses: data.losses || 0,
+            draws: data.draws || 0,
+            coins: (typeof data.coins === "number") ? data.coins : 0,
+            gems: (typeof data.gems === "number") ? data.gems : 0,
+            puzzleRating: data.puzzleRating || 800,
+            puzzleStreak: data.puzzleStreak || 0,
             photoURL: data.photoURL || null
         }));
     }catch(e){}
@@ -33,22 +65,8 @@ function loadCachedProfile(){
         currentUserRating = cached.rating || 100;
         currentUserPhotoURL = cached.photoURL || null;
 
-        const usernameEl = document.getElementById("username");
-        const ratingEl = document.getElementById("playerRating");
-        const winsEl = document.getElementById("gamesWon");
-        const streakEl = document.getElementById("winStreak");
-        const homeAvatar = document.getElementById("homeProfileImg");
-        const accountAvatar = document.getElementById("accountProfileImg");
+        applyHomeHeader(cached);
 
-        if(usernameEl && cached.username) usernameEl.textContent = cached.username;
-        if(ratingEl) ratingEl.textContent = cached.rating;
-        if(winsEl) winsEl.textContent = cached.wins;
-        if(streakEl) streakEl.textContent = cached.winStreak;
-
-        if(cached.photoURL){
-            if(homeAvatar) homeAvatar.src = cached.photoURL;
-            if(accountAvatar) accountAvatar.src = cached.photoURL;
-        }
     }catch(e){}
 }
 
@@ -64,12 +82,86 @@ function countryCodeToFlag(code){
     return String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt()));
 }
 
-function showAccountPopup(){
-    document.getElementById("accountPopup").classList.add("show");
+// Fills in every home-header/account element from a profile-shaped object
+// (works for both the live Firebase snapshot and the cached-offline copy).
+function applyHomeHeader(data){
+
+    const usernameEl = document.getElementById("username");
+    const ratingEl = document.getElementById("playerRating");
+    const ratingBadgeEl = document.getElementById("playerRatingBadge");
+    const winsEl = document.getElementById("gamesWon");
+    const streakEl = document.getElementById("winStreak");
+    const avatarImg = document.getElementById("homeProfileImg");
+    const accountAvatarImg = document.getElementById("accountProfileImg");
+    const greetingEl = document.getElementById("greetingLine");
+    const titleEl = document.getElementById("playerTitle");
+    const starsEl = document.getElementById("playerStars");
+    const coinEl = document.getElementById("coinBalance");
+    const gemEl = document.getElementById("gemBalance");
+
+    if(greetingEl) greetingEl.textContent = getGreeting();
+    if(usernameEl && data.username) usernameEl.textContent = data.username;
+    if(ratingEl) ratingEl.textContent = data.rating || 100;
+    if(ratingBadgeEl) ratingBadgeEl.textContent = data.rating || 100;
+    if(winsEl) winsEl.textContent = data.wins || 0;
+    if(streakEl) streakEl.textContent = data.winStreak || 0;
+    if(coinEl) coinEl.textContent = (typeof data.coins === "number") ? data.coins : 0;
+    if(gemEl) gemEl.textContent = (typeof data.gems === "number") ? data.gems : 0;
+
+    const tier = getPlayerTitle(data.rating || 100);
+    if(titleEl){
+        titleEl.textContent = tier.title;
+        titleEl.style.display = "block";
+    }
+    if(starsEl){
+        starsEl.innerHTML = "★".repeat(tier.stars) + "☆".repeat(5 - tier.stars) + '<span class="eliteLabel">' + tier.title + '</span>';
+        starsEl.style.display = "block";
+    }
+
+    const totalGames = (data.wins || 0) + (data.losses || 0) + (data.draws || 0);
+    const winRateDeltaEl = document.getElementById("winRateDelta");
+    if(winRateDeltaEl){
+        winRateDeltaEl.textContent = totalGames > 0 ? Math.round((data.wins || 0) / totalGames * 100) + "% Win Rate" : "";
+    }
+
+    const bestStreakDeltaEl = document.getElementById("bestStreakDelta");
+    if(bestStreakDeltaEl){
+        bestStreakDeltaEl.textContent = data.bestStreak ? "Best: " + data.bestStreak : "";
+    }
+
+    if(data.photoURL){
+        if(avatarImg) avatarImg.src = data.photoURL;
+        if(accountAvatarImg) accountAvatarImg.src = data.photoURL;
+    }
+
+    // Account screen mirrors
+    const accountRatingEl = document.getElementById("accountRatingValue");
+    const accountWinsEl = document.getElementById("accountWinsValue");
+    const accountStreakEl = document.getElementById("accountStreakValue");
+    const winRateSubtitleEl = document.getElementById("winRateSubtitle");
+    const bestStreakSubtitleEl = document.getElementById("bestStreakSubtitle");
+    const puzzleRatingEl = document.getElementById("puzzleRatingValue");
+    const puzzleStreakEl = document.getElementById("puzzleStreakValue");
+
+    if(accountRatingEl) accountRatingEl.textContent = data.rating || 100;
+    if(accountWinsEl) accountWinsEl.textContent = data.wins || 0;
+    if(accountStreakEl) accountStreakEl.textContent = data.winStreak || 0;
+    if(winRateSubtitleEl) winRateSubtitleEl.textContent = totalGames > 0 ? Math.round((data.wins || 0) / totalGames * 100) + "% Win Rate (" + totalGames + " games)" : "No games yet";
+    if(bestStreakSubtitleEl) bestStreakSubtitleEl.textContent = data.bestStreak ? "Best streak: " + data.bestStreak : "";
+    if(puzzleRatingEl) puzzleRatingEl.textContent = data.puzzleRating || 800;
+    if(puzzleStreakEl) puzzleStreakEl.textContent = data.puzzleStreak || 0;
+
 }
 
-function closeAccountPopup(){
-    document.getElementById("accountPopup").classList.remove("show");
+function openCurrencyShop(kind){
+    showInfoPopup(
+        kind === "gems" ? "💎 Get Gems" : "🪙 Get Coins",
+        "The store isn't open yet — check back soon!"
+    );
+}
+
+function openNotifications(){
+    showInfoPopup("🔔 Notifications", "You're all caught up.");
 }
 
 function signUp(){
@@ -108,6 +200,9 @@ function signUp(){
 
             const uid = userCredential.user.uid;
 
+            // Reserve the username with the uid as its value, guarded by a
+            // security rule requiring this path to be currently empty — this
+            // closes the race window between the check above and this write.
             const updates = {};
             updates["users/" + uid + "/public"] = {
                 username: username,
@@ -118,7 +213,12 @@ function signUp(){
                 wins: 0,
                 losses: 0,
                 draws: 0,
-                winStreak: 0
+                winStreak: 0,
+                bestStreak: 0,
+                coins: 100,
+                gems: 5,
+                puzzleRating: 800,
+                puzzleStreak: 0
             };
             updates["usernames/" + username] = uid;
 
@@ -204,55 +304,13 @@ function initAuthListener(){
                 document.getElementById("loggedInUsername").textContent =
                     currentUserFlag + " " + currentUsername;
 
-                const usernameEl = document.getElementById("username");
-                const ratingEl = document.getElementById("playerRating");
-                const winsEl = document.getElementById("gamesWon");
-                const avatarImg = document.getElementById("homeProfileImg");
-                const accountAvatarImg = document.getElementById("accountProfileImg");
-
-                if(usernameEl){
-                    usernameEl.textContent = currentUsername;
-                }
-                if(ratingEl){
-                    ratingEl.textContent = data.rating || 100;
-                }
-                if(winsEl){
-                    winsEl.textContent = data.wins || 0;
-                }
-
-                const streakEl = document.getElementById("winStreak");
-                if(streakEl){
-                    streakEl.textContent = data.winStreak || 0;
-                }
-
-                const totalGames = (data.wins || 0) + (data.losses || 0) + (data.draws || 0);
-                const winRateEl = document.getElementById("winRateSubtitle");
-                if(winRateEl){
-                    winRateEl.textContent = totalGames > 0 ? Math.round((data.wins || 0) / totalGames * 100) + "% Win Rate" : "";
-                }
-
-                const bestStreakEl = document.getElementById("bestStreakSubtitle");
-                if(bestStreakEl){
-                    bestStreakEl.textContent = data.bestStreak ? "Best: " + data.bestStreak : "";
-                }
-
-                const accountRatingEl = document.getElementById("accountRatingValue");
-                const accountWinsEl = document.getElementById("accountWinsValue");
-                const accountStreakEl = document.getElementById("accountStreakValue");
-
-                if(accountRatingEl) accountRatingEl.textContent = data.rating || 100;
-                if(accountWinsEl) accountWinsEl.textContent = data.wins || 0;
-                if(accountStreakEl) accountStreakEl.textContent = data.winStreak || 0;
+                applyHomeHeader(data);
 
                 if(typeof loadRecentGames === "function") loadRecentGames();
                 if(typeof loadFriendsData === "function") loadFriendsData();
                 if(typeof listenForChallenges === "function") listenForChallenges();
-                if(typeof loadAccountHistory === "function") loadAccountHistory();
-
-                if(data.photoURL){
-                    if(avatarImg) avatarImg.src = data.photoURL;
-                    if(accountAvatarImg) accountAvatarImg.src = data.photoURL;
-                }
+                if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
+                if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
 
             }).catch(function(err){
                 console.log("Offline — showing cached profile instead.");
@@ -279,19 +337,31 @@ function initAuthListener(){
 
             const usernameEl = document.getElementById("username");
             const ratingEl = document.getElementById("playerRating");
+            const ratingBadgeEl = document.getElementById("playerRatingBadge");
             const winsEl = document.getElementById("gamesWon");
+            const coinEl = document.getElementById("coinBalance");
+            const gemEl = document.getElementById("gemBalance");
+            const titleEl = document.getElementById("playerTitle");
+            const starsEl = document.getElementById("playerStars");
 
             if(usernameEl) usernameEl.textContent = "player";
             if(ratingEl) ratingEl.textContent = "—";
+            if(ratingBadgeEl) ratingBadgeEl.textContent = "—";
             if(winsEl) winsEl.textContent = "—";
+            if(coinEl) coinEl.textContent = "0";
+            if(gemEl) gemEl.textContent = "0";
+            if(titleEl) titleEl.style.display = "none";
+            if(starsEl) starsEl.style.display = "none";
 
             const friendsListEl = document.getElementById("friendsList");
             const requestsSectionEl = document.getElementById("friendRequestsSection");
             const searchResultEl = document.getElementById("friendSearchResult");
+            const onlineFriendsStripEl = document.getElementById("onlineFriendsStrip");
 
             if(friendsListEl) friendsListEl.innerHTML = '<p class="sub">Log in to see your friends.</p>';
             if(requestsSectionEl) requestsSectionEl.style.display = "none";
             if(searchResultEl) searchResultEl.innerHTML = "";
+            if(onlineFriendsStripEl) onlineFriendsStripEl.innerHTML = '<p class="sub">Log in to see online friends.</p>';
 
         }
 
