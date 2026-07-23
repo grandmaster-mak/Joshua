@@ -1636,6 +1636,25 @@ function switchScreen(name){
 
 }
 
+// Home-screen quick-link cards (Tournaments/Puzzles/Leaderboards/Daily
+// Rewards, and any future ones) call this instead of their open___()
+// function directly. If the screen or the opener isn't actually available
+// — wrong/partial deploy, feature not built yet, whatever the reason — the
+// person sees a clear "Coming Soon" message instead of a click that
+// silently does nothing.
+function openFeatureOrComingSoon(screenId, openFnName, label){
+    try{
+        if(!document.getElementById(screenId) || typeof window[openFnName] !== "function"){
+            showInfoPopup("🚧 " + label, label + " isn't available yet — check back soon!");
+            return;
+        }
+        window[openFnName]();
+    }catch(err){
+        console.error("Failed to open " + label + ":", err);
+        showInfoPopup("⚠️ " + label, "Something went wrong opening " + label + ". Please try again.");
+    }
+}
+
 function showSettingsPopup(){
     document.getElementById("settingsPopup").classList.add("show");
 }
