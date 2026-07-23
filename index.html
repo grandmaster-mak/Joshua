@@ -10,20 +10,41 @@
 
 <body>
 
-    <!-- App Shell: Home / Friends / Account -->
+    <!-- App Shell: Home / Friends / Account + bottom nav -->
     <div id="appShell">
-
-        <button id="settingsGear" onclick="showSettingsPopup()" title="Settings">⚙️</button>
 
         <!-- Home Screen -->
         <div id="homeScreen" class="screen">
+
+            <!-- Top row: currency + notifications -->
+            <div class="header-top-row">
+                <div class="currency-row">
+                    <div class="currency-pill">
+                        <span class="coinIcon">🪙</span>
+                        <span id="coinBalance">0</span>
+                        <button class="currency-add" onclick="openCurrencyShop('coins')" title="Get Coins">+</button>
+                    </div>
+                    <div class="currency-pill">
+                        <span class="gemIcon">💎</span>
+                        <span id="gemBalance">0</span>
+                        <button class="currency-add" onclick="openCurrencyShop('gems')" title="Get Gems">+</button>
+                    </div>
+                </div>
+
+                <button class="bellBtn" onclick="openNotifications()" title="Notifications">
+                    🔔
+                    <span class="bellDot" id="notifDot" style="display:none;"></span>
+                </button>
+            </div>
 
             <!-- Home Header -->
             <div class="home-header">
 
                 <div class="header-text">
-                    <h1>Hello, <span id="username">player</span>! 👋</h1>
-                    <p>What chess adventure awaits today?</p>
+                    <p class="greeting-line" id="greetingLine">Good morning ☀️</p>
+                    <h1>Hello, <span id="username">player</span>!</h1>
+                    <p class="title-line" id="playerTitle" style="display:none;"></p>
+                    <p class="stars-line" id="playerStars" style="display:none;"></p>
                 </div>
 
                 <div class="profile-box">
@@ -31,6 +52,29 @@
                     <span class="online-dot"></span>
                 </div>
 
+            </div>
+
+            <!-- Rating / online status badges -->
+            <div class="badge-row">
+                <div class="mini-badge">
+                    <span>♟</span> <b id="playerRatingBadge">100</b>&nbsp;Rating
+                </div>
+                <div class="mini-badge onlineBadge">
+                    <span class="dot"></span> Online
+                </div>
+                <button class="iconBtn" style="flex:0 0 auto; width:auto; padding:0 12px;" onclick="switchScreen('account')" title="Settings">⚙️</button>
+            </div>
+
+            <!-- Daily Challenge -->
+            <div class="daily-challenge">
+                <span class="dc-icon">🎯</span>
+                <div class="dc-body">
+                    <div class="dc-title">Daily Challenge</div>
+                    <div class="dc-sub" id="dailyChallengeSub">Win one ranked game today</div>
+                    <div class="dc-bar-track"><div class="dc-bar-fill" id="dailyChallengeBar" style="width:0%;"></div></div>
+                </div>
+                <div class="dc-pct" id="dailyChallengePct">0%</div>
+                <span class="dc-gift">🎁</span>
             </div>
 
             <!-- Quick Actions -->
@@ -61,51 +105,91 @@
 
                 <div class="stats-header">
                     <h2>Your Stats</h2>
-                    <a href="#">View All Stats</a>
+                    <a onclick="switchScreen('account')">View All Stats</a>
                 </div>
 
                 <div class="stats-grid">
 
                     <div class="stat-item">
                         <div class="stat-icon rating">♟</div>
-                        <h3 id="playerRating">1200</h3>
+                        <h3 id="playerRating">100</h3>
                         <p>Rating</p>
+                        <div class="stat-delta up" id="ratingDelta"></div>
                     </div>
 
                     <div class="stat-item">
                         <div class="stat-icon win">🏆</div>
                         <h3 id="gamesWon">0</h3>
                         <p>Games Won</p>
+                        <div class="stat-delta flat" id="winRateDelta"></div>
                     </div>
 
                     <div class="stat-item">
                         <div class="stat-icon streak">🔥</div>
                         <h3 id="winStreak">0</h3>
                         <p>Win Streak</p>
+                        <div class="stat-delta flat" id="bestStreakDelta"></div>
                     </div>
 
                     <div class="stat-item">
                         <div class="stat-icon time">⏱</div>
                         <h3 id="timePlayed">0h</h3>
                         <p>Time Played</p>
+                        <div class="stat-delta flat">This Week</div>
                     </div>
 
                 </div>
 
             </div>
 
+            <!-- ===== Recent Games ===== -->
             <div class="stats-section">
                 <div class="stats-header">
                     <h2>Recent Games</h2>
+                    <a onclick="switchScreen('account')">View All</a>
                 </div>
                 <div id="recentGamesList">
                     <p class="sub">No games played yet.</p>
                 </div>
             </div>
 
-            <button id="tournamentBtn" class="btnSecondary" onclick="showComingSoon()">
-                🏆 Tournaments
-            </button>
+            <!-- ===== Tournaments / Puzzles / Leaderboards / Daily Rewards ===== -->
+            <div class="quicklinks-grid">
+
+                <div class="quicklink-card" onclick="openTournaments()">
+                    <div class="quicklink-icon">🏆</div>
+                    <h4>Tournaments</h4>
+                    <p>Compete &amp; Win</p>
+                </div>
+
+                <div class="quicklink-card" onclick="openDailyPuzzle()">
+                    <div class="quicklink-icon">🧩</div>
+                    <h4>Puzzles</h4>
+                    <p>Train Your Brain</p>
+                </div>
+
+                <div class="quicklink-card" onclick="openLeaderboard()">
+                    <div class="quicklink-icon">👑</div>
+                    <h4>Leaderboards</h4>
+                    <p>See Top Players</p>
+                </div>
+
+                <div class="quicklink-card" onclick="openDailyRewards()">
+                    <div class="quicklink-icon">🎁</div>
+                    <h4>Daily Rewards</h4>
+                    <p id="dailyRewardsClaimLabel">Claim Now</p>
+                </div>
+
+            </div>
+
+            <!-- ===== Online Friends ===== -->
+            <div class="stats-section">
+                <div class="stats-header">
+                    <h2>Online Friends (<span id="onlineFriendsCount">0</span>)</h2>
+                    <a onclick="switchScreen('friends')">View All</a>
+                </div>
+                <div class="online-friends-strip" id="onlineFriendsStrip"></div>
+            </div>
 
         </div>
 
@@ -216,7 +300,45 @@
 
             <div id="loggedInView" style="display:none;">
 
-                <p id="loggedInUsername" class="sub" style="font-size:16px; color:#eef0f3; font-weight:600;"></p>
+                <div class="home-header" style="margin:0 0 14px;">
+                    <div class="header-text">
+                        <p id="loggedInUsername" class="sub" style="font-size:16px; color:#eef0f3; font-weight:600;"></p>
+                        <p class="sub" id="winRateSubtitle"></p>
+                        <p class="sub" id="bestStreakSubtitle"></p>
+                    </div>
+                    <div class="profile-box">
+                        <img id="accountProfileImg" src="" alt="Profile">
+                    </div>
+                </div>
+
+                <label class="btnSecondary" style="display:block; text-align:center; cursor:pointer;">
+                    Change Profile Photo
+                    <input type="file" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelect(event)">
+                </label>
+
+                <div class="stats-grid" style="margin-top:16px;">
+                    <div class="stat-item">
+                        <div class="stat-icon rating">♟</div>
+                        <h3 id="accountRatingValue">100</h3>
+                        <p>Rating</p>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon win">🏆</div>
+                        <h3 id="accountWinsValue">0</h3>
+                        <p>Games Won</p>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon streak">🔥</div>
+                        <h3 id="accountStreakValue">0</h3>
+                        <p>Win Streak</p>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon time">🧩</div>
+                        <h3 id="puzzleRatingValue">800</h3>
+                        <p>Puzzle Rating</p>
+                    </div>
+                </div>
+                <p class="sub" style="margin-top:8px;">Puzzle streak: <b id="puzzleStreakValue">0</b> days</p>
 
                 <button class="btnDanger" onclick="logOut()">Log Out</button>
 
@@ -235,6 +357,7 @@
             <button class="navBtn" data-screen="friends" onclick="switchScreen('friends')">
                 <span class="navIcon">👥</span>
                 <span class="navLabel">Friends</span>
+                <span class="navBadge" id="friendsNavBadge"></span>
             </button>
 
             <button class="navBtn" data-screen="account" onclick="switchScreen('account')">
@@ -308,6 +431,11 @@
 
                 <button class="iconBtn" id="undo" onclick="undoMove()" title="Undo Move">
                     ↩️
+                </button>
+
+                <button class="iconBtn" id="gameChatBtn" onclick="openGameChat()" title="Chat" style="position:relative;">
+                    💬
+                    <span class="cardBadge" id="gameChatBadge" style="display:none; position:absolute; top:-4px; right:-4px;"></span>
                 </button>
 
             </div>
@@ -462,6 +590,22 @@
 
     </div>
 
+    <!-- Challenge Received Popup -->
+    <div id="challengePopup" class="popup">
+
+        <div class="popupContent">
+
+            <div class="badge blue">⚔️</div>
+            <h2>Challenge Received</h2>
+            <p class="sub"><span id="challengeFromName"></span> wants to play a game.</p>
+
+            <button class="btnPrimary" onclick="respondToChallenge(true)">✅ Accept</button>
+            <button class="btnDanger" onclick="respondToChallenge(false)">❌ Decline</button>
+
+        </div>
+
+    </div>
+
     <!-- Settings Popup -->
     <div id="settingsPopup" class="popup">
 
@@ -477,7 +621,7 @@
 
     </div>
 
-    <!-- Info Popup (Tournaments, etc.) -->
+    <!-- Info Popup (generic) -->
     <div id="infoPopup" class="popup">
 
         <div class="popupContent">
@@ -492,6 +636,121 @@
 
     </div>
 
+    <!-- ===== Chat screen (in-game + friend DMs) ===== -->
+    <div id="chatScreen">
+        <div id="chatHeader">
+            <button onclick="closeChat()">←</button>
+            <span id="chatWithName">Chat</span>
+        </div>
+        <div id="chatMessages"></div>
+        <div id="chatInputRow">
+            <input type="text" id="chatInput" placeholder="Message...">
+            <button class="btnPrimary" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- ===== Tournaments screen ===== -->
+    <div id="tournamentsScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closeTournaments()">←</button>
+            <h2>🏆 Tournaments</h2>
+        </div>
+        <div class="fsBody">
+
+            <div id="tournamentsListView">
+                <button class="btnPrimary" onclick="showCreateTournament()">+ Create Tournament</button>
+                <div id="tournamentsList"></div>
+            </div>
+
+            <div id="tournamentCreateView" style="display:none;">
+                <span class="fieldLabel">Tournament Name</span>
+                <input type="text" id="tournamentNameInput" placeholder="e.g. Friday Night Blitz">
+
+                <span class="fieldLabel">Number of Rounds</span>
+                <select id="tournamentRoundsInput">
+                    <option value="3">3 Rounds</option>
+                    <option value="4" selected>4 Rounds</option>
+                    <option value="5">5 Rounds</option>
+                    <option value="7">7 Rounds</option>
+                </select>
+
+                <span class="fieldLabel">Time Control</span>
+                <select id="tournamentTimeInput">
+                    <option value="180">3 Minutes</option>
+                    <option value="300" selected>5 Minutes</option>
+                    <option value="600">10 Minutes</option>
+                </select>
+
+                <button class="btnPrimary" onclick="createTournament()">Create</button>
+                <button class="btnSecondary" onclick="showTournamentsList()">Cancel</button>
+            </div>
+
+            <div id="tournamentDetailView" style="display:none;">
+                <h2 id="tournamentDetailName"></h2>
+                <p class="sub" id="tournamentDetailStatus"></p>
+
+                <button class="btnPrimary" id="tournamentJoinBtn" onclick="joinTournament()" style="display:none;">Join Tournament</button>
+                <button class="btnGold" id="tournamentStartBtn" onclick="startTournament()" style="display:none;">Start Tournament</button>
+                <button class="btnGold" id="tournamentNextRoundBtn" onclick="advanceTournamentRound()" style="display:none;">Start Next Round</button>
+
+                <span class="fieldLabel">Standings</span>
+                <div id="tournamentStandings"></div>
+
+                <span class="fieldLabel">Current Round</span>
+                <div id="tournamentPairings"></div>
+
+                <button class="btnSecondary" onclick="showTournamentsList()">Back to List</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== Daily Puzzle screen ===== -->
+    <div id="puzzleScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closePuzzle()">←</button>
+            <h2>🧩 Daily Puzzle</h2>
+        </div>
+        <div class="fsBody">
+            <p class="sub" id="puzzleDescription">Loading...</p>
+            <p class="sub" id="puzzleFeedback" style="display:none;"></p>
+
+            <div id="boardContainerPuzzle" style="display:flex; justify-content:center; margin-top:10px;">
+                <div id="puzzleBoard" style="width:100%; max-width:370px; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border-radius:10px; overflow:hidden;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Leaderboard screen ===== -->
+    <div id="leaderboardScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closeLeaderboard()">←</button>
+            <h2>👑 Leaderboards</h2>
+        </div>
+        <div class="fsBody">
+            <div class="lbTabs">
+                <div class="lbTab active" id="lbTabRating" onclick="switchLeaderboardTab('rating')">Rating</div>
+                <div class="lbTab" id="lbTabWins" onclick="switchLeaderboardTab('wins')">Most Wins</div>
+                <div class="lbTab" id="lbTabPuzzle" onclick="switchLeaderboardTab('puzzleRating')">Puzzles</div>
+            </div>
+            <div id="leaderboardList"><p class="sub">Loading...</p></div>
+        </div>
+    </div>
+
+    <!-- ===== Daily Rewards screen ===== -->
+    <div id="dailyRewardsScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closeDailyRewards()">←</button>
+            <h2>🎁 Daily Rewards</h2>
+        </div>
+        <div class="fsBody">
+            <p class="sub">Log in every day to build your streak and earn bigger rewards.</p>
+            <div class="rewardsTrack" id="rewardsTrack"></div>
+            <button class="btnGold" id="claimRewardBtn" onclick="claimDailyReward()">Claim Today's Reward</button>
+            <p id="dailyRewardStatus"></p>
+        </div>
+    </div>
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
@@ -502,6 +761,11 @@
     <script src="multiplayer.js"></script>
     <script src="auth.js"></script>
     <script src="friends.js"></script>
+    <script src="chat.js"></script>
+    <script src="tournaments.js"></script>
+    <script src="puzzle.js"></script>
+    <script src="leaderboard.js"></script>
+    <script src="rewards.js"></script>
 
 </body>
 </html>
