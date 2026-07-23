@@ -39,6 +39,20 @@ function renderCreateTournamentView(){
     document.getElementById("tournamentCreateView").style.display = "block";
     document.getElementById("tournamentDetailView").style.display = "none";
     stopTournamentDetailListener();
+    updateTournamentFormatUI();
+
+    const startInput = document.getElementById("tournamentStartInput");
+    if(startInput){
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        startInput.min = now.toISOString().slice(0, 16);
+    }
+}
+
+function updateTournamentFormatUI(){
+    const format = document.getElementById("tournamentFormatInput").value;
+    document.getElementById("tournamentRoundsBox").style.display = format === "elimination" ? "none" : "block";
+    document.getElementById("tournamentEliminationNote").style.display = format === "elimination" ? "block" : "none";
 }
 
 function loadTournamentsList(){
@@ -67,14 +81,18 @@ function loadTournamentsList(){
 
             const t = item.data;
             const playerCount = t.players ? Object.keys(t.players).length : 0;
+            const capLabel = t.maxPlayers ? "/" + t.maxPlayers : "";
             const statusLabel = t.status === "registering" ? "Open" : t.status === "active" ? "Round " + t.currentRound + "/" + t.rounds : "Completed";
+            const formatLabel = t.format === "elimination" ? "Single Elim." : "Swiss";
+            const speedLabel = formatSpeedLabel(t.timeControl);
+            const startLabel = (t.status === "registering" && t.scheduledStart) ? " · Starts " + formatScheduledStart(t.scheduledStart) : "";
 
             const card = document.createElement("div");
             card.className = "tournamentCard";
             card.onclick = function(){ openTournamentDetail(item.id); };
             card.innerHTML =
                 '<div class="tournamentCardName">🏆 ' + escapeHtml(t.name) + '</div>' +
-                '<div class="tournamentCardMeta">' + playerCount + ' players &middot; ' + t.rounds + ' rounds &middot; ' + statusLabel + '</div>';
+                '<div class="tournamentCardMeta">' + formatLabel + ' &middot; ' + speedLabel + ' &middot; ' + playerCount + capLabel + ' players &middot; ' + statusLabel + startLabel + '</div>';
 
             list.appendChild(card);
 
@@ -82,6 +100,21 @@ function loadTournamentsList(){
 
     });
 
+}
+
+function formatSpeedLabel(seconds){
+    if(seconds < 180) return "Bullet";
+    if(seconds < 600) return "Blitz";
+    if(seconds < 1800) return "Rapid";
+    return "Classical";
+}
+
+function formatScheduledStart(timestamp){
+    const d = new Date(timestamp);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    const timePart = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return sameDay ? timePart : d.toLocaleDateString([], { month: "short", day: "numeric" }) + " " + timePart;
 }
 
 function createTournament(){
@@ -92,11 +125,20 @@ function createTournament(){
     }
 
     const name = document.getElementById("tournamentNameInput").value.trim();
+    const format = document.getElementById("tournamentFormatInput").value;
     const rounds = Number(document.getElementById("tournamentRoundsInput").value);
     const timeControl = Number(document.getElementById("tournamentTimeInput").value);
+    const maxPlayers = Number(document.getElementById("tournamentMaxPlayersInput").value);
+    const startInputValue = document.getElementById("tournamentStartInput").value;
+    const scheduledStart = startInputValue ? new Date(startInputValue).getTime() : null;
 
     if(!name){
         alert("Please enter a tournament name.");
+        return;
+    }
+
+    if(scheduledStart && scheduledStart < Date.now()){
+        alert("Start time can't be in the past.");
         return;
     }
 
@@ -112,9 +154,13 @@ function createTournament(){
 
     newRef.set({
         name: name,
-        format: "swiss",
-        rounds: rounds,
+        format: format,
+        // Single elimination's round count depends on how many players
+        // actually join, so it's computed at start time instead of here.
+        rounds: format === "elimination" ? null : rounds,
         timeControl: timeControl,
+        maxPlayers: maxPlayers,
+        scheduledStart: scheduledStart,
         status: "registering",
         createdBy: currentUser.uid,
         createdAt: Date.now(),
@@ -176,11 +222,23 @@ function renderTournamentDetail(tournamentId, t){
     const alreadyJoined = currentUser && players[currentUser.uid];
 
     let statusText = "";
-    if(t.status === "registering") statusText = playerUids.length + " players joined";
+    if(t.status === "registering") statusText = playerUids.length + (t.maxPlayers ? "/" + t.maxPlayers : "") + " players joined";
     else if(t.status === "active") statusText = "Round " + t.currentRound + " of " + t.rounds;
-    else statusText = "Completed";
+    else statusText = "Completed" + (t.champion && players[t.champion] ? " — 🏆 " + players[t.champion].username + " wins!" : "");
 
     document.getElementById("tournamentDetailStatus").textContent = statusText;
+
+    const formatLabel = t.format === "elimination" ? "Single Elimination" : "Swiss System";
+    const speedLabel = formatSpeedLabel(t.timeControl);
+    const startNote = (t.status === "registering" && t.scheduledStart) ? " · Starts " + formatScheduledStart(t.scheduledStart) : "";
+    const metaEl = document.getElementById("tournamentDetailMeta");
+    if(metaEl) metaEl.textContent = formatLabel + " · " + speedLabel + startNote;
+
+    // Any viewer's browser can flip a scheduled tournament from
+    // "registering" to "active" once its start time has passed — the
+    // transaction inside guards against it firing more than once even if
+    // several people have this screen open at the same moment.
+    checkTournamentAutoStart(tournamentId, t);
 
     const joinBtn = document.getElementById("tournamentJoinBtn");
     const startBtn = document.getElementById("tournamentStartBtn");
@@ -248,7 +306,8 @@ function renderTournamentDetail(tournamentId, t){
         if(roundInfo.bye && players[roundInfo.bye]){
             const byeRow = document.createElement("div");
             byeRow.className = "pairingRow";
-            byeRow.innerHTML = '<div class="pairingNames">' + escapeHtml(players[roundInfo.bye].username) + '</div><div class="pairingResult">Bye (free point)</div>';
+            const byeLabel = t.format === "elimination" ? "Bye (advances automatically)" : "Bye (free point)";
+            byeRow.innerHTML = '<div class="pairingNames">' + escapeHtml(players[roundInfo.bye].username) + '</div><div class="pairingResult">' + byeLabel + '</div>';
             pairingsBox.appendChild(byeRow);
         }
 
@@ -260,12 +319,40 @@ function joinTournament(){
 
     if(!currentViewedTournamentId || !currentUser || !db) return;
 
-    db.ref("tournaments/" + currentViewedTournamentId + "/players/" + currentUser.uid).set({
-        username: currentUsername,
-        flag: currentUserFlag,
-        rating: currentUserRating || 100,
-        points: 0,
-        byes: 0
+    const tournamentRef = db.ref("tournaments/" + currentViewedTournamentId);
+
+    tournamentRef.transaction(function(t){
+
+        if(!t) return t;
+        if(t.status !== "registering") return t; // already started/finished, no-op
+        if(t.players && t.players[currentUser.uid]) return t; // already joined, no-op
+
+        const currentCount = t.players ? Object.keys(t.players).length : 0;
+        if(t.maxPlayers && currentCount >= t.maxPlayers) return t; // full, no-op
+
+        if(!t.players) t.players = {};
+        t.players[currentUser.uid] = {
+            username: currentUsername,
+            flag: currentUserFlag,
+            rating: currentUserRating || 100,
+            points: 0,
+            byes: 0
+        };
+
+        return t;
+
+    }).then(function(result){
+
+        const t = result.snapshot.val();
+        if(!t) return;
+
+        const joined = t.players && t.players[currentUser.uid];
+        const currentCount = t.players ? Object.keys(t.players).length : 0;
+
+        if(!joined && t.maxPlayers && currentCount >= t.maxPlayers){
+            showInfoPopup("🏆 Tournament Full", "This tournament already has its maximum of " + t.maxPlayers + " players.");
+        }
+
     });
 
 }
@@ -280,16 +367,116 @@ function startTournament(){
         if(!t) return;
 
         const playerUids = Object.keys(t.players || {});
-        const pairingResult = generateSwissPairings(playerUids, t.players, {});
-
         const updates = {};
+
+        if(t.format === "elimination"){
+            const pairingResult = generateEliminationPairings(playerUids);
+            updates["tournaments/" + currentViewedTournamentId + "/rounds"] = Math.ceil(Math.log2(playerUids.length));
+            updates["tournaments/" + currentViewedTournamentId + "/rounds_data/1"] = pairingResult;
+        }else{
+            const pairingResult = generateSwissPairings(playerUids, t.players, {});
+            updates["tournaments/" + currentViewedTournamentId + "/rounds_data/1"] = pairingResult;
+        }
+
         updates["tournaments/" + currentViewedTournamentId + "/status"] = "active";
         updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = 1;
-        updates["tournaments/" + currentViewedTournamentId + "/rounds_data/1"] = pairingResult;
 
         db.ref().update(updates);
 
     });
+
+}
+
+// A tournament with a scheduled start time opens itself automatically once
+// that time passes and at least 2 players have joined — no creator action
+// needed. Wrapped in a transaction on the whole node so it can safely fire
+// from several people's browsers at once and still only ever run once.
+function checkTournamentAutoStart(tournamentId, t){
+
+    if(t.status !== "registering") return;
+    if(!t.scheduledStart) return;
+    if(Date.now() < t.scheduledStart) return;
+
+    const playerUids = Object.keys(t.players || {});
+    if(playerUids.length < 2) return; // not enough players yet — keep waiting
+
+    db.ref("tournaments/" + tournamentId).transaction(function(current){
+
+        if(!current) return current;
+        if(current.status !== "registering") return current; // someone already started it
+        if(!current.scheduledStart || Date.now() < current.scheduledStart) return current;
+
+        const uids = Object.keys(current.players || {});
+        if(uids.length < 2) return current;
+
+        const pairingResult = current.format === "elimination"
+            ? generateEliminationPairings(uids)
+            : generateSwissPairings(uids, current.players, {});
+
+        current.status = "active";
+        current.currentRound = 1;
+        if(!current.rounds_data) current.rounds_data = {};
+        current.rounds_data[1] = pairingResult;
+        if(current.format === "elimination"){
+            current.rounds = Math.ceil(Math.log2(uids.length));
+        }
+
+        return current;
+
+    });
+
+}
+
+// Randomly seeds players into a knockout bracket. An odd/non-power-of-2
+// count gets one random bye each round rather than requiring exact powers
+// of 2, same as how most casual knockout brackets are run.
+function generateEliminationPairings(playerUids){
+
+    const shuffled = playerUids.slice();
+    for(let i = shuffled.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    let byeUid = null;
+    if(shuffled.length % 2 !== 0){
+        byeUid = shuffled.pop();
+    }
+
+    const pairings = {};
+    for(let i = 0; i < shuffled.length; i += 2){
+        const pairId = "p" + (i / 2);
+        const whiteFirst = Math.random() < 0.5;
+        pairings[pairId] = {
+            white: whiteFirst ? shuffled[i] : shuffled[i + 1],
+            black: whiteFirst ? shuffled[i + 1] : shuffled[i],
+            result: null,
+            roomCode: null
+        };
+    }
+
+    return { pairings: pairings, bye: byeUid || null };
+
+}
+
+// Builds the next knockout round from the previous one's winners (a bye
+// counts as an automatic win). If only one player remains, the bracket is
+// finished — the caller is responsible for checking that.
+function generateEliminationNextRound(previousRoundInfo, players){
+
+    const winners = [];
+
+    Object.keys(previousRoundInfo.pairings || {}).forEach(function(pid){
+        const p = previousRoundInfo.pairings[pid];
+        if(p.result === "white") winners.push(p.white);
+        else if(p.result === "black") winners.push(p.black);
+        // unresolved pairings shouldn't happen here — advanceTournamentRound
+        // already checks the round is complete before calling this.
+    });
+
+    if(previousRoundInfo.bye) winners.push(previousRoundInfo.bye);
+
+    return generateEliminationPairings(winners);
 
 }
 
@@ -489,6 +676,11 @@ function advanceTournamentRound(){
         const t = snapshot.val();
         if(!t) return;
 
+        if(t.format === "elimination"){
+            advanceEliminationRound(t);
+            return;
+        }
+
         if(t.currentRound >= t.rounds){
             db.ref("tournaments/" + currentViewedTournamentId + "/status").set("completed");
             return;
@@ -527,5 +719,34 @@ function advanceTournamentRound(){
         db.ref().update(updates);
 
     });
+
+}
+
+function advanceEliminationRound(t){
+
+    const currentRoundInfo = t.rounds_data[t.currentRound];
+    if(!currentRoundInfo) return;
+
+    const nextRoundResult = generateEliminationNextRound(currentRoundInfo, t.players);
+    const remaining = Object.keys(nextRoundResult.pairings).length * 2 + (nextRoundResult.bye ? 1 : 0);
+
+    const updates = {};
+
+    if(remaining <= 1){
+        // Only one player left standing (or the whole thing collapsed to a
+        // single bye) — the bracket is finished.
+        const championUid = nextRoundResult.bye ||
+            (Object.values(nextRoundResult.pairings)[0] && Object.values(nextRoundResult.pairings)[0].white);
+        updates["tournaments/" + currentViewedTournamentId + "/status"] = "completed";
+        if(championUid) updates["tournaments/" + currentViewedTournamentId + "/champion"] = championUid;
+        db.ref().update(updates);
+        return;
+    }
+
+    const nextRound = t.currentRound + 1;
+    updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
+    updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = nextRoundResult;
+
+    db.ref().update(updates);
 
 }
