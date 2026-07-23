@@ -7,10 +7,16 @@ let activeTournamentPairingId = null;
 let currentViewedTournamentId = null;
 
 function openTournaments(){
-    document.getElementById("appShell").style.display = "none";
-    document.getElementById("tournamentsScreen").style.display = "flex";
-    history.pushState({ screen: "tournaments", view: "list" }, "", "#tournaments");
-    showTournamentsList();
+    try{
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("tournamentsScreen").style.display = "flex";
+        history.pushState({ screen: "tournaments", view: "list" }, "", "#tournaments");
+        showTournamentsList();
+    }catch(err){
+        console.error("openTournaments failed:", err);
+        document.getElementById("appShell").style.display = "flex";
+        alert("Couldn't open Tournaments: " + err.message);
+    }
 }
 
 function closeTournaments(){
