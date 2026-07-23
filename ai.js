@@ -202,4 +202,4 @@ function makeAIMove(){
     stockfish.postMessage("position fen " + boardToFEN());
     stockfish.postMessage("go movetime " + settings.movetime);
 
-     }
+}
