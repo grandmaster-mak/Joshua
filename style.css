@@ -47,6 +47,7 @@ body{
 #homeScreen{
     display:flex;
     flex-direction:column;
+    padding-top:14px;
 }
 
 #friendsScreen,
@@ -572,7 +573,7 @@ input::placeholder{ color:#4a5060; }
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    margin:12px 15px 18px;
+    margin:4px 15px 12px;
     gap:14px;
 }
 
@@ -580,7 +581,7 @@ input::placeholder{ color:#4a5060; }
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin:4px 15px 0;
+    margin:0 15px 6px;
 }
 
 .currency-pill{
