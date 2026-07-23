@@ -16,21 +16,8 @@
         <!-- Home Screen -->
         <div id="homeScreen" class="screen">
 
-            <!-- Top row: currency + notifications -->
-            <div class="header-top-row">
-                <div class="currency-row">
-                    <div class="currency-pill">
-                        <span class="coinIcon">🪙</span>
-                        <span id="coinBalance">0</span>
-                        <button class="currency-add" onclick="openCurrencyShop('coins')" title="Get Coins">+</button>
-                    </div>
-                    <div class="currency-pill">
-                        <span class="gemIcon">💎</span>
-                        <span id="gemBalance">0</span>
-                        <button class="currency-add" onclick="openCurrencyShop('gems')" title="Get Gems">+</button>
-                    </div>
-                </div>
-
+            <!-- Top row: notifications only (currency pills removed for now) -->
+            <div class="header-top-row" style="justify-content:flex-end;">
                 <button class="bellBtn" onclick="openNotifications()" title="Notifications">
                     🔔
                     <span class="bellDot" id="notifDot" style="display:none;"></span>
@@ -43,7 +30,6 @@
                 <div class="header-text">
                     <p class="greeting-line" id="greetingLine">Good morning ☀️</p>
                     <h1>Hello, <span id="username">player</span>!</h1>
-                    <p class="title-line" id="playerTitle" style="display:none;"></p>
                     <p class="stars-line" id="playerStars" style="display:none;"></p>
                 </div>
 
@@ -666,20 +652,48 @@
                 <span class="fieldLabel">Tournament Name</span>
                 <input type="text" id="tournamentNameInput" placeholder="e.g. Friday Night Blitz">
 
-                <span class="fieldLabel">Number of Rounds</span>
-                <select id="tournamentRoundsInput">
-                    <option value="3">3 Rounds</option>
-                    <option value="4" selected>4 Rounds</option>
-                    <option value="5">5 Rounds</option>
-                    <option value="7">7 Rounds</option>
+                <span class="fieldLabel">Format</span>
+                <select id="tournamentFormatInput" onchange="updateTournamentFormatUI()">
+                    <option value="swiss" selected>Swiss System</option>
+                    <option value="elimination">Single Elimination</option>
                 </select>
 
-                <span class="fieldLabel">Time Control</span>
+                <span class="fieldLabel">Speed</span>
                 <select id="tournamentTimeInput">
-                    <option value="180">3 Minutes</option>
-                    <option value="300" selected>5 Minutes</option>
-                    <option value="600">10 Minutes</option>
+                    <option value="60">Bullet · 1 min</option>
+                    <option value="180">Blitz · 3 min</option>
+                    <option value="300" selected>Blitz · 5 min</option>
+                    <option value="600">Rapid · 10 min</option>
+                    <option value="900">Rapid · 15 min</option>
+                    <option value="1800">Classical · 30 min</option>
                 </select>
+
+                <div id="tournamentRoundsBox">
+                    <span class="fieldLabel">Number of Rounds</span>
+                    <select id="tournamentRoundsInput">
+                        <option value="3">3 Rounds</option>
+                        <option value="4" selected>4 Rounds</option>
+                        <option value="5">5 Rounds</option>
+                        <option value="7">7 Rounds</option>
+                    </select>
+                </div>
+
+                <p class="sub" id="tournamentEliminationNote" style="display:none;">
+                    Single elimination rounds are set automatically once the bracket is seeded — the number of rounds depends on how many players join.
+                </p>
+
+                <span class="fieldLabel">Max Players</span>
+                <select id="tournamentMaxPlayersInput">
+                    <option value="4">4 Players</option>
+                    <option value="8" selected>8 Players</option>
+                    <option value="16">16 Players</option>
+                    <option value="32">32 Players</option>
+                    <option value="64">64 Players</option>
+                </select>
+
+                <span class="fieldLabel">Start Time (optional)</span>
+                <input type="datetime-local" id="tournamentStartInput">
+                <p class="sub">Leave blank to start it yourself whenever you're ready. Set a time and it opens automatically once enough players have joined.</p>
 
                 <button class="btnPrimary" onclick="createTournament()">Create</button>
                 <button class="btnSecondary" onclick="showTournamentsList()">Cancel</button>
@@ -688,6 +702,7 @@
             <div id="tournamentDetailView" style="display:none;">
                 <h2 id="tournamentDetailName"></h2>
                 <p class="sub" id="tournamentDetailStatus"></p>
+                <p class="sub" id="tournamentDetailMeta"></p>
 
                 <button class="btnPrimary" id="tournamentJoinBtn" onclick="joinTournament()" style="display:none;">Join Tournament</button>
                 <button class="btnGold" id="tournamentStartBtn" onclick="startTournament()" style="display:none;">Start Tournament</button>
