@@ -1025,10 +1025,17 @@ input::placeholder{ color:#4a5060; }
     background:#171717;
     border:1px solid rgba(255,255,255,0.06);
     border-radius:12px;
-    padding:12px 8px;
+    padding:12px 6px;
     text-align:center;
     cursor:pointer;
     transition:transform .12s ease, background .15s ease;
+    height:100px;
+    box-sizing:border-box;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
 }
 .quicklink-card:hover{ background:#1d1f21; }
 .quicklink-card:active{ transform:scale(0.96); }
@@ -1036,6 +1043,7 @@ input::placeholder{ color:#4a5060; }
 .quicklink-icon{
     font-size:20px;
     margin-bottom:6px;
+    flex-shrink:0;
 }
 
 .quicklink-card h4{
@@ -1043,13 +1051,23 @@ input::placeholder{ color:#4a5060; }
     font-size:12px;
     font-weight:700;
     margin-bottom:2px;
+    width:100%;
+    overflow-x:auto;
+    white-space:nowrap;
+    scrollbar-width:none;
 }
+.quicklink-card h4::-webkit-scrollbar{ display:none; }
 
 .quicklink-card p{
     color:#7d8492;
     font-size:10px;
     line-height:1.2;
+    width:100%;
+    overflow-x:auto;
+    white-space:nowrap;
+    scrollbar-width:none;
 }
+.quicklink-card p::-webkit-scrollbar{ display:none; }
 
 /* ===== Online Friends strip ===== */
 
