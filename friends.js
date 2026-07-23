@@ -2,6 +2,18 @@
 // Friends: search by username, send/accept/decline requests
 // ============================================================
 
+// Escapes a string for safe insertion into innerHTML (prevents markup
+// breaking / injection from usernames containing <, >, ", or ').
+function escapeHtml(str){
+    if(str === null || str === undefined) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 function searchForFriend(){
 
     const query = document.getElementById("friendSearchInput").value.trim();
@@ -40,7 +52,7 @@ function searchForFriend(){
 
         })
         .catch(function(err){
-            resultBox.innerHTML = '<p class="sub">Search failed: ' + err.message + '</p>';
+            resultBox.innerHTML = '<p class="sub">Search failed: ' + escapeHtml(err.message) + '</p>';
         });
 
 }
@@ -48,6 +60,7 @@ function searchForFriend(){
 function renderSearchResult(uid, data){
 
     const resultBox = document.getElementById("friendSearchResult");
+    const safeUsername = escapeHtml(data.username);
 
     db.ref("users/" + currentUser.uid + "/private/friends/" + uid).once("value").then(function(friendSnap){
 
@@ -64,7 +77,7 @@ function renderSearchResult(uid, data){
             }else if(alreadyRequested){
                 buttonHtml = '<button class="btnSecondary" disabled>Request Sent</button>';
             }else{
-                buttonHtml = '<button class="btnPrimary" onclick="sendFriendRequest(\'' + uid + '\', \'' + data.username + '\')">Add Friend</button>';
+                buttonHtml = '<button class="btnPrimary" data-friend-uid="' + uid + '" data-friend-name="' + safeUsername + '" onclick="sendFriendRequest(this.dataset.friendUid, this.dataset.friendName)">Add Friend</button>';
             }
 
             resultBox.innerHTML =
@@ -72,7 +85,7 @@ function renderSearchResult(uid, data){
                     '<div class="friendIdentity">' +
                         '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
                         '<div class="friendInfo">' +
-                            '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
+                            '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + safeUsername + '</span>' +
                             '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
                         '</div>' +
                     '</div>' +
@@ -101,7 +114,7 @@ function sendFriendRequest(targetUid, targetUsername){
 
     const resultBox = document.getElementById("friendSearchResult");
     if(resultBox){
-        resultBox.innerHTML = '<p class="sub">Friend request sent to ' + targetUsername + '.</p>';
+        resultBox.innerHTML = '<p class="sub">Friend request sent to ' + escapeHtml(targetUsername) + '.</p>';
     }
 }
 
@@ -147,13 +160,13 @@ function loadFriendRequests(){
                 '<div class="friendIdentity">' +
                     '<img class="friendAvatarImg" src="' + (req.photo || DEFAULT_AVATAR_SRC) + '" alt="">' +
                     '<div class="friendInfo">' +
-                        '<span class="friendName">' + (req.flag || "") + ' ' + req.username + '</span>' +
+                        '<span class="friendName">' + escapeHtml(req.flag || "") + ' ' + escapeHtml(req.username) + '</span>' +
                         '<span class="friendRating">Rating ' + (req.rating || 100) + '</span>' +
                     '</div>' +
                 '</div>' +
                 '<div class="requestActions">' +
-                    '<button class="btnPrimary" onclick="acceptFriendRequest(\'' + fromUid + '\')">Accept</button>' +
-                    '<button class="btnSecondary" onclick="declineFriendRequest(\'' + fromUid + '\')">Decline</button>' +
+                    '<button class="btnPrimary" data-from-uid="' + fromUid + '" onclick="acceptFriendRequest(this.dataset.fromUid)">Accept</button>' +
+                    '<button class="btnSecondary" data-from-uid="' + fromUid + '" onclick="declineFriendRequest(this.dataset.fromUid)">Decline</button>' +
                 '</div>';
 
             list.appendChild(row);
@@ -199,6 +212,7 @@ function loadFriendsList(){
 
         if(!snapshot.exists()){
             list.innerHTML = '<p class="sub">You haven\'t added any friends yet.</p>';
+            if(typeof loadOnlineFriendsStrip === "function") loadOnlineFriendsStrip([]);
             return;
         }
 
@@ -219,6 +233,7 @@ function loadFriendsList(){
                 db.ref("presence/" + uid).once("value").then(function(presenceSnap){
 
                     const isOnline = presenceSnap.val() === true;
+                    const safeUsername = escapeHtml(data.username);
 
                     const row = document.createElement("div");
                     row.className = "friendCard";
@@ -229,13 +244,13 @@ function loadFriendsList(){
                                 (isOnline ? '<span class="onlineDotSmall"></span>' : '') +
                             '</div>' +
                             '<div class="friendInfo">' +
-                                '<span class="friendName">' + (data.flag || "") + ' ' + data.username + '</span>' +
+                                '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + safeUsername + '</span>' +
                                 '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
                             '</div>' +
                         '</div>' +
                         '<div class="friendActions">' +
-                            '<button class="friendMessageBtn" onclick="openFriendChat(\'' + uid + '\', \'' + data.username + '\')" title="Message">💬<span class="cardBadge" id="friendChatBadge_' + uid + '" style="display:none;"></span></button>' +
-                            '<button class="btnPrimary" onclick="challengeFriend(\'' + uid + '\', \'' + data.username + '\')">⚔️ Challenge</button>' +
+                            '<button class="friendMessageBtn" data-uid="' + uid + '" data-name="' + safeUsername + '" onclick="openFriendChat(this.dataset.uid, this.dataset.name)" title="Message">💬<span class="cardBadge" id="friendChatBadge_' + uid + '" style="display:none;"></span></button>' +
+                            '<button class="btnPrimary" data-uid="' + uid + '" data-name="' + safeUsername + '" onclick="challengeFriend(this.dataset.uid, this.dataset.name)">⚔️ Challenge</button>' +
                         '</div>';
 
                     list.appendChild(row);
@@ -291,7 +306,7 @@ function challengeFriend(friendUid, friendUsername){
         }
     });
 
-    alert("Challenge sent to " + friendUsername + " — waiting for them to accept.");
+    showInfoPopup("⚔️ Challenge Sent", "Challenge sent to " + friendUsername + " — waiting for them to accept.");
 
 }
 
@@ -359,10 +374,12 @@ function respondToChallenge(accepted){
 function loadOnlineFriendsStrip(friendUids){
 
     const strip = document.getElementById("onlineFriendsStrip");
+    const countEl = document.getElementById("onlineFriendsCount");
     if(!strip || !db) return;
 
     if(!friendUids || friendUids.length === 0){
-        strip.innerHTML = "";
+        strip.innerHTML = '<p class="sub">No friends yet — search above to add some.</p>';
+        if(countEl) countEl.textContent = "0";
         return;
     }
 
@@ -386,14 +403,16 @@ function loadOnlineFriendsStrip(friendUids){
 
         const online = results.filter(function(r){ return r !== null; });
 
+        if(countEl) countEl.textContent = String(online.length);
+
         if(online.length === 0){
-            strip.innerHTML = "";
+            strip.innerHTML = '<p class="sub">No friends online right now.</p>';
             return;
         }
 
         strip.innerHTML = "";
 
-        online.forEach(function(friend){
+        online.slice(0, 8).forEach(function(friend){
 
             const item = document.createElement("div");
             item.className = "onlineFriendItem";
@@ -403,11 +422,21 @@ function loadOnlineFriendsStrip(friendUids){
                     '<img class="onlineFriendAvatarImg" src="' + (friend.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
                     '<span class="onlineFriendDot"></span>' +
                 '</div>' +
-                '<span class="onlineFriendName">' + friend.username + '</span>';
+                '<span class="onlineFriendName">' + escapeHtml(friend.username) + '</span>';
 
             strip.appendChild(item);
 
         });
+
+        if(online.length > 8){
+            const more = document.createElement("div");
+            more.className = "onlineFriendItem";
+            more.onclick = function(){ switchScreen("friends"); };
+            more.innerHTML =
+                '<div class="moreFriendsCircle">+' + (online.length - 8) + '</div>' +
+                '<span class="onlineFriendName">More</span>';
+            strip.appendChild(more);
+        }
 
     });
 
