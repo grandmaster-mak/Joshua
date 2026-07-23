@@ -783,12 +783,14 @@ function startTimer(){
             clearInterval(timer);
             gameOver = true;
             showPopup("⏰ TIME!", "Black wins on time!");
+            recordGameResult(gameMode === "ai" ? "loss" : "win", myOpponentName());
         }
 
         if(blackTime <= 0){
             clearInterval(timer);
             gameOver = true;
             showPopup("⏰ TIME!", "White wins on time!");
+            recordGameResult(gameMode === "ai" ? "win" : "loss", myOpponentName());
         }
 
     },1000);
