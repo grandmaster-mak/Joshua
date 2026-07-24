@@ -753,6 +753,50 @@ function updatePlayerNames(){
     document.getElementById("topPlayerName").textContent = (topFlag ? topFlag + " " : "") + topName;
     document.getElementById("bottomPlayerName").textContent = (bottomFlag ? bottomFlag + " " : "") + bottomName;
 
+    const topRating = orientation.top === "white" ? whiteRating : blackRating;
+    const bottomRating = orientation.bottom === "white" ? whiteRating : blackRating;
+    const topRatingEl = document.getElementById("topRatingLine");
+    const bottomRatingEl = document.getElementById("bottomRatingLine");
+
+    if(topRatingEl){
+        if(gameMode === "online" && topRating){
+            topRatingEl.textContent = "Rating " + topRating;
+            topRatingEl.style.display = "block";
+        }else{
+            topRatingEl.style.display = "none";
+        }
+    }
+
+    if(bottomRatingEl){
+        if(gameMode === "online" && bottomRating){
+            bottomRatingEl.textContent = "Rating " + bottomRating;
+            bottomRatingEl.style.display = "block";
+        }else{
+            bottomRatingEl.style.display = "none";
+        }
+    }
+
+    // Avatars: online shows each side's real photo; AI mode shows your own
+    // photo on your side and a robot icon on the computer's side; local
+    // two-player just shows a generic silhouette for both, since it's one
+    // device/no separate accounts.
+    const topAvatarEl = document.getElementById("topPlayerAvatar");
+    const bottomAvatarEl = document.getElementById("bottomPlayerAvatar");
+
+    function avatarFor(side){
+        if(gameMode === "online"){
+            const photo = side === "white" ? whitePhoto : blackPhoto;
+            return photo || DEFAULT_AVATAR_SRC;
+        }
+        if(gameMode === "ai"){
+            return side === "white" ? (currentUserPhotoURL || DEFAULT_AVATAR_SRC) : AI_AVATAR_SRC;
+        }
+        return DEFAULT_AVATAR_SRC;
+    }
+
+    if(topAvatarEl) topAvatarEl.src = avatarFor(orientation.top);
+    if(bottomAvatarEl) bottomAvatarEl.src = avatarFor(orientation.bottom);
+
 }
 
 function startTimer(){
