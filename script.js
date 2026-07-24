@@ -1327,11 +1327,15 @@ if(gameMode === "ai"){
         blackPlayer = "Computer";
         whiteFlag = (typeof currentUserFlag !== "undefined") ? currentUserFlag : "";
         blackFlag = "🤖";
+        whiteRating = null; blackRating = null;
+        whitePhoto = null; blackPhoto = null;
     }else if(gameMode === "human"){
         whitePlayer = "White";
         blackPlayer = "Black";
         whiteFlag = "";
         blackFlag = "";
+        whiteRating = null; blackRating = null;
+        whitePhoto = null; blackPhoto = null;
     }
     // For online mode, names/flags are set separately by multiplayer.js
     if(selectedTime === -1){
