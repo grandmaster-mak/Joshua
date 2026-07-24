@@ -457,6 +457,10 @@ input::placeholder{ color:#4a5060; }
     white-space:nowrap;
     max-height:none;
     scrollbar-width:none;
+    min-width:0;
+    width:100%;
+    box-sizing:border-box;
+    margin:0 15px 10px;
 }
 #history::-webkit-scrollbar{ display:none; }
 
