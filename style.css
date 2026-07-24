@@ -30,8 +30,12 @@ body{
 }
 
 #filesTop, #ranksLeft{
-    display:none;
+    display:none !important;
 }
+
+#boardArea{ width:100%; }
+#boardColumn{ width:100% !important; }
+#board{ width:100% !important; }
 
 .iconBtn{
     border:none;
