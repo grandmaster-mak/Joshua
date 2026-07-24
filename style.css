@@ -179,12 +179,17 @@ body{
     display:flex;
     gap:30px;
     align-items:flex-start;
+    min-width:0;
+    width:100%;
+    box-sizing:border-box;
 }
 
 #boardColumn{
     display:flex;
     flex-direction:column;
     align-items:center;
+    min-width:0;
+    width:100%;
 }
 
 #board{
@@ -217,16 +222,13 @@ body{
 
 #panel{
     width:250px;
+    min-width:0;
+    box-sizing:border-box;
     background:#15181f;
     border:1px solid rgba(255,255,255,0.06);
     padding:24px;
     border-radius:18px;
     box-shadow:0 20px 50px rgba(0,0,0,.4);
-    min-width:0;
-}
-
-#boardColumn{
-    min-width:0;
 }
 
 #panel h2{
@@ -276,16 +278,20 @@ body{
     margin:0;
     cursor:pointer;
 }
-.bigCtrlBtn .ctrlIcon{ font-size:18px; line-height:1; opacity:1; }
+.bigCtrlBtn .ctrlIcon{ font-size:18px; line-height:1; font-weight:900; opacity:1; }
 .bigCtrlBtn .ctrlLabel{ font-weight:800; font-size:11.5px; }
 
 .ctrlGreen{ border-color:#22c55e; }
+.ctrlGreen .ctrlIcon{ color:#22c55e; }
 .ctrlGreen .ctrlLabel{ color:#22c55e; }
 .ctrlBlue{ border-color:#3b82f6; }
+.ctrlBlue .ctrlIcon{ color:#3b82f6; }
 .ctrlBlue .ctrlLabel{ color:#3b82f6; }
 .ctrlPurple{ border-color:#a855f7; }
+.ctrlPurple .ctrlIcon{ color:#a855f7; }
 .ctrlPurple .ctrlLabel{ color:#a855f7; }
 .ctrlTeal{ border-color:#2dd4bf; }
+.ctrlTeal .ctrlIcon{ color:#2dd4bf; }
 .ctrlTeal .ctrlLabel{ color:#2dd4bf; }
 
 .ratingLine{
@@ -457,10 +463,9 @@ input::placeholder{ color:#4a5060; }
     white-space:nowrap;
     max-height:none;
     scrollbar-width:none;
-    min-width:0;
     width:100%;
+    min-width:0;
     box-sizing:border-box;
-    margin:0 15px 10px;
 }
 #history::-webkit-scrollbar{ display:none; }
 
