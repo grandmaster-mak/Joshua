@@ -246,7 +246,44 @@ body{
     gap:8px;
     margin-bottom:22px;
 }
+#inGameControls{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+}
 
+.bigCtrlBtn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    background:#0e1015;
+    border:2px solid;
+    border-radius:14px;
+    padding:14px 8px;
+    width:100%;
+    margin:0;
+    cursor:pointer;
+}
+.bigCtrlBtn .ctrlIcon{ font-size:20px; line-height:1; margin-bottom:2px; }
+.bigCtrlBtn .ctrlLabel{ font-weight:800; font-size:13px; }
+.bigCtrlBtn .ctrlSub{ font-size:10.5px; color:#8b93a0; font-weight:500; }
+
+.ctrlGreen{ border-color:#22c55e; }
+.ctrlGreen .ctrlLabel{ color:#22c55e; }
+.ctrlBlue{ border-color:#3b82f6; }
+.ctrlBlue .ctrlLabel{ color:#3b82f6; }
+.ctrlPurple{ border-color:#a855f7; }
+.ctrlPurple .ctrlLabel{ color:#a855f7; }
+.ctrlTeal{ border-color:#2dd4bf; }
+.ctrlTeal .ctrlLabel{ color:#2dd4bf; }
+
+.ratingLine{
+    font-size:12px;
+    color:rgba(255,255,255,0.75);
+    margin-top:2px;
+}
 .iconBtn{
     flex:1;
     aspect-ratio:1;
