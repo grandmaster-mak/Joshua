@@ -1696,10 +1696,16 @@ function recordGameResult(myResult, opponentName){
     if(typeof currentUser === "undefined" || !currentUser) return;
     if(typeof db === "undefined" || !db) return;
 
-    const userRef = db.ref("users/" + currentUser.uid);
+    // IMPORTANT: this only touches users/{uid}/public, never the parent
+    // users/{uid} node. A transaction on the parent would also read/write
+    // the sibling "history" path, and could silently clobber a concurrent
+    // history push with a stale snapshot — which is what was wiping out
+    // recent games. Scoping it to /public keeps the two writes on
+    // non-overlapping paths so neither can stomp on the other.
+    const userPublicRef = db.ref("users/" + currentUser.uid + "/public");
     const opponentInfo = myOpponentUidAndPhoto();
 
-    userRef.transaction(function(data){
+    userPublicRef.transaction(function(data){
         if(!data) return data;
         data.wins = data.wins || 0;
         data.losses = data.losses || 0;
@@ -1721,18 +1727,21 @@ function recordGameResult(myResult, opponentName){
         return data;
     });
 
-    userRef.child("history").push({
+    db.ref("users/" + currentUser.uid + "/history").push({
         opponent: opponentName || "Unknown",
         opponentPhoto: opponentInfo.photo || null,
         opponentUid: opponentInfo.uid || null,
         result: myResult,
         mode: gameMode,
         time: Date.now()
+    }).then(function(){
+        if(typeof loadRecentGames === "function") loadRecentGames();
+    }).catch(function(err){
+        console.error("Failed to save game to history:", err);
     });
 
     if(typeof recordTournamentGameResult === "function") recordTournamentGameResult(myResult);
     if(typeof recordDailyChallengeProgress === "function") recordDailyChallengeProgress(myResult, gameMode);
-    if(typeof loadRecentGames === "function") loadRecentGames();
 }
 
 function loadRecentGames(){
