@@ -407,21 +407,29 @@
 
             <div id="inGameControls">
 
-                <button class="iconBtn" id="newGame" onclick="handleNewGameClick()" title="New Game">
-                    🆕
+                <button class="bigCtrlBtn ctrlGreen" id="newGame" onclick="handleNewGameClick()">
+                    <span class="ctrlIcon">⊕</span>
+                    <span class="ctrlLabel">New Game</span>
+                    <span class="ctrlSub">Start a new match</span>
                 </button>
 
-                <button class="iconBtn" id="restart" onclick="handleRestartClick()" title="Restart Game">
-                    🔄
+                <button class="bigCtrlBtn ctrlBlue" id="restart" onclick="handleRestartClick()">
+                    <span class="ctrlIcon">↻</span>
+                    <span class="ctrlLabel">Restart Game</span>
+                    <span class="ctrlSub">Reset current game</span>
                 </button>
 
-                <button class="iconBtn" id="undo" onclick="undoMove()" title="Undo Move">
-                    ↩️
+                <button class="bigCtrlBtn ctrlPurple" id="undo" onclick="undoMove()">
+                    <span class="ctrlIcon">↩</span>
+                    <span class="ctrlLabel">Undo Move</span>
+                    <span class="ctrlSub">Take back a move</span>
                 </button>
 
-                <button class="iconBtn" id="gameChatBtn" onclick="openGameChat()" title="Chat" style="position:relative;">
-                    💬
-                    <span class="cardBadge" id="gameChatBadge" style="display:none; position:absolute; top:-4px; right:-4px;"></span>
+                <button class="bigCtrlBtn ctrlTeal" id="gameChatBtn" onclick="openGameChat()" style="position:relative;">
+                    <span class="ctrlIcon">💬</span>
+                    <span class="ctrlLabel">Chat</span>
+                    <span class="ctrlSub">Message opponent</span>
+                    <span class="cardBadge" id="gameChatBadge" style="display:none; position:absolute; top:6px; right:6px;"></span>
                 </button>
 
             </div>
