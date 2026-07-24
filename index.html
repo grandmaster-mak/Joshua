@@ -349,8 +349,10 @@
 
     <div id="game" style="display:none;">
 
-        <!-- Board Column: opponent bar, board, your bar -->
+        <!-- Board Column: move history, opponent bar, board, your bar -->
         <div id="boardColumn">
+
+            <div id="history"></div>
 
             <div id="topPlayerBox">
                 <div class="playerRow">
@@ -363,8 +365,6 @@
                     <span id="topCaptured"></span>
                 </p>
             </div>
-
-            <div id="history"></div>
 
             <!-- Chess Board -->
             <div id="boardContainer">
@@ -395,7 +395,7 @@
 
         </div>
 
-     <!-- Right Panel -->
+        <!-- Right Panel -->
         <div id="panel">
 
             <p id="turn" style="display:none;">White to Move</p>
