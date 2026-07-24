@@ -6,12 +6,6 @@
     <title>Chess</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="style.css">
-    <script>
-    window.onerror = function(message, source, lineno, colno, error){
-        alert("Script error: " + message + "\nFile: " + source + "\nLine: " + lineno);
-        return false;
-    };
-    </script>
 </head>
 
 <body>
@@ -410,26 +404,22 @@
                 <button class="bigCtrlBtn ctrlGreen" id="newGame" onclick="handleNewGameClick()">
                     <span class="ctrlIcon">⊕</span>
                     <span class="ctrlLabel">New Game</span>
-                    <span class="ctrlSub">Start a new match</span>
                 </button>
 
                 <button class="bigCtrlBtn ctrlBlue" id="restart" onclick="handleRestartClick()">
                     <span class="ctrlIcon">↻</span>
                     <span class="ctrlLabel">Restart Game</span>
-                    <span class="ctrlSub">Reset current game</span>
                 </button>
 
                 <button class="bigCtrlBtn ctrlPurple" id="undo" onclick="undoMove()">
                     <span class="ctrlIcon">↩</span>
                     <span class="ctrlLabel">Undo Move</span>
-                    <span class="ctrlSub">Take back a move</span>
                 </button>
 
-                <button class="bigCtrlBtn ctrlTeal" id="gameChatBtn" onclick="openGameChat()" style="position:relative;">
+                <button class="bigCtrlBtn ctrlTeal" id="gameChatBtn" onclick="openGameChat()" style="position:relative; display:none;">
                     <span class="ctrlIcon">💬</span>
                     <span class="ctrlLabel">Chat</span>
-                    <span class="ctrlSub">Message opponent</span>
-                    <span class="cardBadge" id="gameChatBadge" style="display:none; position:absolute; top:6px; right:6px;"></span>
+                    <span class="cardBadge" id="gameChatBadge" style="display:none; position:absolute; top:4px; right:10px;"></span>
                 </button>
 
             </div>
