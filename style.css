@@ -403,8 +403,8 @@ input::placeholder{ color:#4a5060; }
 }
 
 #history{
-    max-height:220px;
-    overflow-y:auto;
+    max-height:none;
+    overflow-y:visible;
 }
 
 .historyRow{
