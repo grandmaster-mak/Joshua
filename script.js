@@ -55,7 +55,7 @@ let whiteUid = null;
 let blackUid = null;
 
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
-
+const AI_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231565C0'/%3E%3Crect x='18' y='22' width='34' height='26' rx='6' fill='%23ffffff'/%3E%3Ccircle cx='28' cy='35' r='4' fill='%231565C0'/%3E%3Ccircle cx='42' cy='35' r='4' fill='%231565C0'/%3E%3Crect x='32' y='10' width='6' height='12' fill='%23ffffff'/%3E%3Ccircle cx='35' cy='8' r='4' fill='%23ffffff'/%3E%3C/svg%3E";
 let pieces = [
 ["bR","bN","bB","bQ","bK","bB","bN","bR"],
 ["bP","bP","bP","bP","bP","bP","bP","bP"],
