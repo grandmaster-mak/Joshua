@@ -409,7 +409,7 @@ input:focus, select:focus{
 input::placeholder{ color:#4a5060; }
 
 @media (max-width:900px){
-    #game{ flex-direction:column; align-items:center; padding-bottom:88px; }
+    #game{ flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding-bottom:88px; box-sizing:border-box; }
     #boardColumn{ width:100%; }
     #board{ width:100%; height:auto; aspect-ratio:1/1; }
     #topPlayerBox, #bottomPlayerBox{
