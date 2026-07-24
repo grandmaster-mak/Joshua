@@ -753,29 +753,6 @@ function updatePlayerNames(){
     document.getElementById("topPlayerName").textContent = (topFlag ? topFlag + " " : "") + topName;
     document.getElementById("bottomPlayerName").textContent = (bottomFlag ? bottomFlag + " " : "") + bottomName;
 
-    const topRating = orientation.top === "white" ? whiteRating : blackRating;
-    const bottomRating = orientation.bottom === "white" ? whiteRating : blackRating;
-    const topRatingEl = document.getElementById("topRatingLine");
-    const bottomRatingEl = document.getElementById("bottomRatingLine");
-
-    if(topRatingEl){
-        if(gameMode === "online" && topRating){
-            topRatingEl.textContent = "Rating " + topRating;
-            topRatingEl.style.display = "block";
-        }else{
-            topRatingEl.style.display = "none";
-        }
-    }
-
-    if(bottomRatingEl){
-        if(gameMode === "online" && bottomRating){
-            bottomRatingEl.textContent = "Rating " + bottomRating;
-            bottomRatingEl.style.display = "block";
-        }else{
-            bottomRatingEl.style.display = "none";
-        }
-    }
-
 }
 
 function startTimer(){
@@ -1329,6 +1306,7 @@ if(gameMode === "ai"){
 
     updateCaptured();
     updateTurn();
+    updateInGameControlsVisibility();
 
     positionHistory = [getPositionKey()];
     createBoard();
@@ -1428,6 +1406,16 @@ function undoMove(){
     promotionColor = null;
 
     createBoard();
+}
+
+// Undo doesn't make sense in a real online match against a live opponent
+// (there's no way to ask them to un-make their move), so it's swapped out
+// for Chat there instead. AI and local two-player games get Undo, no Chat.
+function updateInGameControlsVisibility(){
+    const undoBtn = document.getElementById("undo");
+    const chatBtn = document.getElementById("gameChatBtn");
+    if(undoBtn) undoBtn.style.display = (gameMode === "online") ? "none" : "flex";
+    if(chatBtn) chatBtn.style.display = (gameMode === "online") ? "flex" : "none";
 }
 
 function handleRestartClick(){
