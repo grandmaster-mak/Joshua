@@ -9,6 +9,7 @@ const board = document.getElementById("board");
 
 let currentPlayer = "white";
 let gameMode = "human";
+let isCoachMode = false;
 
 // Online multiplayer state (used by multiplayer.js)
 let myColor = null;
@@ -55,7 +56,7 @@ let whiteUid = null;
 let blackUid = null;
 
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
-const AI_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231565C0'/%3E%3Crect x='18' y='22' width='34' height='26' rx='6' fill='%23ffffff'/%3E%3Ccircle cx='28' cy='35' r='4' fill='%231565C0'/%3E%3Ccircle cx='42' cy='35' r='4' fill='%231565C0'/%3E%3Crect x='32' y='10' width='6' height='12' fill='%23ffffff'/%3E%3Ccircle cx='35' cy='8' r='4' fill='%23ffffff'/%3E%3C/svg%3E";
+
 let pieces = [
 ["bR","bN","bB","bQ","bK","bB","bN","bR"],
 ["bP","bP","bP","bP","bP","bP","bP","bP"],
@@ -753,50 +754,6 @@ function updatePlayerNames(){
     document.getElementById("topPlayerName").textContent = (topFlag ? topFlag + " " : "") + topName;
     document.getElementById("bottomPlayerName").textContent = (bottomFlag ? bottomFlag + " " : "") + bottomName;
 
-    const topRating = orientation.top === "white" ? whiteRating : blackRating;
-    const bottomRating = orientation.bottom === "white" ? whiteRating : blackRating;
-    const topRatingEl = document.getElementById("topRatingLine");
-    const bottomRatingEl = document.getElementById("bottomRatingLine");
-
-    if(topRatingEl){
-        if(gameMode === "online" && topRating){
-            topRatingEl.textContent = "Rating " + topRating;
-            topRatingEl.style.display = "block";
-        }else{
-            topRatingEl.style.display = "none";
-        }
-    }
-
-    if(bottomRatingEl){
-        if(gameMode === "online" && bottomRating){
-            bottomRatingEl.textContent = "Rating " + bottomRating;
-            bottomRatingEl.style.display = "block";
-        }else{
-            bottomRatingEl.style.display = "none";
-        }
-    }
-
-    // Avatars: online shows each side's real photo; AI mode shows your own
-    // photo on your side and a robot icon on the computer's side; local
-    // two-player just shows a generic silhouette for both, since it's one
-    // device/no separate accounts.
-    const topAvatarEl = document.getElementById("topPlayerAvatar");
-    const bottomAvatarEl = document.getElementById("bottomPlayerAvatar");
-
-    function avatarFor(side){
-        if(gameMode === "online"){
-            const photo = side === "white" ? whitePhoto : blackPhoto;
-            return photo || DEFAULT_AVATAR_SRC;
-        }
-        if(gameMode === "ai"){
-            return side === "white" ? (currentUserPhotoURL || DEFAULT_AVATAR_SRC) : AI_AVATAR_SRC;
-        }
-        return DEFAULT_AVATAR_SRC;
-    }
-
-    if(topAvatarEl) topAvatarEl.src = avatarFor(orientation.top);
-    if(bottomAvatarEl) bottomAvatarEl.src = avatarFor(orientation.bottom);
-
 }
 
 function startTimer(){
@@ -1220,6 +1177,10 @@ function finishTurn(wasRemoteMove){
         pushClockUpdate(moverColor);
     }
 
+    if(isCoachMode && currentPlayer === "white" && !gameOver && typeof checkCoachHangingPieces === "function"){
+        checkCoachHangingPieces();
+    }
+
     if(gameMode === "ai" && currentPlayer === "black" && !gameOver){
         setTimeout(makeAIMove, 400);
     }
@@ -1282,6 +1243,7 @@ function startNewGame(){
 }
 
 function openPlaySetup(mode){
+    isCoachMode = false;
     document.getElementById("gameMode").value = mode;
     updateGameMode();
     showTimeControl();
@@ -1324,19 +1286,20 @@ function newGame(){
     blackCaptured = [];
 if(gameMode === "ai"){
         whitePlayer = (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "You";
-        blackPlayer = "Computer";
+        blackPlayer = isCoachMode ? "Coach" : "Computer";
         whiteFlag = (typeof currentUserFlag !== "undefined") ? currentUserFlag : "";
-        blackFlag = "🤖";
-        whiteRating = null; blackRating = null;
-        whitePhoto = null; blackPhoto = null;
+        blackFlag = isCoachMode ? "🧑‍🏫" : "🤖";
     }else if(gameMode === "human"){
         whitePlayer = "White";
         blackPlayer = "Black";
         whiteFlag = "";
         blackFlag = "";
-        whiteRating = null; blackRating = null;
-        whitePhoto = null; blackPhoto = null;
     }
+
+    const coachBarEl = document.getElementById("coachGameBar");
+    if(coachBarEl) coachBarEl.style.display = isCoachMode ? "flex" : "none";
+    if(isCoachMode && typeof resetCoachEval === "function") resetCoachEval();
+
     // For online mode, names/flags are set separately by multiplayer.js
     if(selectedTime === -1){
         whiteTime = -1;
