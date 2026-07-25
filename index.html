@@ -131,8 +131,8 @@
                 </div>
             </div>
 
-            <!-- ===== Tournaments / Puzzles / Leaderboards / Daily Rewards ===== -->
-            <div class="quicklinks-grid">
+            <!-- ===== Tournaments / Puzzles / Leaderboards / Daily Rewards / Coach / Lessons ===== -->
+            <div class="quicklinks-scroll">
 
                 <div class="quicklink-card" onclick="openTournaments()">
                     <div class="quicklink-icon">🏆</div>
@@ -156,6 +156,18 @@
                     <div class="quicklink-icon">🎁</div>
                     <h4>Daily Rewards</h4>
                     <p id="dailyRewardsClaimLabel">Claim Now</p>
+                </div>
+
+                <div class="quicklink-card" onclick="openPlayVsCoach()">
+                    <div class="quicklink-icon">🧑‍🏫</div>
+                    <h4>Play Coach</h4>
+                    <p>Get Live Advice</p>
+                </div>
+
+                <div class="quicklink-card" onclick="openLessons()">
+                    <div class="quicklink-icon">📘</div>
+                    <h4>Lessons</h4>
+                    <p>Learn Tactics</p>
                 </div>
 
             </div>
@@ -354,9 +366,15 @@
 
             <div id="history"></div>
 
+            <div class="coachRow" id="coachGameBar" style="display:none; padding:12px 15px;">
+                <img class="coachAvatarImg" style="width:40px;height:40px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
+                <div class="coachBubble">
+                    <p class="sub" id="coachGameText" style="margin:0;">Let's play — I'll comment on your moves as we go.</p>
+                </div>
+            </div>
+
             <div id="topPlayerBox">
                 <div class="playerRow">
-                    <img id="topPlayerAvatar" class="playerAvatarImg" src="" alt="">
                     <span id="topPlayerName" class="playerTag"></span>
                     <p id="topTimer"></p>
                 </div>
@@ -384,7 +402,6 @@
 
             <div id="bottomPlayerBox">
                 <div class="playerRow">
-                    <img id="bottomPlayerAvatar" class="playerAvatarImg" src="" alt="">
                     <span id="bottomPlayerName" class="playerTag"></span>
                     <p id="bottomTimer"></p>
                 </div>
@@ -723,13 +740,85 @@
             <button onclick="closePuzzle()">←</button>
             <h2>🧩 Daily Puzzle</h2>
         </div>
-        <div class="fsBody">
-            <p class="sub" id="puzzleDescription">Loading...</p>
-            <p class="sub" id="puzzleFeedback" style="display:none;"></p>
+        <div class="fsBody" style="padding:0 0 20px;">
 
-            <div id="boardContainerPuzzle" style="display:flex; justify-content:center; margin-top:10px;">
-                <div id="puzzleBoard" style="width:100%; max-width:370px; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border-radius:10px; overflow:hidden;"></div>
+            <div class="coachRow">
+                <img id="coachAvatar" class="coachAvatarImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
+                <div class="coachBubble">
+                    <p class="sub" id="puzzleDescription" style="margin:0;">Loading...</p>
+                    <p class="sub" id="puzzleFeedback" style="display:none; margin:0;"></p>
+                </div>
             </div>
+
+            <div id="boardContainerPuzzle" style="display:flex; justify-content:center; width:100%;">
+                <div id="puzzleBoard" style="width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); overflow:hidden;"></div>
+            </div>
+
+            <div class="puzzleToolbar">
+                <button class="puzzleToolBtn" onclick="showPuzzleHint()">
+                    <span class="puzzleToolIcon">💡</span>Hint
+                </button>
+                <button class="puzzleToolBtn" id="puzzleBackBtn" onclick="puzzleStepBack()">
+                    <span class="puzzleToolIcon">‹</span>Back
+                </button>
+                <button class="puzzleToolBtn" id="puzzleForwardBtn" onclick="puzzleStepForward()">
+                    <span class="puzzleToolIcon">›</span>Forward
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== Lessons screen ===== -->
+    <div id="lessonsScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closeLessons()">←</button>
+            <h2 id="lessonsHeaderTitle">📘 Lessons</h2>
+        </div>
+        <div class="fsBody">
+
+            <div id="lessonsListView">
+                <p class="sub">Bite-sized lessons on tactics and opening principles.</p>
+                <div id="lessonsList"><p class="sub">Loading...</p></div>
+            </div>
+
+            <div id="lessonDetailView" style="display:none;">
+
+                <div class="coachRow" style="padding:0 0 14px;">
+                    <img class="coachAvatarImg" style="width:44px;height:44px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
+                    <div class="coachBubble">
+                        <p class="sub" id="lessonInstruction" style="margin:0;">Loading...</p>
+                        <p class="sub" id="lessonFeedback" style="display:none; margin:0;"></p>
+                    </div>
+                </div>
+
+                <div id="lessonBoardWrap" style="position:relative; width:100%;">
+                    <div id="lessonBoard" style="width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); overflow:hidden;"></div>
+                    <svg id="lessonArrowSvg" viewBox="0 0 100 100" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;">
+                        <defs>
+                            <marker id="lessonArrowHead" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#ffc857"></path>
+                            </marker>
+                        </defs>
+                        <line id="lessonArrowLine" x1="0" y1="0" x2="0" y2="0" stroke="#ffc857" stroke-width="1.6" marker-end="url(#lessonArrowHead)" style="display:none;"></line>
+                    </svg>
+                </div>
+
+                <div class="puzzleToolbar">
+                    <button class="puzzleToolBtn" onclick="showLessonHint()">
+                        <span class="puzzleToolIcon">💡</span>Hint
+                    </button>
+                </div>
+
+                <p class="sub" id="lessonProgressLabel" style="text-align:center; margin-top:6px;">Challenge 1/1</p>
+                <div class="dc-bar-track" style="margin:0 16px;">
+                    <div class="dc-bar-fill" id="lessonProgressBar" style="width:0%; background:linear-gradient(90deg,#3b7bff,#7ba3ff);"></div>
+                </div>
+
+                <button class="btnSecondary" onclick="showLessonsList()" style="margin:16px;">Back to Lessons</button>
+
+            </div>
+
         </div>
     </div>
 
@@ -770,6 +859,7 @@
 
     <script src="script.js"></script>
     <script src="ai.js"></script>
+    <script src="coach.js"></script>
     <script src="multiplayer.js"></script>
     <script src="auth.js"></script>
     <script src="friends.js"></script>
@@ -778,6 +868,7 @@
     <script src="puzzle.js"></script>
     <script src="leaderboard.js"></script>
     <script src="rewards.js"></script>
+    <script src="lessons.js"></script>
 
 </body>
 </html>
