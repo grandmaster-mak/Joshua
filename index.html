@@ -2,873 +2,360 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>♟️ Chess Arena</title>
+    
+    <!-- Google AdSense -->
+    <meta name="google-adsense-account" content="ca-pub-xxxxxxxxxxxxx">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-xxxxxxxxxxxxx" crossorigin="anonymous"></script>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-    <!-- App Shell: Home / Friends / Account + bottom nav -->
-    <div id="appShell">
+<div id="app">
 
-        <!-- Home Screen -->
-        <div id="homeScreen" class="screen">
-
-            <!-- Home Header -->
-            <div class="home-header">
-
-                <div class="header-text">
-                    <p class="greeting-line" id="greetingLine">Good morning ☀️</p>
-                    <h1>Hello, <span id="username">player</span>!</h1>
-                    <p class="stars-line" id="playerStars" style="display:none;"></p>
-                </div>
-
-                <div class="profile-box">
-                    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" alt="Profile" id="homeProfileImg">
-                    <span class="online-dot"></span>
-                </div>
-
-            </div>
-
-            <!-- Rating / online status badges -->
-            <div class="badge-row">
-                <div class="mini-badge">
-                    <span>♟</span> <b id="playerRatingBadge">100</b>&nbsp;Rating
-                </div>
-                <div class="mini-badge onlineBadge">
-                    <span class="dot"></span> Online
-                </div>
-                <button class="iconBtn" style="flex:0 0 auto; width:auto; padding:0 12px;" onclick="switchScreen('account')" title="Settings">⚙️</button>
-            </div>
-
-            <!-- Daily Challenge -->
-            <div class="daily-challenge">
-                <span class="dc-icon">🎯</span>
-                <div class="dc-body">
-                    <div class="dc-title">Daily Challenge</div>
-                    <div class="dc-sub" id="dailyChallengeSub">Win one ranked game today</div>
-                    <div class="dc-bar-track"><div class="dc-bar-fill" id="dailyChallengeBar" style="width:0%;"></div></div>
-                </div>
-                <div class="dc-pct" id="dailyChallengePct">0%</div>
-                <span class="dc-gift">🎁</span>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-
-                <div class="action-card play-now" onclick="openPlaySetup('human')">
-                    <span class="material-icons">sports_esports</span>
-                    <h3>Play Now</h3>
-                    <p>Two players, one device</p>
-                </div>
-
-                <div class="action-card computer" onclick="openPlaySetup('ai')">
-                    <span class="material-icons">smart_toy</span>
-                    <h3>Play vs AI</h3>
-                    <p>Challenge the AI</p>
-                </div>
-
-                <div class="action-card friends" onclick="openPlaySetup('online')">
-                    <span class="material-icons">public</span>
-                    <h3>Play Online</h3>
-                    <p>Create or join a room</p>
-                </div>
-
-            </div>
-
-            <!-- ===== Your Stats ===== -->
-            <div class="stats-section">
-
-                <div class="stats-header">
-                    <h2>Your Stats</h2>
-                    <a onclick="switchScreen('account')">View All Stats</a>
-                </div>
-
-                <div class="stats-grid">
-
-                    <div class="stat-item">
-                        <div class="stat-icon rating">♟</div>
-                        <h3 id="playerRating">100</h3>
-                        <p>Rating</p>
-                        <div class="stat-delta up" id="ratingDelta"></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-icon win">🏆</div>
-                        <h3 id="gamesWon">0</h3>
-                        <p>Games Won</p>
-                        <div class="stat-delta flat" id="winRateDelta"></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-icon streak">🔥</div>
-                        <h3 id="winStreak">0</h3>
-                        <p>Win Streak</p>
-                        <div class="stat-delta flat" id="bestStreakDelta"></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-icon time">⏱</div>
-                        <h3 id="timePlayed">0h</h3>
-                        <p>Time Played</p>
-                        <div class="stat-delta flat">This Week</div>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- ===== Recent Games ===== -->
-            <div class="stats-section">
-                <div class="stats-header">
-                    <h2>Recent Games</h2>
-                    <a onclick="switchScreen('account')">View All</a>
-                </div>
-                <div id="recentGamesList">
-                    <p class="sub">No games played yet.</p>
-                </div>
-            </div>
-
-            <!-- ===== Tournaments / Puzzles / Leaderboards / Daily Rewards / Coach / Lessons ===== -->
-            <div class="quicklinks-scroll">
-
-                <div class="quicklink-card" onclick="openTournaments()">
-                    <div class="quicklink-icon">🏆</div>
-                    <h4>Tournaments</h4>
-                    <p>Compete &amp; Win</p>
-                </div>
-
-                <div class="quicklink-card" onclick="openDailyPuzzle()">
-                    <div class="quicklink-icon">🧩</div>
-                    <h4>Puzzles</h4>
-                    <p>Train Your Brain</p>
-                </div>
-
-                <div class="quicklink-card" onclick="openLeaderboard()">
-                    <div class="quicklink-icon">👑</div>
-                    <h4>Leaderboards</h4>
-                    <p>See Top Players</p>
-                </div>
-
-                <div class="quicklink-card" onclick="openDailyRewards()">
-                    <div class="quicklink-icon">🎁</div>
-                    <h4>Daily Rewards</h4>
-                    <p id="dailyRewardsClaimLabel">Claim Now</p>
-                </div>
-
-                <div class="quicklink-card" onclick="openPlayVsCoach()">
-                    <div class="quicklink-icon">🧑‍🏫</div>
-                    <h4>Play Coach</h4>
-                    <p>Get Live Advice</p>
-                </div>
-
-                <div class="quicklink-card" onclick="openLessons()">
-                    <div class="quicklink-icon">📘</div>
-                    <h4>Lessons</h4>
-                    <p>Learn Tactics</p>
-                </div>
-
-            </div>
-
-            <!-- ===== Online Friends ===== -->
-            <div class="stats-section">
-                <div class="stats-header">
-                    <h2>Online Friends (<span id="onlineFriendsCount">0</span>)</h2>
-                    <a onclick="switchScreen('friends')">View All</a>
-                </div>
-                <div class="online-friends-strip" id="onlineFriendsStrip"></div>
-            </div>
-
+    <!-- ============================================================
+    TOP NAV
+    ============================================================ -->
+    <nav class="top-nav">
+        <div class="logo" onclick="navigateTo('home')">
+            <span class="pawn">♟️</span>
+            <span>Chess<span style="color:var(--green)">Arena</span></span>
         </div>
 
-        <!-- Friends Screen -->
-        <div id="friendsScreen" class="screen" style="display:none;">
-
-            <h2>Friends</h2>
-            <p class="sub">Find people by their username and send a friend request.</p>
-
-            <div id="friendSearchRow">
-                <input type="text" id="friendSearchInput" placeholder="Search by username">
-                <button class="btnPrimary" onclick="searchForFriend()">Search</button>
-            </div>
-
-            <div id="friendSearchResult"></div>
-
-            <div id="friendRequestsSection" style="display:none;">
-                <span class="fieldLabel">Friend Requests</span>
-                <div id="friendRequestsList"></div>
-            </div>
-
-            <span class="fieldLabel">Your Friends</span>
-            <div id="friendsList">
-                <p class="sub">Log in to see your friends.</p>
-            </div>
-
+        <div class="nav-links" id="navLinks">
+            <a class="active" data-page="home" onclick="navigateTo('home')">Home</a>
+            <a data-page="play" onclick="navigateTo('play')">Play</a>
+            <a data-page="puzzles" onclick="navigateTo('puzzles')">Puzzles</a>
+            <a data-page="leaderboard" onclick="navigateTo('leaderboard')">Rankings</a>
         </div>
 
-        <!-- Account Screen -->
-        <div id="accountScreen" class="screen" style="display:none;">
-
-            <h2 id="accountTitle">Account</h2>
-
-            <div id="loggedOutView">
-
-                <p class="sub">Sign in to save your progress and rating</p>
-
-                <input type="email" id="authEmail" placeholder="Email">
-                <input type="password" id="authPassword" placeholder="Password">
-                <input type="text" id="authUsername" placeholder="Username (for sign up only)">
-
-                <select id="authCountry">
-                    <option value="">Select Country</option>
-                    <option value="US">United States</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="NG">Nigeria</option>
-                    <option value="GH">Ghana</option>
-                    <option value="ZA">South Africa</option>
-                    <option value="KE">Kenya</option>
-                    <option value="EG">Egypt</option>
-                    <option value="IN">India</option>
-                    <option value="PK">Pakistan</option>
-                    <option value="BD">Bangladesh</option>
-                    <option value="CN">China</option>
-                    <option value="JP">Japan</option>
-                    <option value="KR">South Korea</option>
-                    <option value="PH">Philippines</option>
-                    <option value="ID">Indonesia</option>
-                    <option value="VN">Vietnam</option>
-                    <option value="TH">Thailand</option>
-                    <option value="AE">United Arab Emirates</option>
-                    <option value="SA">Saudi Arabia</option>
-                    <option value="TR">Turkey</option>
-                    <option value="RU">Russia</option>
-                    <option value="DE">Germany</option>
-                    <option value="FR">France</option>
-                    <option value="ES">Spain</option>
-                    <option value="IT">Italy</option>
-                    <option value="PT">Portugal</option>
-                    <option value="NL">Netherlands</option>
-                    <option value="BE">Belgium</option>
-                    <option value="SE">Sweden</option>
-                    <option value="NO">Norway</option>
-                    <option value="DK">Denmark</option>
-                    <option value="FI">Finland</option>
-                    <option value="PL">Poland</option>
-                    <option value="UA">Ukraine</option>
-                    <option value="GR">Greece</option>
-                    <option value="IE">Ireland</option>
-                    <option value="CH">Switzerland</option>
-                    <option value="AT">Austria</option>
-                    <option value="CA">Canada</option>
-                    <option value="MX">Mexico</option>
-                    <option value="BR">Brazil</option>
-                    <option value="AR">Argentina</option>
-                    <option value="CO">Colombia</option>
-                    <option value="CL">Chile</option>
-                    <option value="PE">Peru</option>
-                    <option value="AU">Australia</option>
-                    <option value="NZ">New Zealand</option>
-                    <option value="CM">Cameroon</option>
-                    <option value="CI">Côte d'Ivoire</option>
-                    <option value="SN">Senegal</option>
-                    <option value="ET">Ethiopia</option>
-                    <option value="TZ">Tanzania</option>
-                    <option value="UG">Uganda</option>
-                    <option value="DZ">Algeria</option>
-                    <option value="MA">Morocco</option>
-                    <option value="TN">Tunisia</option>
-                </select>
-
-                <button class="btnPrimary" onclick="signUp()">Sign Up</button>
-                <button class="btnSecondary" onclick="logIn()">Log In</button>
-
-                <p id="authStatus" class="sub"></p>
-
+        <div class="nav-right">
+            <span class="rating-badge" id="navRating">♟ 1200</span>
+            <div class="avatar" onclick="navigateTo('account')" id="navAvatar">
+                <span>👤</span>
             </div>
-
-            <div id="loggedInView" style="display:none;">
-
-                <div class="home-header" style="margin:0 0 14px;">
-                    <div class="header-text">
-                        <p id="loggedInUsername" class="sub" style="font-size:16px; color:#eef0f3; font-weight:600;"></p>
-                        <p class="sub" id="winRateSubtitle"></p>
-                        <p class="sub" id="bestStreakSubtitle"></p>
-                    </div>
-                    <div class="profile-box">
-                        <img id="accountProfileImg" src="" alt="Profile">
-                    </div>
-                </div>
-
-                <label class="btnSecondary" style="display:block; text-align:center; cursor:pointer;">
-                    Change Profile Photo
-                    <input type="file" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelect(event)">
-                </label>
-
-                <div class="stats-grid" style="margin-top:16px;">
-                    <div class="stat-item">
-                        <div class="stat-icon rating">♟</div>
-                        <h3 id="accountRatingValue">100</h3>
-                        <p>Rating</p>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon win">🏆</div>
-                        <h3 id="accountWinsValue">0</h3>
-                        <p>Games Won</p>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon streak">🔥</div>
-                        <h3 id="accountStreakValue">0</h3>
-                        <p>Win Streak</p>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon time">🧩</div>
-                        <h3 id="puzzleRatingValue">800</h3>
-                        <p>Puzzle Rating</p>
-                    </div>
-                </div>
-                <p class="sub" style="margin-top:8px;">Puzzle streak: <b id="puzzleStreakValue">0</b> days</p>
-
-                <button class="btnDanger" onclick="logOut()">Log Out</button>
-
-            </div>
-
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         </div>
+    </nav>
 
-        <!-- Bottom Navigation -->
-        <div id="bottomNav">
-
-            <button class="navBtn active" data-screen="home" onclick="switchScreen('home')">
-                <span class="navIcon">🏠</span>
-                <span class="navLabel">Home</span>
-            </button>
-
-            <button class="navBtn" data-screen="friends" onclick="switchScreen('friends')">
-                <span class="navIcon">👥</span>
-                <span class="navLabel">Friends</span>
-                <span class="navBadge" id="friendsNavBadge"></span>
-            </button>
-
-            <button class="navBtn" data-screen="account" onclick="switchScreen('account')">
-                <span class="navIcon">👤</span>
-                <span class="navLabel">Account</span>
-            </button>
-
-        </div>
-
+    <!-- ============================================================
+    AD BANNER - TOP
+    ============================================================ -->
+    <div class="ad-container ad-top">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-xxxxxxxxxxxxx"
+             data-ad-slot="xxxxxxxxxx"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
 
-    <div id="game" style="display:none;">
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
+    <div class="main-content">
 
-        <!-- Board Column: move history, opponent bar, board, your bar -->
-        <div id="boardColumn">
+        <!-- ===== HOME PAGE ===== -->
+        <div id="homePage">
 
-            <div id="history"></div>
-
-            <div class="coachRow" id="coachGameBar" style="display:none; padding:12px 15px;">
-                <img class="coachAvatarImg" style="width:40px;height:40px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
-                <div class="coachBubble">
-                    <p class="sub" id="coachGameText" style="margin:0;">Let's play — I'll comment on your moves as we go.</p>
+            <!-- Hero -->
+            <div class="hero">
+                <div class="hero-left">
+                    <h1>Play <span class="highlight">Chess</span> Online</h1>
+                    <p>Challenge the AI, play with friends, or compete in tournaments. All free, all on ChessArena.</p>
+                    <div class="hero-buttons">
+                        <button class="btn btn-primary pulse" onclick="navigateTo('play')">
+                            <i class="fas fa-play"></i> Play Now
+                        </button>
+                        <button class="btn btn-secondary" onclick="navigateTo('puzzles')">
+                            <i class="fas fa-puzzle-piece"></i> Daily Puzzle
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-right">
+                    <div class="hero-board-preview" id="heroBoard"></div>
                 </div>
             </div>
 
-            <div id="topPlayerBox">
-                <div class="playerRow">
-                    <span id="topPlayerName" class="playerTag"></span>
-                    <p id="topTimer"></p>
-                </div>
-                <p class="ratingLine" id="topRatingLine" style="display:none;"></p>
-                <p>
-                    Captured:
-                    <span id="topCaptured"></span>
-                </p>
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-label">Rating</div><div class="stat-value green" id="homeRating">1200</div></div>
+                <div class="stat-card"><div class="stat-label">Wins</div><div class="stat-value blue" id="homeWins">0</div></div>
+                <div class="stat-card"><div class="stat-label">Losses</div><div class="stat-value red" id="homeLosses">0</div></div>
+                <div class="stat-card"><div class="stat-label">Draws</div><div class="stat-value gold" id="homeDraws">0</div></div>
+                <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="homeStreak" style="color:var(--orange)">0</div></div>
             </div>
 
-            <!-- Chess Board -->
-            <div id="boardContainer">
+            <!-- AD - In-Feed -->
+            <div class="ad-container ad-infeed">
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-xxxxxxxxxxxxx"
+                     data-ad-slot="xxxxxxxxxx"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
 
-                <div id="filesTop"></div>
+            <!-- Quick Play -->
+            <div>
+                <div class="section-header"><h2>Quick Play</h2></div>
+                <div class="quick-play-grid">
+                    <div class="quick-play-card" onclick="startGame('ai')">
+                        <div class="icon">🤖</div>
+                        <h3>vs Computer</h3>
+                        <p>Play against AI</p>
+                    </div>
+                    <div class="quick-play-card" onclick="startGame('online')">
+                        <div class="icon">🌐</div>
+                        <h3>Play Online</h3>
+                        <p>Challenge a player</p>
+                    </div>
+                    <div class="quick-play-card" onclick="startGame('friend')">
+                        <div class="icon">👥</div>
+                        <h3>Play Friend</h3>
+                        <p>Local two-player</p>
+                    </div>
+                </div>
+            </div>
 
-                <div id="boardArea">
+            <!-- AD - In-Feed 2 -->
+            <div class="ad-container ad-infeed">
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-xxxxxxxxxxxxx"
+                     data-ad-slot="xxxxxxxxxx"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
 
-                    <div id="ranksLeft"></div>
+            <!-- Daily Puzzle -->
+            <div>
+                <div class="section-header"><h2>🧩 Daily Puzzle</h2><a onclick="navigateTo('puzzles')">View all →</a></div>
+                <div class="daily-puzzle-card" onclick="navigateTo('puzzles')">
+                    <div class="puzzle-preview" id="puzzlePreview">
+                        <div class="sq light"></div><div class="sq dark"></div><div class="sq light"></div><div class="sq dark"></div>
+                        <div class="sq dark"></div><div class="sq light"></div><div class="sq dark"></div><div class="sq light"></div>
+                        <div class="sq light"></div><div class="sq dark"></div><div class="sq light"></div><div class="sq dark"></div>
+                        <div class="sq dark"></div><div class="sq light"></div><div class="sq dark"></div><div class="sq light"></div>
+                    </div>
+                    <div class="puzzle-info">
+                        <h3>Find the winning move</h3>
+                        <p id="puzzleDesc">White to move and mate in 2</p>
+                    </div>
+                    <button class="btn btn-primary">Solve →</button>
+                </div>
+            </div>
 
+            <!-- Online Friends -->
+            <div>
+                <div class="section-header"><h2>👥 Friends Online <span id="friendCount" style="color:var(--text-muted);font-weight:400;">(0)</span></h2></div>
+                <div class="friends-strip" id="friendsStrip">
+                    <p style="color:var(--text-muted);font-size:13px;">No friends online right now.</p>
+                </div>
+            </div>
+
+            <!-- Recent Games -->
+            <div>
+                <div class="section-header"><h2>📊 Recent Games</h2></div>
+                <div class="recent-games-list" id="recentGames">
+                    <p style="color:var(--text-muted);font-size:13px;">No games played yet. Start playing!</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== GAME PAGE ===== -->
+        <div id="gamePage">
+            <div class="game-board-wrapper">
+                <!-- Top player -->
+                <div class="player-bar" id="topPlayerBar">
+                    <div class="player-info">
+                        <span class="name" id="topName">Black</span>
+                        <span class="rating" id="topRating">(1200)</span>
+                    </div>
+                    <div class="captured" id="topCaptured"></div>
+                    <div class="clock" id="topClock">10:00</div>
+                </div>
+
+                <!-- Board -->
+                <div class="board-container">
                     <div id="board"></div>
-
                 </div>
 
-            </div>
-
-            <div id="bottomPlayerBox">
-                <div class="playerRow">
-                    <span id="bottomPlayerName" class="playerTag"></span>
-                    <p id="bottomTimer"></p>
-                </div>
-                <p class="ratingLine" id="bottomRatingLine" style="display:none;"></p>
-                <p>
-                    Captured:
-                    <span id="bottomCaptured"></span>
-                </p>
-            </div>
-
-        </div>
-
-        <!-- Right Panel -->
-        <div id="panel">
-
-            <p id="turn" style="display:none;">White to Move</p>
-
-            <div id="inGameControls">
-
-                <button class="bigCtrlBtn ctrlGreen" id="newGame" onclick="handleNewGameClick()">
-                    <span class="ctrlIcon">⊕</span>
-                    <span class="ctrlLabel">New Game</span>
-                </button>
-
-                <button class="bigCtrlBtn ctrlBlue" id="restart" onclick="handleRestartClick()">
-                    <span class="ctrlIcon">↻</span>
-                    <span class="ctrlLabel">Restart Game</span>
-                </button>
-
-                <button class="bigCtrlBtn ctrlPurple" id="undo" onclick="undoMove()">
-                    <span class="ctrlIcon">↩</span>
-                    <span class="ctrlLabel">Undo Move</span>
-                </button>
-
-                <button class="bigCtrlBtn ctrlTeal" id="gameChatBtn" onclick="openGameChat()" style="position:relative; display:none;">
-                    <span class="ctrlIcon">💬</span>
-                    <span class="ctrlLabel">Chat</span>
-                    <span class="cardBadge" id="gameChatBadge" style="display:none; position:absolute; top:4px; right:10px;"></span>
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Time Control Popup -->
-    <div id="timeControlPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge blue">♟️</div>
-            <h2>New Game</h2>
-            <p class="sub">Configure your match settings</p>
-
-            <span class="fieldLabel">Game Mode</span>
-            <select id="gameMode" onchange="updateGameMode()">
-                <option value="human">Two Players</option>
-                <option value="ai">Play vs AI</option>
-                <option value="online">Play Online</option>
-            </select>
-
-            <div id="difficultyBox" style="display:none;">
-                <span class="fieldLabel">AI Difficulty</span>
-                <select id="aiDifficulty">
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                </select>
-            </div>
-
-            <div id="onlineBox" style="display:none;">
-
-                <button class="btnPrimary" onclick="createOnlineRoom()">Create Room</button>
-
-                <p id="roomCodeDisplay" class="sub"></p>
-
-                <span class="fieldLabel">Or Join a Room</span>
-                <input type="text" id="joinRoomInput" placeholder="Enter room code" maxlength="6" style="text-transform:uppercase;">
-
-                <button class="btnPrimary" onclick="joinOnlineRoom()">Join Room</button>
-
-                <p id="onlineStatus" class="sub"></p>
-
-            </div>
-
-            <div id="timeControlSection">
-                <span class="fieldLabel">Time Control</span>
-                <select id="timeControl">
-                    <option value="60">1 Minute</option>
-                    <option value="180">3 Minutes</option>
-                    <option value="300">5 Minutes</option>
-                    <option value="600" selected>10 Minutes</option>
-                    <option value="900">15 Minutes</option>
-                    <option value="-1">Unlimited</option>
-                </select>
-            </div>
-
-            <button class="btnPrimary" id="startGameBtn" onclick="startNewGame()">
-                Start Game
-            </button>
-
-            <button class="btnSecondary" onclick="closeTimeControl()">
-                Cancel
-            </button>
-
-        </div>
-
-    </div>
-
-    <!-- Game Over Popup -->
-    <div id="gameOverPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge gold">🏆</div>
-            <h2 id="popupTitle"></h2>
-            <p class="sub" id="popupMessage"></p>
-
-            <button class="btnPrimary" onclick="closePopup(); showTimeControl();">
-                New Game
-            </button>
-
-            <button class="btnSecondary" onclick="closePopup();">
-                Close
-            </button>
-
-        </div>
-
-    </div>
-
-    <!-- Promotion Popup -->
-    <div id="promotionPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge blue">♛</div>
-            <h2>Choose Promotion</h2>
-            <p class="sub">Select a piece for your pawn</p>
-
-            <div id="promotionChoices">
-                <img id="promoteQ" class="promotionPiece" onclick="choosePromotion('Q')">
-                <img id="promoteR" class="promotionPiece" onclick="choosePromotion('R')">
-                <img id="promoteB" class="promotionPiece" onclick="choosePromotion('B')">
-                <img id="promoteN" class="promotionPiece" onclick="choosePromotion('N')">
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Online Game Menu Popup (Resign / Draw / Abort) -->
-    <div id="onlineMenuPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge gold">⚙️</div>
-            <h2>Game Options</h2>
-            <p class="sub">Choose an action for this match</p>
-
-            <button class="btnGold" onclick="requestDraw()">🤝 Offer Draw</button>
-            <button class="btnDanger" onclick="resignGame()">🚩 Resign</button>
-            <button class="btnDanger" onclick="abortGame()">🏳️ Abort Game</button>
-
-            <div class="divider"></div>
-
-            <button class="btnSecondary" onclick="closeOnlineMenu()">Cancel</button>
-
-        </div>
-
-    </div>
-
-    <!-- Draw Offer Received Popup -->
-    <div id="drawOfferPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge gold">🤝</div>
-            <h2>Draw Offer</h2>
-            <p class="sub">Your opponent is offering a draw.</p>
-
-            <button class="btnPrimary" onclick="respondToDraw(true)">✅ Accept</button>
-            <button class="btnDanger" onclick="respondToDraw(false)">❌ Decline</button>
-
-        </div>
-
-    </div>
-
-    <!-- Challenge Received Popup -->
-    <div id="challengePopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge blue">⚔️</div>
-            <h2>Challenge Received</h2>
-            <p class="sub"><span id="challengeFromName"></span> wants to play a game.</p>
-
-            <button class="btnPrimary" onclick="respondToChallenge(true)">✅ Accept</button>
-            <button class="btnDanger" onclick="respondToChallenge(false)">❌ Decline</button>
-
-        </div>
-
-    </div>
-
-    <!-- Settings Popup -->
-    <div id="settingsPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge blue">⚙️</div>
-            <h2>Settings</h2>
-            <p class="sub">More settings are coming soon.</p>
-
-            <button class="btnSecondary" onclick="closeSettingsPopup()">Close</button>
-
-        </div>
-
-    </div>
-
-    <!-- Info Popup (generic) -->
-    <div id="infoPopup" class="popup">
-
-        <div class="popupContent">
-
-            <div class="badge gold" id="infoPopupBadge">🏆</div>
-            <h2 id="infoPopupTitle"></h2>
-            <p class="sub" id="infoPopupMessage"></p>
-
-            <button class="btnSecondary" onclick="closeInfoPopup()">Close</button>
-
-        </div>
-
-    </div>
-
-    <!-- ===== Chat screen (in-game + friend DMs) ===== -->
-    <div id="chatScreen">
-        <div id="chatHeader">
-            <button onclick="closeChat()">←</button>
-            <span id="chatWithName">Chat</span>
-        </div>
-        <div id="chatMessages"></div>
-        <div id="chatInputRow">
-            <input type="text" id="chatInput" placeholder="Message...">
-            <button class="btnPrimary" onclick="sendChatMessage()">Send</button>
-        </div>
-    </div>
-
-    <!-- ===== Tournaments screen ===== -->
-    <div id="tournamentsScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closeTournaments()">←</button>
-            <h2>🏆 Tournaments</h2>
-        </div>
-        <div class="fsBody">
-
-            <div id="tournamentsListView">
-                <button class="btnPrimary" onclick="showCreateTournament()">+ Create Tournament</button>
-                <div id="tournamentsList"></div>
-            </div>
-
-            <div id="tournamentCreateView" style="display:none;">
-                <span class="fieldLabel">Tournament Name</span>
-                <input type="text" id="tournamentNameInput" placeholder="e.g. Friday Night Blitz">
-
-                <span class="fieldLabel">Format</span>
-                <select id="tournamentFormatInput" onchange="updateTournamentFormatUI()">
-                    <option value="swiss" selected>Swiss System</option>
-                    <option value="elimination">Single Elimination</option>
-                </select>
-
-                <span class="fieldLabel">Speed</span>
-                <select id="tournamentTimeInput">
-                    <option value="60">Bullet · 1 min</option>
-                    <option value="180">Blitz · 3 min</option>
-                    <option value="300" selected>Blitz · 5 min</option>
-                    <option value="600">Rapid · 10 min</option>
-                    <option value="900">Rapid · 15 min</option>
-                    <option value="1800">Classical · 30 min</option>
-                </select>
-
-                <div id="tournamentRoundsBox">
-                    <span class="fieldLabel">Number of Rounds</span>
-                    <select id="tournamentRoundsInput">
-                        <option value="3">3 Rounds</option>
-                        <option value="4" selected>4 Rounds</option>
-                        <option value="5">5 Rounds</option>
-                        <option value="7">7 Rounds</option>
-                    </select>
-                </div>
-
-                <p class="sub" id="tournamentEliminationNote" style="display:none;">
-                    Single elimination rounds are set automatically once the bracket is seeded — the number of rounds depends on how many players join.
-                </p>
-
-                <span class="fieldLabel">Max Players</span>
-                <select id="tournamentMaxPlayersInput">
-                    <option value="4">4 Players</option>
-                    <option value="8" selected>8 Players</option>
-                    <option value="16">16 Players</option>
-                    <option value="32">32 Players</option>
-                    <option value="64">64 Players</option>
-                </select>
-
-                <span class="fieldLabel">Start Time (optional)</span>
-                <input type="datetime-local" id="tournamentStartInput">
-                <p class="sub">Leave blank to start it yourself whenever you're ready. Set a time and it opens automatically once enough players have joined.</p>
-
-                <button class="btnPrimary" onclick="createTournament()">Create</button>
-                <button class="btnSecondary" onclick="showTournamentsList()">Cancel</button>
-            </div>
-
-            <div id="tournamentDetailView" style="display:none;">
-                <h2 id="tournamentDetailName"></h2>
-                <p class="sub" id="tournamentDetailStatus"></p>
-                <p class="sub" id="tournamentDetailMeta"></p>
-
-                <button class="btnPrimary" id="tournamentJoinBtn" onclick="joinTournament()" style="display:none;">Join Tournament</button>
-                <button class="btnGold" id="tournamentStartBtn" onclick="startTournament()" style="display:none;">Start Tournament</button>
-                <button class="btnGold" id="tournamentNextRoundBtn" onclick="advanceTournamentRound()" style="display:none;">Start Next Round</button>
-
-                <span class="fieldLabel">Standings</span>
-                <div id="tournamentStandings"></div>
-
-                <span class="fieldLabel">Current Round</span>
-                <div id="tournamentPairings"></div>
-
-                <button class="btnSecondary" onclick="showTournamentsList()">Back to List</button>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- ===== Daily Puzzle screen ===== -->
-    <div id="puzzleScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closePuzzle()">←</button>
-            <h2>🧩 Daily Puzzle</h2>
-        </div>
-        <div class="fsBody" style="padding:0 0 20px;">
-
-            <div class="coachRow">
-                <img id="coachAvatar" class="coachAvatarImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
-                <div class="coachBubble">
-                    <p class="sub" id="puzzleDescription" style="margin:0;">Loading...</p>
-                    <p class="sub" id="puzzleFeedback" style="display:none; margin:0;"></p>
-                </div>
-            </div>
-
-            <div id="boardContainerPuzzle" style="display:flex; justify-content:center; width:100%;">
-                <div id="puzzleBoard" style="width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); overflow:hidden;"></div>
-            </div>
-
-            <div class="puzzleToolbar">
-                <button class="puzzleToolBtn" onclick="showPuzzleHint()">
-                    <span class="puzzleToolIcon">💡</span>Hint
-                </button>
-                <button class="puzzleToolBtn" id="puzzleBackBtn" onclick="puzzleStepBack()">
-                    <span class="puzzleToolIcon">‹</span>Back
-                </button>
-                <button class="puzzleToolBtn" id="puzzleForwardBtn" onclick="puzzleStepForward()">
-                    <span class="puzzleToolIcon">›</span>Forward
-                </button>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- ===== Lessons screen ===== -->
-    <div id="lessonsScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closeLessons()">←</button>
-            <h2 id="lessonsHeaderTitle">📘 Lessons</h2>
-        </div>
-        <div class="fsBody">
-
-            <div id="lessonsListView">
-                <p class="sub">Bite-sized lessons on tactics and opening principles.</p>
-                <div id="lessonsList"><p class="sub">Loading...</p></div>
-            </div>
-
-            <div id="lessonDetailView" style="display:none;">
-
-                <div class="coachRow" style="padding:0 0 14px;">
-                    <img class="coachAvatarImg" style="width:44px;height:44px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
-                    <div class="coachBubble">
-                        <p class="sub" id="lessonInstruction" style="margin:0;">Loading...</p>
-                        <p class="sub" id="lessonFeedback" style="display:none; margin:0;"></p>
+                <!-- Bottom player -->
+                <div class="player-bar" id="bottomPlayerBar">
+                    <div class="player-info">
+                        <span class="name" id="bottomName">White</span>
+                        <span class="rating" id="bottomRating">(1200)</span>
                     </div>
+                    <div class="captured" id="bottomCaptured"></div>
+                    <div class="clock" id="bottomClock">10:00</div>
                 </div>
 
-                <div id="lessonBoardWrap" style="position:relative; width:100%;">
-                    <div id="lessonBoard" style="width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); overflow:hidden;"></div>
-                    <svg id="lessonArrowSvg" viewBox="0 0 100 100" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;">
-                        <defs>
-                            <marker id="lessonArrowHead" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                                <path d="M0,0 L6,3 L0,6 Z" fill="#ffc857"></path>
-                            </marker>
-                        </defs>
-                        <line id="lessonArrowLine" x1="0" y1="0" x2="0" y2="0" stroke="#ffc857" stroke-width="1.6" marker-end="url(#lessonArrowHead)" style="display:none;"></line>
-                    </svg>
+                <!-- Move history -->
+                <div class="move-history" id="moveHistory">
+                    <span style="color:var(--text-muted);font-size:12px;">Game starts here...</span>
                 </div>
-
-                <div class="puzzleToolbar">
-                    <button class="puzzleToolBtn" onclick="showLessonHint()">
-                        <span class="puzzleToolIcon">💡</span>Hint
-                    </button>
-                </div>
-
-                <p class="sub" id="lessonProgressLabel" style="text-align:center; margin-top:6px;">Challenge 1/1</p>
-                <div class="dc-bar-track" style="margin:0 16px;">
-                    <div class="dc-bar-fill" id="lessonProgressBar" style="width:0%; background:linear-gradient(90deg,#3b7bff,#7ba3ff);"></div>
-                </div>
-
-                <button class="btnSecondary" onclick="showLessonsList()" style="margin:16px;">Back to Lessons</button>
-
             </div>
 
-        </div>
-    </div>
+            <div class="game-sidebar">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-weight:700;" id="turnIndicator">White to Move</span>
+                    <span id="gameStatus" style="color:var(--text-secondary);font-size:13px;"></span>
+                </div>
 
-    <!-- ===== Leaderboard screen ===== -->
-    <div id="leaderboardScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closeLeaderboard()">←</button>
-            <h2>👑 Leaderboards</h2>
-        </div>
-        <div class="fsBody">
-            <div class="lbTabs">
-                <div class="lbTab active" id="lbTabRating" onclick="switchLeaderboardTab('rating')">Rating</div>
-                <div class="lbTab" id="lbTabWins" onclick="switchLeaderboardTab('wins')">Most Wins</div>
-                <div class="lbTab" id="lbTabPuzzle" onclick="switchLeaderboardTab('puzzleRating')">Puzzles</div>
+                <div class="game-controls">
+                    <button class="btn btn-secondary" onclick="undoMove()"><i class="fas fa-undo"></i> Undo</button>
+                    <button class="btn btn-secondary" onclick="offerDraw()"><i class="fas fa-handshake"></i> Draw</button>
+                    <button class="btn btn-secondary" onclick="resignGame()"><i class="fas fa-flag"></i> Resign</button>
+                    <button class="btn btn-primary" onclick="newGame()"><i class="fas fa-plus"></i> New</button>
+                </div>
+
+                <!-- AD - Sidebar -->
+                <div class="ad-container ad-sidebar">
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-pub-xxxxxxxxxxxxx"
+                         data-ad-slot="xxxxxxxxxx"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"></ins>
+                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                </div>
+
+                <div id="gameChatContainer" style="display:none;flex-direction:column;gap:8px;border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;">
+                    <div style="display:flex;gap:8px;">
+                        <input type="text" id="chatInput" placeholder="Message..." style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-input);color:var(--text-primary);font-family:var(--font);">
+                        <button class="btn btn-primary" onclick="sendChat()" style="padding:8px 16px;">Send</button>
+                    </div>
+                    <div id="chatMessages" style="max-height:100px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
+                </div>
+
+                <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-secondary" style="flex:1;" onclick="navigateTo('home')"><i class="fas fa-home"></i> Home</button>
+                    <button class="btn btn-secondary" style="flex:1;" onclick="toggleChat()"><i class="fas fa-comment"></i> Chat</button>
+                </div>
             </div>
-            <div id="leaderboardList"><p class="sub">Loading...</p></div>
+        </div>
+
+        <!-- ===== ACCOUNT PAGE ===== -->
+        <div id="accountPage">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profileAvatar"><img id="profileAvatarImg" src="" alt=""></div>
+                <div class="profile-info">
+                    <h2 id="profileName">Player</h2>
+                    <p id="profileFlag">🏳️</p>
+                    <p id="profileRating">Rating: 1200</p>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-label">Wins</div><div class="stat-value blue" id="profileWins">0</div></div>
+                <div class="stat-card"><div class="stat-label">Losses</div><div class="stat-value red" id="profileLosses">0</div></div>
+                <div class="stat-card"><div class="stat-label">Draws</div><div class="stat-value gold" id="profileDraws">0</div></div>
+                <div class="stat-card"><div class="stat-label">Puzzle Rating</div><div class="stat-value green" id="profilePuzzleRating">800</div></div>
+            </div>
+
+            <button class="btn btn-secondary" onclick="logOut()" style="width:100%;justify-content:center;">
+                <i class="fas fa-sign-out-alt"></i> Log Out
+            </button>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    AD BANNER - BOTTOM
+    ============================================================ -->
+    <div class="ad-container ad-bottom">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-xxxxxxxxxxxxx"
+             data-ad-slot="xxxxxxxxxx"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <!-- ============================================================
+    MODALS
+    ============================================================ -->
+
+    <!-- Game Over Modal -->
+    <div class="modal-overlay" id="gameOverModal">
+        <div class="modal">
+            <div class="modal-icon" id="gameOverIcon">🏆</div>
+            <h2 id="gameOverTitle">Checkmate!</h2>
+            <p id="gameOverMessage">White wins!</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="closeModal('gameOverModal');newGame();">New Game</button>
+                <button class="btn btn-secondary" onclick="closeModal('gameOverModal');navigateTo('home');">Home</button>
+            </div>
         </div>
     </div>
 
-    <!-- ===== Daily Rewards screen ===== -->
-    <div id="dailyRewardsScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closeDailyRewards()">←</button>
-            <h2>🎁 Daily Rewards</h2>
-        </div>
-        <div class="fsBody">
-            <p class="sub">Log in every day to build your streak and earn bigger rewards.</p>
-            <div class="rewardsTrack" id="rewardsTrack"></div>
-            <button class="btnGold" id="claimRewardBtn" onclick="claimDailyReward()">Claim Today's Reward</button>
-            <p id="dailyRewardStatus"></p>
+    <!-- Promotion Modal -->
+    <div class="modal-overlay" id="promotionModal">
+        <div class="modal" style="max-width:340px;">
+            <div class="modal-icon">♛</div>
+            <h2>Promote Pawn</h2>
+            <p>Choose your piece</p>
+            <div style="display:flex;justify-content:center;gap:12px;margin:12px 0;">
+                <button class="btn btn-secondary" onclick="choosePromotion('Q')" style="font-size:28px;padding:12px 20px;">♛</button>
+                <button class="btn btn-secondary" onclick="choosePromotion('R')" style="font-size:28px;padding:12px 20px;">♜</button>
+                <button class="btn btn-secondary" onclick="choosePromotion('B')" style="font-size:28px;padding:12px 20px;">♝</button>
+                <button class="btn btn-secondary" onclick="choosePromotion('N')" style="font-size:28px;padding:12px 20px;">♞</button>
+            </div>
         </div>
     </div>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <!-- Time Control Modal -->
+    <div class="modal-overlay" id="timeControlModal">
+        <div class="modal">
+            <div class="modal-icon">⏱️</div>
+            <h2>Choose Time Control</h2>
+            <p>Pick a time format for your game</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="setTimeControl(60)">1 min Bullet</button>
+                <button class="btn btn-primary" onclick="setTimeControl(180)">3 min Blitz</button>
+                <button class="btn btn-primary" onclick="setTimeControl(300)">5 min Blitz</button>
+                <button class="btn btn-primary" onclick="setTimeControl(600)">10 min Rapid</button>
+                <button class="btn btn-secondary" onclick="closeModal('timeControlModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-    <script src="script.js"></script>
-    <script src="ai.js"></script>
-    <script src="coach.js"></script>
-    <script src="multiplayer.js"></script>
-    <script src="auth.js"></script>
-    <script src="friends.js"></script>
-    <script src="chat.js"></script>
-    <script src="tournaments.js"></script>
-    <script src="puzzle.js"></script>
-    <script src="leaderboard.js"></script>
-    <script src="rewards.js"></script>
-    <script src="lessons.js"></script>
+</div>
+
+<!-- ============================================================
+FIREBASE + SCRIPTS
+============================================================ -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+
+<!-- Core Scripts -->
+<script src="auth.js"></script>
+<script src="script.js"></script>
+<script src="ai.js"></script>
+<script src="multiplayer.js"></script>
+<script src="friends.js"></script>
+<script src="chat.js"></script>
+<script src="tournaments.js"></script>
+<script src="puzzle.js"></script>
+<script src="lessons.js"></script>
+<script src="leaderboard.js"></script>
+<script src="rewards.js"></script>
+<script src="coach.js"></script>
+<script src="ai-worker.js"></script>
 
 </body>
 </html>
