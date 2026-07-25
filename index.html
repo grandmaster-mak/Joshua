@@ -1,361 +1,1225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>♟️ Chess Arena</title>
-    
-    <!-- Google AdSense -->
-    <meta name="google-adsense-account" content="ca-pub-xxxxxxxxxxxxx">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-xxxxxxxxxxxxx" crossorigin="anonymous"></script>
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>♟️ ChessArena</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0f0f14;
+            --bg-card: #181820;
+            --bg-card-hover: #222230;
+            --bg-input: #111118;
+            --text: #eeeeee;
+            --text-secondary: #9999b0;
+            --text-muted: #555570;
+            --green: #7cb342;
+            --green-bg: rgba(124, 179, 66, 0.12);
+            --blue: #4a8bff;
+            --red: #e5484d;
+            --gold: #f5c542;
+            --orange: #f5a623;
+            --radius: 14px;
+            --radius-sm: 10px;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 0 0 70px 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--green);
+            border-radius: 3px;
+        }
+
+        /* ============================================================
+           APP CONTAINER
+           ============================================================ */
+        #app {
+            width: 100%;
+            max-width: 480px;
+            padding: 0 16px 20px;
+        }
+
+        /* ============================================================
+           TOP NAV
+           ============================================================ */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 18px;
+        }
+
+        .top-nav .logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-nav .logo .pawn {
+            color: var(--green);
+        }
+
+        .top-nav .nav-links {
+            display: flex;
+            gap: 4px;
+        }
+
+        .top-nav .nav-links a {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+
+        .top-nav .nav-links a:hover,
+        .top-nav .nav-links a.active {
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
+        .top-nav .nav-links a.active {
+            color: var(--green);
+        }
+
+        .top-nav .rating-badge {
+            background: var(--green-bg);
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* ============================================================
+           HOME PAGE
+           ============================================================ */
+        #homePage {
+            display: block;
+        }
+
+        /* Greeting */
+        .greeting {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .greeting .highlight {
+            color: var(--gold);
+        }
+
+        .username {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .stars-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+
+        .stars-row .stars {
+            color: var(--gold);
+            font-size: 16px;
+        }
+
+        /* Profile & Status Row */
+        .profile-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .profile-status .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--green);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .profile-status .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-status .badge-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .profile-status .badge {
+            background: var(--bg-card);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .profile-status .badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            display: inline-block;
+        }
+
+        .profile-status .badge.online {
+            color: var(--green);
+        }
+
+        /* ============================================================
+           STATS CARDS (Chess.com Style)
+           ============================================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            padding: 12px 6px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .stat-card .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-card .value {
+            font-size: 20px;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        .stat-card .value.green {
+            color: var(--green);
+        }
+        .stat-card .value.blue {
+            color: var(--blue);
+        }
+        .stat-card .value.red {
+            color: var(--red);
+        }
+        .stat-card .value.gold {
+            color: var(--gold);
+        }
+        .stat-card .value.orange {
+            color: var(--orange);
+        }
+
+        /* ============================================================
+           DAILY CHALLENGE
+           ============================================================ */
+        .daily-challenge {
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            border: 1px solid rgba(124, 179, 66, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .daily-challenge .icon {
+            font-size: 24px;
+        }
+
+        .daily-challenge .info {
+            flex: 1;
+        }
+
+        .daily-challenge .info .title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .daily-challenge .info .sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .daily-challenge .bar-track {
+            width: 60px;
+            height: 6px;
+            background: var(--bg-input);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .daily-challenge .bar-track .fill {
+            height: 100%;
+            background: var(--green);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .daily-challenge .pct {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        /* ============================================================
+           QUICK PLAY CARDS
+           ============================================================ */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .quick-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            padding: 16px 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .quick-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--green);
+            transform: translateY(-2px);
+        }
+
+        .quick-card .icon {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .quick-card h4 {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .quick-card p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ============================================================
+           SECTION: YOUR STATS
+           ============================================================ */
+        .stats-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            margin-bottom: 18px;
+        }
+
+        .stats-section .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stats-section .header h3 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .stats-section .header a {
+            font-size: 12px;
+            color: var(--green);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .stats-section .header a:hover {
+            text-decoration: underline;
+        }
+
+        .stats-section .row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .stats-section .row .item {
+            text-align: center;
+        }
+
+        .stats-section .row .item .icon {
+            font-size: 18px;
+        }
+
+        .stats-section .row .item .num {
+            font-size: 18px;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        .stats-section .row .item .lbl {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .stats-section .sub-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .stats-section .sub-row .up {
+            color: var(--green);
+        }
+        .stats-section .sub-row .flat {
+            color: var(--text-muted);
+        }
+
+        /* ============================================================
+           RECENT GAMES
+           ============================================================ */
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .recent-item {
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .recent-item .left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recent-item .left .av {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .recent-item .left .name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .recent-item .left .meta {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .recent-item .result {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .recent-item .result.win {
+            color: var(--green);
+        }
+        .recent-item .result.loss {
+            color: var(--red);
+        }
+        .recent-item .result.draw {
+            color: var(--text-muted);
+        }
+
+        /* ============================================================
+           ONLINE FRIENDS STRIP
+           ============================================================ */
+        .friends-strip {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding: 4px 0 8px;
+            margin-bottom: 18px;
+        }
+
+        .friends-strip::-webkit-scrollbar {
+            display: none;
+        }
+
+        .friend-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .friend-item .circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--green);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            position: relative;
+        }
+
+        .friend-item .circle .dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            border: 2px solid var(--bg);
+        }
+
+        .friend-item .fname {
+            font-size: 10px;
+            color: var(--text-secondary);
+            max-width: 50px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* ============================================================
+           FRIENDS PAGE
+           ============================================================ */
+        #friendsPage {
+            display: none;
+        }
+
+        #friendsPage.active {
+            display: block;
+        }
+
+        #friendsPage .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        #friendsPage .page-sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .search-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: var(--bg-input);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 14px;
+        }
+
+        .search-row input:focus {
+            outline: none;
+            border-color: var(--green);
+        }
+
+        .search-row button {
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: var(--green);
+            color: #fff;
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .friend-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .friend-card .left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .friend-card .left .av {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-input);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .friend-card .left .info .name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .friend-card .left .info .rating {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .friend-card .btn-sm {
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: var(--font);
+        }
+
+        .friend-card .btn-sm.green {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .friend-card .btn-sm.gray {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+        }
+
+        /* ============================================================
+           ACCOUNT PAGE
+           ============================================================ */
+        #accountPage {
+            display: none;
+        }
+
+        #accountPage.active {
+            display: block;
+        }
+
+        .profile-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .profile-card .av {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--bg-input);
+            border: 2px solid var(--green);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+
+        .profile-card .av img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-card .info .name {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .profile-card .info .flag {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .profile-card .info .rating {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: var(--bg-card);
+            color: var(--red);
+            font-weight: 700;
+            font-family: var(--font);
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .btn-logout:hover {
+            background: rgba(229, 72, 77, 0.1);
+        }
+
+        /* ============================================================
+           BOTTOM NAV
+           ============================================================ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            background: var(--bg-card);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .bottom-nav .btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 0;
+            font-family: var(--font);
+            transition: 0.2s;
+        }
+
+        .bottom-nav .btn .icon {
+            font-size: 18px;
+        }
+
+        .bottom-nav .btn.active {
+            color: var(--green);
+        }
+
+        .bottom-nav .btn:hover {
+            color: var(--text);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 420px) {
+            #app {
+                padding: 0 10px 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .quick-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stats-section .row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .top-nav .nav-links a {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+
+            .top-nav .logo {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================================
+           UTILITY
+           ============================================================ */
+        .hidden {
+            display: none !important;
+        }
+
+        .mb-8 {
+            margin-bottom: 8px;
+        }
+        .mb-12 {
+            margin-bottom: 12px;
+        }
+        .mb-16 {
+            margin-bottom: 16px;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+        .text-muted {
+            color: var(--text-muted);
+        }
+        .text-secondary {
+            color: var(--text-secondary);
+        }
+        .text-green {
+            color: var(--green);
+        }
+    </style>
 </head>
 <body>
 
-<div id="app">
-
     <!-- ============================================================
-    TOP NAV
+    APP
     ============================================================ -->
-    <nav class="top-nav">
-        <div class="logo" onclick="navigateTo('home')">
-            <span class="pawn">♟️</span>
-            <span>Chess<span style="color:var(--green)">Arena</span></span>
-        </div>
+    <div id="app">
 
-        <div class="nav-links" id="navLinks">
-            <a class="active" data-page="home" onclick="navigateTo('home')">Home</a>
-            <a data-page="play" onclick="navigateTo('play')">Play</a>
-            <a data-page="puzzles" onclick="navigateTo('puzzles')">Puzzles</a>
-            <a data-page="leaderboard" onclick="navigateTo('leaderboard')">Rankings</a>
-        </div>
-
-        <div class="nav-right">
-            <span class="rating-badge" id="navRating">♟ 1200</span>
-            <div class="avatar" onclick="navigateTo('account')" id="navAvatar">
-                <span>👤</span>
+        <!-- ============================================================
+        TOP NAV
+        ============================================================ -->
+        <nav class="top-nav">
+            <div class="logo" onclick="showPage('home')">
+                <span class="pawn">♟️</span> ChessArena
             </div>
-            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-        </div>
-    </nav>
+            <div class="nav-links">
+                <a class="active" data-page="home" onclick="showPage('home')">Home</a>
+                <a data-page="friends" onclick="showPage('friends')">Friends</a>
+                <a data-page="account" onclick="showPage('account')">Account</a>
+            </div>
+            <span class="rating-badge" id="navRating">♟ 116</span>
+        </nav>
 
-    <!-- ============================================================
-    AD BANNER - TOP
-    ============================================================ -->
-    <div class="ad-container ad-top">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-xxxxxxxxxxxxx"
-             data-ad-slot="xxxxxxxxxx"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </div>
-
-    <!-- ============================================================
-    MAIN CONTENT
-    ============================================================ -->
-    <div class="main-content">
-
-        <!-- ===== HOME PAGE ===== -->
+        <!-- ============================================================
+        HOME PAGE
+        ============================================================ -->
         <div id="homePage">
 
-            <!-- Hero -->
-            <div class="hero">
-                <div class="hero-left">
-                    <h1>Play <span class="highlight">Chess</span> Online</h1>
-                    <p>Challenge the AI, play with friends, or compete in tournaments. All free, all on ChessArena.</p>
-                    <div class="hero-buttons">
-                        <button class="btn btn-primary pulse" onclick="navigateTo('play')">
-                            <i class="fas fa-play"></i> Play Now
-                        </button>
-                        <button class="btn btn-secondary" onclick="navigateTo('puzzles')">
-                            <i class="fas fa-puzzle-piece"></i> Daily Puzzle
-                        </button>
-                    </div>
-                </div>
-                <div class="hero-right">
-                    <div class="hero-board-preview" id="heroBoard"></div>
+            <!-- Greeting -->
+            <div class="greeting">Good afternoon <span class="highlight">🎉</span></div>
+            <div class="username">Hello, <span id="usernameDisplay">Joshua creator!</span></div>
+            <div class="stars-row">
+                <span class="stars">⭐️⭐️⭐️⭐️⭐️</span>
+                <span>Beginner</span>
+            </div>
+
+            <!-- Profile & Status -->
+            <div class="profile-status">
+                <div class="avatar" id="avatarDisplay">👤</div>
+                <div class="badge-row">
+                    <span class="badge" id="ratingBadge">♟ 116 Rating</span>
+                    <span class="badge online"><span class="dot"></span> Online</span>
                 </div>
             </div>
 
-            <!-- Stats -->
-            <div class="stats-row">
-                <div class="stat-card"><div class="stat-label">Rating</div><div class="stat-value green" id="homeRating">1200</div></div>
-                <div class="stat-card"><div class="stat-label">Wins</div><div class="stat-value blue" id="homeWins">0</div></div>
-                <div class="stat-card"><div class="stat-label">Losses</div><div class="stat-value red" id="homeLosses">0</div></div>
-                <div class="stat-card"><div class="stat-label">Draws</div><div class="stat-value gold" id="homeDraws">0</div></div>
-                <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="homeStreak" style="color:var(--orange)">0</div></div>
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">Rating</div>
+                    <div class="value green" id="statRating">116</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Wins</div>
+                    <div class="value blue" id="statWins">15</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Losses</div>
+                    <div class="value red" id="statLosses">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Draws</div>
+                    <div class="value gold" id="statDraws">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Streak</div>
+                    <div class="value orange" id="statStreak">0</div>
+                </div>
             </div>
 
-            <!-- AD - In-Feed -->
-            <div class="ad-container ad-infeed">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-xxxxxxxxxxxxx"
-                     data-ad-slot="xxxxxxxxxx"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            <!-- Daily Challenge -->
+            <div class="daily-challenge">
+                <span class="icon">🎯</span>
+                <div class="info">
+                    <div class="title">Daily Challenge</div>
+                    <div class="sub" id="dailySub">Completed – reward claimed!</div>
+                </div>
+                <div class="bar-track">
+                    <div class="fill" id="dailyBar" style="width:100%"></div>
+                </div>
+                <span class="pct" id="dailyPct">100%</span>
             </div>
 
             <!-- Quick Play -->
-            <div>
-                <div class="section-header"><h2>Quick Play</h2></div>
-                <div class="quick-play-grid">
-                    <div class="quick-play-card" onclick="startGame('ai')">
-                        <div class="icon">🤖</div>
-                        <h3>vs Computer</h3>
-                        <p>Play against AI</p>
-                    </div>
-                    <div class="quick-play-card" onclick="startGame('online')">
-                        <div class="icon">🌐</div>
-                        <h3>Play Online</h3>
-                        <p>Challenge a player</p>
-                    </div>
-                    <div class="quick-play-card" onclick="startGame('friend')">
-                        <div class="icon">👥</div>
-                        <h3>Play Friend</h3>
-                        <p>Local two-player</p>
-                    </div>
+            <div class="section-title">Quick Play</div>
+            <div class="quick-grid">
+                <div class="quick-card" onclick="alert('Starting local game...')">
+                    <div class="icon">🎮</div>
+                    <h4>Play Now</h4>
+                    <p>Two players, one device</p>
+                </div>
+                <div class="quick-card" onclick="alert('Starting AI game...')">
+                    <div class="icon">🤖</div>
+                    <h4>Play vs AI</h4>
+                    <p>Challenge the AI</p>
+                </div>
+                <div class="quick-card" onclick="alert('Starting online game...')">
+                    <div class="icon">🌐</div>
+                    <h4>Play Online</h4>
+                    <p>Create or join a room</p>
                 </div>
             </div>
 
-            <!-- AD - In-Feed 2 -->
-            <div class="ad-container ad-infeed">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-xxxxxxxxxxxxx"
-                     data-ad-slot="xxxxxxxxxx"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-            </div>
-
-            <!-- Daily Puzzle -->
-            <div>
-                <div class="section-header"><h2>🧩 Daily Puzzle</h2><a onclick="navigateTo('puzzles')">View all →</a></div>
-                <div class="daily-puzzle-card" onclick="navigateTo('puzzles')">
-                    <div class="puzzle-preview" id="puzzlePreview">
-                        <div class="sq light"></div><div class="sq dark"></div><div class="sq light"></div><div class="sq dark"></div>
-                        <div class="sq dark"></div><div class="sq light"></div><div class="sq dark"></div><div class="sq light"></div>
-                        <div class="sq light"></div><div class="sq dark"></div><div class="sq light"></div><div class="sq dark"></div>
-                        <div class="sq dark"></div><div class="sq light"></div><div class="sq dark"></div><div class="sq light"></div>
-                    </div>
-                    <div class="puzzle-info">
-                        <h3>Find the winning move</h3>
-                        <p id="puzzleDesc">White to move and mate in 2</p>
-                    </div>
-                    <button class="btn btn-primary">Solve →</button>
+            <!-- Your Stats -->
+            <div class="stats-section">
+                <div class="header">
+                    <h3>Your Stats</h3>
+                    <a onclick="showPage('account')">View All Stats →</a>
                 </div>
-            </div>
-
-            <!-- Online Friends -->
-            <div>
-                <div class="section-header"><h2>👥 Friends Online <span id="friendCount" style="color:var(--text-muted);font-weight:400;">(0)</span></h2></div>
-                <div class="friends-strip" id="friendsStrip">
-                    <p style="color:var(--text-muted);font-size:13px;">No friends online right now.</p>
+                <div class="row">
+                    <div class="item">
+                        <div class="icon">♟</div>
+                        <div class="num text-green" id="profileRating">116</div>
+                        <div class="lbl">Rating</div>
+                    </div>
+                    <div class="item">
+                        <div class="icon">🏆</div>
+                        <div class="num text-blue" id="profileWins">15</div>
+                        <div class="lbl">Games Won</div>
+                    </div>
+                    <div class="item">
+                        <div class="icon">🔥</div>
+                        <div class="num text-orange" id="profileStreak">0</div>
+                        <div class="lbl">Win Streak</div>
+                    </div>
+                    <div class="item">
+                        <div class="icon">⏱</div>
+                        <div class="num text-muted" id="profileTime">0h</div>
+                        <div class="lbl">Time Played</div>
+                    </div>
+                </div>
+                <div class="sub-row">
+                    <span class="up" id="winRateDisplay">17% Win Rate</span>
+                    <span class="flat" id="bestStreakDisplay">Best: 2</span>
+                    <span class="flat">This Week</span>
                 </div>
             </div>
 
             <!-- Recent Games -->
-            <div>
-                <div class="section-header"><h2>📊 Recent Games</h2></div>
-                <div class="recent-games-list" id="recentGames">
-                    <p style="color:var(--text-muted);font-size:13px;">No games played yet. Start playing!</p>
+            <div class="stats-section">
+                <div class="header">
+                    <h3>Recent Games</h3>
+                    <a>View All →</a>
                 </div>
+                <div class="recent-list" id="recentList">
+                    <p class="text-muted" style="font-size:13px;">No game played yet</p>
+                </div>
+            </div>
+
+            <!-- Online Friends -->
+            <div class="section-title">👥 Online Friends</div>
+            <div class="friends-strip" id="friendsStrip">
+                <span class="text-muted" style="font-size:13px;">No friends online</span>
             </div>
 
         </div>
 
-        <!-- ===== GAME PAGE ===== -->
-        <div id="gamePage">
-            <div class="game-board-wrapper">
-                <!-- Top player -->
-                <div class="player-bar" id="topPlayerBar">
-                    <div class="player-info">
-                        <span class="name" id="topName">Black</span>
-                        <span class="rating" id="topRating">(1200)</span>
-                    </div>
-                    <div class="captured" id="topCaptured"></div>
-                    <div class="clock" id="topClock">10:00</div>
-                </div>
+        <!-- ============================================================
+        FRIENDS PAGE
+        ============================================================ -->
+        <div id="friendsPage">
+            <div class="page-title">Friends</div>
+            <div class="page-sub">Find people by their username and send a friend request.</div>
 
-                <!-- Board -->
-                <div class="board-container">
-                    <div id="board"></div>
-                </div>
-
-                <!-- Bottom player -->
-                <div class="player-bar" id="bottomPlayerBar">
-                    <div class="player-info">
-                        <span class="name" id="bottomName">White</span>
-                        <span class="rating" id="bottomRating">(1200)</span>
-                    </div>
-                    <div class="captured" id="bottomCaptured"></div>
-                    <div class="clock" id="bottomClock">10:00</div>
-                </div>
-
-                <!-- Move history -->
-                <div class="move-history" id="moveHistory">
-                    <span style="color:var(--text-muted);font-size:12px;">Game starts here...</span>
-                </div>
+            <div class="search-row">
+                <input type="text" id="friendSearch" placeholder="Search by username" />
+                <button onclick="searchFriend()">Search</button>
             </div>
 
-            <div class="game-sidebar">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-weight:700;" id="turnIndicator">White to Move</span>
-                    <span id="gameStatus" style="color:var(--text-secondary);font-size:13px;"></span>
-                </div>
+            <div id="searchResult"></div>
 
-                <div class="game-controls">
-                    <button class="btn btn-secondary" onclick="undoMove()"><i class="fas fa-undo"></i> Undo</button>
-                    <button class="btn btn-secondary" onclick="offerDraw()"><i class="fas fa-handshake"></i> Draw</button>
-                    <button class="btn btn-secondary" onclick="resignGame()"><i class="fas fa-flag"></i> Resign</button>
-                    <button class="btn btn-primary" onclick="newGame()"><i class="fas fa-plus"></i> New</button>
-                </div>
-
-                <!-- AD - Sidebar -->
-                <div class="ad-container ad-sidebar">
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-xxxxxxxxxxxxx"
-                         data-ad-slot="xxxxxxxxxx"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
-                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-                </div>
-
-                <div id="gameChatContainer" style="display:none;flex-direction:column;gap:8px;border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;">
-                    <div style="display:flex;gap:8px;">
-                        <input type="text" id="chatInput" placeholder="Message..." style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-input);color:var(--text-primary);font-family:var(--font);">
-                        <button class="btn btn-primary" onclick="sendChat()" style="padding:8px 16px;">Send</button>
-                    </div>
-                    <div id="chatMessages" style="max-height:100px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
-                </div>
-
-                <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-                    <button class="btn btn-secondary" style="flex:1;" onclick="navigateTo('home')"><i class="fas fa-home"></i> Home</button>
-                    <button class="btn btn-secondary" style="flex:1;" onclick="toggleChat()"><i class="fas fa-comment"></i> Chat</button>
+            <div style="margin-top:16px;">
+                <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">Your Friends</div>
+                <div id="friendsList">
+                    <p class="text-muted" style="font-size:13px;">No friends yet.</p>
                 </div>
             </div>
         </div>
 
-        <!-- ===== ACCOUNT PAGE ===== -->
+        <!-- ============================================================
+        ACCOUNT PAGE
+        ============================================================ -->
         <div id="accountPage">
-            <div class="profile-header">
-                <div class="profile-avatar" id="profileAvatar"><img id="profileAvatarImg" src="" alt=""></div>
-                <div class="profile-info">
-                    <h2 id="profileName">Player</h2>
-                    <p id="profileFlag">🏳️</p>
-                    <p id="profileRating">Rating: 1200</p>
+            <div class="profile-card">
+                <div class="av" id="accountAvatar">👤</div>
+                <div class="info">
+                    <div class="name" id="accountName">Joshua creator</div>
+                    <div class="flag" id="accountFlag">🏳️</div>
+                    <div class="rating" id="accountRating">Rating: 116</div>
                 </div>
             </div>
 
-            <div class="stats-row">
-                <div class="stat-card"><div class="stat-label">Wins</div><div class="stat-value blue" id="profileWins">0</div></div>
-                <div class="stat-card"><div class="stat-label">Losses</div><div class="stat-value red" id="profileLosses">0</div></div>
-                <div class="stat-card"><div class="stat-label">Draws</div><div class="stat-value gold" id="profileDraws">0</div></div>
-                <div class="stat-card"><div class="stat-label">Puzzle Rating</div><div class="stat-value green" id="profilePuzzleRating">800</div></div>
+            <div class="stats-section">
+                <div class="header"><h3>Statistics</h3></div>
+                <div class="row">
+                    <div class="item"><div class="icon">🏆</div><div class="num text-blue" id="accWins">15</div><div class="lbl">Wins</div></div>
+                    <div class="item"><div class="icon">❌</div><div class="num text-red" id="accLosses">0</div><div class="lbl">Losses</div></div>
+                    <div class="item"><div class="icon">🤝</div><div class="num text-gold" id="accDraws">0</div><div class="lbl">Draws</div></div>
+                    <div class="item"><div class="icon">🧩</div><div class="num text-green" id="accPuzzle">800</div><div class="lbl">Puzzle Rating</div></div>
+                </div>
             </div>
 
-            <button class="btn btn-secondary" onclick="logOut()" style="width:100%;justify-content:center;">
-                <i class="fas fa-sign-out-alt"></i> Log Out
+            <button class="btn-logout" onclick="logout()">🚪 Log Out</button>
+        </div>
+
+        <!-- ============================================================
+        BOTTOM NAV
+        ============================================================ -->
+        <div class="bottom-nav">
+            <button class="btn active" data-page="home" onclick="showPage('home')">
+                <span class="icon">🏠</span> Home
+            </button>
+            <button class="btn" data-page="friends" onclick="showPage('friends')">
+                <span class="icon">👥</span> Friends
+            </button>
+            <button class="btn" data-page="account" onclick="showPage('account')">
+                <span class="icon">👤</span> Account
             </button>
         </div>
 
     </div>
 
     <!-- ============================================================
-    AD BANNER - BOTTOM
+    SCRIPT
     ============================================================ -->
-    <div class="ad-container ad-bottom">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-xxxxxxxxxxxxx"
-             data-ad-slot="xxxxxxxxxx"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </div>
+    <script>
+        // ============================================================
+        // PAGE NAVIGATION
+        // ============================================================
+        function showPage(page) {
+            // Hide all pages
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('friendsPage').classList.remove('active');
+            document.getElementById('accountPage').classList.remove('active');
 
-    <!-- ============================================================
-    MODALS
-    ============================================================ -->
+            // Show selected page
+            if (page === 'home') {
+                document.getElementById('homePage').style.display = 'block';
+            } else if (page === 'friends') {
+                document.getElementById('friendsPage').classList.add('active');
+            } else if (page === 'account') {
+                document.getElementById('accountPage').classList.add('active');
+            }
 
-    <!-- Game Over Modal -->
-    <div class="modal-overlay" id="gameOverModal">
-        <div class="modal">
-            <div class="modal-icon" id="gameOverIcon">🏆</div>
-            <h2 id="gameOverTitle">Checkmate!</h2>
-            <p id="gameOverMessage">White wins!</p>
-            <div class="modal-actions">
-                <button class="btn btn-primary" onclick="closeModal('gameOverModal');newGame();">New Game</button>
-                <button class="btn btn-secondary" onclick="closeModal('gameOverModal');navigateTo('home');">Home</button>
-            </div>
-        </div>
-    </div>
+            // Update nav links
+            document.querySelectorAll('.top-nav .nav-links a').forEach(el => {
+                el.classList.toggle('active', el.dataset.page === page);
+            });
 
-    <!-- Promotion Modal -->
-    <div class="modal-overlay" id="promotionModal">
-        <div class="modal" style="max-width:340px;">
-            <div class="modal-icon">♛</div>
-            <h2>Promote Pawn</h2>
-            <p>Choose your piece</p>
-            <div style="display:flex;justify-content:center;gap:12px;margin:12px 0;">
-                <button class="btn btn-secondary" onclick="choosePromotion('Q')" style="font-size:28px;padding:12px 20px;">♛</button>
-                <button class="btn btn-secondary" onclick="choosePromotion('R')" style="font-size:28px;padding:12px 20px;">♜</button>
-                <button class="btn btn-secondary" onclick="choosePromotion('B')" style="font-size:28px;padding:12px 20px;">♝</button>
-                <button class="btn btn-secondary" onclick="choosePromotion('N')" style="font-size:28px;padding:12px 20px;">♞</button>
-            </div>
-        </div>
-    </div>
+            document.querySelectorAll('.bottom-nav .btn').forEach(el => {
+                el.classList.toggle('active', el.dataset.page === page);
+            });
+        }
 
-    <!-- Time Control Modal -->
-    <div class="modal-overlay" id="timeControlModal">
-        <div class="modal">
-            <div class="modal-icon">⏱️</div>
-            <h2>Choose Time Control</h2>
-            <p>Pick a time format for your game</p>
-            <div class="modal-actions">
-                <button class="btn btn-primary" onclick="setTimeControl(60)">1 min Bullet</button>
-                <button class="btn btn-primary" onclick="setTimeControl(180)">3 min Blitz</button>
-                <button class="btn btn-primary" onclick="setTimeControl(300)">5 min Blitz</button>
-                <button class="btn btn-primary" onclick="setTimeControl(600)">10 min Rapid</button>
-                <button class="btn btn-secondary" onclick="closeModal('timeControlModal')">Cancel</button>
-            </div>
-        </div>
-    </div>
+        // ============================================================
+        // FRIENDS - Search
+        // ============================================================
+        function searchFriend() {
+            const query = document.getElementById('friendSearch').value.trim();
+            const result = document.getElementById('searchResult');
 
-</div>
+            if (!query) {
+                result.innerHTML = '<p class="text-muted" style="font-size:13px;">Enter a username to search.</p>';
+                return;
+            }
 
-<!-- ============================================================
-FIREBASE + SCRIPTS
-============================================================ -->
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+            result.innerHTML = '<p class="text-muted" style="font-size:13px;">Searching...</p>';
 
-<!-- Core Scripts -->
-<script src="auth.js"></script>
-<script src="script.js"></script>
-<script src="ai.js"></script>
-<script src="multiplayer.js"></script>
-<script src="friends.js"></script>
-<script src="chat.js"></script>
-<script src="tournaments.js"></script>
-<script src="puzzle.js"></script>
-<script src="lessons.js"></script>
-<script src="leaderboard.js"></script>
-<script src="rewards.js"></script>
-<script src="coach.js"></script>
-<script src="ai-worker.js"></script>
+            // Simulate search
+            setTimeout(() => {
+                result.innerHTML = `
+                    <div class="friend-card">
+                        <div class="left">
+                            <div class="av">👤</div>
+                            <div class="info">
+                                <div class="name">${query}</div>
+                                <div class="rating">Rating 1000</div>
+                            </div>
+                        </div>
+                        <button class="btn-sm green">Add Friend</button>
+                    </div>
+                `;
+            }, 600);
+        }
+
+        // ============================================================
+        // LOGOUT
+        // ============================================================
+        function logout() {
+            if (confirm('Are you sure you want to log out?')) {
+                alert('Logged out!');
+                // In a real app: auth.signOut()
+            }
+        }
+
+        // ============================================================
+        // LOAD STATS FROM localStorage
+        // ============================================================
+        function loadStats() {
+            const stats = JSON.parse(localStorage.getItem('chessStats') || '{"rating":116,"wins":15,"losses":0,"draws":0,"streak":0,"puzzleRating":800,"timePlayed":0,"winRate":17,"bestStreak":2}');
+
+            // Home stats
+            document.getElementById('statRating').textContent = stats.rating || 116;
+            document.getElementById('statWins').textContent = stats.wins || 0;
+            document.getElementById('statLosses').textContent = stats.losses || 0;
+            document.getElementById('statDraws').textContent = stats.draws || 0;
+            document.getElementById('statStreak').textContent = stats.streak || 0;
+            document.getElementById('navRating').textContent = '♟ ' + (stats.rating || 116);
+
+            // Profile stats
+            document.getElementById('profileRating').textContent = stats.rating || 116;
+            document.getElementById('profileWins').textContent = stats.wins || 0;
+            document.getElementById('profileStreak').textContent = stats.streak || 0;
+            document.getElementById('profileTime').textContent = (stats.timePlayed || 0) + 'h';
+            document.getElementById('winRateDisplay').textContent = (stats.winRate || 0) + '% Win Rate';
+            document.getElementById('bestStreakDisplay').textContent = 'Best: ' + (stats.bestStreak || 0);
+
+            // Account stats
+            document.getElementById('accWins').textContent = stats.wins || 0;
+            document.getElementById('accLosses').textContent = stats.losses || 0;
+            document.getElementById('accDraws').textContent = stats.draws || 0;
+            document.getElementById('accPuzzle').textContent = stats.puzzleRating || 800;
+            document.getElementById('accountRating').textContent = 'Rating: ' + (stats.rating || 116);
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        loadStats();
+
+        // Set username
+        document.getElementById('usernameDisplay').textContent = 'Joshua creator!';
+        document.getElementById('accountName').textContent = 'Joshua creator';
+
+        console.log('♟️ ChessArena loaded!');
+    </script>
 
 </body>
 </html>
