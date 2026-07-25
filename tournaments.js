@@ -404,7 +404,8 @@ function checkTournamentAutoStart(tournamentId, t){
     if(Date.now() < t.scheduledStart) return;
 
     const playerUids = Object.keys(t.players || {});
-    if(playerUids.length < 2) return; // not enough players yet — keep waiting
+    const requiredCount = t.maxPlayers || 2;
+    if(playerUids.length < requiredCount) return; // not full yet — keep waiting
 
     db.ref("tournaments/" + tournamentId).transaction(function(current){
 
@@ -413,7 +414,8 @@ function checkTournamentAutoStart(tournamentId, t){
         if(!current.scheduledStart || Date.now() < current.scheduledStart) return current;
 
         const uids = Object.keys(current.players || {});
-        if(uids.length < 2) return current;
+        const requiredNow = current.maxPlayers || 2;
+        if(uids.length < requiredNow) return current;
 
         const pairingResult = current.format === "elimination"
             ? generateEliminationPairings(uids)
