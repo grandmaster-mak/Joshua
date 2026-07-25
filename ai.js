@@ -9,6 +9,7 @@
 let stockfish = null;
 let stockfishReady = false;
 let multiPvMoves = {};
+let latestSearchScoreCp = null;
 
 const difficultySettings = {
     easy:   { elo: 1320, movetime: 400,  multipv: 3 },
@@ -65,6 +66,18 @@ try {
 
         if(line.indexOf("info") === 0 && line.indexOf("score") !== -1){
             console.log("[Stockfish]", line);
+            const scoreTokens = line.split(" ");
+            const scoreIdx = scoreTokens.indexOf("score");
+            if(scoreIdx !== -1 && scoreTokens[scoreIdx + 1]){
+                if(scoreTokens[scoreIdx + 1] === "cp"){
+                    latestSearchScoreCp = parseInt(scoreTokens[scoreIdx + 2], 10);
+                }else if(scoreTokens[scoreIdx + 1] === "mate"){
+                    const mateIn = parseInt(scoreTokens[scoreIdx + 2], 10);
+                    // Treat mate scores as very large centipawn values so the
+                    // same commentary thresholds still make sense.
+                    latestSearchScoreCp = mateIn >= 0 ? (100000 - mateIn) : (-100000 - mateIn);
+                }
+            }
         }
 
         if(line.indexOf("bestmove") === 0){
@@ -96,6 +109,14 @@ try {
             }
 
             multiPvMoves = {};
+
+            if(typeof isCoachMode !== "undefined" && isCoachMode && typeof latestSearchScoreCp === "number" && typeof giveCoachCommentary === "function"){
+                // The search ran with the coach (black) to move, so its score
+                // is from black's perspective — flip it to get White's
+                // (the player's) perspective, which is what the coach talks about.
+                giveCoachCommentary(-latestSearchScoreCp);
+            }
+            latestSearchScoreCp = null;
 
             if(uciMove && uciMove !== "(none)"){
                 playStockfishMove(uciMove);
