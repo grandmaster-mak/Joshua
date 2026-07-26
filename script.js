@@ -62,15 +62,52 @@ const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/
 // text-to-speech (no external API or key needed). Strips emoji first
 // since screen readers/TTS engines otherwise try to announce them
 // ("grinning face emoji") which sounds broken.
+let cachedMaleVoice = null;
+let maleVoiceSearched = false;
+
+function findMaleVoice(){
+    const voices = window.speechSynthesis.getVoices();
+    if(!voices || voices.length === 0) return null;
+
+    // Prefer a voice explicitly named "male" (and not also "female").
+    let match = voices.find(function(v){ return /male/i.test(v.name) && !/female/i.test(v.name); });
+    if(match) return match;
+
+    // Fallback: common male voice names across Android/Chrome/Windows TTS engines.
+    const maleNames = ["david", "mark", "james", "daniel", "alex", "fred", "george", "guy", "thomas", "arthur"];
+    match = voices.find(function(v){
+        const name = v.name.toLowerCase();
+        return maleNames.some(function(n){ return name.indexOf(n) !== -1; });
+    });
+    return match || null;
+}
+
 function speakText(text){
     if(!text) return;
     if(!("speechSynthesis" in window)) return;
     const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu, "").trim();
     if(!clean) return;
+
     window.speechSynthesis.cancel(); // don't let lines queue up/overlap
+
     const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.0;
-    utterance.pitch = 0.95;
+    utterance.rate = 1.15; // a bit faster than normal speaking pace
+    utterance.pitch = 0.75; // lower pitch as a fallback even without a male-labeled voice available
+
+    if(!cachedMaleVoice && !maleVoiceSearched){
+        cachedMaleVoice = findMaleVoice();
+        maleVoiceSearched = true;
+        // Voice list often loads asynchronously on first page load — if it
+        // wasn't ready yet, try again once it fires, for next time.
+        if(!cachedMaleVoice && "onvoiceschanged" in window.speechSynthesis){
+            window.speechSynthesis.onvoiceschanged = function(){
+                cachedMaleVoice = findMaleVoice();
+            };
+        }
+    }
+
+    if(cachedMaleVoice) utterance.voice = cachedMaleVoice;
+
     window.speechSynthesis.speak(utterance);
 }
 
