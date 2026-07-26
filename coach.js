@@ -39,6 +39,7 @@ function resetCoachEval(){
 function setCoachText(text){
     const el = document.getElementById("coachGameText");
     if(el) el.textContent = text;
+    speakText(text);
 }
 
 // whiteEvalCp: the position's evaluation in centipawns from the player's
