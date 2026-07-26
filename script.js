@@ -56,58 +56,21 @@ let whiteUid = null;
 let blackUid = null;
 
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
-const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ccircle cx='35' cy='27' r='12' fill='%23d9a679'/%3E%3Cpath d='M23 22 Q35 8 47 22 Q47 16 35 14 Q23 16 23 22 Z' fill='%233b2a1a'/%3E%3Ccircle cx='30' cy='27' r='1.6' fill='%232c1c10'/%3E%3Ccircle cx='40' cy='27' r='1.6' fill='%232c1c10'/%3E%3Cpath d='M31 33 Q35 36 39 33' stroke='%237a4f2d' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%2334495e'/%3E%3Cpath d='M30 42 L35 48 L40 42 L38 40 L35 44 L32 40 Z' fill='%23e74c3c'/%3E%3C/svg%3E";
+const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
 
 // Reads coach/lesson text out loud using the browser's built-in
 // text-to-speech (no external API or key needed). Strips emoji first
 // since screen readers/TTS engines otherwise try to announce them
 // ("grinning face emoji") which sounds broken.
-let cachedMaleVoice = null;
-let maleVoiceSearched = false;
-
-function findMaleVoice(){
-    const voices = window.speechSynthesis.getVoices();
-    if(!voices || voices.length === 0) return null;
-
-    // Prefer a voice explicitly named "male" (and not also "female").
-    let match = voices.find(function(v){ return /male/i.test(v.name) && !/female/i.test(v.name); });
-    if(match) return match;
-
-    // Fallback: common male voice names across Android/Chrome/Windows TTS engines.
-    const maleNames = ["david", "mark", "james", "daniel", "alex", "fred", "george", "guy", "thomas", "arthur"];
-    match = voices.find(function(v){
-        const name = v.name.toLowerCase();
-        return maleNames.some(function(n){ return name.indexOf(n) !== -1; });
-    });
-    return match || null;
-}
-
 function speakText(text){
     if(!text) return;
     if(!("speechSynthesis" in window)) return;
     const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu, "").trim();
     if(!clean) return;
-
     window.speechSynthesis.cancel(); // don't let lines queue up/overlap
-
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.rate = 1.0;
-    utterance.pitch = 0.75; // lower pitch as a fallback even without a male voice available
-
-    if(!cachedMaleVoice && !maleVoiceSearched){
-        cachedMaleVoice = findMaleVoice();
-        maleVoiceSearched = true;
-        // Voice list often loads asynchronously on first page load — if it
-        // wasn't ready yet, try again once it fires, for next time.
-        if(!cachedMaleVoice && "onvoiceschanged" in window.speechSynthesis){
-            window.speechSynthesis.onvoiceschanged = function(){
-                cachedMaleVoice = findMaleVoice();
-            };
-        }
-    }
-
-    if(cachedMaleVoice) utterance.voice = cachedMaleVoice;
-
+    utterance.pitch = 0.95;
     window.speechSynthesis.speak(utterance);
 }
 
@@ -1959,6 +1922,12 @@ window.addEventListener("popstate", function(event){
     // options the in-game menu icon shows.
     if(document.getElementById("game").style.display === "flex"){
 
+        if(gameMode === "online" && myColor === null){
+            // Spectating — nothing to protect, just leave.
+            leaveSpectating();
+            return;
+        }
+
         if(!gameOver){
             // Game still in progress — protect it, ask before leaving.
             history.pushState({ screen: "game" }, "", "#game");
@@ -1982,6 +1951,8 @@ window.addEventListener("popstate", function(event){
         document.getElementById("leaderboardScreen").style.display = "none";
         document.getElementById("dailyRewardsScreen").style.display = "none";
         document.getElementById("chatScreen").style.display = "none";
+        document.getElementById("analysisScreen").style.display = "none";
+        document.getElementById("lessonsScreen").style.display = "none";
         document.getElementById("appShell").style.display = "flex";
         switchScreen("home");
         return;
@@ -2011,6 +1982,12 @@ window.addEventListener("popstate", function(event){
     if(state.screen === "dailyRewards"){
         document.getElementById("appShell").style.display = "none";
         document.getElementById("dailyRewardsScreen").style.display = "flex";
+        return;
+    }
+
+    if(state.screen === "analysis"){
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("analysisScreen").style.display = "flex";
         return;
     }
 
