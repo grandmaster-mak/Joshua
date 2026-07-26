@@ -149,6 +149,7 @@ function showLessonInstruction(text){
     instrEl.style.display = "block";
     feedbackEl.textContent = "";
     feedbackEl.style.display = "none";
+    speakText(text);
 }
 
 function showLessonFeedback(text){
@@ -157,6 +158,7 @@ function showLessonFeedback(text){
     instrEl.style.display = "none";
     feedbackEl.textContent = text;
     feedbackEl.style.display = "block";
+    speakText(text);
 }
 
 function updateLessonProgress(){
