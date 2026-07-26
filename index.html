@@ -170,6 +170,12 @@
                     <p>Learn Tactics</p>
                 </div>
 
+                <div class="quicklink-card" onclick="openAnalysisBoard()">
+                    <div class="quicklink-icon">🔬</div>
+                    <h4>Analysis</h4>
+                    <p>Engine Eval</p>
+                </div>
+
             </div>
 
             <!-- ===== Online Friends ===== -->
@@ -367,7 +373,7 @@
             <div id="history"></div>
 
             <div class="coachRow" id="coachGameBar" style="display:none; padding:12px 15px;">
-                <img class="coachAvatarImg" style="width:40px;height:40px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ccircle cx='35' cy='27' r='12' fill='%23d9a679'/%3E%3Cpath d='M23 22 Q35 8 47 22 Q47 16 35 14 Q23 16 23 22 Z' fill='%233b2a1a'/%3E%3Ccircle cx='30' cy='27' r='1.6' fill='%232c1c10'/%3E%3Ccircle cx='40' cy='27' r='1.6' fill='%232c1c10'/%3E%3Cpath d='M31 33 Q35 36 39 33' stroke='%237a4f2d' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%2334495e'/%3E%3Cpath d='M30 42 L35 48 L40 42 L38 40 L35 44 L32 40 Z' fill='%23e74c3c'/%3E%3C/svg%3E" alt="Coach">
+                <img class="coachAvatarImg" style="width:40px;height:40px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
                 <div class="coachBubble">
                     <p class="sub" id="coachGameText" style="margin:0;">Let's play — I'll comment on your moves as we go.</p>
                 </div>
@@ -420,6 +426,11 @@
         <div id="panel">
 
             <p id="turn" style="display:none;">White to Move</p>
+
+            <div id="spectatorBanner" style="display:none; position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:420px; background:#15181f; border-top:1px solid rgba(255,255,255,0.06); padding:14px 16px calc(14px + env(safe-area-inset-bottom)); z-index:60; box-sizing:border-box; text-align:center;">
+                <span style="font-weight:700; color:#7ba3ff;">👀 Spectating</span>
+                <button class="btnSecondary" style="margin-top:10px;" onclick="leaveSpectating()">Leave</button>
+            </div>
 
             <div id="inGameControls">
 
@@ -487,6 +498,13 @@
                 <button class="btnPrimary" onclick="joinOnlineRoom()">Join Room</button>
 
                 <p id="onlineStatus" class="sub"></p>
+
+                <div class="divider"></div>
+
+                <span class="fieldLabel">👀 Watch a Game</span>
+                <input type="text" id="spectateRoomInput" placeholder="Enter room code to watch" maxlength="6" style="text-transform:uppercase;">
+                <button class="btnSecondary" onclick="spectateRoom()">Watch</button>
+                <p id="spectateStatus" class="sub"></p>
 
             </div>
 
@@ -745,7 +763,7 @@
         <div class="fsBody" style="padding:0 0 20px;">
 
             <div class="coachRow">
-                <img id="coachAvatar" class="coachAvatarImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ccircle cx='35' cy='27' r='12' fill='%23d9a679'/%3E%3Cpath d='M23 22 Q35 8 47 22 Q47 16 35 14 Q23 16 23 22 Z' fill='%233b2a1a'/%3E%3Ccircle cx='30' cy='27' r='1.6' fill='%232c1c10'/%3E%3Ccircle cx='40' cy='27' r='1.6' fill='%232c1c10'/%3E%3Cpath d='M31 33 Q35 36 39 33' stroke='%237a4f2d' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%2334495e'/%3E%3Cpath d='M30 42 L35 48 L40 42 L38 40 L35 44 L32 40 Z' fill='%23e74c3c'/%3E%3C/svg%3E" alt="Coach">
+                <img id="coachAvatar" class="coachAvatarImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
                 <div class="coachBubble">
                     <p class="sub" id="puzzleDescription" style="margin:0;">Loading...</p>
                     <p class="sub" id="puzzleFeedback" style="display:none; margin:0;"></p>
@@ -787,7 +805,7 @@
             <div id="lessonDetailView" style="display:none;">
 
                 <div class="coachRow" style="padding:0 0 14px;">
-                    <img class="coachAvatarImg" style="width:44px;height:44px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E
+                    <img class="coachAvatarImg" style="width:44px;height:44px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
                     <div class="coachBubble">
                         <p class="sub" id="lessonInstruction" style="margin:0;">Loading...</p>
                         <p class="sub" id="lessonFeedback" style="display:none; margin:0;"></p>
@@ -819,6 +837,37 @@
 
                 <button class="btnSecondary" onclick="showLessonsList()" style="margin:16px;">Back to Lessons</button>
 
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== Analysis Board screen ===== -->
+    <div id="analysisScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closeAnalysisBoard()">←</button>
+            <h2>🔬 Analysis Board</h2>
+        </div>
+        <div class="fsBody">
+
+            <p class="sub" style="margin-bottom:10px;">Move either side freely to explore any position — the engine evaluates live.</p>
+
+            <div id="analysisBoard" style="width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); overflow:hidden;"></div>
+
+            <div class="coachRow" style="padding:14px 0;">
+                <div class="coachBubble" style="width:100%;">
+                    <p class="sub" id="analysisEvalText" style="margin:0; font-weight:700; font-size:15px;">Eval: 0.00</p>
+                    <p class="sub" id="analysisBestMoveText" style="margin:4px 0 0;"></p>
+                </div>
+            </div>
+
+            <div class="puzzleToolbar">
+                <button class="puzzleToolBtn" onclick="resetAnalysisBoard()">
+                    <span class="puzzleToolIcon">⊕</span>Reset
+                </button>
+                <button class="puzzleToolBtn" onclick="flipAnalysisBoard()">
+                    <span class="puzzleToolIcon">⇅</span>Flip
+                </button>
             </div>
 
         </div>
@@ -871,6 +920,17 @@
     <script src="leaderboard.js"></script>
     <script src="rewards.js"></script>
     <script src="lessons.js"></script>
+    <script src="analysis.js"></script>
+
+    <script>
+    if("serviceWorker" in navigator){
+        window.addEventListener("load", function(){
+            navigator.serviceWorker.register("service-worker.js").catch(function(err){
+                console.error("Service worker registration failed:", err.message);
+            });
+        });
+    }
+    </script>
 
 </body>
 </html>
