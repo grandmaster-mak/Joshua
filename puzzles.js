@@ -22,6 +22,28 @@ let puzzlePool = [];
 let puzzleMoveIndex = 0;
 let puzzleSolved = false;
 let puzzleMistakeMade = false;
+let puzzleSnapshots = [];
+let puzzleViewIndex = 0;
+let puzzleHintSquare = null;
+
+function pickRandom(arr){
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const COACH_CORRECT_LINES = [
+    "✅ Nice one! Keep going...",
+    "✅ That's the idea!",
+    "✅ Exactly right — what's next?",
+    "✅ Good eye. Keep it up.",
+    "✅ Sharp move — onward."
+];
+
+const COACH_WRONG_LINES = [
+    "❌ Not quite — try again!",
+    "❌ Hmm, that's not it. Look again.",
+    "❌ Close, but no — try a different piece.",
+    "❌ That doesn't quite work here. Give it another shot."
+];
 
 function todayDateString(){
     const now = new Date();
@@ -38,18 +60,28 @@ function todayDateString(){
 function showCoachDescription(text){
     const descEl = document.getElementById("puzzleDescription");
     const feedbackEl = document.getElementById("puzzleFeedback");
+    const bubbleEl = document.querySelector(".coachBubble");
     descEl.textContent = text;
     descEl.style.display = "block";
     feedbackEl.textContent = "";
     feedbackEl.style.display = "none";
+    if(bubbleEl) bubbleEl.classList.remove("coachGood", "coachBad");
+    speakText(text);
 }
 
-function showCoachFeedback(text){
+function showCoachFeedback(text, tone){
     const descEl = document.getElementById("puzzleDescription");
     const feedbackEl = document.getElementById("puzzleFeedback");
+    const bubbleEl = document.querySelector(".coachBubble");
     descEl.style.display = "none";
     feedbackEl.textContent = text;
     feedbackEl.style.display = "block";
+    if(bubbleEl){
+        bubbleEl.classList.remove("coachGood", "coachBad");
+        if(tone === "good") bubbleEl.classList.add("coachGood");
+        if(tone === "bad") bubbleEl.classList.add("coachBad");
+    }
+    speakText(text);
 }
 
 // ---- Loading the pool from Firebase — Firebase is fully in control ----
@@ -161,6 +193,7 @@ function openDailyPuzzle(){
     puzzleMoveIndex = 0;
     puzzleSolved = false;
     puzzleMistakeMade = false;
+    puzzleHintSquare = null;
     selected = null;
     possibleMoves = [];
 
@@ -187,6 +220,9 @@ function openDailyPuzzle(){
 
         pieces = fenToPieces(currentPuzzle.fen);
         currentPlayer = currentPuzzle.fen.split(" ")[1] === "w" ? "white" : "black";
+        puzzleSnapshots = [{ pieces: JSON.parse(JSON.stringify(pieces)), currentPlayer: currentPlayer }];
+        puzzleViewIndex = 0;
+        puzzleHintSquare = null;
 
         showCoachDescription(currentPuzzle.description);
         updatePuzzleStatsDisplay();
@@ -230,6 +266,9 @@ function createPuzzleBoard(){
             if(possibleMoves.some(function(m){ return m.r === r && m.c === c; })){
                 square.classList.add("possible");
             }
+            if(puzzleHintSquare && puzzleHintSquare.r === r && puzzleHintSquare.c === c){
+                square.classList.add("puzzleHintGlow");
+            }
 
             if(pieces[r][c] !== ""){
                 const img = document.createElement("img");
@@ -243,12 +282,14 @@ function createPuzzleBoard(){
             boardEl.appendChild(square);
         }
     }
+    updatePuzzleNavButtons();
 }
 
 function clickPuzzleSquare(r, c){
 
     if(puzzleSolved) return;
     if(!currentPuzzle) return;
+    if(puzzleViewIndex !== puzzleSnapshots.length - 1) return; // reviewing an earlier position — step Forward back to the latest one before moving
 
     const piece = pieces[r][c];
 
@@ -282,7 +323,7 @@ function clickPuzzleSquare(r, c){
 
     if(uciMove !== expectedMove){
         puzzleMistakeMade = true;
-        showCoachFeedback("❌ Not quite — try again!");
+        showCoachFeedback(pickRandom(COACH_WRONG_LINES), "bad");
         createPuzzleBoard();
         return;
     }
@@ -291,16 +332,19 @@ function clickPuzzleSquare(r, c){
     pieces[r][c] = movingPiece;
     pieces[fromR][fromC] = "";
     puzzleMoveIndex++;
+    puzzleHintSquare = null;
+    puzzleSnapshots.push({ pieces: JSON.parse(JSON.stringify(pieces)), currentPlayer: currentPlayer === "white" ? "black" : "white" });
+    puzzleViewIndex = puzzleSnapshots.length - 1;
 
     if(puzzleMoveIndex >= currentPuzzle.solution.length){
         puzzleSolved = true;
-        showCoachFeedback("✅ Solved! Well played.");
+        showCoachFeedback(puzzleMistakeMade ? "✅ Solved! You got there in the end." : "🏆 Flawless! Solved without a slip.", "good");
         createPuzzleBoard();
         recordPuzzleResult();
         return;
     }
 
-    showCoachFeedback("✅ Correct! Keep going...");
+    showCoachFeedback(pickRandom(COACH_CORRECT_LINES), "good");
     currentPlayer = currentPlayer === "white" ? "black" : "white";
     createPuzzleBoard();
 
@@ -317,16 +361,71 @@ function clickPuzzleSquare(r, c){
 
         puzzleMoveIndex++;
         currentPlayer = currentPlayer === "white" ? "black" : "white";
+        puzzleSnapshots.push({ pieces: JSON.parse(JSON.stringify(pieces)), currentPlayer: currentPlayer });
+        puzzleViewIndex = puzzleSnapshots.length - 1;
         createPuzzleBoard();
 
         if(puzzleMoveIndex >= currentPuzzle.solution.length){
             puzzleSolved = true;
-            showCoachFeedback("✅ Solved! Well played.");
+            showCoachFeedback(puzzleMistakeMade ? "✅ Solved! You got there in the end." : "🏆 Flawless! Solved without a slip.", "good");
             recordPuzzleResult();
+        }else{
+            showCoachFeedback("Your opponent replied " + oppMove.substring(0,2) + "-" + oppMove.substring(2,4) + ". Your move.", null);
         }
 
     }, 500);
 
+}
+
+// ---- Hint: glow the square of the piece that should move next ----
+
+function showPuzzleHint(){
+
+    if(!currentPuzzle || puzzleSolved) return;
+    if(puzzleViewIndex !== puzzleSnapshots.length - 1) return; // don't hint while reviewing history
+
+    const expectedMove = currentPuzzle.solution[puzzleMoveIndex];
+    if(!expectedMove) return;
+
+    const fromSq = expectedMove.substring(0, 2);
+    puzzleHintSquare = squareToCoords(fromSq);
+
+    showCoachFeedback("💡 Try moving the piece on " + fromSq + ".", null);
+    createPuzzleBoard();
+
+}
+
+// ---- Back / Forward: step through this attempt's move history ----
+// (Purely a review tool — you can only make new moves once you're back at
+// the latest position; stepping back just looks, it doesn't undo.)
+
+function puzzleStepBack(){
+    if(puzzleViewIndex <= 0) return;
+    puzzleViewIndex--;
+    renderPuzzleSnapshot();
+}
+
+function puzzleStepForward(){
+    if(puzzleViewIndex >= puzzleSnapshots.length - 1) return;
+    puzzleViewIndex++;
+    renderPuzzleSnapshot();
+}
+
+function renderPuzzleSnapshot(){
+    const snap = puzzleSnapshots[puzzleViewIndex];
+    if(!snap) return;
+    pieces = JSON.parse(JSON.stringify(snap.pieces));
+    currentPlayer = snap.currentPlayer;
+    selected = null;
+    possibleMoves = [];
+    createPuzzleBoard();
+}
+
+function updatePuzzleNavButtons(){
+    const backBtn = document.getElementById("puzzleBackBtn");
+    const forwardBtn = document.getElementById("puzzleForwardBtn");
+    if(backBtn) backBtn.disabled = (puzzleViewIndex <= 0);
+    if(forwardBtn) forwardBtn.disabled = (puzzleViewIndex >= puzzleSnapshots.length - 1);
 }
 
 // ---- Recording results to Firebase: rating + streak, like chess.com ----
@@ -416,5 +515,4 @@ function updatePuzzleStatsDisplay(){
 
     });
 
-        }
-                                        
+}
