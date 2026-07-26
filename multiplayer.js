@@ -152,6 +152,69 @@ function joinOnlineRoom(){
 
 }
 
+function spectateRoom(){
+
+    if(!db){
+        document.getElementById("spectateStatus").textContent = "Could not connect — check your internet connection.";
+        return;
+    }
+
+    const code = document.getElementById("spectateRoomInput").value.trim().toUpperCase();
+
+    if(!code){
+        document.getElementById("spectateStatus").textContent = "Please enter a room code.";
+        return;
+    }
+
+    document.getElementById("spectateStatus").textContent = "Connecting...";
+
+    db.ref("rooms/" + code).once("value").then(function(snapshot){
+
+        if(!snapshot.exists()){
+            document.getElementById("spectateStatus").textContent = "Room not found. Check the code and try again.";
+            return;
+        }
+
+        // myColor stays null on purpose — every existing "is it my turn"
+        // and "is it my color" check in clickSquare/startOnlineGame already
+        // treats a null myColor as "not a player", which is exactly what a
+        // read-only spectator needs: no moves can be sent, no clock writes,
+        // no presence tracking.
+        myColor = null;
+        currentRoomCode = code;
+
+        closeTimeControl();
+        startOnlineGame(code);
+
+        const banner = document.getElementById("spectatorBanner");
+        const controls = document.getElementById("inGameControls");
+        if(banner) banner.style.display = "block";
+        if(controls) controls.style.display = "none";
+
+    }).catch(function(err){
+        document.getElementById("spectateStatus").textContent = "Could not connect: " + err.message;
+    });
+
+}
+
+function leaveSpectating(){
+
+    myColor = null;
+    currentRoomCode = null;
+    gameOver = true;
+    clearInterval(timer);
+
+    const banner = document.getElementById("spectatorBanner");
+    const controls = document.getElementById("inGameControls");
+    if(banner) banner.style.display = "none";
+    if(controls) controls.style.display = "grid";
+
+    document.getElementById("game").style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
+    switchScreen("home");
+
+}
+
 function startOnlineGame(code){
 
     closeTimeControl();
@@ -168,16 +231,19 @@ function startOnlineGame(code){
 
     listenForRemoteMoves(code);
 
-    const myPresenceRef = db.ref("rooms/" + code + "/presence/" + myColor);
+    if(myColor){
+        const myPresenceRef = db.ref("rooms/" + code + "/presence/" + myColor);
 
-    db.ref(".info/connected").on("value", function(connSnap){
-        if(connSnap.val() === true){
-            myPresenceRef.onDisconnect().set(false);
-            myPresenceRef.set(true);
-        }
-    });
+        db.ref(".info/connected").on("value", function(connSnap){
+            if(connSnap.val() === true){
+                myPresenceRef.onDisconnect().set(false);
+                myPresenceRef.set(true);
+            }
+        });
 
-    listenForOpponentPresence(code);
+        listenForOpponentPresence(code);
+    }
+
     listenForGameEvents(code);
     listenForClockSync(code);
     startOnlineClockDisplay();
