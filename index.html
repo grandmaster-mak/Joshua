@@ -367,7 +367,7 @@
             <div id="history"></div>
 
             <div class="coachRow" id="coachGameBar" style="display:none; padding:12px 15px;">
-                <img class="coachAvatarImg" style="width:40px;height:40px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
+                <img class="coachAvatarImg" style="width:40px;height:40px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ccircle cx='35' cy='27' r='12' fill='%23d9a679'/%3E%3Cpath d='M23 22 Q35 8 47 22 Q47 16 35 14 Q23 16 23 22 Z' fill='%233b2a1a'/%3E%3Ccircle cx='30' cy='27' r='1.6' fill='%232c1c10'/%3E%3Ccircle cx='40' cy='27' r='1.6' fill='%232c1c10'/%3E%3Cpath d='M31 33 Q35 36 39 33' stroke='%237a4f2d' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%2334495e'/%3E%3Cpath d='M30 42 L35 48 L40 42 L38 40 L35 44 L32 40 Z' fill='%23e74c3c'/%3E%3C/svg%3E" alt="Coach">
                 <div class="coachBubble">
                     <p class="sub" id="coachGameText" style="margin:0;">Let's play — I'll comment on your moves as we go.</p>
                 </div>
@@ -375,6 +375,7 @@
 
             <div id="topPlayerBox">
                 <div class="playerRow">
+                    <img id="topPlayerAvatar" class="playerAvatarImg" src="" alt="">
                     <span id="topPlayerName" class="playerTag"></span>
                     <p id="topTimer"></p>
                 </div>
@@ -402,6 +403,7 @@
 
             <div id="bottomPlayerBox">
                 <div class="playerRow">
+                    <img id="bottomPlayerAvatar" class="playerAvatarImg" src="" alt="">
                     <span id="bottomPlayerName" class="playerTag"></span>
                     <p id="bottomTimer"></p>
                 </div>
@@ -743,7 +745,7 @@
         <div class="fsBody" style="padding:0 0 20px;">
 
             <div class="coachRow">
-                <img id="coachAvatar" class="coachAvatarImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
+                <img id="coachAvatar" class="coachAvatarImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ccircle cx='35' cy='27' r='12' fill='%23d9a679'/%3E%3Cpath d='M23 22 Q35 8 47 22 Q47 16 35 14 Q23 16 23 22 Z' fill='%233b2a1a'/%3E%3Ccircle cx='30' cy='27' r='1.6' fill='%232c1c10'/%3E%3Ccircle cx='40' cy='27' r='1.6' fill='%232c1c10'/%3E%3Cpath d='M31 33 Q35 36 39 33' stroke='%237a4f2d' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%2334495e'/%3E%3Cpath d='M30 42 L35 48 L40 42 L38 40 L35 44 L32 40 Z' fill='%23e74c3c'/%3E%3C/svg%3E" alt="Coach">
                 <div class="coachBubble">
                     <p class="sub" id="puzzleDescription" style="margin:0;">Loading...</p>
                     <p class="sub" id="puzzleFeedback" style="display:none; margin:0;"></p>
@@ -785,7 +787,7 @@
             <div id="lessonDetailView" style="display:none;">
 
                 <div class="coachRow" style="padding:0 0 14px;">
-                    <img class="coachAvatarImg" style="width:44px;height:44px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232a3142'/%3E%3Ccircle cx='35' cy='28' r='13' fill='%23e8b98a'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%23355070'/%3E%3C/svg%3E" alt="Coach">
+                    <img class="coachAvatarImg" style="width:44px;height:44px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ccircle cx='35' cy='27' r='12' fill='%23d9a679'/%3E%3Cpath d='M23 22 Q35 8 47 22 Q47 16 35 14 Q23 16 23 22 Z' fill='%233b2a1a'/%3E%3Ccircle cx='30' cy='27' r='1.6' fill='%232c1c10'/%3E%3Ccircle cx='40' cy='27' r='1.6' fill='%232c1c10'/%3E%3Cpath d='M31 33 Q35 36 39 33' stroke='%237a4f2d' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M14 62c0-14 9-22 21-22s21 8 21 22' fill='%2334495e'/%3E%3Cpath d='M30 42 L35 48 L40 42 L38 40 L35 44 L32 40 Z' fill='%23e74c3c'/%3E%3C/svg%3E" alt="Coach">
                     <div class="coachBubble">
                         <p class="sub" id="lessonInstruction" style="margin:0;">Loading...</p>
                         <p class="sub" id="lessonFeedback" style="display:none; margin:0;"></p>
