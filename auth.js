@@ -146,6 +146,8 @@ function applyHomeHeader(data){
     if(puzzleRatingEl) puzzleRatingEl.textContent = data.puzzleRating || 800;
     if(puzzleStreakEl) puzzleStreakEl.textContent = data.puzzleStreak || 0;
 
+    if(typeof renderAchievementsGrid === "function") renderAchievementsGrid("accountAchievementsGrid", data.achievements);
+
 }
 
 function openCurrencyShop(kind){
