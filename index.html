@@ -336,6 +336,9 @@
                 </div>
                 <p class="sub" style="margin-top:8px;">Puzzle streak: <b id="puzzleStreakValue">0</b> days</p>
 
+                <span class="fieldLabel">Awards</span>
+                <div class="achievementsGrid" id="accountAchievementsGrid"></div>
+
                 <button class="btnDanger" onclick="logOut()">Log Out</button>
 
             </div>
@@ -373,7 +376,7 @@
             <div id="history"></div>
 
             <div class="coachRow" id="coachGameBar" style="display:none; padding:12px 15px;">
-                <img class="coachAvatarImg" style="width:40px;height:40px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
+                <img class="coachAvatarImg" style="width:80px;height:80px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
                 <div class="coachBubble">
                     <p class="sub" id="coachGameText" style="margin:0;">Let's play — I'll comment on your moves as we go.</p>
                 </div>
@@ -763,7 +766,7 @@
         <div class="fsBody" style="padding:0 0 20px;">
 
             <div class="coachRow">
-                <img id="coachAvatar" class="coachAvatarImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
+                <img id="coachAvatar" class="coachAvatarImg" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
                 <div class="coachBubble">
                     <p class="sub" id="puzzleDescription" style="margin:0;">Loading...</p>
                     <p class="sub" id="puzzleFeedback" style="display:none; margin:0;"></p>
@@ -805,7 +808,7 @@
             <div id="lessonDetailView" style="display:none;">
 
                 <div class="coachRow" style="padding:0 0 14px;">
-                    <img class="coachAvatarImg" style="width:44px;height:44px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
+                    <img class="coachAvatarImg" style="width:88px;height:88px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
                     <div class="coachBubble">
                         <p class="sub" id="lessonInstruction" style="margin:0;">Loading...</p>
                         <p class="sub" id="lessonFeedback" style="display:none; margin:0;"></p>
@@ -891,8 +894,15 @@
 
             <button class="btnSecondary" id="profileAddFriendBtn" style="display:none;" onclick="addFriendFromProfile()">+ Add Friend</button>
 
+            <span class="fieldLabel">Awards</span>
+            <div class="achievementsGrid" id="profileAchievementsGrid"></div>
+
             <span class="fieldLabel">Recent Games</span>
             <div id="profileRecentGamesList"><p class="sub">Loading...</p></div>
+
+            <span class="fieldLabel">Friends</span>
+            <div id="profileFriendsList"><p class="sub">Loading...</p></div>
+            <button class="btnSecondary" id="profileFriendsSeeMoreBtn" style="display:none;" onclick="showMoreProfileFriends()">See 5 More</button>
 
         </div>
     </div>
@@ -988,6 +998,7 @@
     <script src="lessons.js"></script>
     <script src="analysis.js"></script>
     <script src="profile.js"></script>
+    <script src="achievements.js"></script>
 
     <script>
     if("serviceWorker" in navigator){
