@@ -11,7 +11,7 @@
 // own HTML/CSS/JS/images/sounds/engine files available offline.
 // ============================================================
 
-const CACHE_NAME = "chess-app-shell-v1";
+const CACHE_NAME = "chess-app-shell-v2";
 
 // The core files needed just to load the app shell and play a local or
 // vs-AI game. Anything else (piece images, sounds, etc.) gets cached
@@ -81,28 +81,25 @@ self.addEventListener("fetch", function(event){
         return;
     }
 
+    // Network-first: always try to fetch the latest version first. Only
+    // fall back to whatever's cached if the network request fails (i.e.
+    // genuinely offline) — this way, updates you deploy are picked up
+    // immediately the next time you're online, instead of the app
+    // silently continuing to run an old cached copy indefinitely.
     event.respondWith(
-        caches.match(req).then(function(cached){
-
-            if(cached) return cached;
-
-            return fetch(req).then(function(networkResponse){
-                // Cache whatever we successfully fetch (piece images,
-                // sounds, etc.) so it's available offline next time too.
-                const responseClone = networkResponse.clone();
-                caches.open(CACHE_NAME).then(function(cache){
-                    cache.put(req, responseClone);
-                });
-                return networkResponse;
-            }).catch(function(){
-                // Offline and not cached. For a page navigation, fall back
-                // to the cached app shell rather than showing a browser
-                // error page.
+        fetch(req).then(function(networkResponse){
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(function(cache){
+                cache.put(req, responseClone);
+            });
+            return networkResponse;
+        }).catch(function(){
+            return caches.match(req).then(function(cached){
+                if(cached) return cached;
                 if(req.mode === "navigate"){
                     return caches.match("index.html");
                 }
             });
-
         })
     );
 
