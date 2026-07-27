@@ -82,7 +82,7 @@ function renderSearchResult(uid, data){
 
             resultBox.innerHTML =
                 '<div class="friendCard">' +
-                    '<div class="friendIdentity">' +
+                    '<div class="friendIdentity" style="cursor:pointer;" onclick="openPlayerProfile(\'' + uid + '\')">' +
                         '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
                         '<div class="friendInfo">' +
                             '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + safeUsername + '</span>' +
@@ -157,7 +157,7 @@ function loadFriendRequests(){
             const row = document.createElement("div");
             row.className = "requestCard";
             row.innerHTML =
-                '<div class="friendIdentity">' +
+                '<div class="friendIdentity" style="cursor:pointer;" onclick="openPlayerProfile(\'' + fromUid + '\')">' +
                     '<img class="friendAvatarImg" src="' + (req.photo || DEFAULT_AVATAR_SRC) + '" alt="">' +
                     '<div class="friendInfo">' +
                         '<span class="friendName">' + escapeHtml(req.flag || "") + ' ' + escapeHtml(req.username) + '</span>' +
@@ -238,7 +238,7 @@ function loadFriendsList(){
                     const row = document.createElement("div");
                     row.className = "friendCard";
                     row.innerHTML =
-                        '<div class="friendIdentity">' +
+                        '<div class="friendIdentity" style="cursor:pointer;" onclick="openPlayerProfile(\'' + uid + '\')">' +
                             '<div class="friendAvatarWrap">' +
                                 '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
                                 (isOnline ? '<span class="onlineDotSmall"></span>' : '') +
@@ -416,7 +416,7 @@ function loadOnlineFriendsStrip(friendUids){
 
             const item = document.createElement("div");
             item.className = "onlineFriendItem";
-            item.onclick = function(){ openFriendChat(friend.uid, friend.username); };
+            item.onclick = function(){ openPlayerProfile(friend.uid); };
             item.innerHTML =
                 '<div class="onlineFriendAvatarWrap">' +
                     '<img class="onlineFriendAvatarImg" src="' + (friend.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
