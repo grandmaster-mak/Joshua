@@ -89,6 +89,8 @@ function loadLeaderboard(field){
 
             const el = document.createElement("div");
             el.className = "leaderboardRow" + (isMe ? " me" : "");
+            el.style.cursor = "pointer";
+            el.onclick = function(){ openPlayerProfile(row.uid); };
             el.innerHTML =
                 '<span class="lbRank ' + rankCls + '">' + rankLabel + '</span>' +
                 '<img class="lbAvatar" src="' + (row.data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
@@ -106,5 +108,4 @@ function loadLeaderboard(field){
         list.innerHTML = '<p class="sub">Could not load leaderboard: ' + escapeHtml(err.message) + '</p>';
     });
 
-      }
-          
+}
