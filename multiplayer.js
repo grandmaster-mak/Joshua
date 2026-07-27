@@ -152,26 +152,30 @@ function joinOnlineRoom(){
 
 }
 
-function spectateRoom(){
+function spectateRoom(directCode){
 
     if(!db){
-        document.getElementById("spectateStatus").textContent = "Could not connect — check your internet connection.";
+        const statusEl = document.getElementById("spectateStatus");
+        if(statusEl) statusEl.textContent = "Could not connect — check your internet connection.";
         return;
     }
 
-    const code = document.getElementById("spectateRoomInput").value.trim().toUpperCase();
+    const code = (directCode || document.getElementById("spectateRoomInput").value.trim()).toUpperCase();
 
     if(!code){
-        document.getElementById("spectateStatus").textContent = "Please enter a room code.";
+        const statusEl = document.getElementById("spectateStatus");
+        if(statusEl) statusEl.textContent = "Please enter a room code.";
         return;
     }
 
-    document.getElementById("spectateStatus").textContent = "Connecting...";
+    const statusEl = document.getElementById("spectateStatus");
+    if(statusEl) statusEl.textContent = "Connecting...";
 
     db.ref("rooms/" + code).once("value").then(function(snapshot){
 
         if(!snapshot.exists()){
-            document.getElementById("spectateStatus").textContent = "Room not found. Check the code and try again.";
+            if(statusEl) statusEl.textContent = "Room not found. Check the code and try again.";
+            if(directCode) showInfoPopup("👀 Watch", "That game has already ended.");
             return;
         }
 
@@ -242,6 +246,14 @@ function startOnlineGame(code){
         });
 
         listenForOpponentPresence(code);
+
+        // Lets anyone viewing this player's profile see they're currently
+        // in a game and jump straight into spectating it.
+        if(currentUser){
+            const myRoomRef = db.ref("users/" + currentUser.uid + "/public/currentRoomCode");
+            myRoomRef.set(code);
+            myRoomRef.onDisconnect().remove();
+        }
     }
 
     listenForGameEvents(code);
