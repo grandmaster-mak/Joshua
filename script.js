@@ -1853,6 +1853,7 @@ function recordGameResult(myResult, opponentName){
             data.rating = data.rating || 100;
             if(myResult === "win") data.rating += 8;
             else if(myResult === "loss") data.rating -= 8;
+            data.currentRoomCode = null; // game's over — no longer "currently playing"
         }
 
         return data;
@@ -1990,6 +1991,7 @@ window.addEventListener("popstate", function(event){
         document.getElementById("chatScreen").style.display = "none";
         document.getElementById("analysisScreen").style.display = "none";
         document.getElementById("lessonsScreen").style.display = "none";
+        document.getElementById("profileScreen").style.display = "none";
         document.getElementById("appShell").style.display = "flex";
         switchScreen("home");
         return;
@@ -2025,6 +2027,13 @@ window.addEventListener("popstate", function(event){
     if(state.screen === "analysis"){
         document.getElementById("appShell").style.display = "none";
         document.getElementById("analysisScreen").style.display = "flex";
+        return;
+    }
+
+    if(state.screen === "profile"){
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("profileScreen").style.display = "flex";
+        if(state.uid) loadPlayerProfile(state.uid);
         return;
     }
 
