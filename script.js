@@ -1857,6 +1857,8 @@ function recordGameResult(myResult, opponentName){
         }
 
         return data;
+    }, function(error, committed, snapshot){
+        if(error) alert("Stats save failed: " + error.message);
     }).then(function(result){
         if(typeof checkAchievements === "function") checkAchievements(currentUser.uid, result.snapshot.val());
     });
@@ -1871,7 +1873,7 @@ function recordGameResult(myResult, opponentName){
     }).then(function(){
         if(typeof loadRecentGames === "function") loadRecentGames();
     }).catch(function(err){
-        console.error("Failed to save game to history:", err);
+        alert("History save failed: " + err.message);
     });
 
     if(typeof recordTournamentGameResult === "function") recordTournamentGameResult(myResult);
