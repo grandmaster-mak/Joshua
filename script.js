@@ -56,7 +56,7 @@ let whiteUid = null;
 let blackUid = null;
 
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
-const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
+const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
 
 // Reads coach/lesson text out loud using the browser's built-in
 // text-to-speech (no external API or key needed). Strips emoji first
@@ -1857,6 +1857,8 @@ function recordGameResult(myResult, opponentName){
         }
 
         return data;
+    }).then(function(result){
+        if(typeof checkAchievements === "function") checkAchievements(currentUser.uid, result.snapshot.val());
     });
 
     db.ref("users/" + currentUser.uid + "/history").push({
@@ -1927,6 +1929,12 @@ function loadRecentGames(){
                     '</div>';
 
                 row.querySelector(".gameOpponent").textContent = entry.opponent || "Unknown";
+
+                if(entry.opponentUid){
+                    const infoEl = row.querySelector(".gameOpponentInfo");
+                    infoEl.style.cursor = "pointer";
+                    infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
+                }
 
                 list.appendChild(row);
             });
