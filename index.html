@@ -842,6 +842,72 @@
         </div>
     </div>
 
+    <!-- ===== Player Profile screen ===== -->
+    <div id="profileScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closePlayerProfile()">←</button>
+            <h2>Profile</h2>
+        </div>
+        <div class="fsBody">
+
+            <div style="text-align:center; margin-bottom:16px;">
+                <div style="position:relative; display:inline-block;">
+                    <img id="profileAvatarImg" style="width:88px;height:88px;border-radius:50%;object-fit:cover;background:#1c2028;border:2px solid #3b7bff;" src="" alt="">
+                    <span id="profileOnlineDot" style="display:none; position:absolute; right:2px; bottom:2px; width:16px; height:16px; background:#22c55e; border:2px solid #0a0c10; border-radius:50%;"></span>
+                </div>
+                <h2 id="profileUsername" style="margin-top:10px;"></h2>
+                <p class="sub" id="profileOnlineStatus"></p>
+            </div>
+
+            <div class="stats-grid" style="margin:0 0 16px;">
+                <div class="stat-item">
+                    <div class="stat-icon rating">♟</div>
+                    <h3 id="profileRatingValue">100</h3>
+                    <p>Rating</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon win">🏆</div>
+                    <h3 id="profileWinsValue">0</h3>
+                    <p>Wins</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon streak">🔥</div>
+                    <h3 id="profileStreakValue">0</h3>
+                    <p>Streak</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon time">🧩</div>
+                    <h3 id="profilePuzzleValue">800</h3>
+                    <p>Puzzle</p>
+                </div>
+            </div>
+
+            <button class="btnSecondary" id="profileWatchBtn" style="display:none;" onclick="watchFromProfile()">👀 Watch Live Game</button>
+
+            <div style="display:flex; gap:8px;">
+                <button class="btnPrimary" id="profileMessageBtn" style="width:auto; flex:1;" onclick="messageFromProfile()">💬 Message</button>
+                <button class="btnGold" id="profileChallengeBtn" style="width:auto; flex:1;" onclick="challengeFromProfile()">⚔️ Challenge</button>
+            </div>
+
+            <button class="btnSecondary" id="profileAddFriendBtn" style="display:none;" onclick="addFriendFromProfile()">+ Add Friend</button>
+
+            <span class="fieldLabel">Recent Games</span>
+            <div id="profileRecentGamesList"><p class="sub">Loading...</p></div>
+
+        </div>
+    </div>
+
+    <!-- ===== Watch-instead-of-challenge prompt ===== -->
+    <div id="watchPromptPopup" class="popup">
+        <div class="popupContent">
+            <div class="badge gold">👀</div>
+            <h2>Currently Playing</h2>
+            <p class="sub" id="watchPromptText">This player is in a game right now.</p>
+            <button class="btnPrimary" onclick="confirmWatchFromPrompt()">👀 Watch Their Game</button>
+            <button class="btnSecondary" onclick="closeWatchPrompt()">Cancel</button>
+        </div>
+    </div>
+
     <!-- ===== Analysis Board screen ===== -->
     <div id="analysisScreen" class="fullScreenPanel">
         <div class="fsHeader">
@@ -921,6 +987,7 @@
     <script src="rewards.js"></script>
     <script src="lessons.js"></script>
     <script src="analysis.js"></script>
+    <script src="profile.js"></script>
 
     <script>
     if("serviceWorker" in navigator){
