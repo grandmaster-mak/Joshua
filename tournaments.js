@@ -269,6 +269,8 @@ function renderTournamentDetail(tournamentId, t){
     sorted.forEach(function(p, index){
         const row = document.createElement("div");
         row.className = "standingRow";
+        row.style.cursor = "pointer";
+        row.onclick = function(){ openPlayerProfile(p.uid); };
         row.innerHTML =
             '<span class="standingRank">' + (index + 1) + '</span>' +
             '<span class="standingName">' + escapeHtml(p.data.flag || "") + ' ' + escapeHtml(p.data.username) + '</span>' +
@@ -302,7 +304,11 @@ function renderTournamentDetail(tournamentId, t){
                 '<button class="btnPrimary" style="width:auto;padding:6px 14px;font-size:12px;" data-tid="' + tournamentId + '" data-pid="' + pid + '" onclick="joinTournamentMatch(this.dataset.tid, this.dataset.pid)">Play</button>' : '';
 
             row.innerHTML =
-                '<div><div class="pairingNames">' + escapeHtml(whiteName) + ' vs ' + escapeHtml(blackName) + '</div>' +
+                '<div><div class="pairingNames">' +
+                    '<span style="cursor:pointer;" onclick="openPlayerProfile(\'' + p.white + '\')">' + escapeHtml(whiteName) + '</span>' +
+                    ' vs ' +
+                    '<span style="cursor:pointer;" onclick="openPlayerProfile(\'' + p.black + '\')">' + escapeHtml(blackName) + '</span>' +
+                '</div>' +
                 '<div class="pairingResult">' + resultLabel + '</div></div>' + playBtn;
 
             pairingsBox.appendChild(row);
@@ -312,6 +318,8 @@ function renderTournamentDetail(tournamentId, t){
         if(roundInfo.bye && players[roundInfo.bye]){
             const byeRow = document.createElement("div");
             byeRow.className = "pairingRow";
+            byeRow.style.cursor = "pointer";
+            byeRow.onclick = function(){ openPlayerProfile(roundInfo.bye); };
             const byeLabel = t.format === "elimination" ? "Bye (advances automatically)" : "Bye (free point)";
             byeRow.innerHTML = '<div class="pairingNames">' + escapeHtml(players[roundInfo.bye].username) + '</div><div class="pairingResult">' + byeLabel + '</div>';
             pairingsBox.appendChild(byeRow);
@@ -344,6 +352,29 @@ function joinTournament(){
             points: 0,
             byes: 0
         };
+
+        // If that just filled the tournament to its cap, start it right
+        // here in the same atomic transaction — no need for the creator
+        // to manually click "Start Tournament".
+        const newCount = Object.keys(t.players).length;
+        if(t.maxPlayers && newCount >= t.maxPlayers){
+
+            const uids = Object.keys(t.players);
+            const pairingResult = t.format === "elimination"
+                ? generateEliminationPairings(uids)
+                : generateSwissPairings(uids, t.players, {});
+
+            t.status = "active";
+            t.currentRound = 1;
+            if(!t.rounds_data) t.rounds_data = {};
+            t.rounds_data[1] = pairingResult;
+
+            if(t.format !== "elimination" && pairingResult.bye){
+                t.players[pairingResult.bye].points = (t.players[pairingResult.bye].points || 0) + 1;
+                t.players[pairingResult.bye].byes = (t.players[pairingResult.bye].byes || 0) + 1;
+            }
+
+        }
 
         return t;
 
