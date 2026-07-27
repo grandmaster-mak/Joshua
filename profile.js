@@ -14,8 +14,11 @@
 
 let currentProfileUid = null;
 let currentProfileUsername = null;
+let currentProfileIsFriend = false;
 let profilePresenceRef = null;
 let profileRoomRef = null;
+let profileFriendUids = [];
+let profileFriendsShownCount = 0;
 
 function openPlayerProfile(uid){
 
@@ -38,6 +41,16 @@ function closePlayerProfile(){
     if(history.state && history.state.screen === "profile"){
         history.back();
     }
+}
+
+// Used when we're about to open ANOTHER screen (chat, a challenge result,
+// spectating) rather than going back to Home. Just hides the profile
+// screen without touching history — the destination screen pushes its
+// own state on top, so the back button still works correctly afterward
+// (back from chat returns to this profile, not all the way to Home).
+function hideProfileScreenOnly(){
+    stopProfileLiveListeners();
+    document.getElementById("profileScreen").style.display = "none";
 }
 
 function stopProfileLiveListeners(){
@@ -74,14 +87,18 @@ function loadPlayerProfile(uid){
 
         if(!isMe && currentUser){
             db.ref("users/" + currentUser.uid + "/private/friends/" + uid).once("value").then(function(friendSnap){
-                document.getElementById("profileAddFriendBtn").style.display = friendSnap.exists() ? "none" : "block";
+                currentProfileIsFriend = friendSnap.exists();
+                document.getElementById("profileAddFriendBtn").style.display = currentProfileIsFriend ? "none" : "block";
             });
         }else{
+            currentProfileIsFriend = true; // viewing your own profile
             document.getElementById("profileAddFriendBtn").style.display = "none";
         }
 
         startProfileLiveListeners(uid);
         loadProfileRecentGames(uid);
+        loadProfileFriendsList(uid);
+        if(typeof renderAchievementsGrid === "function") renderAchievementsGrid("profileAchievementsGrid", data.achievements);
 
     }).catch(function(err){
         document.getElementById("profileRecentGamesList").innerHTML = '<p class="sub">Could not load profile: ' + escapeHtml(err.message) + '</p>';
@@ -144,6 +161,13 @@ function loadProfileRecentGames(uid){
                     '</div>' +
                 '</div>' +
                 '<span class="gameResult ' + cls + '">' + label + '</span>';
+
+            if(entry.opponentUid){
+                const infoEl = row.querySelector(".gameOpponentInfo");
+                infoEl.style.cursor = "pointer";
+                infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
+            }
+
             list.appendChild(row);
 
         });
@@ -154,9 +178,96 @@ function loadProfileRecentGames(uid){
 
 }
 
+// Shows this player's friends list in batches of 5. Requires a Firebase
+// Rules addition beyond what's already set up: users/{uid}/private/friends
+// needs to be readable by any logged-in user (a sibling rule under
+// "friends", separate from the rest of "private" which stays owner-only).
+// See the note at the bottom of this file for the exact rule to add.
+function loadProfileFriendsList(uid){
+
+    const list = document.getElementById("profileFriendsList");
+    const seeMoreBtn = document.getElementById("profileFriendsSeeMoreBtn");
+    list.innerHTML = '<p class="sub">Loading...</p>';
+    seeMoreBtn.style.display = "none";
+
+    db.ref("users/" + uid + "/private/friends").once("value").then(function(snapshot){
+
+        if(!snapshot.exists()){
+            profileFriendUids = [];
+            list.innerHTML = '<p class="sub">No friends yet.</p>';
+            return;
+        }
+
+        profileFriendUids = Object.keys(snapshot.val());
+        profileFriendsShownCount = 0;
+        list.innerHTML = "";
+        renderNextProfileFriendsBatch();
+
+    }).catch(function(err){
+        list.innerHTML = '<p class="sub">Could not load friends: ' + escapeHtml(err.message) + '</p>';
+    });
+
+}
+
+function renderNextProfileFriendsBatch(){
+
+    const list = document.getElementById("profileFriendsList");
+    const seeMoreBtn = document.getElementById("profileFriendsSeeMoreBtn");
+
+    const batch = profileFriendUids.slice(profileFriendsShownCount, profileFriendsShownCount + 5);
+
+    const lookups = batch.map(function(friendUid){
+        return db.ref("users/" + friendUid + "/public").once("value").then(function(snap){
+            return { uid: friendUid, data: snap.val() };
+        });
+    });
+
+    Promise.all(lookups).then(function(results){
+
+        results.forEach(function(result){
+            if(!result.data) return;
+
+            const row = document.createElement("div");
+            row.className = "friendIdentity";
+            row.style.cursor = "pointer";
+            row.style.marginBottom = "10px";
+            row.onclick = function(){ openPlayerProfile(result.uid); };
+            row.innerHTML =
+                '<img class="friendAvatarImg" src="' + (result.data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                '<div class="friendInfo">' +
+                    '<span class="friendName">' + escapeHtml(result.data.flag || "") + ' ' + escapeHtml(result.data.username || "Player") + '</span>' +
+                    '<span class="friendRating">Rating ' + (result.data.rating || 100) + '</span>' +
+                '</div>';
+            list.appendChild(row);
+        });
+
+        profileFriendsShownCount += batch.length;
+
+        if(profileFriendsShownCount >= profileFriendUids.length){
+            seeMoreBtn.style.display = "none";
+        }else{
+            seeMoreBtn.style.display = "block";
+        }
+
+        if(profileFriendsShownCount === 0){
+            list.innerHTML = '<p class="sub">No friends yet.</p>';
+        }
+
+    });
+
+}
+
+function showMoreProfileFriends(){
+    renderNextProfileFriendsBatch();
+}
+
 function messageFromProfile(){
     if(!currentProfileUid || !currentUser) return;
-    closePlayerProfile();
+    if(!currentProfileIsFriend){
+        showInfoPopup("👋 Add Them First", "Add " + currentProfileUsername + " as a friend before messaging them.");
+        return;
+    }
+    hideProfileScreenOnly();
     openFriendChat(currentProfileUid, currentProfileUsername);
 }
 
@@ -180,7 +291,7 @@ function challengeFromProfile(){
             document.getElementById("watchPromptPopup").dataset.roomCode = code;
             document.getElementById("watchPromptPopup").classList.add("show");
         }else{
-            closePlayerProfile();
+            hideProfileScreenOnly();
             challengeFriend(currentProfileUid, currentProfileUsername);
         }
     });
@@ -194,7 +305,7 @@ function closeWatchPrompt(){
 function confirmWatchFromPrompt(){
     const code = document.getElementById("watchPromptPopup").dataset.roomCode;
     closeWatchPrompt();
-    closePlayerProfile();
+    hideProfileScreenOnly();
     if(code) spectateRoom(code);
 }
 
@@ -206,7 +317,7 @@ function watchFromProfile(){
             showInfoPopup("👀 Watch", "This player just finished — nothing to watch right now.");
             return;
         }
-        closePlayerProfile();
+        hideProfileScreenOnly();
         spectateRoom(code);
     });
 }
@@ -222,6 +333,19 @@ function watchFromProfile(){
 //     ".read": "auth != null"
 //   }
 //
-// Without this, profileRecentGamesList will show a permission_denied
-// error the same way the leaderboard and lessons did before their fixes.
+// The Friends list on someone else's profile also needs one more rule —
+// add ".read" as a sibling INSIDE the existing "friends" block under
+// "private" (the rest of "private" stays owner-only; this only opens up
+// the friends list specifically):
+//
+//   "friends": {
+//     ".read": "auth != null",
+//     "$otherUid": {
+//       ".write": "auth != null && (auth.uid == $uid || auth.uid == $otherUid)"
+//     }
+//   }
+//
+// Without these, Recent Games and Friends on other players' profiles
+// will show a permission error, the same way the leaderboard and lessons
+// did before their fixes.
 // ============================================================
