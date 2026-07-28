@@ -1752,6 +1752,11 @@ function getAllMoves(color){
 
 function switchScreen(name){
 
+    // Wipe out any leftover/queued coach speech the instant you leave the
+    // game screen for a tab — stops old lines from firing late while
+    // you're already back on Home.
+    if("speechSynthesis" in window) window.speechSynthesis.cancel();
+
     const screens = ["home", "friends", "account"];
 
     screens.forEach(function(s){
