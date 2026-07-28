@@ -90,6 +90,14 @@ function speakText(text){
 
     window.speechSynthesis.cancel(); // don't let lines queue up/overlap
 
+    setTimeout(function(){
+        speakTextNow(clean);
+    }, 50);
+
+}
+
+function speakTextNow(clean){
+
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.rate = 1.15; // a bit faster than normal speaking pace
     utterance.pitch = 0.75; // lower pitch as a fallback even without a male-labeled voice available
