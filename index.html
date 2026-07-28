@@ -1033,6 +1033,15 @@
     <script src="profile.js"></script>
     <script src="achievements.js"></script>
 
+    <!-- ===== Award reveal overlay (animated coach hand-over, not a real video) ===== -->
+    <div id="awardRevealOverlay" style="display:none; position:fixed; inset:0; z-index:500; background:rgba(5,6,10,0.94); flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+        <div id="awardRevealGlow" style="position:absolute; inset:0; pointer-events:none;"></div>
+        <img id="awardRevealCoachImg" class="awardRevealCoach" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
+        <div id="awardRevealIcon" class="awardRevealIcon">🏆</div>
+        <p class="awardRevealLabel">Award Unlocked!</p>
+        <h2 id="awardRevealTitle" class="awardRevealTitle">Achievement</h2>
+    </div>
+
     <script>
     if("serviceWorker" in navigator){
         window.addEventListener("load", function(){
