@@ -66,6 +66,13 @@ function loadLeaderboard(field){
 
         rows.sort(function(a, b){ return (b.data[field] || 0) - (a.data[field] || 0); });
 
+        if(field === "rating" && currentUser && typeof unlockAchievement === "function"){
+            const myIndex = rows.findIndex(function(row){ return row.uid === currentUser.uid; });
+            if(myIndex === 0) unlockAchievement(currentUser.uid, "leaderboard_1");
+            else if(myIndex === 1) unlockAchievement(currentUser.uid, "leaderboard_2");
+            else if(myIndex === 2) unlockAchievement(currentUser.uid, "leaderboard_3");
+        }
+
         if(rows.length === 0){
             list.innerHTML = '<p class="sub">No players yet.</p>';
             return;
