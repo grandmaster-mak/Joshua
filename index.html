@@ -296,23 +296,21 @@
 
             <div id="loggedInView" style="display:none;">
 
-                <div class="home-header" style="margin:0 0 14px;">
-                    <div class="header-text">
-                        <p id="loggedInUsername" class="sub" style="font-size:16px; color:#eef0f3; font-weight:600;"></p>
-                        <p class="sub" id="winRateSubtitle"></p>
-                        <p class="sub" id="bestStreakSubtitle"></p>
-                    </div>
-                    <div class="profile-box">
+                <div style="text-align:center; margin:6px 0 20px;">
+                    <div class="profile-box" style="width:96px; height:96px; margin:0 auto;">
                         <img id="accountProfileImg" src="" alt="Profile">
                     </div>
+                    <h2 id="loggedInUsername" style="margin-top:12px; margin-bottom:2px;"></h2>
+                    <p class="sub" id="winRateSubtitle"></p>
+                    <p class="sub" id="bestStreakSubtitle"></p>
+
+                    <label class="btnSecondary" style="display:inline-block; width:auto; padding:9px 18px; cursor:pointer; margin-top:12px;">
+                        Change Profile Photo
+                        <input type="file" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelect(event)">
+                    </label>
                 </div>
 
-                <label class="btnSecondary" style="display:block; text-align:center; cursor:pointer;">
-                    Change Profile Photo
-                    <input type="file" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelect(event)">
-                </label>
-
-                <div class="stats-grid" style="margin-top:16px;">
+                <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-icon rating">♟</div>
                         <h3 id="accountRatingValue">100</h3>
@@ -338,6 +336,41 @@
 
                 <span class="fieldLabel">Awards</span>
                 <div class="achievementsGrid" id="accountAchievementsGrid"></div>
+
+                <span class="fieldLabel">Quick Access</span>
+                <div class="accountMenuList">
+
+                    <div class="accountMenuRow" onclick="openDailyPuzzle()">
+                        <span class="accountMenuIcon">🧩</span>
+                        <span class="accountMenuLabel">Puzzles</span>
+                        <span class="accountMenuChevron">›</span>
+                    </div>
+
+                    <div class="accountMenuRow" onclick="openLessons()">
+                        <span class="accountMenuIcon">📘</span>
+                        <span class="accountMenuLabel">Lessons</span>
+                        <span class="accountMenuChevron">›</span>
+                    </div>
+
+                    <div class="accountMenuRow" onclick="openPlayVsCoach()">
+                        <span class="accountMenuIcon">🧑‍🏫</span>
+                        <span class="accountMenuLabel">Play vs Coach</span>
+                        <span class="accountMenuChevron">›</span>
+                    </div>
+
+                    <div class="accountMenuRow" onclick="openAnalysisBoard()">
+                        <span class="accountMenuIcon">🔬</span>
+                        <span class="accountMenuLabel">Analysis Board</span>
+                        <span class="accountMenuChevron">›</span>
+                    </div>
+
+                    <div class="accountMenuRow" onclick="switchScreen('friends')">
+                        <span class="accountMenuIcon">👥</span>
+                        <span class="accountMenuLabel">Friends</span>
+                        <span class="accountMenuChevron">›</span>
+                    </div>
+
+                </div>
 
                 <button class="btnDanger" onclick="logOut()">Log Out</button>
 
