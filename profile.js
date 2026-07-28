@@ -72,6 +72,22 @@ function loadPlayerProfile(uid){
             return;
         }
 
+        if(typeof playNextUnseenAwardThen === "function"){
+            playNextUnseenAwardThen(uid, data, function(){
+                renderPlayerProfile(uid, data);
+            });
+        }else{
+            renderPlayerProfile(uid, data);
+        }
+
+    }).catch(function(err){
+        document.getElementById("profileRecentGamesList").innerHTML = '<p class="sub">Could not load profile: ' + escapeHtml(err.message) + '</p>';
+    });
+
+}
+
+function renderPlayerProfile(uid, data){
+
         currentProfileUsername = data.username || "Player";
 
         document.getElementById("profileAvatarImg").src = data.photoURL || DEFAULT_AVATAR_SRC;
@@ -99,10 +115,6 @@ function loadPlayerProfile(uid){
         loadProfileRecentGames(uid);
         loadProfileFriendsList(uid);
         if(typeof renderAchievementsGrid === "function") renderAchievementsGrid("profileAchievementsGrid", data.achievements);
-
-    }).catch(function(err){
-        document.getElementById("profileRecentGamesList").innerHTML = '<p class="sub">Could not load profile: ' + escapeHtml(err.message) + '</p>';
-    });
 
 }
 
