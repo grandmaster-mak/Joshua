@@ -449,9 +449,12 @@ function recordPuzzleResult(){
         data.puzzleRating = (data.puzzleRating || 800) + ratingChange;
         data.puzzleStreak = data.puzzleStreak || 0;
         data.puzzleBestStreak = data.puzzleBestStreak || 0;
+        data.puzzlesSolved = (data.puzzlesSolved || 0) + 1;
 
         return data;
 
+    }).then(function(result){
+        if(typeof checkAchievements === "function") checkAchievements(currentUser.uid, result.snapshot.val());
     });
 
     userPrivateRef.child("puzzleLastSolved").once("value").then(function(snapshot){
