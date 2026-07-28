@@ -292,22 +292,9 @@ function addFriendFromProfile(){
 // If they're currently playing, offer to watch instead of sending a
 // challenge that they can't respond to right now.
 function challengeFromProfile(){
-
     if(!currentProfileUid || !currentUser) return;
-
-    db.ref("users/" + currentProfileUid + "/public/currentRoomCode").once("value").then(function(snap){
-        const code = snap.val();
-        if(code){
-            document.getElementById("watchPromptText").textContent =
-                currentProfileUsername + " is currently in a game. Want to watch instead?";
-            document.getElementById("watchPromptPopup").dataset.roomCode = code;
-            document.getElementById("watchPromptPopup").classList.add("show");
-        }else{
-            hideProfileScreenOnly();
-            challengeFriend(currentProfileUid, currentProfileUsername);
-        }
-    });
-
+    hideProfileScreenOnly();
+    challengeFriend(currentProfileUid, currentProfileUsername);
 }
 
 function closeWatchPrompt(){
