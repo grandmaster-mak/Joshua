@@ -273,6 +273,25 @@ function challengeFriend(friendUid, friendUsername){
 
     if(!db || !currentUser) return;
 
+    // Always check first — no matter where Challenge was tapped from
+    // (Friends list, Profile screen, anywhere else later) — so a
+    // challenge is never silently sent to someone already mid-game.
+    db.ref("users/" + friendUid + "/public/currentRoomCode").once("value").then(function(snap){
+        const code = snap.val();
+        if(code){
+            document.getElementById("watchPromptText").textContent =
+                friendUsername + " is currently in a game. Want to watch instead?";
+            document.getElementById("watchPromptPopup").dataset.roomCode = code;
+            document.getElementById("watchPromptPopup").classList.add("show");
+            return;
+        }
+        actuallySendChallenge(friendUid, friendUsername);
+    });
+
+}
+
+function actuallySendChallenge(friendUid, friendUsername){
+
     const code = generateRoomCode();
 
     myColor = "white";
