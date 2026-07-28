@@ -1349,6 +1349,8 @@ function openPlaySetup(mode){
 
 function newGame(){
 
+    if(typeof checkDailyPlayStreak === "function") checkDailyPlayStreak();
+
     pieces = [
         ["bR","bN","bB","bQ","bK","bB","bN","bR"],
         ["bP","bP","bP","bP","bP","bP","bP","bP"],
@@ -1756,6 +1758,13 @@ function switchScreen(name){
         loadFriendsData();
     }
 
+    if(name === "account" && currentUser && db && typeof playNextUnseenAwardThen === "function"){
+        db.ref("users/" + currentUser.uid + "/public").once("value").then(function(snap){
+            const data = snap.val();
+            if(data) playNextUnseenAwardThen(currentUser.uid, data, function(){});
+        });
+    }
+
 }
 
 // Home-screen quick-link cards (Tournaments/Puzzles/Leaderboards/Daily
@@ -1854,6 +1863,11 @@ function recordGameResult(myResult, opponentName){
             if(myResult === "win") data.rating += 8;
             else if(myResult === "loss") data.rating -= 8;
             data.currentRoomCode = null; // game's over — no longer "currently playing"
+        }
+
+        if(gameMode === "ai" && myResult === "win"){
+            if(aiDifficulty === "medium") data.beatMediumAI = true;
+            if(aiDifficulty === "hard") data.beatHardAI = true;
         }
 
         return data;
