@@ -1,22 +1,30 @@
 // ============================================================
-// Tournaments: Swiss system, flexible player count, creator picks rounds
+// Tournaments: Swiss, Single Elimination, Double Elimination,
+// Round Robin, and Arena — the five formats chess.com itself offers.
+//
+// Known simplifications vs chess.com's real system (documented honestly,
+// not hidden):
+// - Swiss pairing balances points/rating and avoids repeat opponents,
+//   but doesn't do full color-balancing or Buchholz tiebreaks.
+// - Double Elimination has no "bracket reset" — if the loser's-bracket
+//   player wins the Grand Final, they're simply champion (no forced
+//   second match), which is a common simplified variant.
+// - Arena uses a simple 2-player matchmaking queue rather than a large-
+//   scale matchmaking service.
 // ============================================================
 
 let activeTournamentId = null;
 let activeTournamentPairingId = null;
+let activeTournamentBracket = "main"; // "main" | "winners" | "losers" | "grandFinal" | "arena"
 let currentViewedTournamentId = null;
+let arenaCountdownInterval = null;
+let arenaPendingRef = null;
 
 function openTournaments(){
-    try{
-        document.getElementById("appShell").style.display = "none";
-        document.getElementById("tournamentsScreen").style.display = "flex";
-        history.pushState({ screen: "tournaments", view: "list" }, "", "#tournaments");
-        showTournamentsList();
-    }catch(err){
-        console.error("openTournaments failed:", err);
-        document.getElementById("appShell").style.display = "flex";
-        alert("Couldn't open Tournaments: " + err.message);
-    }
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("tournamentsScreen").style.display = "flex";
+    history.pushState({ screen: "tournaments", view: "list" }, "", "#tournaments");
+    showTournamentsList();
 }
 
 function closeTournaments(){
@@ -57,8 +65,18 @@ function renderCreateTournamentView(){
 
 function updateTournamentFormatUI(){
     const format = document.getElementById("tournamentFormatInput").value;
-    document.getElementById("tournamentRoundsBox").style.display = format === "elimination" ? "none" : "block";
-    document.getElementById("tournamentEliminationNote").style.display = format === "elimination" ? "block" : "none";
+    const needsAutoRounds = (format === "elimination" || format === "double_elimination" || format === "round_robin");
+    document.getElementById("tournamentRoundsBox").style.display = (format === "swiss") ? "block" : "none";
+    document.getElementById("tournamentEliminationNote").style.display = needsAutoRounds ? "block" : "none";
+    document.getElementById("tournamentDurationBox").style.display = (format === "arena") ? "block" : "none";
+}
+
+function formatFormatLabel(format){
+    if(format === "elimination") return "Single Elim.";
+    if(format === "double_elimination") return "Double Elim.";
+    if(format === "round_robin") return "Round Robin";
+    if(format === "arena") return "Arena";
+    return "Swiss";
 }
 
 function loadTournamentsList(){
@@ -88,8 +106,12 @@ function loadTournamentsList(){
             const t = item.data;
             const playerCount = t.players ? Object.keys(t.players).length : 0;
             const capLabel = t.maxPlayers ? "/" + t.maxPlayers : "";
-            const statusLabel = t.status === "registering" ? "Open" : t.status === "active" ? "Round " + t.currentRound + "/" + t.rounds : "Completed";
-            const formatLabel = t.format === "elimination" ? "Single Elim." : "Swiss";
+            let statusLabel;
+            if(t.status === "registering") statusLabel = "Open";
+            else if(t.status === "active") statusLabel = (t.format === "arena") ? "Live" : "Round " + t.currentRound + "/" + t.rounds;
+            else statusLabel = "Completed";
+
+            const formatLabel = formatFormatLabel(t.format);
             const speedLabel = formatSpeedLabel(t.timeControl);
             const startLabel = (t.status === "registering" && t.scheduledStart) ? " · Starts " + formatScheduledStart(t.scheduledStart) : "";
 
@@ -135,6 +157,7 @@ function createTournament(){
     const rounds = Number(document.getElementById("tournamentRoundsInput").value);
     const timeControl = Number(document.getElementById("tournamentTimeInput").value);
     const maxPlayers = Number(document.getElementById("tournamentMaxPlayersInput").value);
+    const durationMinutes = Number(document.getElementById("tournamentDurationInput").value);
     const startInputValue = document.getElementById("tournamentStartInput").value;
     const scheduledStart = startInputValue ? new Date(startInputValue).getTime() : null;
 
@@ -158,12 +181,12 @@ function createTournament(){
         byes: 0
     };
 
-    newRef.set({
+    const tournamentData = {
         name: name,
         format: format,
-        // Single elimination's round count depends on how many players
-        // actually join, so it's computed at start time instead of here.
-        rounds: format === "elimination" ? null : rounds,
+        // Elimination/Double-Elim/Round-Robin round counts depend on how
+        // many players actually join, so they're computed at start time.
+        rounds: (format === "swiss") ? rounds : null,
         timeControl: timeControl,
         maxPlayers: maxPlayers,
         scheduledStart: scheduledStart,
@@ -172,7 +195,13 @@ function createTournament(){
         createdAt: Date.now(),
         currentRound: 0,
         players: playerEntry
-    }).then(function(){
+    };
+
+    if(format === "arena"){
+        tournamentData.durationMinutes = durationMinutes;
+    }
+
+    newRef.set(tournamentData).then(function(){
         history.replaceState({ screen: "tournaments", view: "detail", id: newRef.key }, "", "#tournaments-detail");
         renderTournamentDetailView(newRef.key);
     });
@@ -186,6 +215,8 @@ function stopTournamentDetailListener(){
         currentTournamentDetailRef.off();
         currentTournamentDetailRef = null;
     }
+    stopArenaCountdown();
+    stopArenaPendingListener();
 }
 
 function openTournamentDetail(tournamentId){
@@ -226,15 +257,21 @@ function renderTournamentDetail(tournamentId, t){
     const playerUids = Object.keys(players);
     const isCreator = currentUser && t.createdBy === currentUser.uid;
     const alreadyJoined = currentUser && players[currentUser.uid];
+    const isArena = (t.format === "arena");
 
     let statusText = "";
-    if(t.status === "registering") statusText = playerUids.length + (t.maxPlayers ? "/" + t.maxPlayers : "") + " players joined";
-    else if(t.status === "active") statusText = "Round " + t.currentRound + " of " + t.rounds;
-    else statusText = "Completed" + (t.champion && players[t.champion] ? " — 🏆 " + players[t.champion].username + " wins!" : "");
+    if(t.status === "registering"){
+        statusText = playerUids.length + (t.maxPlayers ? "/" + t.maxPlayers : "") + " players joined";
+        if(t.scheduledStart) statusText += " — starts automatically at " + formatScheduledStart(t.scheduledStart);
+    }else if(t.status === "active"){
+        statusText = isArena ? "Live now" : "Round " + t.currentRound + " of " + t.rounds;
+    }else{
+        statusText = "Completed" + (t.champion && players[t.champion] ? " — 🏆 " + players[t.champion].username + " wins!" : "");
+    }
 
     document.getElementById("tournamentDetailStatus").textContent = statusText;
 
-    const formatLabel = t.format === "elimination" ? "Single Elimination" : "Swiss System";
+    const formatLabel = formatFormatLabel(t.format);
     const speedLabel = formatSpeedLabel(t.timeControl);
     const startNote = (t.status === "registering" && t.scheduledStart) ? " · Starts " + formatScheduledStart(t.scheduledStart) : "";
     const metaEl = document.getElementById("tournamentDetailMeta");
@@ -249,17 +286,58 @@ function renderTournamentDetail(tournamentId, t){
     const joinBtn = document.getElementById("tournamentJoinBtn");
     const startBtn = document.getElementById("tournamentStartBtn");
     const nextRoundBtn = document.getElementById("tournamentNextRoundBtn");
+    const arenaCountdownEl = document.getElementById("tournamentArenaCountdown");
+    const arenaPlayBtn = document.getElementById("tournamentArenaPlayBtn");
+    const arenaStatusEl = document.getElementById("tournamentArenaStatus");
+    const pairingsLabel = document.getElementById("tournamentPairingsLabel");
 
     joinBtn.style.display = (t.status === "registering" && currentUser && !alreadyJoined) ? "block" : "none";
-    startBtn.style.display = (t.status === "registering" && isCreator && playerUids.length >= 2) ? "block" : "none";
+    // The manual Start button only ever appears when there's no scheduled
+    // time — once a time is set, the tournament can ONLY begin
+    // automatically at that moment, never early.
+    startBtn.style.display = (t.status === "registering" && isCreator && playerUids.length >= 2 && !t.scheduledStart) ? "block" : "none";
 
-    let roundComplete = false;
-    if(t.status === "active" && t.rounds_data && t.rounds_data[t.currentRound]){
-        const pairings = t.rounds_data[t.currentRound].pairings || {};
-        roundComplete = Object.keys(pairings).every(function(pid){ return !!pairings[pid].result; });
+    if(isArena){
+
+        pairingsLabel.textContent = "Live Games";
+
+        if(t.status === "active"){
+            startArenaCountdown(tournamentId, t.arenaEndsAt);
+            startArenaPendingListener(tournamentId);
+            if(alreadyJoined){
+                arenaPlayBtn.style.display = "block";
+                arenaStatusEl.style.display = "block";
+                db.ref("tournaments/" + tournamentId + "/arenaQueue/" + currentUser.uid).once("value").then(function(snap){
+                    arenaStatusEl.textContent = snap.exists() ? "Searching for an opponent..." : "Tap Find Opponent to play.";
+                });
+            }else{
+                arenaPlayBtn.style.display = "none";
+                arenaStatusEl.style.display = "none";
+            }
+        }else{
+            arenaCountdownEl.style.display = "none";
+            arenaPlayBtn.style.display = "none";
+            arenaStatusEl.style.display = "none";
+        }
+
+        nextRoundBtn.style.display = "none";
+
+    }else{
+
+        arenaCountdownEl.style.display = "none";
+        arenaPlayBtn.style.display = "none";
+        arenaStatusEl.style.display = "none";
+        pairingsLabel.textContent = (t.format === "double_elimination") ? "Current Round" : "Current Round";
+
+        let roundComplete = false;
+        if(t.status === "active" && t.rounds_data && t.rounds_data[t.currentRound]){
+            roundComplete = isRoundComplete(t, t.rounds_data[t.currentRound]);
+        }
+        nextRoundBtn.style.display = (t.status === "active" && isCreator && roundComplete) ? "block" : "none";
+        nextRoundBtn.textContent = (t.format !== "round_robin" && t.currentRound >= t.rounds) ? "Finish Tournament" :
+            (t.format === "round_robin" && t.currentRound >= t.rounds) ? "Finish Tournament" : "Start Next Round";
+
     }
-    nextRoundBtn.style.display = (t.status === "active" && isCreator && roundComplete) ? "block" : "none";
-    nextRoundBtn.textContent = (t.currentRound >= t.rounds) ? "Finish Tournament" : "Start Next Round";
 
     const standingsBox = document.getElementById("tournamentStandings");
     const sorted = playerUids.map(function(uid){ return { uid: uid, data: players[uid] }; })
@@ -281,50 +359,111 @@ function renderTournamentDetail(tournamentId, t){
     const pairingsBox = document.getElementById("tournamentPairings");
     pairingsBox.innerHTML = "";
 
+    if(isArena && t.status === "active"){
+        renderArenaPairings(tournamentId, t);
+        return;
+    }
+
     if(t.status === "active" && t.rounds_data && t.rounds_data[t.currentRound]){
 
-        const roundInfo = t.rounds_data[t.currentRound];
-        const pairings = roundInfo.pairings || {};
-
-        Object.keys(pairings).forEach(function(pid){
-
-            const p = pairings[pid];
-            const whiteName = players[p.white] ? players[p.white].username : "?";
-            const blackName = players[p.black] ? players[p.black].username : "?";
-
-            const resultLabel = !p.result ? "In progress" :
-                p.result === "draw" ? "Draw" :
-                p.result === "white" ? whiteName + " won" : blackName + " won";
-
-            const row = document.createElement("div");
-            row.className = "pairingRow";
-
-            const isMyGame = currentUser && (p.white === currentUser.uid || p.black === currentUser.uid);
-            const playBtn = (isMyGame && !p.result) ?
-                '<button class="btnPrimary" style="width:auto;padding:6px 14px;font-size:12px;" data-tid="' + tournamentId + '" data-pid="' + pid + '" onclick="joinTournamentMatch(this.dataset.tid, this.dataset.pid)">Play</button>' : '';
-
-            row.innerHTML =
-                '<div><div class="pairingNames">' +
-                    '<span style="cursor:pointer;" onclick="openPlayerProfile(\'' + p.white + '\')">' + escapeHtml(whiteName) + '</span>' +
-                    ' vs ' +
-                    '<span style="cursor:pointer;" onclick="openPlayerProfile(\'' + p.black + '\')">' + escapeHtml(blackName) + '</span>' +
-                '</div>' +
-                '<div class="pairingResult">' + resultLabel + '</div></div>' + playBtn;
-
-            pairingsBox.appendChild(row);
-
-        });
-
-        if(roundInfo.bye && players[roundInfo.bye]){
-            const byeRow = document.createElement("div");
-            byeRow.className = "pairingRow";
-            byeRow.style.cursor = "pointer";
-            byeRow.onclick = function(){ openPlayerProfile(roundInfo.bye); };
-            const byeLabel = t.format === "elimination" ? "Bye (advances automatically)" : "Bye (free point)";
-            byeRow.innerHTML = '<div class="pairingNames">' + escapeHtml(players[roundInfo.bye].username) + '</div><div class="pairingResult">' + byeLabel + '</div>';
-            pairingsBox.appendChild(byeRow);
+        if(t.format === "double_elimination"){
+            renderDoubleEliminationPairings(tournamentId, t, players);
+        }else{
+            renderStandardPairings(tournamentId, t, players, t.rounds_data[t.currentRound]);
         }
 
+    }
+
+}
+
+function isRoundComplete(t, roundInfo){
+    if(t.format === "double_elimination"){
+        const winnersDone = !roundInfo.winners || Object.keys(roundInfo.winners.pairings || {}).every(function(pid){ return !!roundInfo.winners.pairings[pid].result; });
+        const losersDone = !roundInfo.losers || Object.keys(roundInfo.losers.pairings || {}).every(function(pid){ return !!roundInfo.losers.pairings[pid].result; });
+        return winnersDone && losersDone;
+    }
+    const pairings = roundInfo.pairings || {};
+    return Object.keys(pairings).every(function(pid){ return !!pairings[pid].result; });
+}
+
+function renderStandardPairings(tournamentId, t, players, roundInfo){
+
+    const pairingsBox = document.getElementById("tournamentPairings");
+    const pairings = roundInfo.pairings || {};
+
+    Object.keys(pairings).forEach(function(pid){
+
+        const p = pairings[pid];
+        const whiteName = players[p.white] ? players[p.white].username : "?";
+        const blackName = players[p.black] ? players[p.black].username : "?";
+
+        const resultLabel = !p.result ? "In progress" :
+            p.result === "draw" ? "Draw" :
+            p.result === "white" ? whiteName + " won" : blackName + " won";
+
+        const row = document.createElement("div");
+        row.className = "pairingRow";
+
+        const isMyGame = currentUser && (p.white === currentUser.uid || p.black === currentUser.uid);
+        const playBtn = (isMyGame && !p.result) ?
+            '<button class="btnPrimary" style="width:auto;padding:6px 14px;font-size:12px;" data-tid="' + tournamentId + '" data-pid="' + pid + '" data-bracket="main" onclick="joinTournamentMatch(this.dataset.tid, this.dataset.pid, this.dataset.bracket)">Play</button>' : '';
+
+        row.innerHTML =
+            '<div><div class="pairingNames">' +
+                '<span style="cursor:pointer;" onclick="openPlayerProfile(\'' + p.white + '\')">' + escapeHtml(whiteName) + '</span>' +
+                ' vs ' +
+                '<span style="cursor:pointer;" onclick="openPlayerProfile(\'' + p.black + '\')">' + escapeHtml(blackName) + '</span>' +
+            '</div>' +
+            '<div class="pairingResult">' + resultLabel + '</div></div>' + playBtn;
+
+        pairingsBox.appendChild(row);
+
+    });
+
+    if(roundInfo.bye && players[roundInfo.bye]){
+        const byeRow = document.createElement("div");
+        byeRow.className = "pairingRow";
+        byeRow.style.cursor = "pointer";
+        byeRow.onclick = function(){ openPlayerProfile(roundInfo.bye); };
+        const byeLabel = (t.format === "elimination" || t.format === "double_elimination") ? "Bye (advances automatically)" : "Bye (free point)";
+        byeRow.innerHTML = '<div class="pairingNames">' + escapeHtml(players[roundInfo.bye].username) + '</div><div class="pairingResult">' + byeLabel + '</div>';
+        pairingsBox.appendChild(byeRow);
+    }
+
+}
+
+function renderDoubleEliminationPairings(tournamentId, t, players){
+
+    const pairingsBox = document.getElementById("tournamentPairings");
+    const roundInfo = t.rounds_data[t.currentRound];
+
+    if(roundInfo.grandFinal){
+        const header = document.createElement("div");
+        header.className = "sub";
+        header.style.fontWeight = "700";
+        header.textContent = "🏆 Grand Final";
+        pairingsBox.appendChild(header);
+        renderStandardPairings(tournamentId, t, players, roundInfo.winners);
+        return;
+    }
+
+    if(roundInfo.winners && Object.keys(roundInfo.winners.pairings || {}).length + (roundInfo.winners.bye ? 1 : 0) > 0){
+        const header = document.createElement("div");
+        header.className = "sub";
+        header.style.fontWeight = "700";
+        header.textContent = "Winners Bracket";
+        pairingsBox.appendChild(header);
+        renderStandardPairings(tournamentId, t, players, roundInfo.winners);
+    }
+
+    if(roundInfo.losers && Object.keys(roundInfo.losers.pairings || {}).length + (roundInfo.losers.bye ? 1 : 0) > 0){
+        const header = document.createElement("div");
+        header.className = "sub";
+        header.style.fontWeight = "700";
+        header.style.marginTop = "14px";
+        header.textContent = "Losers Bracket";
+        pairingsBox.appendChild(header);
+        renderStandardPairings(tournamentId, t, players, roundInfo.losers);
     }
 
 }
@@ -355,25 +494,13 @@ function joinTournament(){
 
         // If that just filled the tournament to its cap, start it right
         // here in the same atomic transaction — no need for the creator
-        // to manually click "Start Tournament".
+        // to manually click "Start Tournament". (Arena tournaments don't
+        // auto-start just from filling up — they wait for their scheduled
+        // time or a manual start, since Arena is meant to run for a fixed
+        // clock duration regardless of headcount.)
         const newCount = Object.keys(t.players).length;
-        if(t.maxPlayers && newCount >= t.maxPlayers){
-
-            const uids = Object.keys(t.players);
-            const pairingResult = t.format === "elimination"
-                ? generateEliminationPairings(uids)
-                : generateSwissPairings(uids, t.players, {});
-
-            t.status = "active";
-            t.currentRound = 1;
-            if(!t.rounds_data) t.rounds_data = {};
-            t.rounds_data[1] = pairingResult;
-
-            if(t.format !== "elimination" && pairingResult.bye){
-                t.players[pairingResult.bye].points = (t.players[pairingResult.bye].points || 0) + 1;
-                t.players[pairingResult.bye].byes = (t.players[pairingResult.bye].byes || 0) + 1;
-            }
-
+        if(t.maxPlayers && newCount >= t.maxPlayers && t.format !== "arena"){
+            beginTournamentInPlace(t);
         }
 
         return t;
@@ -394,40 +521,81 @@ function joinTournament(){
 
 }
 
+// Mutates a tournament object (inside a transaction) into its "active"
+// state — pairing generation branches by format. Shared by the
+// auto-fill-up trigger, the scheduled-time trigger, and manual start.
+function beginTournamentInPlace(t){
+
+    const uids = Object.keys(t.players);
+
+    if(t.format === "arena"){
+        t.status = "active";
+        t.arenaEndsAt = getServerNow() + (t.durationMinutes || 30) * 60000;
+        return;
+    }
+
+    if(t.format === "round_robin"){
+        const schedule = generateRoundRobinSchedule(uids);
+        t.status = "active";
+        t.currentRound = 1;
+        t.rounds = schedule.length;
+        t.rounds_data = {};
+        schedule.forEach(function(roundInfo, i){ t.rounds_data[i + 1] = roundInfo; });
+        if(schedule[0] && schedule[0].bye){
+            t.players[schedule[0].bye].points = (t.players[schedule[0].bye].points || 0) + 1;
+            t.players[schedule[0].bye].byes = (t.players[schedule[0].bye].byes || 0) + 1;
+        }
+        return;
+    }
+
+    if(t.format === "double_elimination"){
+        const pairingResult = generateEliminationPairings(uids);
+        t.status = "active";
+        t.currentRound = 1;
+        t.rounds_data = { 1: { winners: pairingResult, losers: null } };
+        return;
+    }
+
+    if(t.format === "elimination"){
+        const pairingResult = generateEliminationPairings(uids);
+        t.status = "active";
+        t.currentRound = 1;
+        t.rounds = Math.ceil(Math.log2(uids.length));
+        t.rounds_data = { 1: pairingResult };
+        return;
+    }
+
+    // Swiss
+    const pairingResult = generateSwissPairings(uids, t.players, {});
+    t.status = "active";
+    t.currentRound = 1;
+    t.rounds_data = { 1: pairingResult };
+    if(pairingResult.bye){
+        t.players[pairingResult.bye].points = (t.players[pairingResult.bye].points || 0) + 1;
+        t.players[pairingResult.bye].byes = (t.players[pairingResult.bye].byes || 0) + 1;
+    }
+
+}
+
 function startTournament(){
 
     if(!currentViewedTournamentId || !db) return;
 
-    db.ref("tournaments/" + currentViewedTournamentId).once("value").then(function(snapshot){
-
-        const t = snapshot.val();
-        if(!t) return;
-
-        const playerUids = Object.keys(t.players || {});
-        const updates = {};
-
-        if(t.format === "elimination"){
-            const pairingResult = generateEliminationPairings(playerUids);
-            updates["tournaments/" + currentViewedTournamentId + "/rounds"] = Math.ceil(Math.log2(playerUids.length));
-            updates["tournaments/" + currentViewedTournamentId + "/rounds_data/1"] = pairingResult;
-        }else{
-            const pairingResult = generateSwissPairings(playerUids, t.players, {});
-            updates["tournaments/" + currentViewedTournamentId + "/rounds_data/1"] = pairingResult;
-        }
-
-        updates["tournaments/" + currentViewedTournamentId + "/status"] = "active";
-        updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = 1;
-
-        db.ref().update(updates);
-
+    db.ref("tournaments/" + currentViewedTournamentId).transaction(function(t){
+        if(!t) return t;
+        if(t.status !== "registering") return t;
+        if(t.scheduledStart) return t; // scheduled tournaments never start manually
+        beginTournamentInPlace(t);
+        return t;
     });
 
 }
 
 // A tournament with a scheduled start time opens itself automatically once
-// that time passes and at least 2 players have joined — no creator action
-// needed. Wrapped in a transaction on the whole node so it can safely fire
-// from several people's browsers at once and still only ever run once.
+// that time passes and at least 2 players have joined (or, if a player cap
+// is set, once it's actually full). Wrapped in a transaction so it can
+// safely fire from several people's browsers at once and still only ever
+// run once.
 function checkTournamentAutoStart(tournamentId, t){
 
     if(t.status !== "registering") return;
@@ -448,17 +616,7 @@ function checkTournamentAutoStart(tournamentId, t){
         const requiredNow = current.maxPlayers || 2;
         if(uids.length < requiredNow) return current;
 
-        const pairingResult = current.format === "elimination"
-            ? generateEliminationPairings(uids)
-            : generateSwissPairings(uids, current.players, {});
-
-        current.status = "active";
-        current.currentRound = 1;
-        if(!current.rounds_data) current.rounds_data = {};
-        current.rounds_data[1] = pairingResult;
-        if(current.format === "elimination"){
-            current.rounds = Math.ceil(Math.log2(uids.length));
-        }
+        beginTournamentInPlace(current);
 
         return current;
 
@@ -466,58 +624,9 @@ function checkTournamentAutoStart(tournamentId, t){
 
 }
 
-// Randomly seeds players into a knockout bracket. An odd/non-power-of-2
-// count gets one random bye each round rather than requiring exact powers
-// of 2, same as how most casual knockout brackets are run.
-function generateEliminationPairings(playerUids){
-
-    const shuffled = playerUids.slice();
-    for(let i = shuffled.length - 1; i > 0; i--){
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    let byeUid = null;
-    if(shuffled.length % 2 !== 0){
-        byeUid = shuffled.pop();
-    }
-
-    const pairings = {};
-    for(let i = 0; i < shuffled.length; i += 2){
-        const pairId = "p" + (i / 2);
-        const whiteFirst = Math.random() < 0.5;
-        pairings[pairId] = {
-            white: whiteFirst ? shuffled[i] : shuffled[i + 1],
-            black: whiteFirst ? shuffled[i + 1] : shuffled[i],
-            result: null,
-            roomCode: null
-        };
-    }
-
-    return { pairings: pairings, bye: byeUid || null };
-
-}
-
-// Builds the next knockout round from the previous one's winners (a bye
-// counts as an automatic win). If only one player remains, the bracket is
-// finished — the caller is responsible for checking that.
-function generateEliminationNextRound(previousRoundInfo, players){
-
-    const winners = [];
-
-    Object.keys(previousRoundInfo.pairings || {}).forEach(function(pid){
-        const p = previousRoundInfo.pairings[pid];
-        if(p.result === "white") winners.push(p.white);
-        else if(p.result === "black") winners.push(p.black);
-        // unresolved pairings shouldn't happen here — advanceTournamentRound
-        // already checks the round is complete before calling this.
-    });
-
-    if(previousRoundInfo.bye) winners.push(previousRoundInfo.bye);
-
-    return generateEliminationPairings(winners);
-
-}
+// ============================================================
+// Swiss pairing
+// ============================================================
 
 function generateSwissPairings(playerUids, playersData, previousOpponents){
 
@@ -591,118 +700,196 @@ function generateSwissPairings(playerUids, playersData, previousOpponents){
 
 }
 
-function joinTournamentMatch(tournamentId, pairingId){
+// ============================================================
+// Single/Double Elimination pairing
+// ============================================================
 
-    db.ref("tournaments/" + tournamentId).once("value").then(function(snapshot){
+// Randomly seeds players into a knockout bracket. An odd/non-power-of-2
+// count gets one random bye each round rather than requiring exact powers
+// of 2, same as how most casual knockout brackets are run.
+function generateEliminationPairings(playerUids){
 
-        const t = snapshot.val();
-        if(!t) return;
+    const shuffled = playerUids.slice();
+    for(let i = shuffled.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = tmp;
+    }
 
-        const round = t.currentRound;
-        const pairing = t.rounds_data[round].pairings[pairingId];
+    let byeUid = null;
+    if(shuffled.length % 2 !== 0){
+        byeUid = shuffled.pop();
+    }
 
-        if(!pairing || !currentUser) return;
+    const pairings = {};
+    for(let i = 0; i < shuffled.length; i += 2){
+        const pairId = "p" + (i / 2);
+        const whiteFirst = Math.random() < 0.5;
+        pairings[pairId] = {
+            white: whiteFirst ? shuffled[i] : shuffled[i + 1],
+            black: whiteFirst ? shuffled[i + 1] : shuffled[i],
+            result: null,
+            roomCode: null
+        };
+    }
 
-        const amWhite = pairing.white === currentUser.uid;
-        const amBlack = pairing.black === currentUser.uid;
-        if(!amWhite && !amBlack) return;
-
-        activeTournamentId = tournamentId;
-        activeTournamentPairingId = pairingId;
-
-        selectedTime = t.timeControl;
-        gameMode = "online";
-
-        if(pairing.roomCode){
-
-            myColor = amWhite ? "white" : "black";
-            currentRoomCode = pairing.roomCode;
-            closeTournaments();
-            startOnlineGame(pairing.roomCode);
-
-        }else{
-
-            const code = generateRoomCode();
-
-            db.ref("tournaments/" + tournamentId + "/rounds_data/" + round + "/pairings/" + pairingId + "/roomCode")
-                .transaction(function(current){
-                    if(current) return;
-                    return code;
-                }).then(function(result){
-
-                    const finalCode = result.snapshot.val();
-
-                    myColor = amWhite ? "white" : "black";
-                    currentRoomCode = finalCode;
-
-                    db.ref("rooms/" + finalCode).set({ status: "waiting", createdAt: Date.now() });
-
-                    db.ref("rooms/" + finalCode + "/players/" + myColor).set({
-                        username: currentUsername,
-                        flag: currentUserFlag,
-                        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
-                        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
-                    });
-
-                    if(finalCode !== code){
-                        db.ref("rooms/" + finalCode + "/status").set("playing");
-                    }
-
-                    closeTournaments();
-                    startOnlineGame(finalCode);
-
-                });
-
-        }
-
-    });
+    return { pairings: pairings, bye: byeUid || null };
 
 }
 
-function recordTournamentGameResult(myResult){
+// Builds the next knockout round from the previous one's winners (a bye
+// counts as an automatic win).
+function generateEliminationNextRound(previousRoundInfo){
 
-    if(!activeTournamentId || !activeTournamentPairingId || !currentUser) return;
+    const winners = [];
 
-    const tournamentId = activeTournamentId;
-    const pairingId = activeTournamentPairingId;
+    Object.keys(previousRoundInfo.pairings || {}).forEach(function(pid){
+        const p = previousRoundInfo.pairings[pid];
+        if(p.result === "white") winners.push(p.white);
+        else if(p.result === "black") winners.push(p.black);
+    });
 
-    activeTournamentId = null;
-    activeTournamentPairingId = null;
+    if(previousRoundInfo.bye) winners.push(previousRoundInfo.bye);
 
-    db.ref("tournaments/" + tournamentId).once("value").then(function(snapshot){
+    return generateEliminationPairings(winners);
 
-        const t = snapshot.val();
-        if(!t) return;
+}
 
-        const round = t.currentRound;
-        const pairing = t.rounds_data[round].pairings[pairingId];
-        if(!pairing) return;
+// ============================================================
+// Round Robin — full schedule generated up front (circle method)
+// ============================================================
 
-        const amWhite = pairing.white === currentUser.uid;
+function generateRoundRobinSchedule(playerUids){
 
-        let resultValue;
-        if(myResult === "draw"){
-            resultValue = "draw";
-        }else if(myResult === "win"){
-            resultValue = amWhite ? "white" : "black";
-        }else{
-            resultValue = amWhite ? "black" : "white";
+    const players = playerUids.slice();
+    if(players.length % 2 !== 0) players.push(null); // bye placeholder
+
+    const n = players.length;
+    const rounds = [];
+
+    for(let r = 0; r < n - 1; r++){
+
+        const roundPairings = {};
+        let byeUid = null;
+
+        for(let i = 0; i < n / 2; i++){
+            const a = players[i];
+            const b = players[n - 1 - i];
+            if(a === null){ byeUid = b; continue; }
+            if(b === null){ byeUid = a; continue; }
+            const pairId = "p" + i;
+            const whiteFirst = (r + i) % 2 === 0;
+            roundPairings[pairId] = {
+                white: whiteFirst ? a : b,
+                black: whiteFirst ? b : a,
+                result: null,
+                roomCode: null
+            };
         }
 
-        db.ref("tournaments/" + tournamentId + "/rounds_data/" + round + "/pairings/" + pairingId + "/result")
-            .transaction(function(current){
-                if(current) return;
-                return resultValue;
-            });
+        rounds.push({ pairings: roundPairings, bye: byeUid });
 
-        const myPoints = myResult === "win" ? 1 : myResult === "draw" ? 0.5 : 0;
+        // Rotate: keep the first player fixed, rotate everyone else.
+        players.splice(1, 0, players.pop());
 
-        db.ref("tournaments/" + tournamentId + "/players/" + currentUser.uid + "/points")
-            .transaction(function(current){
-                return (current || 0) + myPoints;
-            });
+    }
 
+    return rounds;
+
+}
+
+// ============================================================
+// Double Elimination round advancement
+// ============================================================
+
+function advanceEliminationRound(t){
+
+    const currentRoundInfo = t.rounds_data[t.currentRound];
+    if(!currentRoundInfo) return;
+
+    const nextRoundResult = generateEliminationNextRound(currentRoundInfo);
+    const remaining = Object.keys(nextRoundResult.pairings).length * 2 + (nextRoundResult.bye ? 1 : 0);
+
+    const updates = {};
+
+    if(remaining <= 1){
+        const championUid = nextRoundResult.bye ||
+            (Object.values(nextRoundResult.pairings)[0] && Object.values(nextRoundResult.pairings)[0].white);
+        updates["tournaments/" + currentViewedTournamentId + "/status"] = "completed";
+        if(championUid) updates["tournaments/" + currentViewedTournamentId + "/champion"] = championUid;
+        db.ref().update(updates);
+        return;
+    }
+
+    const nextRound = t.currentRound + 1;
+    updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
+    updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = nextRoundResult;
+
+    db.ref().update(updates);
+
+}
+
+function advanceDoubleEliminationRound(t){
+
+    const roundInfo = t.rounds_data[t.currentRound];
+
+    if(roundInfo.grandFinal){
+        const gfPairing = Object.values(roundInfo.winners.pairings)[0];
+        const championUid = gfPairing.result === "white" ? gfPairing.white : gfPairing.black;
+        db.ref("tournaments/" + currentViewedTournamentId + "/status").set("completed");
+        db.ref("tournaments/" + currentViewedTournamentId + "/champion").set(championUid);
+        return;
+    }
+
+    const winnersInfo = roundInfo.winners || { pairings: {}, bye: null };
+    const losersInfo = roundInfo.losers || { pairings: {}, bye: null };
+
+    const winnersStay = [];
+    const droppedToLosers = [];
+    Object.keys(winnersInfo.pairings).forEach(function(pid){
+        const p = winnersInfo.pairings[pid];
+        if(p.result === "white"){ winnersStay.push(p.white); droppedToLosers.push(p.black); }
+        else if(p.result === "black"){ winnersStay.push(p.black); droppedToLosers.push(p.white); }
     });
+    if(winnersInfo.bye) winnersStay.push(winnersInfo.bye);
+
+    const losersStay = [];
+    Object.keys(losersInfo.pairings).forEach(function(pid){
+        const p = losersInfo.pairings[pid];
+        if(p.result === "white") losersStay.push(p.white);
+        else if(p.result === "black") losersStay.push(p.black);
+        // the loser of a losers-bracket game is fully eliminated (2nd loss)
+    });
+    if(losersInfo.bye) losersStay.push(losersInfo.bye);
+
+    const newLosersPool = losersStay.concat(droppedToLosers);
+
+    const nextRound = t.currentRound + 1;
+    const updates = {};
+
+    if(winnersStay.length === 1 && newLosersPool.length === 1){
+        // Both brackets down to their champion — Grand Final.
+        const whiteFirst = Math.random() < 0.5;
+        const gfPairings = {
+            p0: {
+                white: whiteFirst ? winnersStay[0] : newLosersPool[0],
+                black: whiteFirst ? newLosersPool[0] : winnersStay[0],
+                result: null,
+                roomCode: null
+            }
+        };
+        updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
+        updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = { grandFinal: true, winners: { pairings: gfPairings, bye: null }, losers: null };
+        db.ref().update(updates);
+        return;
+    }
+
+    const nextWinners = winnersStay.length > 1 ? generateEliminationPairings(winnersStay) : { pairings: {}, bye: winnersStay[0] || null };
+    const nextLosers = newLosersPool.length > 1 ? generateEliminationPairings(newLosersPool) : { pairings: {}, bye: newLosersPool[0] || null };
+
+    updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
+    updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = { winners: nextWinners, losers: nextLosers };
+
+    db.ref().update(updates);
 
 }
 
@@ -715,11 +902,35 @@ function advanceTournamentRound(){
         const t = snapshot.val();
         if(!t) return;
 
+        if(t.format === "double_elimination"){
+            advanceDoubleEliminationRound(t);
+            return;
+        }
+
         if(t.format === "elimination"){
             advanceEliminationRound(t);
             return;
         }
 
+        if(t.format === "round_robin"){
+            if(t.currentRound >= t.rounds){
+                db.ref("tournaments/" + currentViewedTournamentId + "/status").set("completed");
+                return;
+            }
+            const nextRound = t.currentRound + 1;
+            const nextRoundInfo = t.rounds_data[nextRound];
+            const updates = { ["tournaments/" + currentViewedTournamentId + "/currentRound"]: nextRound };
+            if(nextRoundInfo && nextRoundInfo.bye){
+                updates["tournaments/" + currentViewedTournamentId + "/players/" + nextRoundInfo.bye + "/points"] =
+                    (t.players[nextRoundInfo.bye].points || 0) + 1;
+                updates["tournaments/" + currentViewedTournamentId + "/players/" + nextRoundInfo.bye + "/byes"] =
+                    (t.players[nextRoundInfo.bye].byes || 0) + 1;
+            }
+            db.ref().update(updates);
+            return;
+        }
+
+        // Swiss
         if(t.currentRound >= t.rounds){
             db.ref("tournaments/" + currentViewedTournamentId + "/status").set("completed");
             return;
@@ -761,31 +972,413 @@ function advanceTournamentRound(){
 
 }
 
-function advanceEliminationRound(t){
+// ============================================================
+// Joining an in-progress match (Swiss/Elimination/Double-Elim/Round Robin)
+// ============================================================
 
-    const currentRoundInfo = t.rounds_data[t.currentRound];
-    if(!currentRoundInfo) return;
+function joinTournamentMatch(tournamentId, pairingId, bracket){
 
-    const nextRoundResult = generateEliminationNextRound(currentRoundInfo, t.players);
-    const remaining = Object.keys(nextRoundResult.pairings).length * 2 + (nextRoundResult.bye ? 1 : 0);
+    bracket = bracket || "main";
 
-    const updates = {};
+    db.ref("tournaments/" + tournamentId).once("value").then(function(snapshot){
 
-    if(remaining <= 1){
-        // Only one player left standing (or the whole thing collapsed to a
-        // single bye) — the bracket is finished.
-        const championUid = nextRoundResult.bye ||
-            (Object.values(nextRoundResult.pairings)[0] && Object.values(nextRoundResult.pairings)[0].white);
-        updates["tournaments/" + currentViewedTournamentId + "/status"] = "completed";
-        if(championUid) updates["tournaments/" + currentViewedTournamentId + "/champion"] = championUid;
-        db.ref().update(updates);
+        const t = snapshot.val();
+        if(!t) return;
+
+        const round = t.currentRound;
+        const roundInfo = t.rounds_data[round];
+        const pairing = (bracket === "main") ? roundInfo.pairings[pairingId] :
+            (bracket === "winners") ? roundInfo.winners.pairings[pairingId] :
+            (bracket === "losers") ? roundInfo.losers.pairings[pairingId] :
+            roundInfo.winners.pairings[pairingId]; // grandFinal
+
+        if(!pairing || !currentUser) return;
+
+        const amWhite = pairing.white === currentUser.uid;
+        const amBlack = pairing.black === currentUser.uid;
+        if(!amWhite && !amBlack) return;
+
+        activeTournamentId = tournamentId;
+        activeTournamentPairingId = pairingId;
+        activeTournamentBracket = bracket;
+
+        selectedTime = t.timeControl;
+        gameMode = "online";
+
+        if(pairing.roomCode){
+
+            myColor = amWhite ? "white" : "black";
+            currentRoomCode = pairing.roomCode;
+            closeTournaments();
+            startOnlineGame(pairing.roomCode);
+
+        }else{
+
+            const code = generateRoomCode();
+            const pairingPath = (bracket === "main") ? "rounds_data/" + round + "/pairings/" + pairingId :
+                (bracket === "winners" || bracket === "grandFinal") ? "rounds_data/" + round + "/winners/pairings/" + pairingId :
+                "rounds_data/" + round + "/losers/pairings/" + pairingId;
+
+            db.ref("tournaments/" + tournamentId + "/" + pairingPath + "/roomCode")
+                .transaction(function(current){
+                    if(current) return;
+                    return code;
+                }).then(function(result){
+
+                    const finalCode = result.snapshot.val();
+
+                    myColor = amWhite ? "white" : "black";
+                    currentRoomCode = finalCode;
+
+                    db.ref("rooms/" + finalCode).set({ status: "waiting", createdAt: Date.now() });
+
+                    db.ref("rooms/" + finalCode + "/players/" + myColor).set({
+                        username: currentUsername,
+                        flag: currentUserFlag,
+                        rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
+                        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+                    });
+
+                    if(finalCode !== code){
+                        db.ref("rooms/" + finalCode + "/status").set("playing");
+                    }
+
+                    closeTournaments();
+                    startOnlineGame(finalCode);
+
+                });
+
+        }
+
+    });
+
+}
+
+function recordTournamentGameResult(myResult){
+
+    if(!activeTournamentId || !activeTournamentPairingId || !currentUser) return;
+
+    const tournamentId = activeTournamentId;
+    const pairingId = activeTournamentPairingId;
+    const bracket = activeTournamentBracket;
+
+    activeTournamentId = null;
+    activeTournamentPairingId = null;
+    activeTournamentBracket = "main";
+
+    db.ref("tournaments/" + tournamentId).once("value").then(function(snapshot){
+
+        const t = snapshot.val();
+        if(!t) return;
+
+        const round = t.currentRound;
+        const roundInfo = t.rounds_data[round];
+        const pairingPath = (bracket === "main") ? "pairings/" + pairingId :
+            (bracket === "winners" || bracket === "grandFinal") ? "winners/pairings/" + pairingId :
+            "losers/pairings/" + pairingId;
+
+        const pairing = (bracket === "main") ? roundInfo.pairings[pairingId] :
+            (bracket === "winners" || bracket === "grandFinal") ? roundInfo.winners.pairings[pairingId] :
+            roundInfo.losers.pairings[pairingId];
+
+        if(!pairing) return;
+
+        const amWhite = pairing.white === currentUser.uid;
+
+        let resultValue;
+        if(myResult === "draw"){
+            resultValue = "draw";
+        }else if(myResult === "win"){
+            resultValue = amWhite ? "white" : "black";
+        }else{
+            resultValue = amWhite ? "black" : "white";
+        }
+
+        db.ref("tournaments/" + tournamentId + "/rounds_data/" + round + "/" + pairingPath + "/result")
+            .transaction(function(current){
+                if(current) return;
+                return resultValue;
+            });
+
+        const myPoints = myResult === "win" ? 1 : myResult === "draw" ? 0.5 : 0;
+
+        db.ref("tournaments/" + tournamentId + "/players/" + currentUser.uid + "/points")
+            .transaction(function(current){
+                return (current || 0) + myPoints;
+            });
+
+    });
+
+}
+
+// ============================================================
+// Arena — continuous matchmaking within a fixed time window
+// ============================================================
+
+function startArenaCountdown(tournamentId, endsAt){
+
+    stopArenaCountdown();
+    if(!endsAt) return;
+
+    const el = document.getElementById("tournamentArenaCountdown");
+    el.style.display = "block";
+
+    function tick(){
+        const remaining = Math.max(0, endsAt - getServerNow());
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        el.textContent = "⏱ " + mins + ":" + String(secs).padStart(2, "0") + " remaining";
+        if(remaining <= 0){
+            stopArenaCountdown();
+            checkArenaEnd(tournamentId);
+        }
+    }
+
+    tick();
+    arenaCountdownInterval = setInterval(tick, 1000);
+
+}
+
+function stopArenaCountdown(){
+    if(arenaCountdownInterval){
+        clearInterval(arenaCountdownInterval);
+        arenaCountdownInterval = null;
+    }
+}
+
+function checkArenaEnd(tournamentId){
+    db.ref("tournaments/" + tournamentId).transaction(function(t){
+        if(!t) return t;
+        if(t.status !== "active" || t.format !== "arena") return t;
+        if(!t.arenaEndsAt || getServerNow() < t.arenaEndsAt) return t;
+        t.status = "completed";
+        const uids = Object.keys(t.players || {});
+        uids.sort(function(a, b){ return (t.players[b].points || 0) - (t.players[a].points || 0); });
+        t.champion = uids[0] || null;
+        return t;
+    });
+}
+
+// Puts the current player into the matchmaking queue, or instantly pairs
+// them with whoever's already waiting.
+function joinArenaQueue(tournamentId){
+
+    if(!tournamentId || !currentUser || !db) return;
+
+    const statusEl = document.getElementById("tournamentArenaStatus");
+
+    db.ref("tournaments/" + tournamentId).transaction(function(t){
+
+        if(!t || t.format !== "arena" || t.status !== "active") return t;
+
+        const myUid = currentUser.uid;
+        if(!t.arenaQueue) t.arenaQueue = {};
+        if(!t.arenaPairings) t.arenaPairings = {};
+        if(!t.arenaPending) t.arenaPending = {};
+
+        if(t.arenaPending[myUid]) return t; // already matched, waiting to be picked up
+
+        const others = Object.keys(t.arenaQueue).filter(function(u){ return u !== myUid; });
+
+        if(others.length > 0){
+            const opponent = others[0];
+            delete t.arenaQueue[opponent];
+            delete t.arenaQueue[myUid];
+
+            const pairId = "a" + Date.now() + Math.floor(Math.random() * 1000);
+            const whiteFirst = Math.random() < 0.5;
+
+            t.arenaPairings[pairId] = {
+                white: whiteFirst ? myUid : opponent,
+                black: whiteFirst ? opponent : myUid,
+                result: null,
+                roomCode: null,
+                createdAt: Date.now()
+            };
+            t.arenaPending[myUid] = pairId;
+            t.arenaPending[opponent] = pairId;
+        }else{
+            t.arenaQueue[myUid] = Date.now();
+        }
+
+        return t;
+
+    }).then(function(){
+        if(statusEl){
+            statusEl.style.display = "block";
+            statusEl.textContent = "Searching for an opponent...";
+        }
+    });
+
+}
+
+// Listens for this player being matched, and jumps straight into the game
+// the moment a pairing appears for them.
+function startArenaPendingListener(tournamentId){
+
+    stopArenaPendingListener();
+    if(!currentUser) return;
+
+    arenaPendingRef = db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid);
+
+    arenaPendingRef.on("value", function(snap){
+
+        const pairId = snap.val();
+        if(!pairId) return;
+
+        joinArenaMatch(tournamentId, pairId);
+
+        db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid).set(null);
+
+    });
+
+}
+
+function stopArenaPendingListener(){
+    if(arenaPendingRef){
+        arenaPendingRef.off();
+        arenaPendingRef = null;
+    }
+}
+
+function joinArenaMatch(tournamentId, pairId){
+
+    db.ref("tournaments/" + tournamentId).once("value").then(function(snapshot){
+
+        const t = snapshot.val();
+        if(!t || !t.arenaPairings || !t.arenaPairings[pairId]) return;
+
+        const pairing = t.arenaPairings[pairId];
+        const amWhite = pairing.white === currentUser.uid;
+        const amBlack = pairing.black === currentUser.uid;
+        if(!amWhite && !amBlack) return;
+
+        activeTournamentId = tournamentId;
+        activeTournamentPairingId = pairId;
+        activeTournamentBracket = "arena";
+
+        selectedTime = t.timeControl;
+        gameMode = "online";
+
+        if(pairing.roomCode){
+            myColor = amWhite ? "white" : "black";
+            currentRoomCode = pairing.roomCode;
+            closeTournaments();
+            startOnlineGame(pairing.roomCode);
+            return;
+        }
+
+        const code = generateRoomCode();
+
+        db.ref("tournaments/" + tournamentId + "/arenaPairings/" + pairId + "/roomCode")
+            .transaction(function(current){
+                if(current) return;
+                return code;
+            }).then(function(result){
+
+                const finalCode = result.snapshot.val();
+
+                myColor = amWhite ? "white" : "black";
+                currentRoomCode = finalCode;
+
+                db.ref("rooms/" + finalCode).set({ status: "waiting", createdAt: Date.now() });
+                db.ref("rooms/" + finalCode + "/players/" + myColor).set({
+                    username: currentUsername,
+                    flag: currentUserFlag,
+                    rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
+                    photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+                });
+
+                if(finalCode !== code){
+                    db.ref("rooms/" + finalCode + "/status").set("playing");
+                }
+
+                closeTournaments();
+                startOnlineGame(finalCode);
+
+            });
+
+    });
+
+}
+
+// Called from recordGameResult when the game that just ended was an
+// Arena match — awards points (with a streak bonus, like chess.com's
+// Arena) instead of the round-based points system.
+function recordArenaGameResult(myResult){
+
+    if(!activeTournamentId || !activeTournamentPairingId || !currentUser) return;
+
+    const tournamentId = activeTournamentId;
+    const pairId = activeTournamentPairingId;
+
+    activeTournamentId = null;
+    activeTournamentPairingId = null;
+    activeTournamentBracket = "main";
+
+    db.ref("tournaments/" + tournamentId).once("value").then(function(snapshot){
+
+        const t = snapshot.val();
+        if(!t || !t.arenaPairings || !t.arenaPairings[pairId]) return;
+
+        const pairing = t.arenaPairings[pairId];
+        const amWhite = pairing.white === currentUser.uid;
+        const resultValue = myResult === "draw" ? "draw" : (myResult === "win") === amWhite ? "white" : "black";
+
+        db.ref("tournaments/" + tournamentId + "/arenaPairings/" + pairId + "/result")
+            .transaction(function(current){ if(current) return; return resultValue; });
+
+        db.ref("tournaments/" + tournamentId + "/players/" + currentUser.uid).transaction(function(player){
+            if(!player) return player;
+            player.winStreakArena = player.winStreakArena || 0;
+            let pointsEarned = 0;
+            if(myResult === "win"){
+                player.winStreakArena++;
+                pointsEarned = (player.winStreakArena >= 3) ? 2 : 1; // streak bonus, like chess.com Arena
+            }else if(myResult === "draw"){
+                player.winStreakArena = 0;
+                pointsEarned = 0.5;
+            }else{
+                player.winStreakArena = 0;
+                pointsEarned = 0;
+            }
+            player.points = (player.points || 0) + pointsEarned;
+            return player;
+        });
+
+    });
+
+}
+
+function renderArenaPairings(tournamentId, t){
+
+    const pairingsBox = document.getElementById("tournamentPairings");
+    const pairings = t.arenaPairings || {};
+    const players = t.players || {};
+
+    const activeOnes = Object.keys(pairings).filter(function(pid){ return !pairings[pid].result; });
+
+    if(activeOnes.length === 0){
+        pairingsBox.innerHTML = '<p class="sub">No games in progress right now.</p>';
         return;
     }
 
-    const nextRound = t.currentRound + 1;
-    updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
-    updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = nextRoundResult;
+    activeOnes.slice(-10).reverse().forEach(function(pid){
 
-    db.ref().update(updates);
+        const p = pairings[pid];
+        const whiteName = players[p.white] ? players[p.white].username : "?";
+        const blackName = players[p.black] ? players[p.black].username : "?";
+
+        const row = document.createElement("div");
+        row.className = "pairingRow";
+        row.innerHTML =
+            '<div class="pairingNames">' +
+                '<span style="cursor:pointer;" onclick="openPlayerProfile(\'' + p.white + '\')">' + escapeHtml(whiteName) + '</span>' +
+                ' vs ' +
+                '<span style="cursor:pointer;" onclick="openPlayerProfile(\'' + p.black + '\')">' + escapeHtml(blackName) + '</span>' +
+            '</div>';
+        pairingsBox.appendChild(row);
+
+    });
 
 }
