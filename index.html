@@ -190,27 +190,43 @@
         </div>
 
         <!-- Friends Screen -->
-        <div id="friendsScreen" class="screen" style="display:none;">
+        <div id="friendsScreen" class="screen friendsScreenLight" style="display:none;">
 
-            <h2>Friends</h2>
-            <p class="sub">Find people by their username and send a friend request.</p>
+    <div class="friendsOrangeHeader">
+        <div class="friendsHeaderArt">♟♞</div>
+        <h2 class="friendsHeaderTitleLight">Friends</h2>
+        <p class="friendsHeaderSubLight">Find people by their username and send a friend request.</p>
+    </div>
 
-            <div id="friendSearchRow">
-                <input type="text" id="friendSearchInput" placeholder="Search by username">
-                <button class="btnPrimary" onclick="searchForFriend()">Search</button>
-            </div>
+    <div id="friendSearchRow">
+        <input type="text" id="friendSearchInput" placeholder="Search by username">
+        <button class="btnPrimary" onclick="searchForFriend()">Search</button>
+    </div>
 
-            <div id="friendSearchResult"></div>
+    <div id="friendSearchResult"></div>
 
-            <div id="friendRequestsSection" style="display:none;">
-                <span class="fieldLabel">Friend Requests</span>
-                <div id="friendRequestsList"></div>
-            </div>
+    <div id="friendRequestsSection" style="display:none;">
+        <span class="fieldLabel">Friend Requests</span>
+        <div id="friendRequestsList"></div>
+    </div>
 
-            <span class="fieldLabel">Your Friends</span>
-            <div id="friendsList">
-                <p class="sub">Log in to see your friends.</p>
-            </div>
+    <div class="friendsSectionRow">
+        <span class="friendsSectionTitleLight">Your Friends</span>
+        <span class="friendsSortPillLight">Recently Active ▾</span>
+    </div>
+
+    <div id="friendsList">
+        <p class="sub">Log in to see your friends.</p>
+    </div>
+
+    <div class="addFriendsPromoCard">
+        <span class="addFriendsPromoIcon">👤</span>
+        <div class="addFriendsPromoText">
+            <b>Add more friends</b>
+            <p>The more friends you have, the better your games get!</p>
+        </div>
+        <button class="addFriendsPromoBtn" onclick="document.getElementById('friendSearchInput').focus()">👤 Find Friends</button>
+    </div>
 
         </div>
 
