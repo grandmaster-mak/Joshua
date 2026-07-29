@@ -90,14 +90,6 @@ function speakText(text){
 
     window.speechSynthesis.cancel(); // don't let lines queue up/overlap
 
-    setTimeout(function(){
-        speakTextNow(clean);
-    }, 50);
-
-}
-
-function speakTextNow(clean){
-
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.rate = 1.15; // a bit faster than normal speaking pace
     utterance.pitch = 0.75; // lower pitch as a fallback even without a male-labeled voice available
@@ -1752,11 +1744,6 @@ function getAllMoves(color){
 
 function switchScreen(name){
 
-    // Wipe out any leftover/queued coach speech the instant you leave the
-    // game screen for a tab — stops old lines from firing late while
-    // you're already back on Home.
-    if("speechSynthesis" in window) window.speechSynthesis.cancel();
-
     const screens = ["home", "friends", "account"];
 
     screens.forEach(function(s){
@@ -1903,7 +1890,11 @@ function recordGameResult(myResult, opponentName){
         alert("History save failed: " + err.message);
     });
 
-    if(typeof recordTournamentGameResult === "function") recordTournamentGameResult(myResult);
+    if(typeof activeTournamentBracket !== "undefined" && activeTournamentBracket === "arena" && typeof recordArenaGameResult === "function"){
+        recordArenaGameResult(myResult);
+    }else if(typeof recordTournamentGameResult === "function"){
+        recordTournamentGameResult(myResult);
+    }
     if(typeof recordDailyChallengeProgress === "function") recordDailyChallengeProgress(myResult, gameMode);
 }
 
