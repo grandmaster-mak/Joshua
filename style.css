@@ -1808,4 +1808,181 @@ input::placeholder{ color:#4a5060; }
     from{ opacity:0; transform:translateY(10px); }
     to{ opacity:1; transform:translateY(0); }
 }
-    
+
+/* ============================================================
+   Profile screen — light/orange theme, scoped entirely under
+   #profileScreen so no other screen in the app is affected.
+   ============================================================ */
+
+.profileScreenLight{
+    background:#f2f0ee !important;
+    color:#1a1a1a;
+}
+
+.profileOrangeHeader{
+    background:#e2681a;
+}
+
+.profileFsHeaderLight{
+    background:transparent;
+    border-bottom:none;
+}
+.profileFsHeaderLight button{
+    background:rgba(0,0,0,0.18);
+    color:#ffffff;
+}
+.profileFsHeaderLight h2{
+    color:#ffffff;
+}
+
+.profileAvatarImgLight{
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    object-fit:cover;
+    background:#1c2028;
+    border:3px solid #ffffff;
+}
+.profileOnlineDotLight{
+    position:absolute;
+    right:4px;
+    bottom:4px;
+    width:18px;
+    height:18px;
+    background:#ffffff;
+    border:2px solid #e2681a;
+    border-radius:50%;
+}
+
+.profileUsernameLight{
+    color:#ffffff;
+    margin-top:14px;
+    margin-bottom:2px;
+    font-size:22px;
+}
+.profileOnlineStatusLight{
+    color:rgba(255,255,255,0.85);
+    font-size:13px;
+    margin:0;
+}
+
+.profileFsBodyLight{
+    margin-top:-26px;
+    padding-top:0;
+}
+
+.profileStatsCardLight{
+    background:#ffffff;
+    border-radius:16px;
+    padding:18px 8px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.12);
+    margin:0 0 16px;
+}
+.profileStatsCardLight .stat-item{
+    border-right:1px solid #eee1d6;
+}
+.profileStatsCardLight .stat-item:last-child{
+    border-right:none;
+}
+.profileStatsCardLight h3{ color:#1a1a1a; }
+.profileStatsCardLight p{ color:#8a8580; }
+.profileStatsCardLight .stat-icon.rating{ color:#e2681a; }
+.profileStatsCardLight .stat-icon.win{ color:#eab308; }
+.profileStatsCardLight .stat-icon.streak{ color:#f97316; }
+.profileStatsCardLight .stat-icon.time{ color:#22c55e; }
+
+.profileMessageBtnLight{
+    flex:1;
+    background:#e2681a;
+    color:#ffffff;
+    border:none;
+    border-radius:14px;
+    padding:16px;
+    font-weight:800;
+    font-size:15px;
+    cursor:pointer;
+}
+.profileChallengeBtnLight{
+    flex:1;
+    background:linear-gradient(135deg, #ffd9a0, #ffc06e);
+    color:#1a1a1a;
+    border:none;
+    border-radius:14px;
+    padding:16px;
+    font-weight:800;
+    font-size:15px;
+    cursor:pointer;
+}
+
+.profileSectionHeaderLight{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#e2681a;
+    font-weight:800;
+    font-size:12.5px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    margin:20px 2px 8px;
+}
+.profileChevronLight{
+    color:#e2681a;
+    font-size:16px;
+    font-weight:800;
+}
+
+.profileWhiteCardLight{
+    background:#ffffff;
+    border-radius:16px;
+    padding:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.06);
+}
+.profileWhiteCardLight .sub{ color:#8a8580; }
+
+/* Re-skin the shared components (gameRow, friendIdentity, achievement
+   badges) to the light theme, but ONLY inside the profile screen — the
+   same classes elsewhere (Home, Friends tab, Account) are untouched. */
+
+#profileScreen .gameRow{ background:transparent; border:none; padding:10px 0; }
+#profileScreen .gameOpponent{ color:#1a1a1a; }
+#profileScreen .gameMeta{ color:#8a8580; }
+#profileScreen .gameResultCol .gameResult,
+#profileScreen .gameResultCol{ font-weight:800; }
+
+#profileScreen .friendIdentity{ background:transparent; }
+#profileScreen .friendName{ color:#1a1a1a; }
+#profileScreen .friendRating{ color:#8a8580; }
+#profileScreen .friendAvatarImg{ border:2px solid #e2681a; }
+
+.profileFriendRowLight{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+.profileFriendMsgBtn{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:#ffffff;
+    border:1.5px solid #e2681a;
+    color:#e2681a;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+}
+
+#profileScreen .achievementBadge{
+    background:#fff6ec;
+    border:1px solid #ffdcae;
+}
+#profileScreen .achievementBadge.locked{
+    background:#f4f4f2;
+    border-color:#e5e0da;
+}
+#profileScreen .achievementTitle{ color:#5a5550; }
+
+#profileScreen .fieldLabel{ display:none; } /* replaced by profileSectionHeaderLight */
+
