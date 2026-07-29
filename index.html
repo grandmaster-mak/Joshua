@@ -726,6 +726,9 @@
                 <select id="tournamentFormatInput" onchange="updateTournamentFormatUI()">
                     <option value="swiss" selected>Swiss System</option>
                     <option value="elimination">Single Elimination</option>
+                    <option value="double_elimination">Double Elimination</option>
+                    <option value="round_robin">Round Robin</option>
+                    <option value="arena">Arena</option>
                 </select>
 
                 <span class="fieldLabel">Speed</span>
@@ -749,8 +752,19 @@
                 </div>
 
                 <p class="sub" id="tournamentEliminationNote" style="display:none;">
-                    Single elimination rounds are set automatically once the bracket is seeded — the number of rounds depends on how many players join.
+                    Elimination/Round Robin round counts are set automatically based on how many players join.
                 </p>
+
+                <div id="tournamentDurationBox" style="display:none;">
+                    <span class="fieldLabel">Arena Duration</span>
+                    <select id="tournamentDurationInput">
+                        <option value="15">15 Minutes</option>
+                        <option value="30" selected>30 Minutes</option>
+                        <option value="45">45 Minutes</option>
+                        <option value="60">60 Minutes</option>
+                    </select>
+                    <p class="sub">Everyone plays continuously against random available opponents until time runs out — most points wins, just like chess.com's Arena.</p>
+                </div>
 
                 <span class="fieldLabel">Max Players</span>
                 <select id="tournamentMaxPlayersInput">
@@ -778,10 +792,14 @@
                 <button class="btnGold" id="tournamentStartBtn" onclick="startTournament()" style="display:none;">Start Tournament</button>
                 <button class="btnGold" id="tournamentNextRoundBtn" onclick="advanceTournamentRound()" style="display:none;">Start Next Round</button>
 
+                <p class="sub" id="tournamentArenaCountdown" style="display:none; font-weight:700; font-size:16px; text-align:center; color:#4ade80;"></p>
+                <button class="btnPrimary" id="tournamentArenaPlayBtn" onclick="joinArenaQueue(currentViewedTournamentId)" style="display:none;">🔎 Find Opponent</button>
+                <p class="sub" id="tournamentArenaStatus" style="display:none; text-align:center;"></p>
+
                 <span class="fieldLabel">Standings</span>
                 <div id="tournamentStandings"></div>
 
-                <span class="fieldLabel">Current Round</span>
+                <span class="fieldLabel" id="tournamentPairingsLabel">Current Round</span>
                 <div id="tournamentPairings"></div>
 
                 <button class="btnSecondary" onclick="showTournamentsList()">Back to List</button>
