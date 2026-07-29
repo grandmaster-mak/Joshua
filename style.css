@@ -1985,4 +1985,74 @@ input::placeholder{ color:#4a5060; }
 #profileScreen .achievementTitle{ color:#5a5550; }
 
 #profileScreen .fieldLabel{ display:none; } /* replaced by profileSectionHeaderLight */
+/* ============================================================
+   Home screen recolor — orange/white theme to match the mockup.
+   Scope: only the Home screen (header, badges, daily challenge,
+   stats, recent games, bottom nav). Everything else — game board,
+   popups, Profile/Account/Friends screens — stays as-is.
+   ============================================================ */
+
+:root{
+    --themeOrange: #FF7A1A;
+}
+
+body{
+    background: var(--themeOrange);
+}
+
+.home-header{
+    background:#ffffff;
+    padding:20px 15px 16px;
+    border-radius:0 0 24px 24px;
+    margin:0 0 12px;
+}
+
+.header-text h1{ color:#1a1a1a; }
+.greeting-line{ color:#7d8492; }
+
+.stars-line{ color: var(--themeOrange); }
+.stars-line span.eliteLabel{ color: var(--themeOrange); }
+
+.online-dot{ border-color:#ffffff; }
+
+.mini-badge{
+    background:#ffffff;
+    color:#1a1a1a;
+    border-color:transparent;
+}
+.mini-badge b{ color:#1a1a1a; }
+
+.iconBtn{
+    background:#ffffff;
+    color: var(--themeOrange);
+    border-color:transparent;
+}
+
+.daily-challenge{
+    background:#ffffff;
+    border-color:transparent;
+}
+.dc-title{ color: var(--themeOrange); }
+.dc-sub{ color:#8a8580; }
+.dc-pct{ color:#1a1a1a; }
+.dc-bar-track{ background:#f0ece6; }
+
+.stats-section{ background:#ffffff; }
+.stats-header h2{ color:#1a1a1a; }
+.stats-header a{ color: var(--themeOrange); }
+
+.stat-item h3{ color:#1a1a1a; }
+.stat-delta.up, .stat-delta.flat{ color: var(--themeOrange); }
+
+.rating{ color: var(--themeOrange); }
+.win{ color:#eab308; }
+.streak{ color:#ff5b3d; }
+.time{ color:#e5484d; }
+
+.gameOpponent{ color:#1a1a1a; }
+.gameMeta{ color:#8a8580; }
+
+#bottomNav{ background:#ffffff; border-top-color:rgba(0,0,0,0.06); }
+.navBtn{ color:#8a8580; }
+.navBtn.active{ color: var(--themeOrange); }
 
