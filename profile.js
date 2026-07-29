@@ -240,7 +240,7 @@ function renderNextProfileFriendsBatch(){
             if(!result.data) return;
 
             const row = document.createElement("div");
-            row.className = "friendIdentity";
+            row.className = "friendIdentity profileFriendRowLight";
             row.style.cursor = "pointer";
             row.style.marginBottom = "10px";
             row.onclick = function(){ openPlayerProfile(result.uid); };
@@ -249,7 +249,8 @@ function renderNextProfileFriendsBatch(){
                 '<div class="friendInfo">' +
                     '<span class="friendName">' + escapeHtml(result.data.flag || "") + ' ' + escapeHtml(result.data.username || "Player") + '</span>' +
                     '<span class="friendRating">Rating ' + (result.data.rating || 100) + '</span>' +
-                '</div>';
+                '</div>' +
+                '<button class="profileFriendMsgBtn" data-uid="' + result.uid + '" data-name="' + escapeHtml(result.data.username || "Player") + '" onclick="event.stopPropagation(); openFriendChat(this.dataset.uid, this.dataset.name);">💬</button>';
             list.appendChild(row);
         });
 
@@ -292,9 +293,22 @@ function addFriendFromProfile(){
 // If they're currently playing, offer to watch instead of sending a
 // challenge that they can't respond to right now.
 function challengeFromProfile(){
+
     if(!currentProfileUid || !currentUser) return;
-    hideProfileScreenOnly();
-    challengeFriend(currentProfileUid, currentProfileUsername);
+
+    db.ref("users/" + currentProfileUid + "/public/currentRoomCode").once("value").then(function(snap){
+        const code = snap.val();
+        if(code){
+            document.getElementById("watchPromptText").textContent =
+                currentProfileUsername + " is currently in a game. Want to watch instead?";
+            document.getElementById("watchPromptPopup").dataset.roomCode = code;
+            document.getElementById("watchPromptPopup").classList.add("show");
+        }else{
+            hideProfileScreenOnly();
+            challengeFriend(currentProfileUid, currentProfileUsername);
+        }
+    });
+
 }
 
 function closeWatchPrompt(){
