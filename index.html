@@ -897,23 +897,26 @@
     </div>
 
     <!-- ===== Player Profile screen ===== -->
-    <div id="profileScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closePlayerProfile()">←</button>
-            <h2>Profile</h2>
-        </div>
-        <div class="fsBody">
+    <div id="profileScreen" class="fullScreenPanel profileScreenLight">
 
-            <div style="text-align:center; margin-bottom:16px;">
-                <div style="position:relative; display:inline-block;">
-                    <img id="profileAvatarImg" style="width:88px;height:88px;border-radius:50%;object-fit:cover;background:#1c2028;border:2px solid #3b7bff;" src="" alt="">
-                    <span id="profileOnlineDot" style="display:none; position:absolute; right:2px; bottom:2px; width:16px; height:16px; background:#22c55e; border:2px solid #0a0c10; border-radius:50%;"></span>
-                </div>
-                <h2 id="profileUsername" style="margin-top:10px;"></h2>
-                <p class="sub" id="profileOnlineStatus"></p>
+        <div class="profileOrangeHeader">
+            <div class="fsHeader profileFsHeaderLight">
+                <button onclick="closePlayerProfile()">←</button>
+                <h2>Profile</h2>
             </div>
+            <div style="text-align:center; padding:6px 20px 34px;">
+                <div style="position:relative; display:inline-block;">
+                    <img id="profileAvatarImg" class="profileAvatarImgLight" src="" alt="">
+                    <span id="profileOnlineDot" class="profileOnlineDotLight" style="display:none;"></span>
+                </div>
+                <h2 id="profileUsername" class="profileUsernameLight"></h2>
+                <p class="profileOnlineStatusLight" id="profileOnlineStatus"></p>
+            </div>
+        </div>
 
-            <div class="stats-grid" style="margin:0 0 16px;">
+        <div class="fsBody profileFsBodyLight">
+
+            <div class="stats-grid profileStatsCardLight">
                 <div class="stat-item">
                     <div class="stat-icon rating">♟</div>
                     <h3 id="profileRatingValue">100</h3>
@@ -938,21 +941,21 @@
 
             <button class="btnSecondary" id="profileWatchBtn" style="display:none;" onclick="watchFromProfile()">👀 Watch Live Game</button>
 
-            <div style="display:flex; gap:8px;">
-                <button class="btnPrimary" id="profileMessageBtn" style="width:auto; flex:1;" onclick="messageFromProfile()">💬 Message</button>
-                <button class="btnGold" id="profileChallengeBtn" style="width:auto; flex:1;" onclick="challengeFromProfile()">⚔️ Challenge</button>
+            <div style="display:flex; gap:10px; margin:16px 0;">
+                <button class="profileMessageBtnLight" id="profileMessageBtn" onclick="messageFromProfile()">💬 Message</button>
+                <button class="profileChallengeBtnLight" id="profileChallengeBtn" onclick="challengeFromProfile()">⚔️ Challenge</button>
             </div>
 
             <button class="btnSecondary" id="profileAddFriendBtn" style="display:none;" onclick="addFriendFromProfile()">+ Add Friend</button>
 
-            <span class="fieldLabel">Awards</span>
-            <div class="achievementsGrid" id="profileAchievementsGrid"></div>
+            <div class="profileSectionHeaderLight">AWARDS <span class="profileChevronLight">›</span></div>
+            <div class="achievementsGrid profileWhiteCardLight" id="profileAchievementsGrid"></div>
 
-            <span class="fieldLabel">Recent Games</span>
-            <div id="profileRecentGamesList"><p class="sub">Loading...</p></div>
+            <div class="profileSectionHeaderLight">RECENT GAMES <span class="profileChevronLight">›</span></div>
+            <div id="profileRecentGamesList" class="profileWhiteCardLight"><p class="sub">Loading...</p></div>
 
-            <span class="fieldLabel">Friends</span>
-            <div id="profileFriendsList"><p class="sub">Loading...</p></div>
+            <div class="profileSectionHeaderLight">FRIENDS <span class="profileChevronLight">›</span></div>
+            <div id="profileFriendsList" class="profileWhiteCardLight"><p class="sub">Loading...</p></div>
             <button class="btnSecondary" id="profileFriendsSeeMoreBtn" style="display:none;" onclick="showMoreProfileFriends()">See 5 More</button>
 
         </div>
