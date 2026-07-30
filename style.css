@@ -2396,3 +2396,16 @@ body{
 .accountBodyLight{
     background:#e6f4ea;
 }
+/* Live online/offline indicator on a Recent Games avatar — separate
+   from .gameResultDot (win/loss/draw), sits on the opposite corner so
+   the two never overlap. */
+.gameOnlineDot{
+    position:absolute;
+    left:-1px;
+    top:-1px;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#22c55e;
+    border:2px solid #ffffff;
+}
