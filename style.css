@@ -2364,3 +2364,27 @@ body{
 #homeScreen .stats-section .stats-grid .stat-item:last-child{
     border-right:none;
 }
+/* ============================================================
+   Home badge cards (Rating / Online / Settings) — tightened up,
+   they were too large. Overrides the earlier .homeBadgeCard block.
+   ============================================================ */
+
+.homeBadgeCard{
+    padding:10px 8px;
+    gap:1px;
+    border-radius:12px;
+}
+.homeBadgeIcon{
+    font-size:15px;
+    margin-bottom:2px;
+}
+.homeBadgeCard b{
+    font-size:13px;
+}
+.homeBadgeCard p{
+    font-size:10px;
+}
+.homeBadgeDot{
+    width:7px;
+    height:7px;
+}
