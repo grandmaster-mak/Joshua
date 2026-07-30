@@ -2351,3 +2351,16 @@ body{
 
 .quicklink-card h4{ color:#1a1a1a; }
 .quicklink-card p{ color:#8a8580; }
+/* ============================================================
+   Home screen "Your Stats" — vertical dividers between the 4
+   stat items, matching the Account screen's stat card. Scoped to
+   #homeScreen only, so the Account/Profile stat grids (already
+   styled separately) aren't affected.
+   ============================================================ */
+
+#homeScreen .stats-section .stats-grid .stat-item{
+    border-right:1px solid #eee1d6;
+}
+#homeScreen .stats-section .stats-grid .stat-item:last-child{
+    border-right:none;
+}
