@@ -163,6 +163,11 @@ function loadProfileRecentGames(uid){
             const label = entry.result === "win" ? "Won" : entry.result === "loss" ? "Lost" : "Draw";
             const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
             const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
+            // Renamed from "Online" to "Online Match" — this is the match
+            // TYPE (permanently recorded at game-end), not a live status.
+            // It will always say this for every online game, forever,
+            // regardless of whether the opponent is online right now.
+            const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online Match" : "Local";
 
             const row = document.createElement("div");
             row.className = "gameRow";
@@ -170,11 +175,10 @@ function loadProfileRecentGames(uid){
                 '<div class="gameOpponentInfo">' +
                     '<div class="gameAvatarWrap">' +
                         '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
-                        '<span class="gameOnlineDot" style="display:none;"></span>' +
                     '</div>' +
                     '<div class="gameOpponentText">' +
                         '<span class="gameOpponent">vs ' + escapeHtml(entry.opponent || "Unknown") + '</span>' +
-                        '<span class="gameMeta">' + (entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online" : "Local") + '</span>' +
+                        '<span class="gameMeta">' + modeLabel + '<span class="liveStatusText"></span></span>' +
                     '</div>' +
                 '</div>' +
                 '<span class="gameResult ' + cls + '">' + label + '</span>';
@@ -185,14 +189,23 @@ function loadProfileRecentGames(uid){
                 infoEl.style.cursor = "pointer";
                 infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
 
-                // Real, live presence check — fetched fresh every time this
-                // profile is opened, not stored on the history entry itself.
+                // Explicit text either way — "Online now" or "Offline" —
+                // instead of a dot that only appears sometimes, so it's
+                // always obvious the live check actually ran and isn't
+                // silently broken.
                 db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
-                    const dotEl = row.querySelector(".gameOnlineDot");
-                    if(dotEl && presenceSnap.val() === true){
-                        dotEl.style.display = "block";
+                    const statusEl = row.querySelector(".liveStatusText");
+                    if(!statusEl) return;
+                    if(presenceSnap.val() === true){
+                        statusEl.textContent = " · 🟢 Online now";
+                        statusEl.classList.add("liveOnline");
+                    }else{
+                        statusEl.textContent = " · Offline";
                     }
-                }).catch(function(){ /* presence lookup failed — skip the dot, don't guess */ });
+                }).catch(function(){
+                    const statusEl = row.querySelector(".liveStatusText");
+                    if(statusEl) statusEl.textContent = " · Status unavailable";
+                });
 
             }
 
