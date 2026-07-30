@@ -2409,3 +2409,5 @@ body{
     background:#22c55e;
     border:2px solid #ffffff;
 }
+.liveStatusText{ color:#8a8580; }
+.liveStatusText.liveOnline{ color:#22c55e; font-weight:700; }
