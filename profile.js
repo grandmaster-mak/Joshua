@@ -162,11 +162,16 @@ function loadProfileRecentGames(uid){
 
             const label = entry.result === "win" ? "Won" : entry.result === "loss" ? "Lost" : "Draw";
             const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+            const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
 
             const row = document.createElement("div");
             row.className = "gameRow";
             row.innerHTML =
                 '<div class="gameOpponentInfo">' +
+                    '<div class="gameAvatarWrap">' +
+                        '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
+                        '<span class="gameOnlineDot" style="display:none;"></span>' +
+                    '</div>' +
                     '<div class="gameOpponentText">' +
                         '<span class="gameOpponent">vs ' + escapeHtml(entry.opponent || "Unknown") + '</span>' +
                         '<span class="gameMeta">' + (entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online" : "Local") + '</span>' +
@@ -175,9 +180,20 @@ function loadProfileRecentGames(uid){
                 '<span class="gameResult ' + cls + '">' + label + '</span>';
 
             if(entry.opponentUid){
+
                 const infoEl = row.querySelector(".gameOpponentInfo");
                 infoEl.style.cursor = "pointer";
                 infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
+
+                // Real, live presence check — fetched fresh every time this
+                // profile is opened, not stored on the history entry itself.
+                db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
+                    const dotEl = row.querySelector(".gameOnlineDot");
+                    if(dotEl && presenceSnap.val() === true){
+                        dotEl.style.display = "block";
+                    }
+                }).catch(function(){ /* presence lookup failed — skip the dot, don't guess */ });
+
             }
 
             list.appendChild(row);
@@ -189,7 +205,6 @@ function loadProfileRecentGames(uid){
     });
 
 }
-
 // Shows this player's friends list in batches of 5. Requires a Firebase
 // Rules addition beyond what's already set up: users/{uid}/private/friends
 // needs to be readable by any logged-in user (a sibling rule under
