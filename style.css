@@ -2336,3 +2336,18 @@ body{
     font-size:15px;
     font-weight:800;
 }
+/* ============================================================
+   Quicklink cards (Tournaments / Puzzles / Leaderboards / Daily
+   Rewards) — recolored from black to match the white card style
+   used everywhere else on the Home screen.
+   ============================================================ */
+
+.quicklink-card{
+    background:#ffffff;
+    border-color:transparent;
+    box-shadow:0 2px 10px rgba(0,0,0,0.06);
+}
+.quicklink-card:hover{ background:#fafafa; }
+
+.quicklink-card h4{ color:#1a1a1a; }
+.quicklink-card p{ color:#8a8580; }
