@@ -2388,3 +2388,11 @@ body{
     width:7px;
     height:7px;
 }
+/* ============================================================
+   Account screen — swapped the pale off-white body background for
+   a light green, keeping the same card layout/spacing untouched.
+   ============================================================ */
+
+.accountBodyLight{
+    background:#e6f4ea;
+}
