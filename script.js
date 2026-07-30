@@ -56,7 +56,7 @@ let whiteUid = null;
 let blackUid = null;
 
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
-const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
+const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ccircle cx='35' cy='35' r='35' fill='%232c3e50'/%3E%3Ctext x='35' y='47' font-size='34' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
 
 // Reads coach/lesson text out loud using the browser's built-in
 // text-to-speech (no external API or key needed). Strips emoji first
@@ -1349,8 +1349,6 @@ function openPlaySetup(mode){
 
 function newGame(){
 
-    if(typeof checkDailyPlayStreak === "function") checkDailyPlayStreak();
-
     pieces = [
         ["bR","bN","bB","bQ","bK","bB","bN","bR"],
         ["bP","bP","bP","bP","bP","bP","bP","bP"],
@@ -1426,22 +1424,27 @@ if(gameMode === "ai"){
         history.pushState({ screen: "game" }, "", "#game");
     }
 
-    // Starting a game — via accepting a challenge, joining a tournament match,
-// spectating, or any other path — always funnels through here. But the
-// person could be sitting on any full-screen panel (a Profile, Chat,
-// Tournaments, etc.) when that happens, and those panels are fixed on top
-// of everything else. Without this, the board loads correctly underneath
-// but stays invisible, hidden behind whatever screen was open — which is
-// exactly what accepting a challenge from someone's profile looked like.
-if(typeof stopProfileLiveListeners === "function") stopProfileLiveListeners();
-if(typeof closeChatListener === "function") closeChatListener();
-if(typeof stopTournamentDetailListener === "function") stopTournamentDetailListener();
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("game").style.display = "flex";
 
-["profileScreen","chatScreen","tournamentsScreen","puzzleScreen","leaderboardScreen","dailyRewardsScreen","analysisScreen","lessonsScreen"].forEach(function(id){
-    const el = document.getElementById(id);
-    if(el) el.style.display = "none";
-});
+    // Starting a game — via accepting a challenge, joining a tournament
+    // match, spectating, or any other path — always funnels through here.
+    // But the person could be sitting on any full-screen panel (a Profile,
+    // Chat, Tournaments, etc.) when that happens, and those panels are
+    // fixed on top of everything else. Without this, the board loads
+    // correctly underneath but stays invisible, hidden behind whatever
+    // screen was open — which is exactly what accepting a challenge from
+    // someone's profile looked like.
+    if(typeof stopProfileLiveListeners === "function") stopProfileLiveListeners();
+    if(typeof closeChatListener === "function") closeChatListener();
+    if(typeof stopTournamentDetailListener === "function") stopTournamentDetailListener();
+
+    ["profileScreen","chatScreen","tournamentsScreen","puzzleScreen","leaderboardScreen","dailyRewardsScreen","analysisScreen","lessonsScreen"].forEach(function(id){
+        const el = document.getElementById(id);
+        if(el) el.style.display = "none";
+    });
 }
+
 function createCoordinates(){
 
     const files = document.getElementById("filesTop");
@@ -1770,11 +1773,15 @@ function switchScreen(name){
         loadFriendsData();
     }
 
-    if(name === "account" && currentUser && db && typeof playNextUnseenAwardThen === "function"){
-        db.ref("users/" + currentUser.uid + "/public").once("value").then(function(snap){
-            const data = snap.val();
-            if(data) playNextUnseenAwardThen(currentUser.uid, data, function(){});
-        });
+    // Recent Games is otherwise only refreshed right after a game finishes
+    // (via recordGameResult's push().then(loadRecentGames)) or once at app
+    // boot (via initAuthListener). Neither of those covers simply
+    // navigating back to Home later in the same session, so without this
+    // the list can look stale or briefly empty depending on when it was
+    // last populated. Re-pulling the last 5 games from Firebase every time
+    // Home becomes visible keeps it reliably in sync.
+    if(name === "home" && typeof loadRecentGames === "function"){
+        loadRecentGames();
     }
 
 }
@@ -1877,16 +1884,17 @@ function recordGameResult(myResult, opponentName){
             data.currentRoomCode = null; // game's over — no longer "currently playing"
         }
 
-        if(gameMode === "ai" && myResult === "win"){
-            if(aiDifficulty === "medium") data.beatMediumAI = true;
-            if(aiDifficulty === "hard") data.beatHardAI = true;
-        }
-
         return data;
-    }, function(error, committed, snapshot){
-        if(error) alert("Stats save failed: " + error.message);
     }).then(function(result){
-        if(typeof checkAchievements === "function") checkAchievements(currentUser.uid, result.snapshot.val());
+        // Award checks run off the post-transaction value, not myResult
+        // directly, since streak/rating milestones depend on the actual
+        // stored number (e.g. bestStreak resets), not just this one game's
+        // outcome. checkAndGrantAward() itself is idempotent (Firebase
+        // transaction guarded), so it's safe to call this on every game.
+        const updated = result.snapshot.val();
+        if(!updated) return;
+        if(typeof checkWinStreakAwards === "function") checkWinStreakAwards(updated.winStreak || 0);
+        if(gameMode === "online" && typeof checkRatingAwards === "function") checkRatingAwards(updated.rating || 0);
     });
 
     db.ref("users/" + currentUser.uid + "/history").push({
@@ -1899,15 +1907,86 @@ function recordGameResult(myResult, opponentName){
     }).then(function(){
         if(typeof loadRecentGames === "function") loadRecentGames();
     }).catch(function(err){
-        alert("History save failed: " + err.message);
+        console.error("Failed to save game to history:", err.message);
+        // Surface it in the UI too — a silent failure here is exactly
+        // what made games look like they were "randomly" not being saved.
+        const list = document.getElementById("recentGamesList");
+        if(list) list.innerHTML = '<p class="sub">Couldn\'t save this game to your history: ' + escapeHtml(err.message) + '</p>';
     });
 
-    if(typeof activeTournamentBracket !== "undefined" && activeTournamentBracket === "arena" && typeof recordArenaGameResult === "function"){
-        recordArenaGameResult(myResult);
-    }else if(typeof recordTournamentGameResult === "function"){
-        recordTournamentGameResult(myResult);
-    }
+    if(typeof recordTournamentGameResult === "function") recordTournamentGameResult(myResult);
     if(typeof recordDailyChallengeProgress === "function") recordDailyChallengeProgress(myResult, gameMode);
+}
+
+// Shared row renderer used both by the Home screen's "Recent Games" list
+// (loadRecentGames, below) and by profile.js's "Recent Games" section on
+// another player's profile (loadProfileRecentGames) — so both places show
+// identical, fully-detailed rows instead of two different formats.
+//
+// Renders immediately with whatever is already in the history entry
+// (name/photo/result/mode/time), then — only for games against a real
+// online opponent with a known opponentUid — quietly patches in that
+// opponent's live rating and online/offline status once those extra
+// lookups resolve. AI and local games have no opponentUid, so they never
+// trigger those extra reads.
+function renderRecentGameRow(list, entry){
+
+    const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
+    const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+    const dotCls = entry.result === "win" ? "win" : entry.result === "loss" ? "loss" : "draw";
+    const dotIcon = entry.result === "win" ? "✓" : entry.result === "loss" ? "✕" : "–";
+
+    const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
+    const timeLabel = formatRelativeTime(entry.time);
+    const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online" : "Local";
+
+    const row = document.createElement("div");
+    row.className = "gameRow";
+
+    row.innerHTML =
+        '<div class="gameOpponentInfo">' +
+            '<div class="gameAvatarWrap">' +
+                '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
+                '<span class="gameResultDot ' + dotCls + '">' + dotIcon + '</span>' +
+                '<span class="gameOnlineDot" style="display:none;"></span>' +
+            '</div>' +
+            '<div class="gameOpponentText">' +
+                '<span class="gameOpponent"></span>' +
+                '<span class="gameMeta">' + modeLabel + '<span class="gameOpponentRating"></span></span>' +
+            '</div>' +
+        '</div>' +
+        '<div class="gameResultCol">' +
+            '<span class="gameResult ' + cls + '">' + label + '</span>' +
+            '<span class="gameTime">' + timeLabel + '</span>' +
+        '</div>';
+
+    row.querySelector(".gameOpponent").textContent = entry.opponent || "Unknown";
+
+    if(entry.opponentUid){
+        row.style.cursor = "pointer";
+        row.onclick = function(){ openPlayerProfile(entry.opponentUid); };
+    }
+
+    list.appendChild(row);
+
+    if(entry.opponentUid && typeof db !== "undefined" && db){
+
+        db.ref("users/" + entry.opponentUid + "/public/rating").once("value").then(function(ratingSnap){
+            const ratingEl = row.querySelector(".gameOpponentRating");
+            if(ratingEl && ratingSnap.exists()){
+                ratingEl.textContent = " · " + ratingSnap.val();
+            }
+        }).catch(function(){ /* opponent profile no longer readable — leave rating blank */ });
+
+        db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
+            const dotEl = row.querySelector(".gameOnlineDot");
+            if(dotEl && presenceSnap.val() === true){
+                dotEl.style.display = "block";
+            }
+        }).catch(function(){ /* presence lookup failed — just skip the dot */ });
+
+    }
+
 }
 
 function loadRecentGames(){
@@ -1932,44 +2011,22 @@ function loadRecentGames(){
 
             list.innerHTML = "";
             entries.forEach(function(entry){
-
-                const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
-                const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
-                const dotCls = entry.result === "win" ? "win" : entry.result === "loss" ? "loss" : "draw";
-                const dotIcon = entry.result === "win" ? "✓" : entry.result === "loss" ? "✕" : "–";
-
-                const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
-                const timeLabel = formatRelativeTime(entry.time);
-
-                const row = document.createElement("div");
-                row.className = "gameRow";
-
-                row.innerHTML =
-                    '<div class="gameOpponentInfo">' +
-                        '<div class="gameAvatarWrap">' +
-                            '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
-                            '<span class="gameResultDot ' + dotCls + '">' + dotIcon + '</span>' +
-                        '</div>' +
-                        '<div class="gameOpponentText">' +
-                            '<span class="gameOpponent"></span>' +
-                            '<span class="gameMeta">' + (entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online" : "Local") + '</span>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="gameResultCol">' +
-                        '<span class="gameResult ' + cls + '">' + label + '</span>' +
-                        '<span class="gameTime">' + timeLabel + '</span>' +
-                    '</div>';
-
-                row.querySelector(".gameOpponent").textContent = entry.opponent || "Unknown";
-
-                if(entry.opponentUid){
-                    const infoEl = row.querySelector(".gameOpponentInfo");
-                    infoEl.style.cursor = "pointer";
-                    infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
-                }
-
-                list.appendChild(row);
+                renderRecentGameRow(list, entry);
             });
+        })
+        .catch(function(err){
+            // Previously this had no .catch at all, so a permission or
+            // network failure here failed completely silently — the list
+            // just stayed on "Loading..." or reverted to whatever was
+            // there before, with nothing in the console pointing at why.
+            // That silent failure is what made "my recent games vanish
+            // after closing the app" so hard to pin down: it looked random,
+            // but it was almost certainly this call failing quietly every
+            // time on a fresh app load. See CHANGES-README.md for the
+            // Firebase rule this most likely needs.
+            console.error("Failed to load recent games:", err.message);
+            const list = document.getElementById("recentGamesList");
+            if(list) list.innerHTML = '<p class="sub">Could not load recent games: ' + escapeHtml(err.message) + '</p>';
         });
 }
 
