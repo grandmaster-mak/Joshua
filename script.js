@@ -1426,10 +1426,22 @@ if(gameMode === "ai"){
         history.pushState({ screen: "game" }, "", "#game");
     }
 
-    document.getElementById("appShell").style.display = "none";
-    document.getElementById("game").style.display = "flex";
-}
+    // Starting a game — via accepting a challenge, joining a tournament match,
+// spectating, or any other path — always funnels through here. But the
+// person could be sitting on any full-screen panel (a Profile, Chat,
+// Tournaments, etc.) when that happens, and those panels are fixed on top
+// of everything else. Without this, the board loads correctly underneath
+// but stays invisible, hidden behind whatever screen was open — which is
+// exactly what accepting a challenge from someone's profile looked like.
+if(typeof stopProfileLiveListeners === "function") stopProfileLiveListeners();
+if(typeof closeChatListener === "function") closeChatListener();
+if(typeof stopTournamentDetailListener === "function") stopTournamentDetailListener();
 
+["profileScreen","chatScreen","tournamentsScreen","puzzleScreen","leaderboardScreen","dailyRewardsScreen","analysisScreen","lessonsScreen"].forEach(function(id){
+    const el = document.getElementById(id);
+    if(el) el.style.display = "none";
+});
+}
 function createCoordinates(){
 
     const files = document.getElementById("filesTop");
