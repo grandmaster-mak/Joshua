@@ -2273,3 +2273,66 @@ body{
 .accountMenuTextLight b{ display:block; color:#1a1a1a; font-size:14.5px; margin-bottom:2px; }
 .accountMenuTextLight p{ color:#8a8580; font-size:12px; margin:0; }
 .accountMenuChevronLight{ color:#c2bcb2; font-size:18px; }
+/* ============================================================
+   Home screen v2 — top icon bar, two-line badge cards, and
+   "photo-style" quick action cards with circular arrow buttons.
+   ============================================================ */
+
+.homeTopBar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 16px 14px; position:relative;
+}
+.homeTopBarIconBtn{
+    width:auto; margin:0; padding:0; background:none; border:none;
+    color:#ffffff; font-size:22px; cursor:pointer; position:relative;
+}
+.homeTopBarDot{
+    position:absolute; top:-2px; right:-2px; width:9px; height:9px;
+    border-radius:50%; background:#e5484d; border:2px solid var(--themeOrange, #FF7A1A);
+}
+
+.homeBadgeRowLight{ align-items:stretch; }
+.homeBadgeCard{
+    flex:1; background:#ffffff; border-radius:14px; padding:14px 12px;
+    display:flex; flex-direction:column; gap:2px; cursor:default;
+}
+.homeBadgeIcon{ font-size:18px; margin-bottom:4px; }
+.homeBadgeCard b{ color:#1a1a1a; font-size:15px; }
+.homeBadgeGreenText{ color:#22c55e !important; }
+.homeBadgeCard p{ color:#8a8580; font-size:11.5px; margin:0; }
+.homeBadgeDot{
+    width:9px; height:9px; border-radius:50%; background:#22c55e; display:inline-block;
+}
+.homeBadgeCard[onclick]{ cursor:pointer; }
+
+.homeActionPhoto{
+    position:relative;
+    overflow:hidden;
+}
+.homeActionPieces{ background:linear-gradient(160deg, #2d6a3e 0%, #1f4a2c 100%); }
+.homeActionRobot{ background:linear-gradient(160deg, #2563eb 0%, #1d3f8f 100%); }
+.homeActionGlobe{ background:linear-gradient(160deg, #f97316 0%, #c2410c 100%); }
+
+.homeActionIconChip{
+    background:rgba(255,255,255,0.18);
+    border-radius:8px;
+    padding:6px;
+    width:auto !important;
+    height:auto !important;
+}
+
+.homeActionArrow{
+    position:absolute;
+    right:10px;
+    bottom:10px;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.9);
+    color:#1a1a1a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:15px;
+    font-weight:800;
+}
