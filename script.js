@@ -1314,8 +1314,29 @@ function updateCaptured(){
         bottomBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
     });
 
-}
+    // Material advantage, chess.com style — standard point values (not
+    // the AI's internal centipawn pieceValues), shown as "+N" beside
+    // whichever side has captured more material overall. Because this is
+    // a NET difference, trading a pawn for a pawn cancels back to 0
+    // automatically, and a captured queen (+9) followed by the opponent
+    // capturing a rook back correctly nets down to +4 — no extra logic
+    // needed for that, it falls out of the subtraction.
+    const captureValues = { P: 1, N: 3, B: 3, R: 5, Q: 9 };
+    const materialValue = list => list.reduce((sum, p) => sum + (captureValues[p[1]] || 0), 0);
 
+    const whiteScore = materialValue(whiteCaptured);
+    const blackScore = materialValue(blackCaptured);
+    const advantage = whiteScore - blackScore;
+
+    if(advantage > 0){
+        const target = orientation.top === "white" ? topBox : bottomBox;
+        target.innerHTML += '<span class="captureAdvantage">+' + advantage + '</span>';
+    }else if(advantage < 0){
+        const target = orientation.top === "black" ? topBox : bottomBox;
+        target.innerHTML += '<span class="captureAdvantage">+' + (-advantage) + '</span>';
+    }
+
+}
 function showTimeControl(){
     updateGameMode();
     document.getElementById("timeControlPopup").classList.add("show");
