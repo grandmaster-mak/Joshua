@@ -1782,10 +1782,10 @@ function switchScreen(name){
         loadFriendsData();
     }
 
-    if(name === "account" && currentUser && db && typeof playNextUnseenAwardThen === "function"){
+    if(name === "account" && currentUser && db && typeof checkAndShowOwnAwardBanner === "function"){
         db.ref("users/" + currentUser.uid + "/public").once("value").then(function(snap){
             const data = snap.val();
-            if(data) playNextUnseenAwardThen(currentUser.uid, data, function(){});
+            if(data) checkAndShowOwnAwardBanner(currentUser.uid, data, "accountAchievementsGrid");
         });
     }
 
