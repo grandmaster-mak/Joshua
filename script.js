@@ -1349,6 +1349,8 @@ function openPlaySetup(mode){
 
 function newGame(){
 
+    if(typeof stopOnlineListeners === "function") stopOnlineListeners(); // ← add this line
+
     if(typeof checkDailyPlayStreak === "function") checkDailyPlayStreak();
 
     pieces = [
