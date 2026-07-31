@@ -255,6 +255,16 @@ function loadFriendsList(){
 
                     list.appendChild(row);
 
+                    // The row's badge element (#friendChatBadge_<uid>) may
+                    // not have existed yet when startFriendChatWatchers()
+                    // (chat.js) tried to update it — these are two
+                    // independent async chains with no guaranteed order.
+                    // Re-syncing here, now that the row definitely exists,
+                    // closes that race regardless of which one finished first.
+                    if(typeof updateFriendChatBadge === "function"){
+                        updateFriendChatBadge(uid);
+                    }
+
                 });
 
             });
