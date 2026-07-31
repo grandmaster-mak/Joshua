@@ -304,11 +304,10 @@ function initAuthListener(){
                 applyHomeHeader(data);
 
                 if(typeof loadRecentGames === "function") loadRecentGames();
-                if(typeof loadFriendsData === "function") loadFriendsData();
+                if(typeof loadFriendRequests === "function") loadFriendRequests();
                 if(typeof listenForChallenges === "function") listenForChallenges();
                 if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
                 if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
-
             }).catch(function(err){
                 console.log("Offline — showing cached profile instead.");
             });
