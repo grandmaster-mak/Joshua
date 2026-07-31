@@ -5,10 +5,12 @@
 // place for the leaderboard — no extra Firebase Rules changes needed.
 //
 // Each newly-unlocked achievement is also marked "unseen"
-// (public/achievementsUnseen/{id} = true). The next time ANYONE opens
-// that player's profile, the oldest unseen award plays as an animated
-// coach hand-over sequence before the profile itself appears — like a
-// WhatsApp status. Once shown, it's marked seen so it doesn't replay.
+// (public/achievementsUnseen/{id} = true). The next time the OWNER (and
+// only the owner — never a visitor viewing their profile) looks at
+// their own Account tab or their own Profile screen, the oldest unseen
+// award shows as a small, discreet banner above their achievements grid
+// — not a full-screen takeover, and not shown to anyone else. Once
+// shown, it's marked seen so it never replays.
 // ============================================================
 
 const ACHIEVEMENT_DEFS = [
@@ -82,7 +84,7 @@ function unlockAchievement(uid, id){
 
 // Called right after a game's stats are saved. Compares the just-updated
 // public data against every achievement's condition and unlocks any
-// newly earned ones, marking each unseen for the reveal animation.
+// newly earned ones, marking each unseen for the reveal banner.
 function checkAchievements(uid, publicData){
 
     if(!publicData || !db) return;
@@ -129,66 +131,75 @@ function renderAchievementsGrid(containerId, unlockedMap){
 }
 
 // ============================================================
-// The animated "coach hands over the award" reveal sequence.
-// Not an actual video file (no video-generation capability here) — this
-// is a real CSS/JS animation built from the same coach avatar already
-// used elsewhere, that achieves the same moment.
+// Award reveal — small discreet inline banner (NOT full-screen).
+//
+// Fixed two bugs from the old fullscreen-overlay version:
+//  1. It used to fire for whoever opened a profile — meaning viewing a
+//     FRIEND's profile could trigger and mark THEIR unseen award as
+//     seen on YOUR screen. checkAndShowOwnAwardBanner() now hard-checks
+//     uid === currentUser.uid before doing anything, so it only ever
+//     fires for the achievement's actual owner.
+//  2. Two independent trigger points (Account tab switch + opening your
+//     own Profile screen) could race and double-fire. awardBannerBusy
+//     is a simple in-flight guard against that.
 // ============================================================
 
-function playAwardRevealAnimation(def, onDone){
+let awardBannerBusy = false;
 
-    const overlay = document.getElementById("awardRevealOverlay");
-    if(!overlay || !def){
-        if(onDone) onDone();
-        return;
-    }
+// uid/publicData: whose data this is. containerId: the achievements
+// grid element to drop the banner above (e.g. "accountAchievementsGrid"
+// or "profileAchievementsGrid" — whichever screen is currently showing).
+function checkAndShowOwnAwardBanner(uid, publicData, containerId){
 
-    document.getElementById("awardRevealIcon").textContent = def.icon;
-    document.getElementById("awardRevealTitle").textContent = def.title;
-    document.getElementById("awardRevealIcon").style.color = def.color || "#ffd700";
-    document.getElementById("awardRevealGlow").style.background =
-        "radial-gradient(circle, " + (def.color || "#ffd700") + "55 0%, transparent 70%)";
-
-    overlay.style.display = "flex";
-    overlay.classList.remove("awardRevealPlaying");
-    void overlay.offsetWidth; // restart the CSS animation from scratch
-    overlay.classList.add("awardRevealPlaying");
-
-    if(typeof speakText === "function"){
-        speakText("New award unlocked: " + def.title + "!");
-    }
-
-    setTimeout(function(){
-        overlay.style.display = "none";
-        overlay.classList.remove("awardRevealPlaying");
-        if(onDone) onDone();
-    }, 3200);
-
-}
-
-// Finds the oldest unseen achievement for a player (if any), plays its
-// reveal, marks it seen, then continues. If there's nothing unseen,
-// continues immediately — the caller doesn't need to know which case it was.
-function playNextUnseenAwardThen(uid, publicData, onDone){
+    // Hard safety check — never show or mark-seen an award that isn't
+    // the current logged-in user's own.
+    if(!currentUser || uid !== currentUser.uid) return;
+    if(awardBannerBusy) return;
 
     const unseen = (publicData && publicData.achievementsUnseen) || {};
     const unseenIds = Object.keys(unseen).filter(function(id){ return unseen[id]; });
-
-    if(unseenIds.length === 0){
-        if(onDone) onDone();
-        return;
-    }
+    if(unseenIds.length === 0) return;
 
     const achievements = publicData.achievements || {};
     unseenIds.sort(function(a, b){ return (achievements[a] || 0) - (achievements[b] || 0); });
 
     const nextId = unseenIds[0];
     const def = getAchievementDef(nextId);
+    if(!def) return;
+
+    awardBannerBusy = true;
 
     if(db) db.ref("users/" + uid + "/public/achievementsUnseen/" + nextId).set(false);
 
-    playAwardRevealAnimation(def, function(){
-        onDone();
+    showInlineAwardBanner(containerId, def);
+
+    setTimeout(function(){ awardBannerBusy = false; }, 4500);
+
+}
+
+function showInlineAwardBanner(containerId, def){
+
+    const grid = document.getElementById(containerId);
+    if(!grid || !grid.parentNode || !def) return;
+
+    const banner = document.createElement("div");
+    banner.className = "inlineAwardBanner";
+    banner.innerHTML =
+        '<span class="inlineAwardBannerIcon" style="color:' + (def.color || "#ffd700") + ';">' + def.icon + '</span>' +
+        '<div class="inlineAwardBannerText">' +
+            '<b>New Award Unlocked</b>' +
+            '<p>' + escapeHtml(def.title) + '</p>' +
+        '</div>';
+
+    grid.parentNode.insertBefore(banner, grid);
+
+    requestAnimationFrame(function(){
+        banner.classList.add("show");
     });
+
+    setTimeout(function(){
+        banner.classList.remove("show");
+        setTimeout(function(){ if(banner.parentNode) banner.remove(); }, 400);
+    }, 4000);
 
 }
