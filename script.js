@@ -1986,6 +1986,14 @@ function loadRecentGames(){
                 const row = document.createElement("div");
                 row.className = "gameRow";
 
+                // "Online" here is the MATCH TYPE (recorded once, forever,
+                // when the game ended) — not the opponent's current
+                // presence. Labeled "Online Match" to make that clear, and
+                // real presence is checked separately below via
+                // .liveStatusText, the same way the Profile screen's
+                // Recent Games already does it.
+                const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online Match" : "Local";
+
                 row.innerHTML =
                     '<div class="gameOpponentInfo">' +
                         '<div class="gameAvatarWrap">' +
@@ -1994,7 +2002,7 @@ function loadRecentGames(){
                         '</div>' +
                         '<div class="gameOpponentText">' +
                             '<span class="gameOpponent"></span>' +
-                            '<span class="gameMeta">' + (entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online" : "Local") + '</span>' +
+                            '<span class="gameMeta">' + modeLabel + '<span class="liveStatusText"></span></span>' +
                         '</div>' +
                     '</div>' +
                     '<div class="gameResultCol">' +
@@ -2005,9 +2013,28 @@ function loadRecentGames(){
                 row.querySelector(".gameOpponent").textContent = entry.opponent || "Unknown";
 
                 if(entry.opponentUid){
+
                     const infoEl = row.querySelector(".gameOpponentInfo");
                     infoEl.style.cursor = "pointer";
                     infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
+
+                    // Real presence check — explicit "Online now" or
+                    // "Offline" either way, so it's obvious the check
+                    // actually ran rather than silently doing nothing.
+                    db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
+                        const statusEl = row.querySelector(".liveStatusText");
+                        if(!statusEl) return;
+                        if(presenceSnap.val() === true){
+                            statusEl.textContent = " · 🟢 Online now";
+                            statusEl.classList.add("liveOnline");
+                        }else{
+                            statusEl.textContent = " · Offline";
+                        }
+                    }).catch(function(){
+                        const statusEl = row.querySelector(".liveStatusText");
+                        if(statusEl) statusEl.textContent = " · Status unavailable";
+                    });
+
                 }
 
                 list.appendChild(row);
