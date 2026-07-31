@@ -14,6 +14,14 @@ function escapeHtml(str){
         .replace(/'/g, "&#39;");
 }
 
+// Race token for loadFriendsList — every call gets a new number, and
+// only the MOST RECENT call is allowed to touch the DOM. This is what
+// stops the "blink": if loadFriendsList() fires twice in quick
+// succession (e.g. tab tap + an auth state re-fire), the first call's
+// async work is abandoned instead of racing the second one and wiping
+// out a freshly-arrived unread badge.
+let friendsListLoadToken = 0;
+
 function searchForFriend(){
 
     const query = document.getElementById("friendSearchInput").value.trim();
@@ -201,6 +209,9 @@ function declineFriendRequest(fromUid){
     loadFriendRequests();
 }
 
+// ---- Loads (or reloads) the friends list. Guarded by friendsListLoadToken
+// so an overlapping/duplicate call can never clobber a newer one — this
+// is the fix for the "friends tab blinks and eats the unread badge" bug.
 function loadFriendsList(){
 
     if(!db || !currentUser) return;
@@ -208,7 +219,11 @@ function loadFriendsList(){
     const list = document.getElementById("friendsList");
     if(!list) return;
 
+    const myToken = ++friendsListLoadToken;
+
     db.ref("users/" + currentUser.uid + "/private/friends").once("value").then(function(snapshot){
+
+        if(myToken !== friendsListLoadToken) return; // a newer load has taken over — abandon this one
 
         if(!snapshot.exists()){
             list.innerHTML = '<p class="sub">You haven\'t added any friends yet.</p>';
@@ -227,10 +242,14 @@ function loadFriendsList(){
         uids.forEach(function(uid){
             db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
 
+                if(myToken !== friendsListLoadToken) return;
+
                 const data = userSnap.val();
                 if(!data) return;
 
                 db.ref("presence/" + uid).once("value").then(function(presenceSnap){
+
+                    if(myToken !== friendsListLoadToken) return;
 
                     const isOnline = presenceSnap.val() === true;
                     const safeUsername = escapeHtml(data.username);
@@ -316,7 +335,8 @@ function actuallySendChallenge(friendUid, friendUsername){
         username: currentUsername,
         flag: currentUserFlag,
         rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
-        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
+        uid: currentUser ? currentUser.uid : null
     });
 
     db.ref("users/" + friendUid + "/private/incomingChallenges/" + currentUser.uid).set({
@@ -391,7 +411,8 @@ function respondToChallenge(accepted){
         username: currentUsername,
         flag: currentUserFlag,
         rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
-        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
+        uid: currentUser ? currentUser.uid : null
     });
 
     db.ref("rooms/" + code + "/status").set("playing");
