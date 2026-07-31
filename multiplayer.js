@@ -67,6 +67,30 @@ function generateRoomCode(){
     return code;
 }
 
+// ============================================================
+// Listener leak fix: every db.ref(...).on(...) set up for a room
+// (moves, events, clock, player info, presence, connection state) gets
+// tracked here so it can be torn down in one call. Previously nothing
+// ever called .off() on these — playing several online games in one
+// session silently piled up dead Firebase listeners. stopOnlineListeners()
+// is called at the top of startOnlineGame() (clears the PREVIOUS game's
+// listeners before attaching the new game's) and from leaveSpectating().
+// ============================================================
+
+let activeOnlineListenerRefs = [];
+
+function trackOnlineListener(ref){
+    activeOnlineListenerRefs.push(ref);
+    return ref;
+}
+
+function stopOnlineListeners(){
+    activeOnlineListenerRefs.forEach(function(ref){
+        try{ ref.off(); }catch(e){}
+    });
+    activeOnlineListenerRefs = [];
+}
+
 function createOnlineRoom(){
 
     if(!db){
@@ -203,6 +227,8 @@ function spectateRoom(directCode){
 
 function leaveSpectating(){
 
+    stopOnlineListeners();
+
     myColor = null;
     currentRoomCode = null;
     gameOver = true;
@@ -221,6 +247,10 @@ function leaveSpectating(){
 
 function startOnlineGame(code){
 
+    // Clear out any listeners left over from a previous online game
+    // played earlier in this session, before attaching this game's set.
+    stopOnlineListeners();
+
     closeTimeControl();
 
     gameMode = "online";
@@ -238,7 +268,9 @@ function startOnlineGame(code){
     if(myColor){
         const myPresenceRef = db.ref("rooms/" + code + "/presence/" + myColor);
 
-        db.ref(".info/connected").on("value", function(connSnap){
+        const connRef = db.ref(".info/connected");
+        trackOnlineListener(connRef);
+        connRef.on("value", function(connSnap){
             if(connSnap.val() === true){
                 myPresenceRef.onDisconnect().set(false);
                 myPresenceRef.set(true);
@@ -281,7 +313,10 @@ function listenForOpponentPresence(code){
     const opponentColor = myColor === "white" ? "black" : "white";
     let abandonTimeout = null;
 
-    db.ref("rooms/" + code + "/presence/" + opponentColor).on("value", function(snapshot){
+    const ref = db.ref("rooms/" + code + "/presence/" + opponentColor);
+    trackOnlineListener(ref);
+
+    ref.on("value", function(snapshot){
 
         if(snapshot.val() === false && !gameOver){
 
@@ -311,7 +346,11 @@ function listenForOpponentPresence(code){
     });
 }
 function listenForPlayerInfo(code){
-    db.ref("rooms/" + code + "/players").on("value", function(snapshot){
+
+    const ref = db.ref("rooms/" + code + "/players");
+    trackOnlineListener(ref);
+
+    ref.on("value", function(snapshot){
 
         const players = snapshot.val();
         if(!players) return;
@@ -354,7 +393,10 @@ function sendGameEvent(type, extra){
 
 function listenForGameEvents(code){
 
-    db.ref("rooms/" + code + "/events").on("child_added", function(snapshot){
+    const ref = db.ref("rooms/" + code + "/events");
+    trackOnlineListener(ref);
+
+    ref.on("child_added", function(snapshot){
 
         const event = snapshot.val();
         if(!event) return;
@@ -398,7 +440,10 @@ function listenForGameEvents(code){
 
 function listenForRemoteMoves(code){
 
-    db.ref("rooms/" + code + "/moves").on("child_added", function(snapshot){
+    const ref = db.ref("rooms/" + code + "/moves");
+    trackOnlineListener(ref);
+
+    ref.on("child_added", function(snapshot){
 
         const move = snapshot.val();
 
@@ -430,7 +475,9 @@ function sendMoveToFirebase(fromR, fromC, toR, toC, promotion){
 }
 
 function listenForClockSync(code){
-    db.ref("rooms/" + code + "/clock").on("value", function(snapshot){
+    const ref = db.ref("rooms/" + code + "/clock");
+    trackOnlineListener(ref);
+    ref.on("value", function(snapshot){
         clockData = snapshot.val();
     });
 }
