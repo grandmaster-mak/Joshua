@@ -14,11 +14,8 @@
 
 let currentProfileUid = null;
 let currentProfileUsername = null;
-let currentProfileIsFriend = false;
 let profilePresenceRef = null;
 let profileRoomRef = null;
-let profileFriendUids = [];
-let profileFriendsShownCount = 0;
 
 function openPlayerProfile(uid){
 
@@ -43,16 +40,6 @@ function closePlayerProfile(){
     }
 }
 
-// Used when we're about to open ANOTHER screen (chat, a challenge result,
-// spectating) rather than going back to Home. Just hides the profile
-// screen without touching history — the destination screen pushes its
-// own state on top, so the back button still works correctly afterward
-// (back from chat returns to this profile, not all the way to Home).
-function hideProfileScreenOnly(){
-    stopProfileLiveListeners();
-    document.getElementById("profileScreen").style.display = "none";
-}
-
 function stopProfileLiveListeners(){
     if(profilePresenceRef) profilePresenceRef.off();
     if(profileRoomRef) profileRoomRef.off();
@@ -72,22 +59,6 @@ function loadPlayerProfile(uid){
             return;
         }
 
-        if(typeof playNextUnseenAwardThen === "function"){
-            playNextUnseenAwardThen(uid, data, function(){
-                renderPlayerProfile(uid, data);
-            });
-        }else{
-            renderPlayerProfile(uid, data);
-        }
-
-    }).catch(function(err){
-        document.getElementById("profileRecentGamesList").innerHTML = '<p class="sub">Could not load profile: ' + escapeHtml(err.message) + '</p>';
-    });
-
-}
-
-function renderPlayerProfile(uid, data){
-
         currentProfileUsername = data.username || "Player";
 
         document.getElementById("profileAvatarImg").src = data.photoURL || DEFAULT_AVATAR_SRC;
@@ -103,18 +74,19 @@ function renderPlayerProfile(uid, data){
 
         if(!isMe && currentUser){
             db.ref("users/" + currentUser.uid + "/private/friends/" + uid).once("value").then(function(friendSnap){
-                currentProfileIsFriend = friendSnap.exists();
-                document.getElementById("profileAddFriendBtn").style.display = currentProfileIsFriend ? "none" : "block";
+                document.getElementById("profileAddFriendBtn").style.display = friendSnap.exists() ? "none" : "block";
             });
         }else{
-            currentProfileIsFriend = true; // viewing your own profile
             document.getElementById("profileAddFriendBtn").style.display = "none";
         }
 
         startProfileLiveListeners(uid);
         loadProfileRecentGames(uid);
-        loadProfileFriendsList(uid);
-        if(typeof renderAchievementsGrid === "function") renderAchievementsGrid("profileAchievementsGrid", data.achievements);
+        if(typeof loadAwardsGrid === "function") loadAwardsGrid(uid, "profileAwardsGrid");
+
+    }).catch(function(err){
+        document.getElementById("profileRecentGamesList").innerHTML = '<p class="sub">Could not load profile: ' + escapeHtml(err.message) + '</p>';
+    });
 
 }
 
@@ -141,6 +113,10 @@ function startProfileLiveListeners(uid){
 
 }
 
+// Reuses the same row renderer script.js's Home "Recent Games" list uses
+// (renderRecentGameRow) so both places show identical, fully-detailed
+// rows: opponent photo, live rating, online dot, mode, result, and time —
+// instead of the old bare-bones version that only showed name + result.
 function loadProfileRecentGames(uid){
 
     const list = document.getElementById("profileRecentGamesList");
@@ -159,58 +135,9 @@ function loadProfileRecentGames(uid){
         list.innerHTML = "";
 
         entries.forEach(function(entry){
-
-            const label = entry.result === "win" ? "Won" : entry.result === "loss" ? "Lost" : "Draw";
-            const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
-            const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
-            // Renamed from "Online" to "Online Match" — this is the match
-            // TYPE (permanently recorded at game-end), not a live status.
-            // It will always say this for every online game, forever,
-            // regardless of whether the opponent is online right now.
-            const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online Match" : "Local";
-
-            const row = document.createElement("div");
-            row.className = "gameRow";
-            row.innerHTML =
-                '<div class="gameOpponentInfo">' +
-                    '<div class="gameAvatarWrap">' +
-                        '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
-                    '</div>' +
-                    '<div class="gameOpponentText">' +
-                        '<span class="gameOpponent">vs ' + escapeHtml(entry.opponent || "Unknown") + '</span>' +
-                        '<span class="gameMeta">' + modeLabel + '<span class="liveStatusText"></span></span>' +
-                    '</div>' +
-                '</div>' +
-                '<span class="gameResult ' + cls + '">' + label + '</span>';
-
-            if(entry.opponentUid){
-
-                const infoEl = row.querySelector(".gameOpponentInfo");
-                infoEl.style.cursor = "pointer";
-                infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
-
-                // Explicit text either way — "Online now" or "Offline" —
-                // instead of a dot that only appears sometimes, so it's
-                // always obvious the live check actually ran and isn't
-                // silently broken.
-                db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
-                    const statusEl = row.querySelector(".liveStatusText");
-                    if(!statusEl) return;
-                    if(presenceSnap.val() === true){
-                        statusEl.textContent = " · 🟢 Online now";
-                        statusEl.classList.add("liveOnline");
-                    }else{
-                        statusEl.textContent = " · Offline";
-                    }
-                }).catch(function(){
-                    const statusEl = row.querySelector(".liveStatusText");
-                    if(statusEl) statusEl.textContent = " · Status unavailable";
-                });
-
+            if(typeof renderRecentGameRow === "function"){
+                renderRecentGameRow(list, entry);
             }
-
-            list.appendChild(row);
-
         });
 
     }).catch(function(err){
@@ -218,98 +145,29 @@ function loadProfileRecentGames(uid){
     });
 
 }
-// Shows this player's friends list in batches of 5. Requires a Firebase
-// Rules addition beyond what's already set up: users/{uid}/private/friends
-// needs to be readable by any logged-in user (a sibling rule under
-// "friends", separate from the rest of "private" which stays owner-only).
-// See the note at the bottom of this file for the exact rule to add.
-function loadProfileFriendsList(uid){
-
-    const list = document.getElementById("profileFriendsList");
-    const seeMoreBtn = document.getElementById("profileFriendsSeeMoreBtn");
-    list.innerHTML = '<p class="sub">Loading...</p>';
-    seeMoreBtn.style.display = "none";
-
-    db.ref("users/" + uid + "/private/friends").once("value").then(function(snapshot){
-
-        if(!snapshot.exists()){
-            profileFriendUids = [];
-            list.innerHTML = '<p class="sub">No friends yet.</p>';
-            return;
-        }
-
-        profileFriendUids = Object.keys(snapshot.val());
-        profileFriendsShownCount = 0;
-        list.innerHTML = "";
-        renderNextProfileFriendsBatch();
-
-    }).catch(function(err){
-        list.innerHTML = '<p class="sub">Could not load friends: ' + escapeHtml(err.message) + '</p>';
-    });
-
-}
-
-function renderNextProfileFriendsBatch(){
-
-    const list = document.getElementById("profileFriendsList");
-    const seeMoreBtn = document.getElementById("profileFriendsSeeMoreBtn");
-
-    const batch = profileFriendUids.slice(profileFriendsShownCount, profileFriendsShownCount + 5);
-
-    const lookups = batch.map(function(friendUid){
-        return db.ref("users/" + friendUid + "/public").once("value").then(function(snap){
-            return { uid: friendUid, data: snap.val() };
-        });
-    });
-
-    Promise.all(lookups).then(function(results){
-
-        results.forEach(function(result){
-            if(!result.data) return;
-
-            const row = document.createElement("div");
-            row.className = "friendIdentity profileFriendRowLight";
-            row.style.cursor = "pointer";
-            row.style.marginBottom = "10px";
-            row.onclick = function(){ openPlayerProfile(result.uid); };
-            row.innerHTML =
-                '<img class="friendAvatarImg" src="' + (result.data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
-                '<div class="friendInfo">' +
-                    '<span class="friendName">' + escapeHtml(result.data.flag || "") + ' ' + escapeHtml(result.data.username || "Player") + '</span>' +
-                    '<span class="friendRating">Rating ' + (result.data.rating || 100) + '</span>' +
-                '</div>' +
-                '<button class="profileFriendMsgBtn" data-uid="' + result.uid + '" data-name="' + escapeHtml(result.data.username || "Player") + '" onclick="event.stopPropagation(); openFriendChat(this.dataset.uid, this.dataset.name);">💬</button>';
-            list.appendChild(row);
-        });
-
-        profileFriendsShownCount += batch.length;
-
-        if(profileFriendsShownCount >= profileFriendUids.length){
-            seeMoreBtn.style.display = "none";
-        }else{
-            seeMoreBtn.style.display = "block";
-        }
-
-        if(profileFriendsShownCount === 0){
-            list.innerHTML = '<p class="sub">No friends yet.</p>';
-        }
-
-    });
-
-}
-
-function showMoreProfileFriends(){
-    renderNextProfileFriendsBatch();
-}
 
 function messageFromProfile(){
+
     if(!currentProfileUid || !currentUser) return;
-    if(!currentProfileIsFriend){
-        showInfoPopup("👋 Add Them First", "Add " + currentProfileUsername + " as a friend before messaging them.");
-        return;
-    }
-    hideProfileScreenOnly();
+
+    // IMPORTANT: don't call closePlayerProfile() here. That function does
+    // history.back(), which fires its popstate asynchronously — often
+    // AFTER openFriendChat() below has already pushed the chat's own
+    // history state. When that stale popstate finally arrives, it lands
+    // on whatever was on the stack before the profile was even opened,
+    // and the app's global popstate handler then tears down the chat
+    // screen and drops the user back on Home. That was the bug: tapping
+    // Message appeared to just bounce straight to the home screen.
+    //
+    // Instead, just hide the profile screen directly (no history.back())
+    // and let openFriendChat() push its own "chat" state on top of the
+    // existing "profile" state. The phone back button then correctly
+    // steps chat -> profile -> home, same as everywhere else in the app.
+    stopProfileLiveListeners();
+    document.getElementById("profileScreen").style.display = "none";
+
     openFriendChat(currentProfileUid, currentProfileUsername);
+
 }
 
 function addFriendFromProfile(){
@@ -332,7 +190,7 @@ function challengeFromProfile(){
             document.getElementById("watchPromptPopup").dataset.roomCode = code;
             document.getElementById("watchPromptPopup").classList.add("show");
         }else{
-            hideProfileScreenOnly();
+            closePlayerProfile();
             challengeFriend(currentProfileUid, currentProfileUsername);
         }
     });
@@ -346,7 +204,7 @@ function closeWatchPrompt(){
 function confirmWatchFromPrompt(){
     const code = document.getElementById("watchPromptPopup").dataset.roomCode;
     closeWatchPrompt();
-    hideProfileScreenOnly();
+    closePlayerProfile();
     if(code) spectateRoom(code);
 }
 
@@ -358,7 +216,7 @@ function watchFromProfile(){
             showInfoPopup("👀 Watch", "This player just finished — nothing to watch right now.");
             return;
         }
-        hideProfileScreenOnly();
+        closePlayerProfile();
         spectateRoom(code);
     });
 }
@@ -374,19 +232,6 @@ function watchFromProfile(){
 //     ".read": "auth != null"
 //   }
 //
-// The Friends list on someone else's profile also needs one more rule —
-// add ".read" as a sibling INSIDE the existing "friends" block under
-// "private" (the rest of "private" stays owner-only; this only opens up
-// the friends list specifically):
-//
-//   "friends": {
-//     ".read": "auth != null",
-//     "$otherUid": {
-//       ".write": "auth != null && (auth.uid == $uid || auth.uid == $otherUid)"
-//     }
-//   }
-//
-// Without these, Recent Games and Friends on other players' profiles
-// will show a permission error, the same way the leaderboard and lessons
-// did before their fixes.
+// Without this, profileRecentGamesList will show a permission_denied
+// error the same way the leaderboard and lessons did before their fixes.
 // ============================================================
