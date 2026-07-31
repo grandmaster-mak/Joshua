@@ -34,12 +34,18 @@ function openPlayerProfile(uid){
 
 }
 
+// Fixed: previously this forced appShell/Home to show FIRST and then
+// called history.back(), which let popstate correct the screen a moment
+// later — that's the "hijack" flash when going Profile A -> Profile B
+// and hitting back. Now popstate is the ONLY thing that decides what to
+// show; this function just triggers the navigation.
 function closePlayerProfile(){
     stopProfileLiveListeners();
-    document.getElementById("profileScreen").style.display = "none";
-    document.getElementById("appShell").style.display = "flex";
     if(history.state && history.state.screen === "profile"){
         history.back();
+    }else{
+        document.getElementById("profileScreen").style.display = "none";
+        document.getElementById("appShell").style.display = "flex";
     }
 }
 
