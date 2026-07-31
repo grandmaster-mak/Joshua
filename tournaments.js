@@ -801,7 +801,7 @@ function generateRoundRobinSchedule(playerUids){
 // Double Elimination round advancement
 // ============================================================
 
-function advanceEliminationRound(t){
+function advanceEliminationRound(t, tournamentId){
 
     const currentRoundInfo = t.rounds_data[t.currentRound];
     if(!currentRoundInfo) return;
@@ -814,29 +814,29 @@ function advanceEliminationRound(t){
     if(remaining <= 1){
         const championUid = nextRoundResult.bye ||
             (Object.values(nextRoundResult.pairings)[0] && Object.values(nextRoundResult.pairings)[0].white);
-        updates["tournaments/" + currentViewedTournamentId + "/status"] = "completed";
-        if(championUid) updates["tournaments/" + currentViewedTournamentId + "/champion"] = championUid;
+        updates["tournaments/" + tournamentId + "/status"] = "completed";
+        if(championUid) updates["tournaments/" + tournamentId + "/champion"] = championUid;
         db.ref().update(updates);
         return;
     }
 
     const nextRound = t.currentRound + 1;
-    updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
-    updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = nextRoundResult;
+    updates["tournaments/" + tournamentId + "/currentRound"] = nextRound;
+    updates["tournaments/" + tournamentId + "/rounds_data/" + nextRound] = nextRoundResult;
 
     db.ref().update(updates);
 
 }
 
-function advanceDoubleEliminationRound(t){
+function advanceDoubleEliminationRound(t, tournamentId){
 
     const roundInfo = t.rounds_data[t.currentRound];
 
     if(roundInfo.grandFinal){
         const gfPairing = Object.values(roundInfo.winners.pairings)[0];
         const championUid = gfPairing.result === "white" ? gfPairing.white : gfPairing.black;
-        db.ref("tournaments/" + currentViewedTournamentId + "/status").set("completed");
-        db.ref("tournaments/" + currentViewedTournamentId + "/champion").set(championUid);
+        db.ref("tournaments/" + tournamentId + "/status").set("completed");
+        db.ref("tournaments/" + tournamentId + "/champion").set(championUid);
         return;
     }
 
@@ -877,8 +877,8 @@ function advanceDoubleEliminationRound(t){
                 roomCode: null
             }
         };
-        updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
-        updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = { grandFinal: true, winners: { pairings: gfPairings, bye: null }, losers: null };
+        updates["tournaments/" + tournamentId + "/currentRound"] = nextRound;
+        updates["tournaments/" + tournamentId + "/rounds_data/" + nextRound] = { grandFinal: true, winners: { pairings: gfPairings, bye: null }, losers: null };
         db.ref().update(updates);
         return;
     }
@@ -886,44 +886,52 @@ function advanceDoubleEliminationRound(t){
     const nextWinners = winnersStay.length > 1 ? generateEliminationPairings(winnersStay) : { pairings: {}, bye: winnersStay[0] || null };
     const nextLosers = newLosersPool.length > 1 ? generateEliminationPairings(newLosersPool) : { pairings: {}, bye: newLosersPool[0] || null };
 
-    updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
-    updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = { winners: nextWinners, losers: nextLosers };
+    updates["tournaments/" + tournamentId + "/currentRound"] = nextRound;
+    updates["tournaments/" + tournamentId + "/rounds_data/" + nextRound] = { winners: nextWinners, losers: nextLosers };
 
     db.ref().update(updates);
 
 }
 
+// Fixed race condition: this used to read the tournament ONCE, then write
+// its result back using the LIVE currentViewedTournamentId global — if
+// the person tapped into a different tournament before the write landed,
+// the round data could land on the wrong tournament. Now the id is
+// captured locally the moment the button is tapped and threaded through
+// every helper, so later navigation can never redirect the write.
 function advanceTournamentRound(){
 
     if(!currentViewedTournamentId || !db) return;
 
-    db.ref("tournaments/" + currentViewedTournamentId).once("value").then(function(snapshot){
+    const tournamentId = currentViewedTournamentId;
+
+    db.ref("tournaments/" + tournamentId).once("value").then(function(snapshot){
 
         const t = snapshot.val();
         if(!t) return;
 
         if(t.format === "double_elimination"){
-            advanceDoubleEliminationRound(t);
+            advanceDoubleEliminationRound(t, tournamentId);
             return;
         }
 
         if(t.format === "elimination"){
-            advanceEliminationRound(t);
+            advanceEliminationRound(t, tournamentId);
             return;
         }
 
         if(t.format === "round_robin"){
             if(t.currentRound >= t.rounds){
-                db.ref("tournaments/" + currentViewedTournamentId + "/status").set("completed");
+                db.ref("tournaments/" + tournamentId + "/status").set("completed");
                 return;
             }
             const nextRound = t.currentRound + 1;
             const nextRoundInfo = t.rounds_data[nextRound];
-            const updates = { ["tournaments/" + currentViewedTournamentId + "/currentRound"]: nextRound };
+            const updates = { ["tournaments/" + tournamentId + "/currentRound"]: nextRound };
             if(nextRoundInfo && nextRoundInfo.bye){
-                updates["tournaments/" + currentViewedTournamentId + "/players/" + nextRoundInfo.bye + "/points"] =
+                updates["tournaments/" + tournamentId + "/players/" + nextRoundInfo.bye + "/points"] =
                     (t.players[nextRoundInfo.bye].points || 0) + 1;
-                updates["tournaments/" + currentViewedTournamentId + "/players/" + nextRoundInfo.bye + "/byes"] =
+                updates["tournaments/" + tournamentId + "/players/" + nextRoundInfo.bye + "/byes"] =
                     (t.players[nextRoundInfo.bye].byes || 0) + 1;
             }
             db.ref().update(updates);
@@ -932,7 +940,7 @@ function advanceTournamentRound(){
 
         // Swiss
         if(t.currentRound >= t.rounds){
-            db.ref("tournaments/" + currentViewedTournamentId + "/status").set("completed");
+            db.ref("tournaments/" + tournamentId + "/status").set("completed");
             return;
         }
 
@@ -956,13 +964,13 @@ function advanceTournamentRound(){
         const pairingResult = generateSwissPairings(playerUids, t.players, previousOpponents);
 
         const updates = {};
-        updates["tournaments/" + currentViewedTournamentId + "/currentRound"] = nextRound;
-        updates["tournaments/" + currentViewedTournamentId + "/rounds_data/" + nextRound] = pairingResult;
+        updates["tournaments/" + tournamentId + "/currentRound"] = nextRound;
+        updates["tournaments/" + tournamentId + "/rounds_data/" + nextRound] = pairingResult;
 
         if(pairingResult.bye){
-            updates["tournaments/" + currentViewedTournamentId + "/players/" + pairingResult.bye + "/points"] =
+            updates["tournaments/" + tournamentId + "/players/" + pairingResult.bye + "/points"] =
                 (t.players[pairingResult.bye].points || 0) + 1;
-            updates["tournaments/" + currentViewedTournamentId + "/players/" + pairingResult.bye + "/byes"] =
+            updates["tournaments/" + tournamentId + "/players/" + pairingResult.bye + "/byes"] =
                 (t.players[pairingResult.bye].byes || 0) + 1;
         }
 
@@ -1036,7 +1044,8 @@ function joinTournamentMatch(tournamentId, pairingId, bracket){
                         username: currentUsername,
                         flag: currentUserFlag,
                         rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
-                        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+                        photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
+                        uid: currentUser ? currentUser.uid : null
                     });
 
                     if(finalCode !== code){
@@ -1286,7 +1295,8 @@ function joinArenaMatch(tournamentId, pairId){
                     username: currentUsername,
                     flag: currentUserFlag,
                     rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
-                    photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null
+                    photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
+                    uid: currentUser ? currentUser.uid : null
                 });
 
                 if(finalCode !== code){
