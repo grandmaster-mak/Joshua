@@ -11,6 +11,15 @@ let currentPlayer = "white";
 let gameMode = "human";
 let isCoachMode = false;
 
+// Tracks which bottom-nav tab (home/friends/account) was last active.
+// The tab buttons don't push browser-history entries when tapped, so
+// when a full-screen panel (Tournaments, Puzzles, Profile, etc.) is
+// closed via the back button, the "previous" history state is often
+// null — this is what popstate falls back to instead of hardcoding
+// "home", so back correctly returns to whichever tab you actually came
+// from instead of flashing there and then jumping to Home a moment later.
+let lastActiveTab = "home";
+
 // Online multiplayer state (used by multiplayer.js)
 let myColor = null;
 let currentRoomCode = null;
@@ -1349,7 +1358,7 @@ function openPlaySetup(mode){
 
 function newGame(){
 
-    if(typeof stopOnlineListeners === "function") stopOnlineListeners(); // ← add this line
+    if(typeof stopOnlineListeners === "function") stopOnlineListeners();
 
     if(typeof checkDailyPlayStreak === "function") checkDailyPlayStreak();
 
@@ -1454,9 +1463,20 @@ function createCoordinates(){
 
 }
 
+// Shows the game-over popup. Also resets any previous rating-change
+// indicator so it doesn't linger from a prior online game — the correct
+// value (if any) is filled back in by showRatingChangePopup() once
+// recordGameResult() has finished saving.
 function showPopup(title, message){
     document.getElementById("popupTitle").textContent = title;
     document.getElementById("popupMessage").textContent = message;
+
+    const ratingChangeEl = document.getElementById("popupRatingChange");
+    if(ratingChangeEl){
+        ratingChangeEl.style.display = "none";
+        ratingChangeEl.textContent = "";
+    }
+
     document.getElementById("gameOverPopup").classList.add("show");
 }
 
@@ -1746,6 +1766,8 @@ function getAllMoves(color){
 
 function switchScreen(name){
 
+    lastActiveTab = name;
+
     const screens = ["home", "friends", "account"];
 
     screens.forEach(function(s){
@@ -1821,6 +1843,35 @@ function myOpponentUidAndPhoto(){
     return { uid: (typeof whiteUid !== "undefined" ? whiteUid : null), photo: (typeof whitePhoto !== "undefined" ? whitePhoto : null) };
 }
 
+// Shows the "+8" / "-8" rating-change line on the game-over popup, once
+// the online rating update has actually been saved. Online wins/losses
+// change rating by 8 (see recordGameResult below); draws don't change
+// rating, and AI/local games never show this at all.
+function showRatingChangePopup(myResult){
+
+    const el = document.getElementById("popupRatingChange");
+    if(!el) return;
+
+    if(gameMode !== "online"){
+        el.style.display = "none";
+        return;
+    }
+
+    let delta = 0;
+    if(myResult === "win") delta = 8;
+    else if(myResult === "loss") delta = -8;
+
+    if(delta === 0){
+        el.style.display = "none";
+        return;
+    }
+
+    el.textContent = "Rating: " + (delta > 0 ? "+" : "") + delta;
+    el.style.color = delta > 0 ? "#4ade80" : "#e5484d";
+    el.style.display = "block";
+
+}
+
 function recordGameResult(myResult, opponentName){
 
     if(gameMode === "human") return;
@@ -1877,6 +1928,7 @@ function recordGameResult(myResult, opponentName){
         if(error) alert("Stats save failed: " + error.message);
     }).then(function(result){
         if(typeof checkAchievements === "function") checkAchievements(currentUser.uid, result.snapshot.val());
+        showRatingChangePopup(myResult);
     });
 
     db.ref("users/" + currentUser.uid + "/history").push({
@@ -2023,7 +2075,7 @@ window.addEventListener("popstate", function(event){
         document.getElementById("lessonsScreen").style.display = "none";
         document.getElementById("profileScreen").style.display = "none";
         document.getElementById("appShell").style.display = "flex";
-        switchScreen("home");
+        switchScreen(lastActiveTab);
         return;
     }
 
