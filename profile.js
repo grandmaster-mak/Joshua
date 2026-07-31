@@ -78,12 +78,13 @@ function loadPlayerProfile(uid){
             return;
         }
 
-        if(typeof playNextUnseenAwardThen === "function"){
-            playNextUnseenAwardThen(uid, data, function(){
-                renderPlayerProfile(uid, data);
-            });
-        }else{
-            renderPlayerProfile(uid, data);
+        renderPlayerProfile(uid, data);
+
+        // Only the OWNER of an achievement ever sees the "new award"
+        // banner — viewing someone else's profile must never trigger it
+        // or mark anything as seen on their behalf.
+        if(currentUser && uid === currentUser.uid && typeof checkAndShowOwnAwardBanner === "function"){
+            checkAndShowOwnAwardBanner(uid, data, "profileAchievementsGrid");
         }
 
     }).catch(function(err){
@@ -91,7 +92,6 @@ function loadPlayerProfile(uid){
     });
 
 }
-
 function renderPlayerProfile(uid, data){
 
         currentProfileUsername = data.username || "Player";
