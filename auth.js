@@ -298,6 +298,16 @@ function initAuthListener(){
                 presenceRef.onDisconnect().set(false);
             }
 
+            // These don't depend on the profile fetch below — they only
+            // need currentUser, which is already set at this point.
+            // Calling them here (not inside .then()) means they run
+            // instantly whether or not the network is available, instead
+            // of hanging forever waiting on a Firebase promise that never
+            // rejects when offline (.once("value") just stalls silently
+            // with no connection — it doesn't reject).
+            if(typeof loadRecentGames === "function") loadRecentGames();
+            if(typeof loadFriendRequests === "function") loadFriendRequests();
+
             db.ref("users/" + user.uid + "/public").once("value").then(function(snapshot){
 
                 const data = snapshot.val() || {};
@@ -317,20 +327,12 @@ function initAuthListener(){
 
                 applyHomeHeader(data);
 
-                if(typeof loadRecentGames === "function") loadRecentGames();
-                if(typeof loadFriendRequests === "function") loadFriendRequests();
                 if(typeof listenForChallenges === "function") listenForChallenges();
                 if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
                 if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
+
             }).catch(function(err){
                 console.log("Offline — showing cached profile instead.");
-                // The network fetch above failed, so loadRecentGames()
-                // (and friend requests) never got called from the .then()
-                // branch — call them here instead. loadRecentGames()
-                // already knows how to paint from its own localStorage
-                // cache on its own, it just needs to actually be invoked.
-                if(typeof loadRecentGames === "function") loadRecentGames();
-                if(typeof loadFriendRequests === "function") loadFriendRequests();
             });
 
         }else{
