@@ -9,7 +9,27 @@
 </head>
 
 <body>
-
+<div id="splashScreen">
+    <div class="splashBoardPattern"></div>
+    <div class="splashGlow"></div>
+    <div class="splashStage">
+        <img src="pieces/bN.svg" class="splashKnight splashKnightLeft" alt="">
+        <img src="pieces/wK.svg" class="splashKing" alt="">
+        <img src="pieces/bN.svg" class="splashKnight splashKnightRight" alt="">
+    </div>
+    <h1 class="splashWordmark">Be<span class="splashPawn">♟️</span><span class="splashChess">chess</span></h1>
+    <div class="splashDots"><span></span><span></span><span></span></div>
+</div>
+<script>
+(function(){
+    var splash = document.getElementById('splashScreen');
+    if(!splash) return;
+    setTimeout(function(){
+        splash.classList.add('splashHide');
+        setTimeout(function(){ splash.remove(); }, 550);
+    }, 3000);
+})();
+</script>
     <!-- App Shell: Home / Friends / Account + bottom nav -->
     <div id="appShell">
 
