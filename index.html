@@ -690,13 +690,12 @@
         </div>
 
     </div>
-    <div id="chessDnaPopup" class="popup">
-        <div class="popupContent">
-            <div class="badge blue">🧬</div>
-            <h2>Chess DNA</h2>
-            <div id="chessDnaBody"></div>
-            <button class="btnSecondary" onclick="closeChessDNA()">Close</button>
+    <div id="chessDnaScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closeChessDNA()">←</button>
+            <h2>🧬 Chess DNA</h2>
         </div>
+        <div class="fsBody" id="chessDnaBody"></div>
     </div>
 
     <!-- Promotion Popup -->
