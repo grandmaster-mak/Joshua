@@ -968,6 +968,15 @@ function clickSquare(r, c){
 
     const piece = pieces[r][c];
 
+    // Cut the coach off mid-sentence the moment the player interacts with
+    // the board again — only relevant once they're actually making a
+    // move (i.e. a piece is already selected and this tap completes it),
+    // not on the initial "select a piece" tap.
+    if(selected != null && "speechSynthesis" in window){
+        window.speechSynthesis.cancel();
+        if(typeof setCoachTalking === "function") setCoachTalking(false);
+    }
+
     if(selected == null){
 
         if(piece === "") return;
