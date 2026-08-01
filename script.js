@@ -1526,9 +1526,13 @@ function showPopup(title, message){
         ratingChangeEl.textContent = "";
     }
 
+    const dnaBtn = document.getElementById("chessDnaBtn");
+    if(dnaBtn){
+        dnaBtn.style.display = (gameMode === "ai" || gameMode === "online") ? "block" : "none";
+    }
+
     document.getElementById("gameOverPopup").classList.add("show");
 }
-
 function closePopup(){
     document.getElementById("gameOverPopup").classList.remove("show");
 }
