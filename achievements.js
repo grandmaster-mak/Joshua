@@ -119,10 +119,18 @@ function renderAchievementsGrid(containerId, unlockedMap){
     unlockedMap = unlockedMap || {};
     container.innerHTML = "";
 
-    ACHIEVEMENT_DEFS.forEach(function(def){
-        const isUnlocked = !!unlockedMap[def.id];
+    // Only earned awards are shown at all — locked ones stay completely
+    // hidden (no greyed-out placeholder) until actually unlocked.
+    const unlockedDefs = ACHIEVEMENT_DEFS.filter(function(def){ return !!unlockedMap[def.id]; });
+
+    if(unlockedDefs.length === 0){
+        container.innerHTML = '<p class="sub" style="grid-column:1/-1;">No awards earned yet.</p>';
+        return;
+    }
+
+    unlockedDefs.forEach(function(def){
         const badge = document.createElement("div");
-        badge.className = "achievementBadge" + (isUnlocked ? " unlocked" : " locked");
+        badge.className = "achievementBadge unlocked";
         badge.innerHTML =
             '<div class="achievementIcon">' + def.icon + '</div>' +
             '<div class="achievementTitle">' + def.title + '</div>';
