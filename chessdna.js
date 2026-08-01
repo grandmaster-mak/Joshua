@@ -243,10 +243,18 @@ function openChessDNA(){
 
     }
 
-    document.getElementById("chessDnaPopup").classList.add("show");
+    // The old result popup sits at a higher z-index than full-screen
+    // panels — close it first so it can't render on top of this screen.
+    if(typeof closePopup === "function") closePopup();
+
+    document.getElementById("chessDnaScreen").style.display = "flex";
+    history.pushState({ screen: "chessdna" }, "", "#chessdna");
 
 }
 
 function closeChessDNA(){
-    document.getElementById("chessDnaPopup").classList.remove("show");
+    document.getElementById("chessDnaScreen").style.display = "none";
+    if(history.state && history.state.screen === "chessdna"){
+        history.back();
+    }
 }
