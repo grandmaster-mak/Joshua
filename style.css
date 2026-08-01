@@ -2529,3 +2529,73 @@ input::placeholder{ color:#4a5060; }
 @media (prefers-reduced-motion: reduce){
     .splashGlow, .splashKing, .splashDots span{ animation:none !important; }
 }
+/* ============================================================
+   Coach face — real inline SVG (not a static emoji <img>), so its
+   parts can be animated. Mood/talking/thinking are toggled via JS
+   (setCoachMood / setCoachTalking / setCoachThinking in script.js).
+   ============================================================ */
+
+.coachFace{ display:block; overflow:visible; }
+
+.coachFace .coachPupil{
+    transform-origin:center;
+    transform-box:fill-box;
+    animation:coachBlink 4.5s ease-in-out infinite;
+}
+.coachFace .coachPupilRight{ animation-delay:.08s; }
+
+@keyframes coachBlink{
+    0%, 92%, 100%{ transform:scaleY(1); }
+    95%{ transform:scaleY(0.1); }
+}
+
+.coachFace .coachMouth{
+    transform-origin:center;
+    transform-box:fill-box;
+}
+.coachFace.coachTalking .coachMouth{
+    animation:coachTalk .22s ease-in-out infinite;
+}
+@keyframes coachTalk{
+    0%, 100%{ transform:scaleY(0.35); }
+    50%{ transform:scaleY(1); }
+}
+
+.coachFace .coachMouthHappy,
+.coachFace .coachMouthConcerned{ opacity:0; }
+.coachFace .coachMouthNeutral{ opacity:1; }
+
+.coachFace.mood-happy .coachMouthNeutral,
+.coachFace.mood-happy .coachMouthConcerned{ opacity:0; }
+.coachFace.mood-happy .coachMouthHappy{ opacity:1; }
+
+.coachFace.mood-concerned .coachMouthNeutral,
+.coachFace.mood-concerned .coachMouthHappy{ opacity:0; }
+.coachFace.mood-concerned .coachMouthConcerned{ opacity:1; }
+
+.coachFace .coachBrow{
+    transform-origin:center;
+    transform-box:fill-box;
+    transition:transform .3s ease;
+}
+.coachFace.mood-happy .coachBrowLeft{ transform:rotate(-6deg) translateY(-1px); }
+.coachFace.mood-happy .coachBrowRight{ transform:rotate(6deg) translateY(-1px); }
+.coachFace.mood-concerned .coachBrowLeft{ transform:rotate(14deg) translateY(1px); }
+.coachFace.mood-concerned .coachBrowRight{ transform:rotate(-14deg) translateY(1px); }
+
+.coachFace .coachHand{
+    opacity:0;
+    transform:translate(10px, 16px);
+    transition:opacity .35s ease, transform .35s ease;
+    transform-origin:center;
+    transform-box:fill-box;
+}
+.coachFace.coachThinking .coachHand{
+    opacity:1;
+    transform:translate(0, 0);
+    animation:coachHandBob 2.6s ease-in-out infinite;
+}
+@keyframes coachHandBob{
+    0%, 100%{ transform:translate(0, 0); }
+    50%{ transform:translate(0, -2px); }
+}
