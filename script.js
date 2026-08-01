@@ -2177,6 +2177,8 @@ window.addEventListener("popstate", function(event){
         document.getElementById("analysisScreen").style.display = "none";
         document.getElementById("lessonsScreen").style.display = "none";
         document.getElementById("profileScreen").style.display = "none";
+        const dnaScreenEl2 = document.getElementById("chessDnaScreen");
+        if(dnaScreenEl2) dnaScreenEl2.style.display = "none";
         document.getElementById("appShell").style.display = "flex";
         switchScreen(lastActiveTab);
         return;
