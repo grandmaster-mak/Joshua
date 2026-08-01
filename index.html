@@ -935,7 +935,29 @@
             <div id="lessonDetailView" style="display:none;">
 
                 <div class="coachRow" style="padding:0 0 14px;">
-                    <img class="coachAvatarImg" style="width:88px;height:88px;" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
+                    <svg class="coachFace coachAvatarImg" style="width:80px;height:80px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <title>Coach</title>
+    <circle cx="50" cy="50" r="50" fill="#262b34"/>
+    <path d="M14,100 Q50,72 86,100 Z" fill="#10131a"/>
+    <path d="M44,80 L50,86 L56,80 L50,90 Z" fill="#FF7A1A"/>
+    <path d="M26,34 Q50,12 74,34 L74,25 Q50,15 26,25 Z" fill="#2b2118"/>
+    <ellipse cx="50" cy="46" rx="24" ry="26" fill="#e8b382"/>
+    <rect class="coachBrow coachBrowLeft" x="32" y="36" width="10" height="3" rx="1.5" fill="#2b2118"/>
+    <rect class="coachBrow coachBrowRight" x="58" y="36" width="10" height="3" rx="1.5" fill="#2b2118"/>
+    <circle cx="38" cy="44" r="4.5" fill="#ffffff"/>
+    <circle cx="62" cy="44" r="4.5" fill="#ffffff"/>
+    <circle class="coachPupil coachPupilLeft" cx="38" cy="44" r="2" fill="#1a1a1a"/>
+    <circle class="coachPupil coachPupilRight" cx="62" cy="44" r="2" fill="#1a1a1a"/>
+    <g class="coachMouth">
+        <path class="coachMouthNeutral" d="M42,58 Q50,60 58,58" stroke="#5a3a2a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path class="coachMouthHappy" d="M40,56 Q50,67 60,56 Q50,62 40,56 Z" fill="#5a3a2a"/>
+        <path class="coachMouthConcerned" d="M42,60 Q50,55 58,60" stroke="#5a3a2a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </g>
+    <g class="coachHand">
+        <ellipse cx="64" cy="64" rx="7" ry="6" fill="#e8b382"/>
+        <rect x="60" y="66" width="8" height="10" rx="3" fill="#e8b382"/>
+    </g>
+</svg>
                     <div class="coachBubble">
                         <p class="sub" id="lessonInstruction" style="margin:0;">Loading...</p>
                         <p class="sub" id="lessonFeedback" style="display:none; margin:0;"></p>
