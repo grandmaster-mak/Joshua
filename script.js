@@ -1973,84 +1973,109 @@ function recordGameResult(myResult, opponentName){
     if(typeof recordDailyChallengeProgress === "function") recordDailyChallengeProgress(myResult, gameMode);
 }
 
+function cacheRecentGames(entries){
+    try{ localStorage.setItem("cachedRecentGames", JSON.stringify(entries)); }catch(e){}
+}
+
+function loadCachedRecentGames(){
+    try{ return JSON.parse(localStorage.getItem("cachedRecentGames") || "null"); }catch(e){ return null; }
+}
+
+function renderRecentGamesRows(entries){
+
+    const list = document.getElementById("recentGamesList");
+    if(!list) return;
+
+    if(!entries) return; // nothing cached and nothing loaded yet — leave existing placeholder as-is
+
+    if(entries.length === 0){
+        list.innerHTML = '<p class="sub">No games played yet.</p>';
+        return;
+    }
+
+    list.innerHTML = "";
+    entries.forEach(function(entry){
+
+        const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
+        const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+
+        const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
+        const timeLabel = formatRelativeTime(entry.time);
+        const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online Match" : "Local";
+
+        const row = document.createElement("div");
+        row.className = "gameRow";
+
+        row.innerHTML =
+            '<div class="gameOpponentInfo">' +
+                '<div class="gameAvatarWrap">' +
+                    '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
+                '</div>' +
+                '<div class="gameOpponentText">' +
+                    '<span class="gameOpponent"></span>' +
+                    '<span class="gameMeta">' + modeLabel + '<span class="liveStatusText"></span></span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="gameResultCol">' +
+                '<span class="gameResult ' + cls + '">' + label + '</span>' +
+                '<span class="gameTime">' + timeLabel + '</span>' +
+            '</div>';
+
+        row.querySelector(".gameOpponent").textContent = entry.opponent || "Unknown";
+
+        if(entry.opponentUid){
+
+            const infoEl = row.querySelector(".gameOpponentInfo");
+            infoEl.style.cursor = "pointer";
+            infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
+
+            if(db){
+                db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
+                    const statusEl = row.querySelector(".liveStatusText");
+                    if(!statusEl) return;
+                    if(presenceSnap.val() === true){
+                        statusEl.textContent = " · 🟢 Online now";
+                        statusEl.classList.add("liveOnline");
+                    }else{
+                        statusEl.textContent = " · Offline";
+                    }
+                }).catch(function(){
+                    const statusEl = row.querySelector(".liveStatusText");
+                    if(statusEl) statusEl.textContent = " · Status unavailable";
+                });
+            }
+
+        }
+
+        list.appendChild(row);
+    });
+
+}
+
 function loadRecentGames(){
     if(!db || !currentUser) return;
+
+    // Paint instantly from whatever was cached last time this loaded
+    // successfully — keeps Recent Games usable while offline instead of
+    // sitting blank or stuck on a stale placeholder.
+    renderRecentGamesRows(loadCachedRecentGames());
 
     db.ref("users/" + currentUser.uid + "/history")
         .orderByChild("time")
         .limitToLast(5)
         .once("value")
         .then(function(snapshot){
-            const list = document.getElementById("recentGamesList");
-            if(!list) return;
 
             const entries = [];
             snapshot.forEach(function(child){ entries.push(child.val()); });
             entries.reverse();
 
-            if(entries.length === 0){
-                list.innerHTML = '<p class="sub">No games played yet.</p>';
-                return;
-            }
+            cacheRecentGames(entries);
+            renderRecentGamesRows(entries);
 
-            list.innerHTML = "";
-            entries.forEach(function(entry){
-
-                const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
-                const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
-
-                const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
-                const timeLabel = formatRelativeTime(entry.time);
-
-                const row = document.createElement("div");
-                row.className = "gameRow";
-
-                const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online Match" : "Local";
-
-                row.innerHTML =
-                    '<div class="gameOpponentInfo">' +
-                        '<div class="gameAvatarWrap">' +
-                            '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
-                        '</div>' +
-                        '<div class="gameOpponentText">' +
-                            '<span class="gameOpponent"></span>' +
-                            '<span class="gameMeta">' + modeLabel + '<span class="liveStatusText"></span></span>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="gameResultCol">' +
-                        '<span class="gameResult ' + cls + '">' + label + '</span>' +
-                        '<span class="gameTime">' + timeLabel + '</span>' +
-                    '</div>';
-
-                row.querySelector(".gameOpponent").textContent = entry.opponent || "Unknown";
-
-                if(entry.opponentUid){
-
-                    const infoEl = row.querySelector(".gameOpponentInfo");
-                    infoEl.style.cursor = "pointer";
-                    infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
-
-                    // Real presence check — explicit "Online now" or
-                    // "Offline" either way, so it's obvious the check
-                    // actually ran rather than silently doing nothing.
-                    db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
-                        const statusEl = row.querySelector(".liveStatusText");
-                        if(!statusEl) return;
-                        if(presenceSnap.val() === true){
-                            statusEl.textContent = " · 🟢 Online now";
-                            statusEl.classList.add("liveOnline");
-                        }else{
-                            statusEl.textContent = " · Offline";
-                        }
-                    }).catch(function(){
-                        const statusEl = row.querySelector(".liveStatusText");
-                        if(statusEl) statusEl.textContent = " · Status unavailable";
-                    });
-
-                }
-
-                list.appendChild(row);
-            });
+        }).catch(function(){
+            // Offline / request failed — leave the cache-painted rows
+            // above exactly as they are instead of clearing them out.
         });
 }
 
