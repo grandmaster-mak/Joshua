@@ -66,6 +66,8 @@ function showCoachDescription(text){
     feedbackEl.textContent = "";
     feedbackEl.style.display = "none";
     if(bubbleEl) bubbleEl.classList.remove("coachGood", "coachBad");
+    if(typeof setCoachThinking === "function") setCoachThinking(true);
+    if(typeof setCoachMood === "function") setCoachMood("neutral");
     speakText(text);
 }
 
