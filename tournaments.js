@@ -356,6 +356,18 @@ function renderTournamentDetail(tournamentId, t){
         standingsBox.appendChild(row);
     });
 
+    // Tournament placement awards — same client-triggered pattern already
+    // used by checkTournamentAutoStart: any viewer whose OWN browser sees
+    // a completed tournament checks their OWN placement and unlocks their
+    // OWN award. unlockAchievement() already no-ops if already unlocked,
+    // so this is safe to run every time this screen re-renders.
+    if(t.status === "completed" && currentUser){
+        const myIndex = sorted.findIndex(function(p){ return p.uid === currentUser.uid; });
+        if(myIndex === 0 && typeof unlockAchievement === "function") unlockAchievement(currentUser.uid, "tournament_gold");
+        else if(myIndex === 1 && typeof unlockAchievement === "function") unlockAchievement(currentUser.uid, "tournament_silver");
+        else if(myIndex === 2 && typeof unlockAchievement === "function") unlockAchievement(currentUser.uid, "tournament_bronze");
+    }
+
     const pairingsBox = document.getElementById("tournamentPairings");
     pairingsBox.innerHTML = "";
 
@@ -375,7 +387,6 @@ function renderTournamentDetail(tournamentId, t){
     }
 
 }
-
 function isRoundComplete(t, roundInfo){
     if(t.format === "double_elimination"){
         const winnersDone = !roundInfo.winners || Object.keys(roundInfo.winners.pairings || {}).every(function(pid){ return !!roundInfo.winners.pairings[pid].result; });
