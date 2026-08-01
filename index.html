@@ -9,27 +9,30 @@
 </head>
 
 <body>
-<div id="splashScreen">
-    <div class="splashBoardPattern"></div>
-    <div class="splashGlow"></div>
-    <div class="splashStage">
-        <img src="pieces/bN.svg" class="splashKnight splashKnightLeft" alt="">
-        <img src="pieces/wK.svg" class="splashKing" alt="">
-        <img src="pieces/bN.svg" class="splashKnight splashKnightRight" alt="">
+
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <div class="splashBoardPattern"></div>
+        <div class="splashGlow"></div>
+        <div class="splashStage">
+            <img src="pieces/bN.svg" class="splashKnight splashKnightLeft" alt="">
+            <img src="pieces/wK.svg" class="splashKing" alt="">
+            <img src="pieces/bN.svg" class="splashKnight splashKnightRight" alt="">
+        </div>
+        <h1 class="splashWordmark">Be<span class="splashPawn">♟️</span><span class="splashChess">chess</span></h1>
+        <div class="splashDots"><span></span><span></span><span></span></div>
     </div>
-    <h1 class="splashWordmark">Be<span class="splashPawn">♟️</span><span class="splashChess">chess</span></h1>
-    <div class="splashDots"><span></span><span></span><span></span></div>
-</div>
-<script>
-(function(){
-    var splash = document.getElementById('splashScreen');
-    if(!splash) return;
-    setTimeout(function(){
-        splash.classList.add('splashHide');
-        setTimeout(function(){ splash.remove(); }, 550);
-    }, 3000);
-})();
-</script>
+    <script>
+    (function(){
+        var splash = document.getElementById('splashScreen');
+        if(!splash) return;
+        setTimeout(function(){
+            splash.classList.add('splashHide');
+            setTimeout(function(){ splash.remove(); }, 550);
+        }, 3000);
+    })();
+    </script>
+
     <!-- App Shell: Home / Friends / Account + bottom nav -->
     <div id="appShell">
 
@@ -484,31 +487,31 @@
             <div id="history"></div>
 
             <div class="coachRow" id="coachGameBar" style="display:none; padding:12px 15px;">
-<svg class="coachFace coachAvatarImg" style="width:80px;height:80px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <title>Coach</title>
-    <circle cx="50" cy="50" r="50" fill="#FF7A1A"/>
-    <path d="M10,100 Q50,74 90,100 Z" fill="#161616"/>
-    <path d="M38,78 L50,68 L62,78 L58,92 L42,92 Z" fill="#ffffff"/>
-    <path d="M44,80 L50,84 L56,80 L58,86 L50,90 L42,86 Z" fill="#1c1c1c"/>
-    <rect x="43" y="66" width="14" height="14" fill="#f2c48d"/>
-    <circle cx="50" cy="46" r="26" fill="#f2c48d"/>
-    <path d="M24,40 Q24,14 50,14 Q76,14 76,40 Q70,28 50,28 Q30,28 24,40 Z" fill="#1c1c1c"/>
-    <path d="M24,38 Q22,50 27,58 Q23,44 27,34 Z" fill="#1c1c1c"/>
-    <path d="M76,38 Q78,50 73,58 Q77,44 73,34 Z" fill="#1c1c1c"/>
-    <rect class="coachBrow coachBrowLeft" x="34" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
-    <rect class="coachBrow coachBrowRight" x="56" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
-    <ellipse class="coachPupil coachPupilLeft" cx="39" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
-    <ellipse class="coachPupil coachPupilRight" cx="61" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
-    <g class="coachMouth">
-        <path class="coachMouthNeutral" d="M43,58 Q50,61 57,58" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        <path class="coachMouthHappy" d="M41,57 Q50,68 59,57 Q50,63 41,57 Z" fill="#7a4a33"/>
-        <path class="coachMouthConcerned" d="M43,60 Q50,55 57,60" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    </g>
-    <g class="coachHand">
-        <ellipse cx="66" cy="62" rx="8" ry="7" fill="#f2c48d"/>
-        <rect x="61" y="64" width="9" height="12" rx="4" fill="#f2c48d"/>
-    </g>
-</svg>
+                <svg class="coachFace coachAvatarImg" style="width:80px;height:80px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <title>Coach</title>
+                    <circle cx="50" cy="50" r="50" fill="#FF7A1A"/>
+                    <path d="M10,100 Q50,74 90,100 Z" fill="#161616"/>
+                    <path d="M38,78 L50,68 L62,78 L58,92 L42,92 Z" fill="#ffffff"/>
+                    <path d="M44,80 L50,84 L56,80 L58,86 L50,90 L42,86 Z" fill="#1c1c1c"/>
+                    <rect x="43" y="66" width="14" height="14" fill="#f2c48d"/>
+                    <circle cx="50" cy="46" r="26" fill="#f2c48d"/>
+                    <path d="M24,40 Q24,14 50,14 Q76,14 76,40 Q70,28 50,28 Q30,28 24,40 Z" fill="#1c1c1c"/>
+                    <path d="M24,38 Q22,50 27,58 Q23,44 27,34 Z" fill="#1c1c1c"/>
+                    <path d="M76,38 Q78,50 73,58 Q77,44 73,34 Z" fill="#1c1c1c"/>
+                    <rect class="coachBrow coachBrowLeft" x="34" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
+                    <rect class="coachBrow coachBrowRight" x="56" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
+                    <ellipse class="coachPupil coachPupilLeft" cx="39" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
+                    <ellipse class="coachPupil coachPupilRight" cx="61" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
+                    <g class="coachMouth">
+                        <path class="coachMouthNeutral" d="M43,58 Q50,61 57,58" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                        <path class="coachMouthHappy" d="M41,57 Q50,68 59,57 Q50,63 41,57 Z" fill="#7a4a33"/>
+                        <path class="coachMouthConcerned" d="M43,60 Q50,55 57,60" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                    </g>
+                    <g class="coachHand">
+                        <ellipse cx="66" cy="62" rx="8" ry="7" fill="#f2c48d"/>
+                        <rect x="61" y="64" width="9" height="12" rx="4" fill="#f2c48d"/>
+                    </g>
+                </svg>
                 <div class="coachBubble">
                     <p class="sub" id="coachGameText" style="margin:0;">Let's play — I'll comment on your moves as we go.</p>
                 </div>
@@ -666,15 +669,7 @@
         </div>
 
     </div>
-<div id="analysisPositionPopup" class="popup">
-        <div class="popupContent" style="max-height:80vh; overflow-y:auto; text-align:left;">
-            <div class="badge blue">📂</div>
-            <h2 style="text-align:center;">Choose a Position</h2>
-            <p class="sub" style="text-align:center;">10 openings · 10 middlegames · 10 endgames</p>
-            <div id="analysisPositionList"></div>
-            <button class="btnSecondary" onclick="closeAnalysisPositionPicker()">Cancel</button>
-        </div>
-    </div>
+
     <!-- Game Over Popup -->
     <div id="gameOverPopup" class="popup">
 
@@ -697,13 +692,6 @@
 
         </div>
 
-    </div>
-    <div id="chessDnaScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closeChessDNA()">←</button>
-            <h2>🧬 Chess DNA</h2>
-        </div>
-        <div class="fsBody" id="chessDnaBody"></div>
     </div>
 
     <!-- Promotion Popup -->
@@ -934,31 +922,31 @@
         <div class="fsBody" style="padding:0 0 20px;">
 
             <div class="coachRow">
-                <svg class="coachFace coachAvatarImg" style="width:80px;height:80px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <title>Coach</title>
-    <circle cx="50" cy="50" r="50" fill="#FF7A1A"/>
-    <path d="M10,100 Q50,74 90,100 Z" fill="#161616"/>
-    <path d="M38,78 L50,68 L62,78 L58,92 L42,92 Z" fill="#ffffff"/>
-    <path d="M44,80 L50,84 L56,80 L58,86 L50,90 L42,86 Z" fill="#1c1c1c"/>
-    <rect x="43" y="66" width="14" height="14" fill="#f2c48d"/>
-    <circle cx="50" cy="46" r="26" fill="#f2c48d"/>
-    <path d="M24,40 Q24,14 50,14 Q76,14 76,40 Q70,28 50,28 Q30,28 24,40 Z" fill="#1c1c1c"/>
-    <path d="M24,38 Q22,50 27,58 Q23,44 27,34 Z" fill="#1c1c1c"/>
-    <path d="M76,38 Q78,50 73,58 Q77,44 73,34 Z" fill="#1c1c1c"/>
-    <rect class="coachBrow coachBrowLeft" x="34" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
-    <rect class="coachBrow coachBrowRight" x="56" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
-    <ellipse class="coachPupil coachPupilLeft" cx="39" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
-    <ellipse class="coachPupil coachPupilRight" cx="61" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
-    <g class="coachMouth">
-        <path class="coachMouthNeutral" d="M43,58 Q50,61 57,58" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        <path class="coachMouthHappy" d="M41,57 Q50,68 59,57 Q50,63 41,57 Z" fill="#7a4a33"/>
-        <path class="coachMouthConcerned" d="M43,60 Q50,55 57,60" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    </g>
-    <g class="coachHand">
-        <ellipse cx="66" cy="62" rx="8" ry="7" fill="#f2c48d"/>
-        <rect x="61" y="64" width="9" height="12" rx="4" fill="#f2c48d"/>
-    </g>
-</svg>
+                <svg id="coachAvatar" class="coachFace coachAvatarImg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <title>Coach</title>
+                    <circle cx="50" cy="50" r="50" fill="#FF7A1A"/>
+                    <path d="M10,100 Q50,74 90,100 Z" fill="#161616"/>
+                    <path d="M38,78 L50,68 L62,78 L58,92 L42,92 Z" fill="#ffffff"/>
+                    <path d="M44,80 L50,84 L56,80 L58,86 L50,90 L42,86 Z" fill="#1c1c1c"/>
+                    <rect x="43" y="66" width="14" height="14" fill="#f2c48d"/>
+                    <circle cx="50" cy="46" r="26" fill="#f2c48d"/>
+                    <path d="M24,40 Q24,14 50,14 Q76,14 76,40 Q70,28 50,28 Q30,28 24,40 Z" fill="#1c1c1c"/>
+                    <path d="M24,38 Q22,50 27,58 Q23,44 27,34 Z" fill="#1c1c1c"/>
+                    <path d="M76,38 Q78,50 73,58 Q77,44 73,34 Z" fill="#1c1c1c"/>
+                    <rect class="coachBrow coachBrowLeft" x="34" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
+                    <rect class="coachBrow coachBrowRight" x="56" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
+                    <ellipse class="coachPupil coachPupilLeft" cx="39" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
+                    <ellipse class="coachPupil coachPupilRight" cx="61" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
+                    <g class="coachMouth">
+                        <path class="coachMouthNeutral" d="M43,58 Q50,61 57,58" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                        <path class="coachMouthHappy" d="M41,57 Q50,68 59,57 Q50,63 41,57 Z" fill="#7a4a33"/>
+                        <path class="coachMouthConcerned" d="M43,60 Q50,55 57,60" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                    </g>
+                    <g class="coachHand">
+                        <ellipse cx="66" cy="62" rx="8" ry="7" fill="#f2c48d"/>
+                        <rect x="61" y="64" width="9" height="12" rx="4" fill="#f2c48d"/>
+                    </g>
+                </svg>
                 <div class="coachBubble">
                     <p class="sub" id="puzzleDescription" style="margin:0;">Loading...</p>
                     <p class="sub" id="puzzleFeedback" style="display:none; margin:0;"></p>
@@ -1000,31 +988,31 @@
             <div id="lessonDetailView" style="display:none;">
 
                 <div class="coachRow" style="padding:0 0 14px;">
-                    <svg class="coachFace coachAvatarImg" style="width:80px;height:80px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <title>Coach</title>
-    <circle cx="50" cy="50" r="50" fill="#FF7A1A"/>
-    <path d="M10,100 Q50,74 90,100 Z" fill="#161616"/>
-    <path d="M38,78 L50,68 L62,78 L58,92 L42,92 Z" fill="#ffffff"/>
-    <path d="M44,80 L50,84 L56,80 L58,86 L50,90 L42,86 Z" fill="#1c1c1c"/>
-    <rect x="43" y="66" width="14" height="14" fill="#f2c48d"/>
-    <circle cx="50" cy="46" r="26" fill="#f2c48d"/>
-    <path d="M24,40 Q24,14 50,14 Q76,14 76,40 Q70,28 50,28 Q30,28 24,40 Z" fill="#1c1c1c"/>
-    <path d="M24,38 Q22,50 27,58 Q23,44 27,34 Z" fill="#1c1c1c"/>
-    <path d="M76,38 Q78,50 73,58 Q77,44 73,34 Z" fill="#1c1c1c"/>
-    <rect class="coachBrow coachBrowLeft" x="34" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
-    <rect class="coachBrow coachBrowRight" x="56" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
-    <ellipse class="coachPupil coachPupilLeft" cx="39" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
-    <ellipse class="coachPupil coachPupilRight" cx="61" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
-    <g class="coachMouth">
-        <path class="coachMouthNeutral" d="M43,58 Q50,61 57,58" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        <path class="coachMouthHappy" d="M41,57 Q50,68 59,57 Q50,63 41,57 Z" fill="#7a4a33"/>
-        <path class="coachMouthConcerned" d="M43,60 Q50,55 57,60" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    </g>
-    <g class="coachHand">
-        <ellipse cx="66" cy="62" rx="8" ry="7" fill="#f2c48d"/>
-        <rect x="61" y="64" width="9" height="12" rx="4" fill="#f2c48d"/>
-    </g>
-</svg>
+                    <svg class="coachFace coachAvatarImg" style="width:88px;height:88px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <title>Coach</title>
+                        <circle cx="50" cy="50" r="50" fill="#FF7A1A"/>
+                        <path d="M10,100 Q50,74 90,100 Z" fill="#161616"/>
+                        <path d="M38,78 L50,68 L62,78 L58,92 L42,92 Z" fill="#ffffff"/>
+                        <path d="M44,80 L50,84 L56,80 L58,86 L50,90 L42,86 Z" fill="#1c1c1c"/>
+                        <rect x="43" y="66" width="14" height="14" fill="#f2c48d"/>
+                        <circle cx="50" cy="46" r="26" fill="#f2c48d"/>
+                        <path d="M24,40 Q24,14 50,14 Q76,14 76,40 Q70,28 50,28 Q30,28 24,40 Z" fill="#1c1c1c"/>
+                        <path d="M24,38 Q22,50 27,58 Q23,44 27,34 Z" fill="#1c1c1c"/>
+                        <path d="M76,38 Q78,50 73,58 Q77,44 73,34 Z" fill="#1c1c1c"/>
+                        <rect class="coachBrow coachBrowLeft" x="34" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
+                        <rect class="coachBrow coachBrowRight" x="56" y="38" width="10" height="2.6" rx="1.3" fill="#1c1c1c"/>
+                        <ellipse class="coachPupil coachPupilLeft" cx="39" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
+                        <ellipse class="coachPupil coachPupilRight" cx="61" cy="46" rx="3.6" ry="4.6" fill="#1c1c1c"/>
+                        <g class="coachMouth">
+                            <path class="coachMouthNeutral" d="M43,58 Q50,61 57,58" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                            <path class="coachMouthHappy" d="M41,57 Q50,68 59,57 Q50,63 41,57 Z" fill="#7a4a33"/>
+                            <path class="coachMouthConcerned" d="M43,60 Q50,55 57,60" stroke="#7a4a33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                        </g>
+                        <g class="coachHand">
+                            <ellipse cx="66" cy="62" rx="8" ry="7" fill="#f2c48d"/>
+                            <rect x="61" y="64" width="9" height="12" rx="4" fill="#f2c48d"/>
+                        </g>
+                    </svg>
                     <div class="coachBubble">
                         <p class="sub" id="lessonInstruction" style="margin:0;">Loading...</p>
                         <p class="sub" id="lessonFeedback" style="display:none; margin:0;"></p>
@@ -1167,7 +1155,8 @@
                 <div class="coachBubble" style="width:100%;">
                     <p class="sub" id="analysisEvalText" style="margin:0; font-weight:700; font-size:15px;">Eval: 0.00</p>
                     <p class="sub" id="analysisBestMoveText" style="margin:4px 0 0;"></p>
-                <p class="sub" id="analysisPonderText" style="margin:2px 0 0; font-size:12px;"></p>
+                    <p class="sub" id="analysisPonderText" style="margin:2px 0 0; font-size:12px;"></p>
+                </div>
             </div>
 
             <div class="puzzleToolbar">
@@ -1183,6 +1172,26 @@
             </div>
 
         </div>
+    </div>
+
+    <!-- ===== Analysis Position Picker popup ===== -->
+    <div id="analysisPositionPopup" class="popup">
+        <div class="popupContent" style="max-height:80vh; overflow-y:auto; text-align:left;">
+            <div class="badge blue">📂</div>
+            <h2 style="text-align:center;">Choose a Position</h2>
+            <p class="sub" style="text-align:center;">10 openings · 10 middlegames · 10 endgames</p>
+            <div id="analysisPositionList"></div>
+            <button class="btnSecondary" onclick="closeAnalysisPositionPicker()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- ===== Chess DNA screen ===== -->
+    <div id="chessDnaScreen" class="fullScreenPanel">
+        <div class="fsHeader">
+            <button onclick="closeChessDNA()">←</button>
+            <h2>🧬 Chess DNA</h2>
+        </div>
+        <div class="fsBody" id="chessDnaBody"></div>
     </div>
 
     <!-- ===== Leaderboard screen ===== -->
@@ -1232,11 +1241,11 @@
     <script src="leaderboard.js"></script>
     <script src="rewards.js"></script>
     <script src="lessons.js"></script>
+    <script src="analysis-positions.js"></script>
     <script src="analysis.js"></script>
+    <script src="chessdna.js"></script>
     <script src="profile.js"></script>
     <script src="achievements.js"></script>
-    <script src="chessdna.js"></script>
-    <script src="analysis-position.js"></script>
 
     <!-- ===== Award reveal overlay (animated coach hand-over, not a real video) ===== -->
     <div id="awardRevealOverlay" style="display:none; position:fixed; inset:0; z-index:500; background:rgba(5,6,10,0.94); flex-direction:column; align-items:center; justify-content:center; text-align:center;">
