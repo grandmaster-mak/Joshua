@@ -59,32 +59,38 @@ function giveCoachCommentary(whiteEvalCp){
     coachLastEvalCp = whiteEvalCp;
 
     let line;
+    let mood;
 
     if(delta <= -300){
+        mood = "concerned";
         line = pickCoachLine([
             "😬 Ouch — that was a real blunder. You just handed me a big advantage.",
             "😬 That move loses significant material or position. Careful with the next one.",
             "😬 Big mistake there — I like my chances a lot more now."
         ]);
     }else if(delta <= -120){
+        mood = "concerned";
         line = pickCoachLine([
             "❌ That's a weak move — your position just got noticeably worse.",
             "❌ Not your best. You gave up some ground there.",
             "❌ I wouldn't have played that — it costs you something."
         ]);
     }else if(delta < 60){
+        mood = "neutral";
         line = pickCoachLine([
             "➖ A reasonable move — nothing gained, nothing lost.",
             "➖ Solid enough. The position's still roughly balanced.",
             "➖ Fine move. Let's see what you do next."
         ]);
     }else if(delta < 250){
+        mood = "happy";
         line = pickCoachLine([
             "✅ Good move — that improved your position.",
             "✅ Nice — you're gaining ground.",
             "✅ That's a strong choice."
         ]);
     }else{
+        mood = "happy";
         line = pickCoachLine([
             "🌟 Excellent move! That's a big improvement for you.",
             "🌟 Wow, that's a great find — real progress there.",
@@ -97,6 +103,9 @@ function giveCoachCommentary(whiteEvalCp){
     }else if(whiteEvalCp >= 400){
         line += " And overall, you're clearly ahead — keep it up.";
     }
+
+    if(typeof setCoachThinking === "function") setCoachThinking(false);
+    if(typeof setCoachMood === "function") setCoachMood(mood);
 
     setCoachText(line);
 
@@ -139,8 +148,12 @@ function checkCoachHangingPieces(){
     if(worst){
         const pieceNames = { P: "pawn", N: "knight", B: "bishop", R: "rook", Q: "queen" };
         const name = pieceNames[worst.piece[1]] || "piece";
+        if(typeof setCoachThinking === "function") setCoachThinking(false);
+        if(typeof setCoachMood === "function") setCoachMood("concerned");
         setCoachText("⚠️ Watch out — your " + name + " on " + squareName(worst.r, worst.c) + " is undefended.");
     }else{
+        if(typeof setCoachThinking === "function") setCoachThinking(true);
+        if(typeof setCoachMood === "function") setCoachMood("neutral");
         setCoachText(pickCoachLine([
             "Your move — what's the plan?",
             "Take your time and look for the best move.",
