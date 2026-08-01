@@ -28,7 +28,10 @@ const ACHIEVEMENT_DEFS = [
     { id: "daily_player",  icon: "📅", title: "3-Day Play Streak", color: "#22c55e", check: function(d){ return (d.dailyPlayStreak || 0) >= 3; } },
     { id: "leaderboard_1", icon: "🥇", title: "#1 on Leaderboard", color: "#ffd700", check: function(){ return false; } },
     { id: "leaderboard_2", icon: "🥈", title: "#2 on Leaderboard", color: "#c0c0c0", check: function(){ return false; } },
-    { id: "leaderboard_3", icon: "🥉", title: "#3 on Leaderboard", color: "#cd7f32", check: function(){ return false; } }
+    { id: "leaderboard_3", icon: "🥉", title: "#3 on Leaderboard", color: "#cd7f32", check: function(){ return false; } },
+    { id: "tournament_gold",   icon: "🥇", title: "Tournament Champion",   color: "#ffd700", check: function(){ return false; } },
+    { id: "tournament_silver", icon: "🥈", title: "Tournament Runner-Up", color: "#c0c0c0", check: function(){ return false; } },
+    { id: "tournament_bronze", icon: "🥉", title: "Tournament 3rd Place", color: "#cd7f32", check: function(){ return false; } }
 ];
 
 function getAchievementDef(id){
