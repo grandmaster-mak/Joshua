@@ -2229,6 +2229,11 @@ window.addEventListener("popstate", function(event){
         return;
     }
 
+    if(state.screen === "chessdna"){
+        document.getElementById("chessDnaScreen").style.display = "flex";
+        return;
+    }
+
 });
 
 createCoordinates();
