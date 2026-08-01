@@ -83,6 +83,8 @@ function showCoachFeedback(text, tone){
         if(tone === "good") bubbleEl.classList.add("coachGood");
         if(tone === "bad") bubbleEl.classList.add("coachBad");
     }
+    if(typeof setCoachThinking === "function") setCoachThinking(false);
+    if(typeof setCoachMood === "function") setCoachMood(tone === "good" ? "happy" : tone === "bad" ? "concerned" : "neutral");
     speakText(text);
 }
 
