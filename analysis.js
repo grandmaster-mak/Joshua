@@ -150,7 +150,58 @@ function flipAnalysisBoard(){
     analysisFlipped = !analysisFlipped;
     createAnalysisBoard();
 }
+const ANALYSIS_CATEGORY_LABELS = { opening:"Openings", middlegame:"Middlegames", endgame:"Endgames" };
 
+function openAnalysisPositionPicker(){
+
+    const list = document.getElementById("analysisPositionList");
+    if(!list || typeof ANALYSIS_POSITIONS === "undefined") return;
+
+    list.innerHTML = "";
+
+    ["opening", "middlegame", "endgame"].forEach(function(cat){
+
+        const header = document.createElement("div");
+        header.className = "sub";
+        header.style.fontWeight = "700";
+        header.style.margin = "14px 0 6px";
+        header.textContent = ANALYSIS_CATEGORY_LABELS[cat];
+        list.appendChild(header);
+
+        ANALYSIS_POSITIONS.filter(function(p){ return p.category === cat; }).forEach(function(p){
+            const row = document.createElement("div");
+            row.className = "standingRow";
+            row.style.cursor = "pointer";
+            row.innerHTML = '<span class="standingName">' + p.label + '</span>';
+            row.onclick = function(){ loadAnalysisPosition(p.fen); };
+            list.appendChild(row);
+        });
+
+    });
+
+    document.getElementById("analysisPositionPopup").classList.add("show");
+
+}
+
+function closeAnalysisPositionPicker(){
+    document.getElementById("analysisPositionPopup").classList.remove("show");
+}
+
+function loadAnalysisPosition(fen){
+
+    pieces = fenToPieces(fen); // fenToPieces is defined in puzzle.js
+    currentPlayer = fen.split(" ")[1] === "w" ? "white" : "black";
+
+    selected = null;
+    possibleMoves = [];
+    lastMove = null;
+    analysisFlipped = false;
+
+    closeAnalysisPositionPicker();
+    createAnalysisBoard();
+    queueAnalysisQuery();
+
+}
 function createAnalysisBoard(){
 
     const boardEl = document.getElementById("analysisBoard");
