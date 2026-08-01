@@ -90,7 +90,28 @@ function findMaleVoice(){
     });
     return match || null;
 }
+// Coach face controller — applies mood/talking/thinking state to every
+// coach avatar currently in the DOM. Game bar, puzzle screen, and
+// lessons screen all share the same .coachFace markup, so one call
+// updates whichever one happens to be visible right now.
+function setCoachMood(mood){
+    document.querySelectorAll(".coachFace").forEach(function(el){
+        el.classList.remove("mood-neutral", "mood-happy", "mood-concerned");
+        el.classList.add("mood-" + (mood || "neutral"));
+    });
+}
 
+function setCoachTalking(isTalking){
+    document.querySelectorAll(".coachFace").forEach(function(el){
+        el.classList.toggle("coachTalking", !!isTalking);
+    });
+}
+
+function setCoachThinking(isThinking){
+    document.querySelectorAll(".coachFace").forEach(function(el){
+        el.classList.toggle("coachThinking", !!isThinking);
+    });
+}
 function speakText(text){
     if(!text) return;
     if(!("speechSynthesis" in window)) return;
