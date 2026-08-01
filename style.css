@@ -2403,3 +2403,129 @@ input::placeholder{ color:#4a5060; }
     display:flex; align-items:center; justify-content:center;
     font-size:15px; font-weight:800;
 }
+/* ============================================================
+   Splash screen — king staged under a warm spotlight with two
+   knights flanking as guards, using the app's real piece SVGs.
+   Auto-dismissed by the inline script in index.html after 3s.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap');
+
+#splashScreen{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:
+        radial-gradient(circle at 50% 38%, rgba(255,122,26,0.16), transparent 55%),
+        radial-gradient(circle at 50% 100%, rgba(255,122,26,0.06), transparent 60%),
+        linear-gradient(180deg, #0a0c10 0%, #14171c 100%);
+    overflow:hidden;
+    transition:opacity .5s ease;
+}
+#splashScreen.splashHide{
+    opacity:0;
+    pointer-events:none;
+}
+
+.splashBoardPattern{
+    position:absolute;
+    inset:-20%;
+    background-image:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 42px),
+        repeating-linear-gradient(-45deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 42px);
+    transform:rotate(3deg);
+    pointer-events:none;
+}
+
+.splashGlow{
+    position:absolute;
+    top:32%;
+    left:50%;
+    width:260px;
+    height:260px;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle, rgba(255,176,102,0.35) 0%, rgba(255,122,26,0.12) 45%, transparent 72%);
+    filter:blur(4px);
+    animation:splashGlowPulse 2.6s ease-in-out infinite;
+    pointer-events:none;
+}
+
+@keyframes splashGlowPulse{
+    0%, 100%{ opacity:0.7; transform:translate(-50%,-50%) scale(1); }
+    50%{ opacity:1; transform:translate(-50%,-50%) scale(1.08); }
+}
+
+.splashStage{
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    gap:6px;
+    z-index:1;
+}
+
+.splashKnight{
+    width:58px;
+    height:58px;
+    opacity:0.82;
+    filter:brightness(0.75) drop-shadow(0 8px 10px rgba(0,0,0,0.5));
+    transform:translateY(10px);
+}
+.splashKnightLeft{ transform:translateY(10px) scaleX(-1); }
+
+.splashKing{
+    width:96px;
+    height:96px;
+    filter:drop-shadow(0 0 22px rgba(255,176,102,0.55)) drop-shadow(0 10px 12px rgba(0,0,0,0.55));
+    animation:splashKingRise .9s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes splashKingRise{
+    from{ opacity:0; transform:translateY(18px) scale(0.9); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+.splashWordmark{
+    margin-top:26px;
+    font-family:'Cinzel', serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:1.5px;
+    color:#f5f1e8;
+    display:flex;
+    align-items:center;
+    gap:2px;
+    z-index:1;
+}
+.splashWordmark .splashChess{ color:#FF7A1A; }
+.splashWordmark .splashPawn{ font-size:20px; margin:0 1px; }
+
+.splashDots{
+    margin-top:18px;
+    display:flex;
+    gap:7px;
+    z-index:1;
+}
+.splashDots span{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#FF7A1A;
+    opacity:0.35;
+    animation:splashDotPulse 1.2s ease-in-out infinite;
+}
+.splashDots span:nth-child(2){ animation-delay:.15s; }
+.splashDots span:nth-child(3){ animation-delay:.3s; }
+
+@keyframes splashDotPulse{
+    0%, 80%, 100%{ opacity:0.3; transform:scale(0.8); }
+    40%{ opacity:1; transform:scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce){
+    .splashGlow, .splashKing, .splashDots span{ animation:none !important; }
+}
