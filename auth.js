@@ -67,6 +67,20 @@ function loadCachedProfile(){
 
         applyHomeHeader(cached);
 
+        // Show Account's logged-in view immediately from the cached
+        // copy, without waiting on a network round trip — this is what
+        // lets Account be viewed while offline. The real auth listener
+        // will overwrite this with live data once the network call
+        // actually completes.
+        if(cached.username){
+            const loggedOutEl = document.getElementById("loggedOutView");
+            const loggedInEl = document.getElementById("loggedInView");
+            const usernameEl = document.getElementById("loggedInUsername");
+            if(loggedOutEl) loggedOutEl.style.display = "none";
+            if(loggedInEl) loggedInEl.style.display = "block";
+            if(usernameEl) usernameEl.textContent = currentUserFlag + " " + currentUsername;
+        }
+
     }catch(e){}
 }
 
