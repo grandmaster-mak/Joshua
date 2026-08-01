@@ -324,6 +324,13 @@ function initAuthListener(){
                 if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
             }).catch(function(err){
                 console.log("Offline — showing cached profile instead.");
+                // The network fetch above failed, so loadRecentGames()
+                // (and friend requests) never got called from the .then()
+                // branch — call them here instead. loadRecentGames()
+                // already knows how to paint from its own localStorage
+                // cache on its own, it just needs to actually be invoked.
+                if(typeof loadRecentGames === "function") loadRecentGames();
+                if(typeof loadFriendRequests === "function") loadFriendRequests();
             });
 
         }else{
