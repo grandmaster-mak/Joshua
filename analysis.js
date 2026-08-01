@@ -156,6 +156,10 @@ function createAnalysisBoard(){
     const boardEl = document.getElementById("analysisBoard");
     boardEl.innerHTML = "";
 
+    const mainArrow = document.getElementById("analysisArrowMain");
+    const ponderArrow = document.getElementById("analysisArrowPonder");
+    if(mainArrow) mainArrow.style.display = "none";
+    if(ponderArrow) ponderArrow.style.display = "none";
     for(let i = 0; i < 8; i++){
         for(let j = 0; j < 8; j++){
 
