@@ -19,6 +19,7 @@ let isCoachMode = false;
 // "home", so back correctly returns to whichever tab you actually came
 // from instead of flashing there and then jumping to Home a moment later.
 let lastActiveTab = "home";
+let lastGameResult = null;
 
 // Online multiplayer state (used by multiplayer.js)
 let myColor = null;
@@ -1921,6 +1922,8 @@ function showRatingChangePopup(myResult){
 }
 
 function recordGameResult(myResult, opponentName){
+
+    lastGameResult = myResult;
 
     if(gameMode === "human") return;
     if(typeof currentUser === "undefined" || !currentUser) return;
