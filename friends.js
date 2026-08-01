@@ -212,6 +212,35 @@ function declineFriendRequest(fromUid){
 // ---- Loads (or reloads) the friends list. Guarded by friendsListLoadToken
 // so an overlapping/duplicate call can never clobber a newer one — this
 // is the fix for the "friends tab blinks and eats the unread badge" bug.
+function cacheFriendsList(entries){
+    try{ localStorage.setItem("cachedFriendsList", JSON.stringify(entries)); }catch(e){}
+}
+
+function loadCachedFriendsList(){
+    try{ return JSON.parse(localStorage.getItem("cachedFriendsList") || "null"); }catch(e){ return null; }
+}
+
+function renderFriendCardFromCache(uid, data){
+    const safeUsername = escapeHtml(data.username);
+    const row = document.createElement("div");
+    row.className = "friendCard";
+    row.innerHTML =
+        '<div class="friendIdentity" style="cursor:pointer;" onclick="openPlayerProfile(\'' + uid + '\')">' +
+            '<div class="friendAvatarWrap">' +
+                '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+            '</div>' +
+            '<div class="friendInfo">' +
+                '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + safeUsername + '</span>' +
+                '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
+            '</div>' +
+        '</div>' +
+        '<div class="friendActions">' +
+            '<button class="friendMessageBtn" data-uid="' + uid + '" data-name="' + safeUsername + '" onclick="openFriendChat(this.dataset.uid, this.dataset.name)" title="Message">💬<span class="cardBadge" id="friendChatBadge_' + uid + '" style="display:none;"></span></button>' +
+            '<button class="btnPrimary" data-uid="' + uid + '" data-name="' + safeUsername + '" onclick="challengeFriend(this.dataset.uid, this.dataset.name)">⚔️ Challenge</button>' +
+        '</div>';
+    return row;
+}
+
 function loadFriendsList(){
 
     if(!db || !currentUser) return;
@@ -221,6 +250,19 @@ function loadFriendsList(){
 
     const myToken = ++friendsListLoadToken;
 
+    // Paint instantly from last-known friends data — keeps the Friends
+    // tab usable while offline. The live fetch below replaces this with
+    // fresh rows (presence dots, chat badges) as soon as it succeeds.
+    const cached = loadCachedFriendsList();
+    if(cached && cached.length > 0){
+        list.innerHTML = "";
+        cached.forEach(function(entry){
+            list.appendChild(renderFriendCardFromCache(entry.uid, entry.data));
+        });
+    }
+
+    const cacheAccumulator = {};
+
     db.ref("users/" + currentUser.uid + "/private/friends").once("value").then(function(snapshot){
 
         if(myToken !== friendsListLoadToken) return; // a newer load has taken over — abandon this one
@@ -228,6 +270,7 @@ function loadFriendsList(){
         if(!snapshot.exists()){
             list.innerHTML = '<p class="sub">You haven\'t added any friends yet.</p>';
             if(typeof loadOnlineFriendsStrip === "function") loadOnlineFriendsStrip([]);
+            cacheFriendsList([]);
             return;
         }
 
@@ -246,6 +289,12 @@ function loadFriendsList(){
 
                 const data = userSnap.val();
                 if(!data) return;
+
+                cacheAccumulator[uid] = data;
+                cacheFriendsList(
+                    uids.map(function(u){ return { uid: u, data: cacheAccumulator[u] }; })
+                        .filter(function(e){ return e.data; })
+                );
 
                 db.ref("presence/" + uid).once("value").then(function(presenceSnap){
 
@@ -274,12 +323,6 @@ function loadFriendsList(){
 
                     list.appendChild(row);
 
-                    // The row's badge element (#friendChatBadge_<uid>) may
-                    // not have existed yet when startFriendChatWatchers()
-                    // (chat.js) tried to update it — these are two
-                    // independent async chains with no guaranteed order.
-                    // Re-syncing here, now that the row definitely exists,
-                    // closes that race regardless of which one finished first.
                     if(typeof updateFriendChatBadge === "function"){
                         updateFriendChatBadge(uid);
                     }
