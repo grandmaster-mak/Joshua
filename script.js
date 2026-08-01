@@ -138,6 +138,12 @@ function speakText(text){
 
     if(cachedMaleVoice) utterance.voice = cachedMaleVoice;
 
+    // Mouth animates for exactly as long as speech is actually playing —
+    // this one hook covers every screen that calls speakText().
+    utterance.onstart = function(){ setCoachTalking(true); };
+    utterance.onend = function(){ setCoachTalking(false); };
+    utterance.onerror = function(){ setCoachTalking(false); };
+
     window.speechSynthesis.speak(utterance);
 }
 
