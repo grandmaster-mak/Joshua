@@ -1998,8 +1998,6 @@ function loadRecentGames(){
 
                 const label = entry.result === "win" ? "You Won" : entry.result === "loss" ? "You Lost" : "Draw";
                 const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
-                const dotCls = entry.result === "win" ? "win" : entry.result === "loss" ? "loss" : "draw";
-                const dotIcon = entry.result === "win" ? "✓" : entry.result === "loss" ? "✕" : "–";
 
                 const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
                 const timeLabel = formatRelativeTime(entry.time);
@@ -2007,19 +2005,12 @@ function loadRecentGames(){
                 const row = document.createElement("div");
                 row.className = "gameRow";
 
-                // "Online" here is the MATCH TYPE (recorded once, forever,
-                // when the game ended) — not the opponent's current
-                // presence. Labeled "Online Match" to make that clear, and
-                // real presence is checked separately below via
-                // .liveStatusText, the same way the Profile screen's
-                // Recent Games already does it.
                 const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online Match" : "Local";
 
                 row.innerHTML =
                     '<div class="gameOpponentInfo">' +
                         '<div class="gameAvatarWrap">' +
                             '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
-                            '<span class="gameResultDot ' + dotCls + '">' + dotIcon + '</span>' +
                         '</div>' +
                         '<div class="gameOpponentText">' +
                             '<span class="gameOpponent"></span>' +
