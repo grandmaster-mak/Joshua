@@ -299,7 +299,46 @@ function runAnalysisQuery(){
     analysisStockfish.postMessage("go movetime 800");
 
 }
+// Draws a move arrow on the analysis board — from-square to to-square,
+// accounting for board flip. lineId/headId pick which of the two arrow
+// styles (solid green "best move" vs dashed blue "then likely") to draw.
+function drawAnalysisArrow(lineId, uciMove){
 
+    const line = document.getElementById(lineId);
+    if(!line) return;
+
+    if(!uciMove || uciMove.length < 4){
+        line.style.display = "none";
+        return;
+    }
+
+    const from = squareToCoords(uciMove.substring(0, 2));
+    const to = squareToCoords(uciMove.substring(2, 4));
+
+    function displayCoords(r, c){
+        const dr = analysisFlipped ? 7 - r : r;
+        const dc = analysisFlipped ? 7 - c : c;
+        return { x: dc * 12.5 + 6.25, y: dr * 12.5 + 6.25 };
+    }
+
+    const p1 = displayCoords(from.r, from.c);
+    const p2 = displayCoords(to.r, to.c);
+
+    // Pull the tip back slightly so the arrowhead doesn't bury itself
+    // under the destination square's piece image.
+    const dx = p2.x - p1.x, dy = p2.y - p1.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    const shorten = 5;
+    const tipX = p2.x - (dx / dist) * shorten;
+    const tipY = p2.y - (dy / dist) * shorten;
+
+    line.setAttribute("x1", p1.x);
+    line.setAttribute("y1", p1.y);
+    line.setAttribute("x2", tipX);
+    line.setAttribute("y2", tipY);
+    line.style.display = "block";
+
+}
 function updateAnalysisDisplay(){
 
     const evalEl = document.getElementById("analysisEvalText");
