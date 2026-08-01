@@ -343,6 +343,7 @@ function updateAnalysisDisplay(){
 
     const evalEl = document.getElementById("analysisEvalText");
     const bestEl = document.getElementById("analysisBestMoveText");
+    const ponderEl = document.getElementById("analysisPonderText");
     if(!evalEl) return;
 
     if(analysisEvalCp !== null){
@@ -365,8 +366,18 @@ function updateAnalysisDisplay(){
 
     }
 
+    const moves = analysisBestMoveUci ? analysisBestMoveUci.split(" ").filter(Boolean) : [];
+    const mainMove = moves[0] || null;
+    const ponderMove = moves[1] || null;
+
+    drawAnalysisArrow("analysisArrowMain", mainMove);
+    drawAnalysisArrow("analysisArrowPonder", ponderMove);
+
     if(bestEl){
-        bestEl.textContent = analysisBestMoveUci ? "Best move: " + analysisBestMoveUci : "";
+        bestEl.textContent = mainMove ? "Suggested: " + squareName(squareToCoords(mainMove.substring(0,2)).r, squareToCoords(mainMove.substring(0,2)).c).toUpperCase() + " → " + squareName(squareToCoords(mainMove.substring(2,4)).r, squareToCoords(mainMove.substring(2,4)).c).toUpperCase() : "";
+    }
+    if(ponderEl){
+        ponderEl.textContent = ponderMove ? "Then likely: " + ponderMove.substring(0,2).toUpperCase() + " → " + ponderMove.substring(2,4).toUpperCase() : "";
     }
 
 }
