@@ -2155,8 +2155,13 @@ window.addEventListener("popstate", function(event){
 
         // Game already finished (resigned/aborted/drawn/checkmated/timed
         // out) — nothing left to protect, so just leave the board and any
-        // leftover result popup, straight back to Home.
+        // leftover result popup, straight back to Home. Also close Chess
+        // DNA here if it's open — #game staying visible means THIS branch
+        // runs before the generic full-screen-panel cleanup below ever
+        // gets a chance to, which is exactly what let DNA get stuck onscreen.
         closePopup();
+        const dnaScreenEl = document.getElementById("chessDnaScreen");
+        if(dnaScreenEl) dnaScreenEl.style.display = "none";
         document.getElementById("game").style.display = "none";
         document.getElementById("appShell").style.display = "flex";
         switchScreen("home");
