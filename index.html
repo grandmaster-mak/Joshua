@@ -1139,7 +1139,21 @@
 
             <p class="sub" style="margin-bottom:10px;">Move either side freely to explore any position — the engine evaluates live.</p>
 
-            <div id="analysisBoard" style="width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); overflow:hidden;"></div>
+            <div id="analysisBoardWrap" style="position:relative; width:100%;">
+                <div id="analysisBoard" style="width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); overflow:hidden;"></div>
+                <svg id="analysisArrowSvg" viewBox="0 0 100 100" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;">
+                    <defs>
+                        <marker id="analysisArrowHead" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 Z" fill="#4ade80"></path>
+                        </marker>
+                        <marker id="analysisArrowHeadPonder" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 Z" fill="#7ba3ff"></path>
+                        </marker>
+                    </defs>
+                    <line id="analysisArrowMain" x1="0" y1="0" x2="0" y2="0" stroke="#4ade80" stroke-width="1.8" marker-end="url(#analysisArrowHead)" style="display:none;"></line>
+                    <line id="analysisArrowPonder" x1="0" y1="0" x2="0" y2="0" stroke="#7ba3ff" stroke-width="1.4" stroke-dasharray="3,2" marker-end="url(#analysisArrowHeadPonder)" style="display:none; opacity:0.85;"></line>
+                </svg>
+            </div>
 
             <div class="coachRow" style="padding:14px 0;">
                 <div class="coachBubble" style="width:100%;">
