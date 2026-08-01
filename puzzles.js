@@ -297,6 +297,11 @@ function clickPuzzleSquare(r, c){
 
     const piece = pieces[r][c];
 
+    if(selected != null && "speechSynthesis" in window){
+        window.speechSynthesis.cancel();
+        if(typeof setCoachTalking === "function") setCoachTalking(false);
+    }
+
     if(selected == null){
         if(piece === "") return;
         const pieceColor = isWhite(piece) ? "white" : "black";
