@@ -108,9 +108,16 @@ function closeChatListener(){
 
 function closeChat(){
     closeChatListener();
-    document.getElementById("chatScreen").style.display = "none";
+    // Let popstate be the ONLY thing that hides chatScreen — same
+    // pattern as closePlayerProfile(). Hiding it here first (before
+    // history.back() even fires the popstate event) was making the
+    // chat-open check in script.js's popstate handler see it as already
+    // closed, so it fell through to the live-game branch and showed the
+    // resign/draw/abort menu on top of the board it had just revealed.
     if(history.state && history.state.screen === "chat"){
         history.back();
+    }else{
+        document.getElementById("chatScreen").style.display = "none";
     }
 }
 
