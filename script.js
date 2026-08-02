@@ -20,6 +20,8 @@ let isCoachMode = false;
 // from instead of flashing there and then jumping to Home a moment later.
 let lastActiveTab = "home";
 let lastGameResult = null;
+let ratedAIActive = false;
+let ratedAISettings = null;
 
 // Online multiplayer state (used by multiplayer.js)
 let myColor = null;
@@ -1409,6 +1411,7 @@ function startNewGame(){
 
 function openPlaySetup(mode){
     isCoachMode = false;
+    ratedAIActive = false;
     document.getElementById("gameMode").value = mode;
     updateGameMode();
     showTimeControl();
