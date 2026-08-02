@@ -31,6 +31,11 @@ function buildDirectChatId(uidA, uidB){
 
 function openGameChat(){
 
+    if(gameMode === "ai" && ratedAIActive){
+        openAIChat();
+        return;
+    }
+
     if(gameMode !== "online" || !currentRoomCode) return;
 
     const partnerName = myColor === "white" ? blackPlayer : whitePlayer;
@@ -39,6 +44,27 @@ function openGameChat(){
     updateGameChatBadge();
 
     openChat("rooms/" + currentRoomCode + "/chat", partnerName, "room_" + currentRoomCode);
+
+}
+
+// Fully local, non-Firebase chat with the rated AI opponent. Reuses the
+// same chat screen and message-bubble rendering as real online chat.
+function openAIChat(){
+
+    closeChatListener();
+
+    activeChatPath = "ai-local";
+    activeChatPartnerName = blackPlayer || "Computer";
+    activeChatReadKey = null;
+
+    document.getElementById("chatWithName").textContent = activeChatPartnerName;
+    const container = document.getElementById("chatMessages");
+    container.innerHTML = "";
+    aiChatMessages.forEach(function(msg){ renderChatMessage(msg); });
+    document.getElementById("chatInput").value = "";
+    document.getElementById("chatScreen").style.display = "flex";
+
+    history.pushState({ screen: "chat" }, "", "#chat");
 
 }
 
