@@ -1565,8 +1565,7 @@ function closePromotion(){
 }
 
 function undoMove(){
-    if(gameMode === "online") return;
-
+    if(gameMode === "online" || (gameMode === "ai" && ratedAIActive)) return;
     if(gameOver) return;
 
     if(gameMode === "ai" && undoStack.length >= 2){
