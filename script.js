@@ -1404,6 +1404,7 @@ function startNewGame(){
     selectedTime = Number(document.getElementById("timeControl").value);
     gameMode = document.getElementById("gameMode").value;
     aiDifficulty = document.getElementById("aiDifficulty").value;
+    ratedAIActive = false;
 
     closeTimeControl();
     newGame();
