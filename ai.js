@@ -16,9 +16,13 @@ const difficultySettings = {
     medium: { elo: 1600, movetime: 700,  multipv: 1 },
     hard:   { elo: 0,    movetime: 1200, multipv: 1 }
 };
+
 // Maps the player's own rating onto Stockfish strength + a candidate-
 // move pool size, so the rated quick-match AI feels roughly matched to
 // the player and gets more consistent (fewer mistakes) as they improve.
+// Used only when ratedAIActive is true (set by startRatedAIMatch() in
+// multiplayer.js) — the practice "Play vs AI" mode still uses the fixed
+// difficultySettings above, picked by the person themselves.
 function getRatedAISettings(rating){
     rating = rating || 100;
     const elo = Math.max(1320, Math.min(2600, 1320 + Math.round(rating * 1.4)));
@@ -30,6 +34,7 @@ function getRatedAISettings(rating){
     else multipv = 1;
     return { elo: elo, movetime: movetime, multipv: multipv };
 }
+
 try {
 
     stockfish = new Worker("stockfish-18-lite-single.js");
@@ -98,7 +103,7 @@ try {
             const parts = line.split(" ");
             let uciMove = parts[1];
 
-            const settings = difficultySettings[aiDifficulty] || difficultySettings.medium;
+            const settings = (typeof ratedAIActive !== "undefined" && ratedAIActive && typeof ratedAISettings !== "undefined" && ratedAISettings) ? ratedAISettings : (difficultySettings[aiDifficulty] || difficultySettings.medium);
 
             if(settings.multipv > 1){
 
@@ -108,16 +113,20 @@ try {
                 }
 
                 if(candidates.length > 0){
+                    // Weighted pick among the engine's top candidates — this
+                    // is what makes the AI human-like: it doesn't always
+                    // play its single best line. More candidates (lower
+                    // rating opponents) means more frequent slip-ups.
+                    const weights = [0.45, 0.25, 0.17, 0.13];
                     const roll = Math.random();
-                    if(roll < 0.5){
-                        uciMove = candidates[0];
-                    }else if(roll < 0.8 && candidates[1]){
-                        uciMove = candidates[1];
-                    }else if(candidates[2]){
-                        uciMove = candidates[2];
-                    }else{
-                        uciMove = candidates[0];
+                    let cumulative = 0;
+                    let chosenIndex = 0;
+                    for(let i = 0; i < candidates.length; i++){
+                        cumulative += weights[i] || (0.13 / Math.max(1, candidates.length - 3));
+                        chosenIndex = i;
+                        if(roll < cumulative) break;
                     }
+                    uciMove = candidates[chosenIndex];
                 }
             }
 
@@ -218,9 +227,9 @@ function makeAIMove(){
     if(currentPlayer !== "black") return;
     if(!stockfish) return;
 
-    const settings = difficultySettings[aiDifficulty] || difficultySettings.medium;
+    const settings = (typeof ratedAIActive !== "undefined" && ratedAIActive && typeof ratedAISettings !== "undefined" && ratedAISettings) ? ratedAISettings : (difficultySettings[aiDifficulty] || difficultySettings.medium);
 
-    console.log("[Stockfish] Difficulty:", aiDifficulty, "Settings:", JSON.stringify(settings));
+    console.log("[Stockfish] Difficulty:", (typeof ratedAIActive !== "undefined" && ratedAIActive) ? "rated-ai" : aiDifficulty, "Settings:", JSON.stringify(settings));
 
     multiPvMoves = {};
 
