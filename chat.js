@@ -8,6 +8,8 @@ let activeChatPartnerName = "";
 let activeChatReadKey = null;
 let aiChatMessages = [];
 
+let aiChatMessages = [];
+
 const AI_CHAT_LINES = [
     "Good luck, let's have a good game!",
     "Nice move.",
@@ -23,6 +25,38 @@ const AI_CHAT_LINES = [
 
 function pickAIChatReply(){
     return AI_CHAT_LINES[Math.floor(Math.random() * AI_CHAT_LINES.length)];
+}
+
+// Lightweight pattern-matched replies — checks the actual message
+// against a set of recognized phrases before falling back to the
+// generic small-talk lines above. Order matters: more specific patterns
+// are checked before the catch-all "ends with ?" pattern.
+const AI_CHAT_PATTERNS = [
+    { re:/\b(hi|hello|hey|yo)\b/,                           replies:["Hey there!", "Hello! Ready for a good game.", "Hi! Good luck to both of us."] },
+    { re:/how\s*(are|'re)\s*(you|u)\b/,                     replies:["I'm doing well, thanks for asking! How about you?", "Can't complain — focused on this game though!"] },
+    { re:/\bcan i ask (you )?(a )?question\b/,               replies:["Go ahead, ask away.", "Sure, what's on your mind?"] },
+    { re:/\b(what'?s your name|who are you)\b/,              replies:["I'm your AI opponent for this match — no fancy name, just here to play!"] },
+    { re:/\byour rating\b|\bhow good are you\b|\bare you rated\b/, replies:["I'm playing at roughly your level today — should be a fair fight!"] },
+    { re:/\b(good game|gg|well played|nice game)\b/,         replies:["Good game to you too!", "That was fun — thanks for playing!"] },
+    { re:/\b(nice move|good move|great move)\b/,             replies:["Thanks! I try.", "Glad you liked that one."] },
+    { re:/\brematch\b|\bplay again\b/,                       replies:["Sounds good — let's see who wins the next one!"] },
+    { re:/\b(thank you|thanks|thx)\b/,                       replies:["You're welcome!", "No problem at all."] },
+    { re:/\b(bye|goodbye|see ya|see you|later)\b/,           replies:["See you next time — good luck out there!"] },
+    { re:/\bhint\b|\bwhat should i play\b|\bbest move\b|\btell me the move\b/, replies:["Ha, nice try — I can't give away hints mid-game!", "That wouldn't be a fair game if I told you!"] },
+    { re:/\b(lucky|luck)\b/,                                 replies:["Maybe a little — but I'll take it!", "Skill and a bit of luck, I think."] },
+    { re:/\b(nervous|scared|worried)\b/,                     replies:["Don't worry, just play your natural game."] },
+    { re:/\?\s*$/,                                           replies:["That's a good question — let's talk after the game, I need to focus!", "Hmm, good one — ask me again once we're done playing."] }
+];
+
+function getAIChatReply(userText){
+    const text = (userText || "").toLowerCase().trim();
+    for(let i = 0; i < AI_CHAT_PATTERNS.length; i++){
+        if(AI_CHAT_PATTERNS[i].re.test(text)){
+            const options = AI_CHAT_PATTERNS[i].replies;
+            return options[Math.floor(Math.random() * options.length)];
+        }
+    }
+    return pickAIChatReply();
 }
 
 function buildDirectChatId(uidA, uidB){
