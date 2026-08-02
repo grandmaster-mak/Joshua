@@ -19,6 +19,12 @@ let isCoachMode = false;
 // "home", so back correctly returns to whichever tab you actually came
 // from instead of flashing there and then jumping to Home a moment later.
 let lastActiveTab = "home";
+
+// Set by multiplayer.js's startRatedAIMatch() when Play Online falls
+// back to a rated AI opponent after no human match is found in time.
+// Affects rating changes, chat button visibility, undo availability,
+// and the restart-confirmation flow — everywhere a real online game
+// already behaves specially, a rated AI match now behaves the same way.
 let lastGameResult = null;
 let ratedAIActive = false;
 let ratedAISettings = null;
@@ -93,28 +99,7 @@ function findMaleVoice(){
     });
     return match || null;
 }
-// Coach face controller — applies mood/talking/thinking state to every
-// coach avatar currently in the DOM. Game bar, puzzle screen, and
-// lessons screen all share the same .coachFace markup, so one call
-// updates whichever one happens to be visible right now.
-function setCoachMood(mood){
-    document.querySelectorAll(".coachFace").forEach(function(el){
-        el.classList.remove("mood-neutral", "mood-happy", "mood-concerned");
-        el.classList.add("mood-" + (mood || "neutral"));
-    });
-}
 
-function setCoachTalking(isTalking){
-    document.querySelectorAll(".coachFace").forEach(function(el){
-        el.classList.toggle("coachTalking", !!isTalking);
-    });
-}
-
-function setCoachThinking(isThinking){
-    document.querySelectorAll(".coachFace").forEach(function(el){
-        el.classList.toggle("coachThinking", !!isThinking);
-    });
-}
 function speakText(text){
     if(!text) return;
     if(!("speechSynthesis" in window)) return;
@@ -148,6 +133,29 @@ function speakText(text){
     utterance.onerror = function(){ setCoachTalking(false); };
 
     window.speechSynthesis.speak(utterance);
+}
+
+// Coach face controller — applies mood/talking/thinking state to every
+// coach avatar currently in the DOM. Game bar, puzzle screen, and
+// lessons screen all share the same .coachFace markup, so one call
+// updates whichever one happens to be visible right now.
+function setCoachMood(mood){
+    document.querySelectorAll(".coachFace").forEach(function(el){
+        el.classList.remove("mood-neutral", "mood-happy", "mood-concerned");
+        el.classList.add("mood-" + (mood || "neutral"));
+    });
+}
+
+function setCoachTalking(isTalking){
+    document.querySelectorAll(".coachFace").forEach(function(el){
+        el.classList.toggle("coachTalking", !!isTalking);
+    });
+}
+
+function setCoachThinking(isThinking){
+    document.querySelectorAll(".coachFace").forEach(function(el){
+        el.classList.toggle("coachThinking", !!isThinking);
+    });
 }
 
 let pieces = [
@@ -1528,7 +1536,9 @@ function createCoordinates(){
 // Shows the game-over popup. Also resets any previous rating-change
 // indicator so it doesn't linger from a prior online game — the correct
 // value (if any) is filled back in by showRatingChangePopup() once
-// recordGameResult() has finished saving.
+// recordGameResult() has finished saving. Also shows/hides the Chess
+// DNA button depending on whether this game has "you" as a single
+// player to analyze (AI or online — including rated AI matches).
 function showPopup(title, message){
     document.getElementById("popupTitle").textContent = title;
     document.getElementById("popupMessage").textContent = message;
@@ -1546,6 +1556,7 @@ function showPopup(title, message){
 
     document.getElementById("gameOverPopup").classList.add("show");
 }
+
 function closePopup(){
     document.getElementById("gameOverPopup").classList.remove("show");
 }
@@ -1566,6 +1577,7 @@ function closePromotion(){
 
 function undoMove(){
     if(gameMode === "online" || (gameMode === "ai" && ratedAIActive)) return;
+
     if(gameOver) return;
 
     if(gameMode === "ai" && undoStack.length >= 2){
@@ -1608,7 +1620,9 @@ function undoMove(){
 
 // Undo doesn't make sense in a real online match against a live opponent
 // (there's no way to ask them to un-make their move), so it's swapped out
-// for Chat there instead. AI and local two-player games get Undo, no Chat.
+// for Chat there instead — and a rated AI match behaves the same way
+// since it counts toward rating just like a real online game does.
+// Practice AI and local two-player games get Undo, no Chat.
 function updateInGameControlsVisibility(){
     const undoBtn = document.getElementById("undo");
     const chatBtn = document.getElementById("gameChatBtn");
@@ -1910,9 +1924,9 @@ function myOpponentUidAndPhoto(){
 }
 
 // Shows the "+8" / "-8" rating-change line on the game-over popup, once
-// the online rating update has actually been saved. Online wins/losses
-// change rating by 8 (see recordGameResult below); draws don't change
-// rating, and AI/local games never show this at all.
+// the rating update has actually been saved. Applies to real online
+// games AND rated AI matches (ratedAIActive) — draws don't change
+// rating, and practice AI/local games never show this at all.
 function showRatingChangePopup(myResult){
 
     const el = document.getElementById("popupRatingChange");
@@ -2265,6 +2279,5 @@ window.addEventListener("popstate", function(event){
     }
 
 });
-
 
 createCoordinates();
