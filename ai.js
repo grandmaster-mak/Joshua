@@ -16,7 +16,20 @@ const difficultySettings = {
     medium: { elo: 1600, movetime: 700,  multipv: 1 },
     hard:   { elo: 0,    movetime: 1200, multipv: 1 }
 };
-
+// Maps the player's own rating onto Stockfish strength + a candidate-
+// move pool size, so the rated quick-match AI feels roughly matched to
+// the player and gets more consistent (fewer mistakes) as they improve.
+function getRatedAISettings(rating){
+    rating = rating || 100;
+    const elo = Math.max(1320, Math.min(2600, 1320 + Math.round(rating * 1.4)));
+    const movetime = Math.max(500, Math.min(1300, 500 + rating));
+    let multipv;
+    if(rating < 200) multipv = 4;
+    else if(rating < 600) multipv = 3;
+    else if(rating < 1200) multipv = 2;
+    else multipv = 1;
+    return { elo: elo, movetime: movetime, multipv: multipv };
+}
 try {
 
     stockfish = new Worker("stockfish-18-lite-single.js");
