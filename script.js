@@ -1918,7 +1918,7 @@ function showRatingChangePopup(myResult){
     const el = document.getElementById("popupRatingChange");
     if(!el) return;
 
-    if(gameMode !== "online"){
+    if(gameMode !== "online" && !ratedAIActive){
         el.style.display = "none";
         return;
     }
