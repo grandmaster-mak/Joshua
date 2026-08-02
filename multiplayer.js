@@ -658,6 +658,15 @@ function startQuickMatch(){
 
         return m;
 
+    }, function(error, committed, snapshot){
+        if(error){
+            console.error("Matchmaking transaction failed:", error.message);
+            matchmakingSearchActive = false;
+            if(matchmakingPendingRef){ matchmakingPendingRef.off(); matchmakingPendingRef = null; }
+            clearTimeout(matchmakingTimeoutHandle);
+            closeQuickMatchSearchingUI();
+            showInfoPopup("⚠️ Matchmaking Error", "Could not join the matchmaking queue: " + error.message);
+        }
     });
 
     matchmakingTimeoutHandle = setTimeout(function(){
