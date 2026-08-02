@@ -337,13 +337,39 @@ function initAuthListener(){
 
         }else{
 
+            // Don't decide instantly — a null user can mean a genuine
+            // logout (session cleared) OR a brief network hiccup where
+            // Firebase hasn't confirmed the saved session yet. Wait a
+            // moment and check again. If still logged out AND online
+            // after that, treat it as real and show the login screen —
+            // otherwise a cleared cache leaves the device permanently
+            // stuck with no way back in, since there's no Log Out
+            // button to have set userExplicitlyLoggedOut.
+            clearTimeout(authNullRecoveryTimer);
+            authNullRecoveryTimer = setTimeout(function(){
+
+                if(auth.currentUser) return; // recovered on its own — was just a hiccup
+
+                if(!navigator.onLine && !userExplicitlyLoggedOut){
+                    console.log("Offline with no session yet — keeping cached profile displayed instead of showing the login screen.");
+                    return;
+                }
+
+                showLoggedOutState();
+
+            }, 2500);
+
+            return;
+
+        }
+
+    });
+
+}
+
+function showLoggedOutState(){
+
             currentUser = null;
-
-            if(!userExplicitlyLoggedOut){
-                console.log("Auth check came back empty, but this wasn't an explicit logout — keeping the cached profile displayed rather than resetting to placeholders (likely a network hiccup).");
-                return;
-            }
-
             currentUsername = null;
             currentUserCountry = null;
             currentUserFlag = "";
