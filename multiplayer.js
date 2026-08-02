@@ -16,10 +16,6 @@ const firebaseConfig = {
 let db = null;
 let serverTimeOffset = 0;
 let clockData = null;
-let matchmakingScreenActive = false;
-let matchmakingPendingRef = null;
-let matchmakingTimeoutHandle = null;
-let quickMatchCountdownInterval = null;
 
 // Whether we've heard back from Firebase at least once about how far off
 // this device's own clock is. Every device — regardless of what its own
@@ -250,6 +246,10 @@ function leaveSpectating(){
 }
 
 function startOnlineGame(code){
+
+    // Clear out any listeners left over from a previous online game
+    // played earlier in this session, before attaching this game's set.
+    stopOnlineListeners();
 
     closeTimeControl();
 
@@ -568,6 +568,7 @@ function startOnlineClockDisplay(){
     }, 500);
 
 }
+
 // ============================================================
 // Quick Match — automatic matchmaking. Searches for 15 seconds; if
 // someone else is also searching, they're paired atomically via a
@@ -576,13 +577,17 @@ function startOnlineClockDisplay(){
 // found in time, falls back to a RATED match against the AI, scaled
 // to the player's own rating.
 //
-// FIREBASE RULES NOTE: add a rule for this new top-level path, same
-// shape as other auth-gated paths already in use:
+// FIREBASE RULES: requires a rule for this top-level path —
 //   "matchmaking": {
 //     ".read": "auth != null",
 //     ".write": "auth != null"
 //   }
 // ============================================================
+
+let matchmakingSearchActive = false;
+let matchmakingPendingRef = null;
+let matchmakingTimeoutHandle = null;
+let quickMatchCountdownInterval = null;
 
 function startQuickMatch(){
 
