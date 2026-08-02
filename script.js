@@ -2149,11 +2149,22 @@ window.addEventListener("popstate", function(event){
 
     const state = event.state;
 
+    // Closing an open chat (in-game chat or a friend DM) via the back
+    // button must just close chat and reveal whatever's behind it — it
+    // should never trigger the live-game resign/draw/abort menu. That
+    // menu was firing here because #game stays display:flex underneath
+    // the chat overlay for the entire time chat is open, so the live-
+    // game check below was running first regardless of chat being open.
+    if(document.getElementById("chatScreen").style.display === "flex"){
+        document.getElementById("chatScreen").style.display = "none";
+        if(typeof closeChatListener === "function") closeChatListener();
+        return;
+    }
+
     // A live game must never be silently left by the back button — push
     // its state right back on and surface the same resign/draw/abort
     // options the in-game menu icon shows.
     if(document.getElementById("game").style.display === "flex"){
-
         if(gameMode === "online" && myColor === null){
             // Spectating — nothing to protect, just leave.
             leaveSpectating();
