@@ -612,6 +612,15 @@ function startQuickMatch(){
         closeQuickMatchSearchingUI();
         startOnlineGame(info.roomCode);
 
+    }, function(err){
+        // Almost always a Firebase Rules problem on the "matchmaking"
+        // path — surfaced loudly here instead of silently doing nothing
+        // and quietly falling back to AI, which is what made this look
+        // like "nobody's ever online" even with two phones searching.
+        console.error("Matchmaking listener denied:", err.message);
+        matchmakingSearchActive = false;
+        closeQuickMatchSearchingUI();
+        showInfoPopup("⚠️ Matchmaking Error", "Could not reach the matchmaking queue: " + err.message);
     });
 
     db.ref("matchmaking").transaction(function(m){
