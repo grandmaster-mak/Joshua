@@ -1619,7 +1619,7 @@ function updateInGameControlsVisibility(){
 }
 
 function handleRestartClick(){
-    if(gameMode === "online"){
+    if(gameMode === "online" || (gameMode === "ai" && ratedAIActive)){
         showOnlineGameMenu();
     }else{
         newGame();
