@@ -1613,8 +1613,9 @@ function undoMove(){
 function updateInGameControlsVisibility(){
     const undoBtn = document.getElementById("undo");
     const chatBtn = document.getElementById("gameChatBtn");
-    if(undoBtn) undoBtn.style.display = (gameMode === "online") ? "none" : "flex";
-    if(chatBtn) chatBtn.style.display = (gameMode === "online") ? "flex" : "none";
+    const isRatedMatch = (gameMode === "online") || (gameMode === "ai" && ratedAIActive);
+    if(undoBtn) undoBtn.style.display = isRatedMatch ? "none" : "flex";
+    if(chatBtn) chatBtn.style.display = isRatedMatch ? "flex" : "none";
 }
 
 function handleRestartClick(){
