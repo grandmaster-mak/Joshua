@@ -21,6 +21,7 @@ let coachLastEvalCp = null;
 function openPlayVsCoach(){
 
     isCoachMode = true;
+    ratedAIActive = false;
     gameMode = "ai";
     aiDifficulty = "hard"; // Stockfish at full strength — meant to be very hard to beat.
     selectedTime = 600;
