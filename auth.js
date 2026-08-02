@@ -402,10 +402,6 @@ function showLoggedOutState(){
             if(searchResultEl) searchResultEl.innerHTML = "";
             if(onlineFriendsStripEl) onlineFriendsStripEl.innerHTML = '<p class="sub">Log in to see online friends.</p>';
 
-        }
-
-    });
-
 }
 
 initAuthListener();
