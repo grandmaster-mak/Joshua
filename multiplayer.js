@@ -16,6 +16,10 @@ const firebaseConfig = {
 let db = null;
 let serverTimeOffset = 0;
 let clockData = null;
+let matchmakingScreenActive = false;
+let matchmakingPendingRef = null;
+let matchmakingTimeoutHandle = null;
+let quickMatchCountdownInterval = null;
 
 // Whether we've heard back from Firebase at least once about how far off
 // this device's own clock is. Every device — regardless of what its own
@@ -247,13 +251,10 @@ function leaveSpectating(){
 
 function startOnlineGame(code){
 
-    // Clear out any listeners left over from a previous online game
-    // played earlier in this session, before attaching this game's set.
-    stopOnlineListeners();
-
     closeTimeControl();
 
     gameMode = "online";
+    ratedAIActive = false;
     newGame();
 
     // Board and clock UI show up immediately; only the timing-sensitive
