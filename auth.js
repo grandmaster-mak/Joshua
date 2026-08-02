@@ -9,6 +9,7 @@ let currentUserCountry = null;
 let currentUserFlag = "";
 let currentUserRating = 100;
 let currentUserPhotoURL = null;
+let authNullRecoveryTimer = null;
 
 // ---- Title / star-rating tiers, shown under the player's name on Home ----
 // (Purely cosmetic — derived from rating, not stored separately.)
