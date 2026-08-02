@@ -1267,9 +1267,27 @@
     </div>
 
     <script>
+    <script>
     if("serviceWorker" in navigator){
         window.addEventListener("load", function(){
-            navigator.serviceWorker.register("service-worker.js").catch(function(err){
+            navigator.serviceWorker.register("service-worker.js").then(function(reg){
+
+                reg.update(); // check for a newer version right away, every load
+
+                // The moment a new service worker takes control (which
+                // happens automatically now thanks to skipWaiting +
+                // clients.claim above), reload once so the page is
+                // actually running the fresh code, not just caching it
+                // for "next time." This is what replaces manual cache
+                // clearing / log-out-log-in as the fix going forward.
+                let refreshed = false;
+                navigator.serviceWorker.addEventListener("controllerchange", function(){
+                    if(refreshed) return;
+                    refreshed = true;
+                    window.location.reload();
+                });
+
+            }).catch(function(err){
                 console.error("Service worker registration failed:", err.message);
             });
         });
