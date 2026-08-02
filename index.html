@@ -106,7 +106,7 @@
         <div class="action-card friends homeActionPhoto homeActionGlobe" onclick="startQuickMatch()">
             <span class="material-icons homeActionIconChip">public</span>
             <h3>Play Online</h3>
-            <p>Create or join a room</p>
+            <p>Find an opponent automatically</p>
             <span class="homeActionArrow">→</span>
         </div>
 
@@ -766,16 +766,6 @@
         </div>
 
     </div>
-    <!-- Quick Match searching popup -->
-    <div id="quickMatchPopup" class="popup">
-        <div class="popupContent">
-            <div class="quickMatchSpinner"></div>
-            <h2>Searching for an Opponent</h2>
-            <p class="sub">Looking for someone online to play...</p>
-            <p class="quickMatchCountdown" id="quickMatchCountdown">15s</p>
-            <button class="btnSecondary" onclick="cancelQuickMatchManually()">Cancel</button>
-        </div>
-    </div>
 
     <!-- Settings Popup -->
     <div id="settingsPopup" class="popup">
@@ -805,6 +795,17 @@
 
         </div>
 
+    </div>
+
+    <!-- Quick Match searching popup -->
+    <div id="quickMatchPopup" class="popup">
+        <div class="popupContent">
+            <div class="quickMatchSpinner"></div>
+            <h2>Searching for an Opponent</h2>
+            <p class="sub">Looking for someone online to play...</p>
+            <p class="quickMatchCountdown" id="quickMatchCountdown">15s</p>
+            <button class="btnSecondary" onclick="cancelQuickMatchManually()">Cancel</button>
+        </div>
     </div>
 
     <!-- ===== Chat screen (in-game + friend DMs) ===== -->
@@ -1265,34 +1266,6 @@
         <p class="awardRevealLabel">Award Unlocked!</p>
         <h2 id="awardRevealTitle" class="awardRevealTitle">Achievement</h2>
     </div>
-
-    <script>
-    <script>
-    if("serviceWorker" in navigator){
-        window.addEventListener("load", function(){
-            navigator.serviceWorker.register("service-worker.js").then(function(reg){
-
-                reg.update(); // check for a newer version right away, every load
-
-                // The moment a new service worker takes control (which
-                // happens automatically now thanks to skipWaiting +
-                // clients.claim above), reload once so the page is
-                // actually running the fresh code, not just caching it
-                // for "next time." This is what replaces manual cache
-                // clearing / log-out-log-in as the fix going forward.
-                let refreshed = false;
-                navigator.serviceWorker.addEventListener("controllerchange", function(){
-                    if(refreshed) return;
-                    refreshed = true;
-                    window.location.reload();
-                });
-
-            }).catch(function(err){
-                console.error("Service worker registration failed:", err.message);
-            });
-        });
-    }
-    </script>
 
 </body>
 </html>
