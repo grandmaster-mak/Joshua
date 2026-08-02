@@ -197,13 +197,12 @@ function sendChatMessage(){
         aiChatMessages.push({ from: myFrom, text: text, time: myTime });
         renderChatMessage({ from: myFrom, text: text, time: myTime });
 
-        setTimeout(function(){
-            const reply = pickAIChatReply();
+       setTimeout(function(){
+            const reply = getAIChatReply(text);
             const replyTime = Date.now();
             aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
             renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
-        }, 700 + Math.random() * 900);
-
+        }, 700 + Math.random() * 900); 
         input.value = "";
         return;
 
