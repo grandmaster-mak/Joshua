@@ -568,3 +568,160 @@ function startOnlineClockDisplay(){
     }, 500);
 
 }
+// ============================================================
+// Quick Match — automatic matchmaking. Searches for 15 seconds; if
+// someone else is also searching, they're paired atomically via a
+// single Firebase transaction (same pattern as the Tournament Arena
+// queue) with a randomly assigned color for each side. If nobody's
+// found in time, falls back to a RATED match against the AI, scaled
+// to the player's own rating.
+//
+// FIREBASE RULES NOTE: add a rule for this new top-level path, same
+// shape as other auth-gated paths already in use:
+//   "matchmaking": {
+//     ".read": "auth != null",
+//     ".write": "auth != null"
+//   }
+// ============================================================
+
+function startQuickMatch(){
+
+    if(!currentUser || !db){
+        showInfoPopup("🔒 Log In Required", "Please log in to play online.");
+        return;
+    }
+
+    matchmakingSearchActive = true;
+    showQuickMatchSearchingUI();
+
+    matchmakingPendingRef = db.ref("matchmaking/pending/" + currentUser.uid);
+    matchmakingPendingRef.on("value", function(snap){
+
+        const info = snap.val();
+        if(!info || !matchmakingSearchActive) return;
+
+        clearTimeout(matchmakingTimeoutHandle);
+        stopQuickMatchSearch();
+        db.ref("matchmaking/pending/" + currentUser.uid).set(null);
+
+        myColor = info.color;
+        currentRoomCode = info.roomCode;
+        selectedTime = 600;
+        gameMode = "online";
+
+        closeQuickMatchSearchingUI();
+        startOnlineGame(info.roomCode);
+
+    });
+
+    db.ref("matchmaking").transaction(function(m){
+
+        if(!m) m = {};
+        if(!m.queue) m.queue = {};
+        if(!m.pending) m.pending = {};
+
+        const myUid = currentUser.uid;
+        const now = Date.now();
+
+        // Best-effort cleanup of anyone who's been sitting in queue too
+        // long (closed the app mid-search without cancelling properly).
+        Object.keys(m.queue).forEach(function(uid){
+            if(now - (m.queue[uid].joinedAt || 0) > 60000) delete m.queue[uid];
+        });
+
+        const others = Object.keys(m.queue).filter(function(u){ return u !== myUid; });
+
+        if(others.length > 0){
+
+            const opponent = others[0];
+            delete m.queue[opponent];
+            delete m.queue[myUid];
+
+            const code = generateRoomCode();
+            const whiteFirst = Math.random() < 0.5;
+
+            m.pending[myUid] = { roomCode: code, color: whiteFirst ? "white" : "black" };
+            m.pending[opponent] = { roomCode: code, color: whiteFirst ? "black" : "white" };
+
+        }else{
+            m.queue[myUid] = { rating: currentUserRating || 100, joinedAt: now };
+        }
+
+        return m;
+
+    });
+
+    matchmakingTimeoutHandle = setTimeout(function(){
+        cancelQuickMatchAndFallbackToAI();
+    }, 15000);
+
+}
+
+function stopQuickMatchSearch(){
+    matchmakingSearchActive = false;
+    if(matchmakingPendingRef){ matchmakingPendingRef.off(); matchmakingPendingRef = null; }
+    clearTimeout(matchmakingTimeoutHandle);
+}
+
+function cancelQuickMatchAndFallbackToAI(){
+    if(!matchmakingSearchActive) return; // already matched or cancelled
+    stopQuickMatchSearch();
+    if(currentUser && db) db.ref("matchmaking/queue/" + currentUser.uid).remove();
+    closeQuickMatchSearchingUI();
+    startRatedAIMatch();
+}
+
+function cancelQuickMatchManually(){
+    if(!matchmakingSearchActive){
+        closeQuickMatchSearchingUI();
+        return;
+    }
+    stopQuickMatchSearch();
+    if(currentUser && db) db.ref("matchmaking/queue/" + currentUser.uid).remove();
+    closeQuickMatchSearchingUI();
+}
+
+function showQuickMatchSearchingUI(){
+
+    let remaining = 15;
+    const el = document.getElementById("quickMatchCountdown");
+    if(el) el.textContent = remaining + "s";
+
+    document.getElementById("quickMatchPopup").classList.add("show");
+
+    clearInterval(quickMatchCountdownInterval);
+    quickMatchCountdownInterval = setInterval(function(){
+        remaining--;
+        if(el) el.textContent = Math.max(remaining, 0) + "s";
+        if(remaining <= 0) clearInterval(quickMatchCountdownInterval);
+    }, 1000);
+
+}
+
+function closeQuickMatchSearchingUI(){
+    clearInterval(quickMatchCountdownInterval);
+    document.getElementById("quickMatchPopup").classList.remove("show");
+}
+
+// Rated AI fallback — counts toward rating exactly like a real online
+// game (see recordGameResult / showRatingChangePopup in script.js).
+function startRatedAIMatch(){
+
+    const rating = currentUserRating || 100;
+
+    gameMode = "ai";
+    ratedAIActive = true;
+    isCoachMode = false;
+    // Kept only for the existing beatMediumAI/beatHardAI achievement
+    // checks — actual engine strength comes from ratedAISettings below.
+    aiDifficulty = rating >= 1200 ? "hard" : rating >= 600 ? "medium" : "easy";
+    ratedAISettings = (typeof getRatedAISettings === "function") ? getRatedAISettings(rating) : null;
+    selectedTime = 600;
+    if(typeof aiChatMessages !== "undefined") aiChatMessages = [];
+
+    closeTimeControl();
+    newGame();
+
+    showInfoPopup("🤖 No Opponents Found", "Couldn't find anyone online in time — this is now a rated match against the AI, matched to your rating.");
+
+}
