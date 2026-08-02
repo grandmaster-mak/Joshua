@@ -2193,6 +2193,9 @@ window.addEventListener("popstate", function(event){
         document.getElementById("profileScreen").style.display = "none";
         const dnaScreenEl2 = document.getElementById("chessDnaScreen");
         if(dnaScreenEl2) dnaScreenEl2.style.display = "none";
+        if(typeof matchmakingSearchActive !== "undefined" && matchmakingSearchActive && typeof cancelQuickMatchManually === "function"){
+            cancelQuickMatchManually();
+        }
         document.getElementById("appShell").style.display = "flex";
         switchScreen(lastActiveTab);
         return;
