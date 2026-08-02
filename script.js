@@ -1975,14 +1975,15 @@ function recordGameResult(myResult, opponentName){
             data.winStreak = 0;
         }
 
-        // Rating only changes for real online opponents, not local/AI
-        // games. Each side's own client updates their own rating (a win
-        // for me is a loss for them, on their own device) — this avoids
-        // needing write access to another player's account.
-        if(gameMode === "online"){
+        // Rating changes for real online opponents AND for the rated
+        // quick-match AI fallback — everything else (practice AI, local
+        // 2-player, Coach) stays unrated.
+        if(gameMode === "online" || ratedAIActive){
             data.rating = data.rating || 100;
             if(myResult === "win") data.rating += 8;
             else if(myResult === "loss") data.rating -= 8;
+        }
+        if(gameMode === "online"){
             data.currentRoomCode = null; // game's over — no longer "currently playing"
         }
 
