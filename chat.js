@@ -154,7 +154,28 @@ function sendChatMessage(){
     const input = document.getElementById("chatInput");
     const text = input.value.trim();
 
-    if(!text || !activeChatPath || !db || !currentUser) return;
+    if(!text) return;
+
+    if(activeChatPath === "ai-local"){
+
+        const myTime = Date.now();
+        const myFrom = currentUser ? currentUser.uid : "me";
+        aiChatMessages.push({ from: myFrom, text: text, time: myTime });
+        renderChatMessage({ from: myFrom, text: text, time: myTime });
+
+        setTimeout(function(){
+            const reply = pickAIChatReply();
+            const replyTime = Date.now();
+            aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
+            renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
+        }, 700 + Math.random() * 900);
+
+        input.value = "";
+        return;
+
+    }
+
+    if(!activeChatPath || !db || !currentUser) return;
 
     db.ref(activeChatPath).push({
         from: currentUser.uid,
