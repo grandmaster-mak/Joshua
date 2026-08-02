@@ -6,6 +6,24 @@ let activeChatPath = null;
 let activeChatRef = null;
 let activeChatPartnerName = "";
 let activeChatReadKey = null;
+let aiChatMessages = [];
+
+const AI_CHAT_LINES = [
+    "Good luck, let's have a good game!",
+    "Nice move.",
+    "Hmm, interesting choice.",
+    "I need to think about this one.",
+    "This position is getting tricky.",
+    "You're playing well today.",
+    "Let's see how this unfolds.",
+    "I almost missed that.",
+    "Good game so far!",
+    "I'll have to be careful here."
+];
+
+function pickAIChatReply(){
+    return AI_CHAT_LINES[Math.floor(Math.random() * AI_CHAT_LINES.length)];
+}
 
 function buildDirectChatId(uidA, uidB){
     return [uidA, uidB].sort().join("_");
