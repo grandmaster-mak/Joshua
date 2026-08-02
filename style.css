@@ -2610,3 +2610,18 @@ input::placeholder{ color:#4a5060; }
 .dnaCallout b{ font-weight:800; }
 .dnaCalloutGood{ background:rgba(74,222,128,0.12); color:#c9f7d9; border:1px solid rgba(74,222,128,0.3); }
 .dnaCalloutFocus{ background:rgba(255,122,26,0.12); color:#ffd9b3; border:1px solid rgba(255,122,26,0.3); }
+.quickMatchSpinner{
+    width:64px; height:64px;
+    border-radius:50%;
+    border:4px solid rgba(255,122,26,0.2);
+    border-top-color:#FF7A1A;
+    margin:0 auto 16px;
+    animation:quickMatchSpin 1s linear infinite;
+}
+@keyframes quickMatchSpin{ to{ transform:rotate(360deg); } }
+.quickMatchCountdown{
+    font-size:32px;
+    font-weight:800;
+    color:#FF7A1A;
+    margin:6px 0;
+}
