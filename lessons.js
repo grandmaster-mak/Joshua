@@ -172,35 +172,14 @@ function updateLessonProgress(){
 
 function drawLessonArrow(fromSq, toSq){
 
+    // Arrows disabled for Lessons — hint arrows were removed per request.
+    // Kept this function in place (instead of deleting it) since it's
+    // still called from loadLessonChallenge() below; it now always just
+    // hides the line instead of drawing one.
     const line = document.getElementById("lessonArrowLine");
     if(!line) return;
 
-    if(!fromSq || !toSq){
-        line.style.display = "none";
-        return;
-    }
-
-    const from = squareToCoords(fromSq);
-    const to = squareToCoords(toSq);
-
-    const x1 = from.c * 12.5 + 6.25;
-    const y1 = from.r * 12.5 + 6.25;
-    const x2 = to.c * 12.5 + 6.25;
-    const y2 = to.r * 12.5 + 6.25;
-
-    // Pull the arrow's tip back slightly so it doesn't bury itself under
-    // the destination piece image.
-    const dx = x2 - x1, dy = y2 - y1;
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    const shorten = 4;
-    const tipX = x2 - (dx / dist) * shorten;
-    const tipY = y2 - (dy / dist) * shorten;
-
-    line.setAttribute("x1", x1);
-    line.setAttribute("y1", y1);
-    line.setAttribute("x2", tipX);
-    line.setAttribute("y2", tipY);
-    line.style.display = "block";
+    line.style.display = "none";
 
 }
 
