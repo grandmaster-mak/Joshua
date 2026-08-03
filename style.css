@@ -1318,7 +1318,7 @@ input::placeholder{ color:#4a5060; }
     background:#0a0c10;
     display:none;
     flex-direction:column;
-    z-index:200;
+    z-index:250;
     max-width:420px;
     margin:0 auto;
 }
