@@ -611,9 +611,6 @@ function startQuickMatch(){
         return;
     }
 
-    matchmakingSearchActive = true;
-    showQuickMatchSearchingUI();
-
     matchmakingPendingRef = db.ref("matchmaking/pending/" + currentUser.uid);
     matchmakingPendingRef.on("value", function(snap){
 
@@ -621,6 +618,7 @@ function startQuickMatch(){
         if(!info || !matchmakingSearchActive) return;
 
         clearTimeout(matchmakingTimeoutHandle);
+        clearInterval(quickMatchCountdownInterval); // stop the countdown ticking the instant a match lands
         stopQuickMatchSearch();
         db.ref("matchmaking/pending/" + currentUser.uid).set(null);
 
@@ -629,8 +627,17 @@ function startQuickMatch(){
         selectedTime = 600;
         gameMode = "online";
 
-        closeQuickMatchSearchingUI();
-        startOnlineGame(info.roomCode);
+        // Brief "found" confirmation so it's visually obvious the search
+        // succeeded, instead of the popup abruptly vanishing (or, worse,
+        // looking like the countdown ran to 0 on its own with nothing
+        // happening until a moment later).
+        const el = document.getElementById("quickMatchCountdown");
+        if(el) el.textContent = "Opponent found!";
+
+        setTimeout(function(){
+            closeQuickMatchSearchingUI();
+            startOnlineGame(info.roomCode);
+        }, 500);
 
     }, function(err){
         // Almost always a Firebase Rules problem on the "matchmaking"
