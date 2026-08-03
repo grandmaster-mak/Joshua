@@ -17,10 +17,6 @@ let db = null;
 let serverTimeOffset = 0;
 let clockData = null;
 
-// Whether we've heard back from Firebase at least once about how far off
-// this device's own clock is. Every device — regardless of what its own
-// clock says — corrects against this same offset, which is what keeps
-// both phones' game clocks in agreement instead of drifting apart.
 let serverTimeSynced = false;
 let resolveServerTimeReady;
 const serverTimeReady = new Promise(function(resolve){ resolveServerTimeReady = resolve; });
@@ -45,11 +41,6 @@ function getServerNow(){
     return Date.now() + serverTimeOffset;
 }
 
-// Resolves as soon as the clock correction above has been confirmed, or
-// after maxWaitMs — whichever comes first — so a slow/offline connection
-// can't hang a game start forever. Used to make sure the very first
-// clock timestamp of an online game is written with a confirmed offset,
-// not a default of 0, which is what caused the two-phones-disagree bug.
 function waitForServerTime(maxWaitMs){
     if(serverTimeSynced) return Promise.resolve();
     return Promise.race([
@@ -66,16 +57,6 @@ function generateRoomCode(){
     }
     return code;
 }
-
-// ============================================================
-// Listener leak fix: every db.ref(...).on(...) set up for a room
-// (moves, events, clock, player info, presence, connection state) gets
-// tracked here so it can be torn down in one call. Previously nothing
-// ever called .off() on these — playing several online games in one
-// session silently piled up dead Firebase listeners. stopOnlineListeners()
-// is called at the top of startOnlineGame() (clears the PREVIOUS game's
-// listeners before attaching the new game's) and from leaveSpectating().
-// ============================================================
 
 let activeOnlineListenerRefs = [];
 
@@ -203,11 +184,6 @@ function spectateRoom(directCode){
             return;
         }
 
-        // myColor stays null on purpose — every existing "is it my turn"
-        // and "is it my color" check in clickSquare/startOnlineGame already
-        // treats a null myColor as "not a player", which is exactly what a
-        // read-only spectator needs: no moves can be sent, no clock writes,
-        // no presence tracking.
         myColor = null;
         currentRoomCode = code;
 
@@ -247,8 +223,6 @@ function leaveSpectating(){
 
 function startOnlineGame(code){
 
-    // Clear out any listeners left over from a previous online game
-    // played earlier in this session, before attaching this game's set.
     stopOnlineListeners();
 
     closeTimeControl();
@@ -257,8 +231,6 @@ function startOnlineGame(code){
     ratedAIActive = false;
     newGame();
 
-    // Board and clock UI show up immediately; only the timing-sensitive
-    // part below (writing the first clock timestamp) waits on the sync.
     if(!serverTimeSynced){
         const timerEl = document.getElementById("topTimer");
         if(timerEl) timerEl.textContent = "Syncing clock...";
@@ -280,8 +252,6 @@ function startOnlineGame(code){
 
         listenForOpponentPresence(code);
 
-        // Lets anyone viewing this player's profile see they're currently
-        // in a game and jump straight into spectating it.
         if(currentUser){
             const myRoomRef = db.ref("users/" + currentUser.uid + "/public/currentRoomCode");
             myRoomRef.set(code);
@@ -582,9 +552,6 @@ function startOnlineClockDisplay(){
 //     ".read": "auth != null",
 //     ".write": "auth != null"
 //   }
-// Both the transaction and the pending-match listener attach error
-// callbacks so a rules/permission problem surfaces as a visible popup
-// instead of silently doing nothing and looking like "no one's online."
 // ============================================================
 
 let matchmakingSearchActive = false;
@@ -599,10 +566,6 @@ function startQuickMatch(){
         return;
     }
 
-    // currentUser can be briefly null right after a page load while the
-    // saved session is still being reconfirmed (see the grace period in
-    // auth.js) — wait a moment for it to resolve instead of instantly
-    // telling someone who IS logged in that they aren't.
     if(!currentUser){
         showInfoPopup("⏳ One Moment", "Confirming your session — try Play Online again in a couple of seconds.");
         setTimeout(function(){
@@ -611,6 +574,9 @@ function startQuickMatch(){
         return;
     }
 
+    matchmakingSearchActive = true;
+    showQuickMatchSearchingUI();
+
     matchmakingPendingRef = db.ref("matchmaking/pending/" + currentUser.uid);
     matchmakingPendingRef.on("value", function(snap){
 
@@ -618,7 +584,7 @@ function startQuickMatch(){
         if(!info || !matchmakingSearchActive) return;
 
         clearTimeout(matchmakingTimeoutHandle);
-        clearInterval(quickMatchCountdownInterval); // stop the countdown ticking the instant a match lands
+        clearInterval(quickMatchCountdownInterval);
         stopQuickMatchSearch();
         db.ref("matchmaking/pending/" + currentUser.uid).set(null);
 
@@ -627,10 +593,6 @@ function startQuickMatch(){
         selectedTime = 600;
         gameMode = "online";
 
-        // Brief "found" confirmation so it's visually obvious the search
-        // succeeded, instead of the popup abruptly vanishing (or, worse,
-        // looking like the countdown ran to 0 on its own with nothing
-        // happening until a moment later).
         const el = document.getElementById("quickMatchCountdown");
         if(el) el.textContent = "Opponent found!";
 
@@ -640,10 +602,6 @@ function startQuickMatch(){
         }, 500);
 
     }, function(err){
-        // Almost always a Firebase Rules problem on the "matchmaking"
-        // path — surfaced loudly here instead of silently doing nothing
-        // and quietly falling back to AI, which is what made this look
-        // like "nobody's ever online" even with two phones searching.
         console.error("Matchmaking listener denied:", err.message);
         matchmakingSearchActive = false;
         closeQuickMatchSearchingUI();
@@ -659,8 +617,6 @@ function startQuickMatch(){
         const myUid = currentUser.uid;
         const now = Date.now();
 
-        // Best-effort cleanup of anyone who's been sitting in queue too
-        // long (closed the app mid-search without cancelling properly).
         Object.keys(m.queue).forEach(function(uid){
             if(now - (m.queue[uid].joinedAt || 0) > 60000) delete m.queue[uid];
         });
@@ -709,7 +665,7 @@ function stopQuickMatchSearch(){
 }
 
 function cancelQuickMatchAndFallbackToAI(){
-    if(!matchmakingSearchActive) return; // already matched or cancelled
+    if(!matchmakingSearchActive) return;
     stopQuickMatchSearch();
     if(currentUser && db) db.ref("matchmaking/queue/" + currentUser.uid).remove();
     closeQuickMatchSearchingUI();
@@ -748,8 +704,6 @@ function closeQuickMatchSearchingUI(){
     document.getElementById("quickMatchPopup").classList.remove("show");
 }
 
-// Rated AI fallback — counts toward rating exactly like a real online
-// game (see recordGameResult / showRatingChangePopup in script.js).
 function startRatedAIMatch(){
 
     const rating = currentUserRating || 100;
@@ -757,8 +711,6 @@ function startRatedAIMatch(){
     gameMode = "ai";
     ratedAIActive = true;
     isCoachMode = false;
-    // Kept only for the existing beatMediumAI/beatHardAI achievement
-    // checks — actual engine strength comes from ratedAISettings below.
     aiDifficulty = rating >= 1200 ? "hard" : rating >= 600 ? "medium" : "easy";
     ratedAISettings = (typeof getRatedAISettings === "function") ? getRatedAISettings(rating) : null;
     selectedTime = 600;
