@@ -315,7 +315,12 @@ function messageFromProfile(){
         showInfoPopup("👋 Add Them First", "Add " + currentProfileUsername + " as a friend before messaging them.");
         return;
     }
-    hideProfileScreenOnly();
+    // Deliberately NOT calling hideProfileScreenOnly() here — profileScreen
+    // stays showing underneath, and openFriendChat() below pushes its own
+    // "chat" history state on top of it cleanly. This is what lets the
+    // back button correctly reveal the profile again with no gap/flash,
+    // instead of a black frame from profileScreen having been hidden
+    // early without any history state to properly return to.
     openFriendChat(currentProfileUid, currentProfileUsername);
 }
 
