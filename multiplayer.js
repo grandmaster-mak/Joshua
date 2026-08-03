@@ -582,6 +582,9 @@ function startOnlineClockDisplay(){
 //     ".read": "auth != null",
 //     ".write": "auth != null"
 //   }
+// Both the transaction and the pending-match listener attach error
+// callbacks so a rules/permission problem surfaces as a visible popup
+// instead of silently doing nothing and looking like "no one's online."
 // ============================================================
 
 let matchmakingSearchActive = false;
@@ -591,8 +594,20 @@ let quickMatchCountdownInterval = null;
 
 function startQuickMatch(){
 
-    if(!currentUser || !db){
+    if(!db){
         showInfoPopup("🔒 Log In Required", "Please log in to play online.");
+        return;
+    }
+
+    // currentUser can be briefly null right after a page load while the
+    // saved session is still being reconfirmed (see the grace period in
+    // auth.js) — wait a moment for it to resolve instead of instantly
+    // telling someone who IS logged in that they aren't.
+    if(!currentUser){
+        showInfoPopup("⏳ One Moment", "Confirming your session — try Play Online again in a couple of seconds.");
+        setTimeout(function(){
+            if(currentUser) startQuickMatch();
+        }, 2600);
         return;
     }
 
