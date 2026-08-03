@@ -344,7 +344,10 @@ function challengeFromProfile(){
             document.getElementById("watchPromptPopup").dataset.roomCode = code;
             document.getElementById("watchPromptPopup").classList.add("show");
         }else{
-            hideProfileScreenOnly();
+            // challengeFriend() starts a game, which fully replaces the
+            // screen anyway (newGame() shows #game, hides #appShell) —
+            // safe to leave profileScreen showing underneath until then,
+            // same reasoning as messageFromProfile() above.
             challengeFriend(currentProfileUid, currentProfileUsername);
         }
     });
