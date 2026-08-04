@@ -593,6 +593,22 @@ function startQuickMatch(){
         selectedTime = 600;
         gameMode = "online";
 
+        // Quick Match never had a "create room" step like Create Room /
+        // Join Room / Challenge — write our own player info into the
+        // room now, same shape those flows already use, so the board
+        // actually has a name/rating/photo to show instead of falling
+        // back to generic "White"/"Black". Each side only ever writes
+        // its OWN color's entry, so this is safe to run independently
+        // and simultaneously on both devices with no race condition.
+        db.ref("rooms/" + info.roomCode + "/players/" + myColor).set({
+            username: currentUsername,
+            flag: currentUserFlag,
+            rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
+            photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
+            uid: currentUser.uid
+        });
+        db.ref("rooms/" + info.roomCode + "/status").set("playing");
+
         const el = document.getElementById("quickMatchCountdown");
         if(el) el.textContent = "Opponent found!";
 
