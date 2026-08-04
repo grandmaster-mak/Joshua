@@ -181,7 +181,15 @@ function closeAnalysisPositionPicker(){
     }
 
 }
-
+// Hides just the popup itself, no side effects — used when a position
+// was actually picked (a board is about to be built immediately after,
+// so there's nothing to "fall back" from). Kept separate from
+// closeAnalysisPositionPicker(), which has extra logic for the Cancel/
+// back-button case where NOTHING was picked and the board may still be
+// empty.
+function hideAnalysisPositionPopupOnly(){
+    document.getElementById("analysisPositionPopup").classList.remove("show");
+}
 function loadAnalysisPosition(fen){
 
     pieces = fenToPieces(fen); // fenToPieces is defined in puzzle.js
