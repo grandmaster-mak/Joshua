@@ -2163,6 +2163,20 @@ window.addEventListener("popstate", function(event){
 
     const state = event.state;
 
+    // Closing the Analysis position-picker popup via the back button
+    // must just close the popup itself, the same as tapping Cancel —
+    // it should never fall through to whatever screen is showing
+    // underneath it (the Analysis board, or Home if no position has
+    // been picked yet). This check runs first since a .popup isn't a
+    // tracked history state on its own, so without this, back button
+    // presses were being absorbed by whatever WAS driving history
+    // (the screen behind the popup) instead of the popup itself.
+    const analysisPopupEl = document.getElementById("analysisPositionPopup");
+    if(analysisPopupEl && analysisPopupEl.classList.contains("show")){
+        if(typeof closeAnalysisPositionPicker === "function") closeAnalysisPositionPicker();
+        return;
+    }
+
     // Closing an open chat (in-game chat or a friend DM) via the back
     // button must just close chat and reveal whatever's behind it — it
     // should never trigger the live-game resign/draw/abort menu. This
