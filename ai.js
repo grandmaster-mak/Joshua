@@ -225,10 +225,30 @@ function makeAIMove(){
 
     if(gameOver) return;
     if(currentPlayer !== "black") return;
+
+    // If this is a Clone match and they've actually played this exact
+    // position before, use their real historical move instead of
+    // Stockfish — no engine call needed for a book hit.
+    if(typeof cloneModeActive !== "undefined" && cloneModeActive && typeof getCloneBookMove === "function"){
+        const bookMove = getCloneBookMove();
+        if(bookMove && typeof playCloneBookMove === "function"){
+            const played = playCloneBookMove(bookMove);
+            if(played) return;
+        }
+    }
+
     if(!stockfish) return;
 
-    const settings = (typeof ratedAIActive !== "undefined" && ratedAIActive && typeof ratedAISettings !== "undefined" && ratedAISettings) ? ratedAISettings : (difficultySettings[aiDifficulty] || difficultySettings.medium);
-
+    // Outside the book, fall back to Stockfish — biased toward the
+    // clone's tactical sharpness (more consistently strong = fewer
+    // candidate moves considered) when in Clone mode.
+    let settings;
+    if(typeof cloneModeActive !== "undefined" && cloneModeActive){
+        const multipv = cloneTactics >= 70 ? 1 : cloneTactics >= 40 ? 2 : 3;
+        settings = { elo: 1600, movetime: 700, multipv: multipv };
+    }else{
+        settings = (typeof ratedAIActive !== "undefined" && ratedAIActive && typeof ratedAISettings !== "undefined" && ratedAISettings) ? ratedAISettings : (difficultySettings[aiDifficulty] || difficultySettings.medium);
+    }
     console.log("[Stockfish] Difficulty:", (typeof ratedAIActive !== "undefined" && ratedAIActive) ? "rated-ai" : aiDifficulty, "Settings:", JSON.stringify(settings));
 
     multiPvMoves = {};
