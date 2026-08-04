@@ -117,20 +117,29 @@ try {
                 }
 
                 if(candidates.length > 0){
-                    // Weighted pick among the engine's top candidates — this
-                    // is what makes the AI human-like: it doesn't always
-                    // play its single best line. More candidates (lower
-                    // rating opponents) means more frequent slip-ups.
-                    const weights = [0.45, 0.25, 0.17, 0.13];
-                    const roll = Math.random();
-                    let cumulative = 0;
-                    let chosenIndex = 0;
-                    for(let i = 0; i < candidates.length; i++){
-                        cumulative += weights[i] || (0.13 / Math.max(1, candidates.length - 3));
-                        chosenIndex = i;
-                        if(roll < cumulative) break;
+
+                    if(typeof cloneModeActive !== "undefined" && cloneModeActive && typeof pickCloneCandidateIndex === "function"){
+                        // Clone mode: pick weighted by the opponent's own
+                        // style traits (tactics/aggression/defense) instead
+                        // of the fixed rank-based weighting below.
+                        uciMove = candidates[pickCloneCandidateIndex(candidates)];
+                    }else{
+                        // Weighted pick among the engine's top candidates — this
+                        // is what makes the AI human-like: it doesn't always
+                        // play its single best line. More candidates (lower
+                        // rating opponents) means more frequent slip-ups.
+                        const weights = [0.45, 0.25, 0.17, 0.13];
+                        const roll = Math.random();
+                        let cumulative = 0;
+                        let chosenIndex = 0;
+                        for(let i = 0; i < candidates.length; i++){
+                            cumulative += weights[i] || (0.13 / Math.max(1, candidates.length - 3));
+                            chosenIndex = i;
+                            if(roll < cumulative) break;
+                        }
+                        uciMove = candidates[chosenIndex];
                     }
-                    uciMove = candidates[chosenIndex];
+
                 }
             }
 
