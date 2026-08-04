@@ -577,7 +577,7 @@ function startQuickMatch(){
     matchmakingSearchActive = true;
     showQuickMatchSearchingUI();
 
-    matchmakingPendingRef = db.ref("matchmaking/pending/" + currentUser.uid);
+    matchmakingPendingRef = db.ref("matchmakingPending/" + currentUser.uid);
     matchmakingPendingRef.on("value", function(snap){
 
         const info = snap.val();
@@ -586,7 +586,7 @@ function startQuickMatch(){
         clearTimeout(matchmakingTimeoutHandle);
         clearInterval(quickMatchCountdownInterval);
         stopQuickMatchSearch();
-        db.ref("matchmaking/pending/" + currentUser.uid).set(null);
+        db.ref("matchmakingPending/" + currentUser.uid).set(null);
 
         myColor = info.color;
         currentRoomCode = info.roomCode;
@@ -602,54 +602,80 @@ function startQuickMatch(){
         }, 500);
 
     }, function(err){
-        console.error("Matchmaking listener denied:", err.message);
+        console.error("Matchmaking pending-listener denied:", err.code, err.message, err);
         matchmakingSearchActive = false;
         closeQuickMatchSearchingUI();
-        showInfoPopup("⚠️ Matchmaking Error", "Could not reach the matchmaking queue: " + err.message);
+        showInfoPopup("⚠️ Matchmaking Error", "Could not reach the matchmaking queue: " + (err.code || err.message));
     });
 
-    db.ref("matchmaking").transaction(function(m){
+    // Transaction runs on matchmakingQueue ONLY now — a much smaller,
+    // simpler node than before. If it finds someone else waiting, it
+    // pairs them (removing both from the queue) inside this SAME atomic
+    // transaction, which is what prevents two searchers ever double-
+    // matching. The actual matchmakingPending writes for both sides
+    // happen afterward, as plain writes, once the transaction has
+    // safely committed and we know for certain who — if anyone — was
+    // matched.
+    let matchedOpponentUid = null;
+    let matchedRoomCode = null;
+    let matchedMyColor = null;
+    let matchedOpponentColor = null;
 
-        if(!m) m = {};
-        if(!m.queue) m.queue = {};
-        if(!m.pending) m.pending = {};
+    db.ref("matchmakingQueue").transaction(function(queue){
+
+        if(!queue) queue = {};
 
         const myUid = currentUser.uid;
         const now = Date.now();
 
-        Object.keys(m.queue).forEach(function(uid){
-            if(now - (m.queue[uid].joinedAt || 0) > 60000) delete m.queue[uid];
+        // Best-effort cleanup of anyone who's been sitting too long
+        // (closed the app mid-search without cancelling properly).
+        Object.keys(queue).forEach(function(uid){
+            if(now - (queue[uid].joinedAt || 0) > 60000) delete queue[uid];
         });
 
-        const others = Object.keys(m.queue).filter(function(u){ return u !== myUid; });
+        const others = Object.keys(queue).filter(function(u){ return u !== myUid; });
 
         if(others.length > 0){
 
             const opponent = others[0];
-            delete m.queue[opponent];
-            delete m.queue[myUid];
+            delete queue[opponent];
+            delete queue[myUid];
 
-            const code = generateRoomCode();
-            const whiteFirst = Math.random() < 0.5;
-
-            m.pending[myUid] = { roomCode: code, color: whiteFirst ? "white" : "black" };
-            m.pending[opponent] = { roomCode: code, color: whiteFirst ? "black" : "white" };
+            matchedOpponentUid = opponent;
+            matchedRoomCode = generateRoomCode();
+            matchedMyColor = Math.random() < 0.5 ? "white" : "black";
+            matchedOpponentColor = matchedMyColor === "white" ? "black" : "white";
 
         }else{
-            m.queue[myUid] = { rating: currentUserRating || 100, joinedAt: now };
+            queue[myUid] = { rating: currentUserRating || 100, joinedAt: now };
         }
 
-        return m;
+        return queue;
 
     }, function(error, committed, snapshot){
+
         if(error){
-            console.error("Matchmaking transaction failed:", error.message);
+            console.error("Matchmaking queue transaction failed:", error.code, error.message, error);
             matchmakingSearchActive = false;
             if(matchmakingPendingRef){ matchmakingPendingRef.off(); matchmakingPendingRef = null; }
             clearTimeout(matchmakingTimeoutHandle);
             closeQuickMatchSearchingUI();
-            showInfoPopup("⚠️ Matchmaking Error", "Could not join the matchmaking queue: " + error.message);
+            showInfoPopup("⚠️ Matchmaking Error", "Could not join the matchmaking queue: " + (error.code || error.message));
+            return;
         }
+
+        if(!committed) return; // aborted/retried internally by Firebase — no-op here
+
+        // A match was found and both sides removed from the queue —
+        // now write both pending entries as plain (non-transactional)
+        // writes. Safe because the queue removal above already
+        // guarantees this opponent can't be matched twice.
+        if(matchedOpponentUid){
+            db.ref("matchmakingPending/" + currentUser.uid).set({ roomCode: matchedRoomCode, color: matchedMyColor });
+            db.ref("matchmakingPending/" + matchedOpponentUid).set({ roomCode: matchedRoomCode, color: matchedOpponentColor });
+        }
+
     });
 
     matchmakingTimeoutHandle = setTimeout(function(){
@@ -667,7 +693,7 @@ function stopQuickMatchSearch(){
 function cancelQuickMatchAndFallbackToAI(){
     if(!matchmakingSearchActive) return;
     stopQuickMatchSearch();
-    if(currentUser && db) db.ref("matchmaking/queue/" + currentUser.uid).remove();
+    if(currentUser && db) db.ref("matchmakingQueue/" + currentUser.uid).remove();
     closeQuickMatchSearchingUI();
     startRatedAIMatch();
 }
@@ -678,7 +704,7 @@ function cancelQuickMatchManually(){
         return;
     }
     stopQuickMatchSearch();
-    if(currentUser && db) db.ref("matchmaking/queue/" + currentUser.uid).remove();
+    if(currentUser && db) db.ref("matchmakingQueue/" + currentUser.uid).remove();
     closeQuickMatchSearchingUI();
 }
 
