@@ -169,7 +169,17 @@ function openAnalysisPositionPicker(){
 }
 
 function closeAnalysisPositionPicker(){
+
     document.getElementById("analysisPositionPopup").classList.remove("show");
+
+    // If no position has ever been chosen yet (board array is still
+    // empty/never built), cancelling the picker should exit Analysis
+    // entirely instead of leaving an unrendered blank board behind it.
+    const boardEl = document.getElementById("analysisBoard");
+    if(boardEl && boardEl.children.length === 0){
+        closeAnalysisBoard();
+    }
+
 }
 
 function loadAnalysisPosition(fen){
