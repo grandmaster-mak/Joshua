@@ -103,8 +103,12 @@ try {
             const parts = line.split(" ");
             let uciMove = parts[1];
 
-            const settings = (typeof ratedAIActive !== "undefined" && ratedAIActive && typeof ratedAISettings !== "undefined" && ratedAISettings) ? ratedAISettings : (difficultySettings[aiDifficulty] || difficultySettings.medium);
-
+            let settings;
+    if(typeof cloneModeActive !== "undefined" && cloneModeActive && typeof getCloneSearchSettings === "function"){
+        settings = getCloneSearchSettings();
+    }else{
+        settings = (typeof ratedAIActive !== "undefined" && ratedAIActive && typeof ratedAISettings !== "undefined" && ratedAISettings) ? ratedAISettings : (difficultySettings[aiDifficulty] || difficultySettings.medium);
+    }
             if(settings.multipv > 1){
 
                 const candidates = [];
