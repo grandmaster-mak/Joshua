@@ -94,28 +94,13 @@ function openAnalysisBoard(){
 
     initAnalysisEngine();
 
-    pieces = [
-        ["bR","bN","bB","bQ","bK","bB","bN","bR"],
-        ["bP","bP","bP","bP","bP","bP","bP","bP"],
-        ["","","","","","","",""],
-        ["","","","","","","",""],
-        ["","","","","","","",""],
-        ["","","","","","","",""],
-        ["wP","wP","wP","wP","wP","wP","wP","wP"],
-        ["wR","wN","wB","wQ","wK","wB","wN","wR"]
-    ];
-    currentPlayer = "white";
-    selected = null;
-    possibleMoves = [];
-    lastMove = null;
-    analysisFlipped = false;
-
+    // Position picker opens FIRST — the board itself doesn't load until
+    // a position is actually chosen in loadAnalysisPosition() below.
     document.getElementById("appShell").style.display = "none";
     document.getElementById("analysisScreen").style.display = "flex";
     history.pushState({ screen: "analysis" }, "", "#analysis");
 
-    createAnalysisBoard();
-    queueAnalysisQuery();
+    openAnalysisPositionPicker();
 
 }
 
