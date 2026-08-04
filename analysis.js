@@ -200,11 +200,13 @@ function loadAnalysisPosition(fen){
     lastMove = null;
     analysisFlipped = false;
 
-    closeAnalysisPositionPicker();
+    // Just hide the popup — NOT closeAnalysisPositionPicker(), which
+    // would incorrectly treat a still-empty board (true on a fresh app
+    // load, before createAnalysisBoard() below has ever run) as "nothing
+    // was picked" and bounce back to Home even though a position WAS
+    // just chosen.
+    hideAnalysisPositionPopupOnly();
 
-    // The board area is empty/unrendered until a position is chosen —
-    // build it now for the first time (or rebuild it if switching
-    // positions from within an already-open board via the 📂 button).
     createAnalysisBoard();
     queueAnalysisQuery();
 
