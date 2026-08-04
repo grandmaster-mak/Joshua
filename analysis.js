@@ -183,6 +183,10 @@ function loadAnalysisPosition(fen){
     analysisFlipped = false;
 
     closeAnalysisPositionPicker();
+
+    // The board area is empty/unrendered until a position is chosen —
+    // build it now for the first time (or rebuild it if switching
+    // positions from within an already-open board via the 📂 button).
     createAnalysisBoard();
     queueAnalysisQuery();
 
