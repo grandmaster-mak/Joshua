@@ -2033,6 +2033,19 @@ function recordGameResult(myResult, opponentName){
         recordTournamentGameResult(myResult);
     }
     if(typeof recordDailyChallengeProgress === "function") recordDailyChallengeProgress(myResult, gameMode);
+
+    // Save this game's full move list against this specific opponent —
+    // builds up the data an Opponent Clone is generated from (see
+    // clone.js). Only real online opponents can be cloned, never AI.
+    if(gameMode === "online" && opponentInfo.uid && typeof moveHistory !== "undefined"){
+        const opponentColorForClone = myColor === "white" ? "black" : "white";
+        db.ref("users/" + currentUser.uid + "/opponentGames/" + opponentInfo.uid).push({
+            moves: moveHistory.slice(),
+            opponentColor: opponentColorForClone,
+            result: myResult,
+            time: Date.now()
+        });
+    }
 }
 
 function cacheRecentGames(entries){
