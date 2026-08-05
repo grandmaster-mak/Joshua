@@ -168,7 +168,51 @@ let pieces = [
 ["wP","wP","wP","wP","wP","wP","wP","wP"],
 ["wR","wN","wB","wQ","wK","wB","wN","wR"]
 ];
+// ===== KINGDOM SYSTEM =====
+const KINGDOM_LEVELS = [
+  { id: 'village', name: 'Village', emoji: '🏕️', requiredStreak: 0, visualLevel: 1, description: 'A modest settlement' },
+  { id: 'town', name: 'Town', emoji: '🏘️', requiredStreak: 3, visualLevel: 2, description: 'A growing community' },
+  { id: 'fortress', name: 'Fortress', emoji: '🏰', requiredStreak: 5, visualLevel: 3, description: 'Protected by strong walls' },
+  { id: 'city', name: 'City', emoji: '🏯', requiredStreak: 7, visualLevel: 4, description: 'A prosperous civilization' },
+  { id: 'kingdom', name: 'Kingdom', emoji: '👑', requiredStreak: 8, visualLevel: 5, description: 'A royal realm' },
+  { id: 'grand-kingdom', name: 'Grand Kingdom', emoji: '⚜️', requiredStreak: 9, visualLevel: 6, description: 'A grand and powerful realm' },
+  { id: 'dominion', name: 'Dominion', emoji: '🦁', requiredStreak: 10, visualLevel: 7, description: 'A vast territory' },
+  { id: 'empire', name: 'Empire', emoji: '🌎', requiredStreak: 12, visualLevel: 8, description: 'The greatest realm of all' }
+];
 
+let kingdomState = {
+  currentLevel: 'village',
+  consecutiveWins: 0,
+  totalWins: 0
+};
+
+function getKingdomByStreak(streak) {
+  let kingdom = KINGDOM_LEVELS[0];
+  for (let i = KINGDOM_LEVELS.length - 1; i >= 0; i--) {
+    if (streak >= KINGDOM_LEVELS[i].requiredStreak) {
+      kingdom = KINGDOM_LEVELS[i];
+      break;
+    }
+  }
+  return kingdom;
+}
+
+function getNextKingdom(currentKingdom) {
+  const currentIndex = KINGDOM_LEVELS.findIndex(k => k.id === currentKingdom.id);
+  if (currentIndex < KINGDOM_LEVELS.length - 1) {
+    return KINGDOM_LEVELS[currentIndex + 1];
+  }
+  return null;
+}
+
+function getProgressToNext(currentStreak, nextKingdom) {
+  if (!nextKingdom) return 100;
+  const currentKingdom = getKingdomByStreak(currentStreak);
+  const currentRequired = currentKingdom.requiredStreak;
+  const nextRequired = nextKingdom.requiredStreak;
+  const progress = ((currentStreak - currentRequired) / (nextRequired - currentRequired)) * 100;
+  return Math.min(Math.max(progress, 0), 100);
+}
 const moveSound = new Audio("sounds/Move.ogg");
 const captureSound = new Audio("sounds/Capture.ogg");
 const selectSound = new Audio("sounds/Select.ogg");
