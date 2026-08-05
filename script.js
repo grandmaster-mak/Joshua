@@ -121,6 +121,7 @@ function getProgressToNext(currentStreak, nextKingdom) {
   const progress = ((currentStreak - currentRequired) / (nextRequired - currentRequired)) * 100;
   return Math.min(Math.max(progress, 0), 100);
 }
+// ===== END KINGDOM SYSTEM =====
 
 // Reads coach/lesson text out loud using the browser's built-in
 // text-to-speech (no external API or key needed). Strips emoji first
@@ -2480,6 +2481,7 @@ if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefine
         }
     });
 }
+// ===== END KINGDOM UI FUNCTIONS =====
 
 // ===== Physical/phone back-button support =====
 // Every open___() function already does history.pushState({screen, view}, ...),
