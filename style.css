@@ -3003,3 +3003,106 @@ input::placeholder{ color:#4a5060; }
 #kingdomScreen #progressFill {
     background: linear-gradient(90deg, #FF7A1A, #ffb066);
 }
+/* ===== KINGDOM SYSTEM STYLES ===== */
+
+/* Kingdom Screen - Matching App Style */
+#kingdomScreen .accountOrangeHeader {
+    background: var(--themeOrange, #FF7A1A);
+}
+
+#kingdomScreen .accountBodyLight {
+    background: #f2f0ee;
+}
+
+#kingdomScreen .accountStatsCardLight .stat-item {
+    border-right: 1px solid #eee1d6;
+    padding: 0 4px;
+}
+
+#kingdomScreen .accountStatsCardLight .stat-item:last-child {
+    border-right: none;
+}
+
+#kingdomScreen .stat-icon-circle.peach {
+    background: #fdecd2;
+    color: #e2681a;
+}
+
+#kingdomScreen .stat-icon-circle.mint {
+    background: #dcf5e4;
+    color: #22c55e;
+}
+
+/* Crown glow animation */
+@keyframes kingdomCrownGlow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+#kingdomScreen #rulerCrown {
+    animation: kingdomCrownGlow 2.4s ease-in-out infinite;
+}
+
+/* Progress bar fill */
+#kingdomScreen #progressFill {
+    background: linear-gradient(90deg, #FF7A1A, #ffb066);
+}
+
+/* Kingdom Journey steps */
+.kingdom-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 6px;
+    border-radius: 12px;
+    min-width: 56px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.kingdom-step.completed {
+    background: #dcf5e4;
+}
+
+.kingdom-step.current {
+    background: #ffe4d6;
+    border: 2px solid #FF7A1A;
+}
+
+.kingdom-step.locked {
+    background: #f5f5f5;
+    opacity: 0.5;
+}
+
+.kingdom-step .step-emoji {
+    font-size: 24px;
+}
+
+.kingdom-step .step-name {
+    font-size: 8px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 50px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.kingdom-step.completed .step-name {
+    color: #22c55e;
+}
+
+.kingdom-step.current .step-name {
+    color: #FF7A1A;
+}
+
+.kingdom-step.locked .step-name {
+    color: #aaa;
+}
+
+.kingdom-step .step-icon {
+    font-size: 14px;
+    margin-top: 2px;
+}
