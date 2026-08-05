@@ -2715,3 +2715,143 @@ function updateKingdomJourney(currentKingdom) {
         container.appendChild(step);
     });
 }
+// ===== KINGDOM SYSTEM WITH IMAGES =====
+
+// Kingdom image path mapping
+function getKingdomImagePath(kingdomId) {
+    const images = {
+        'village': 'assets/kingdoms/village.png',
+        'town': 'assets/kingdoms/town.png',
+        'fortress': 'assets/kingdoms/fortress.png',
+        'city': 'assets/kingdoms/city.png',
+        'kingdom': 'assets/kingdoms/kingdom.png',
+        'grand-kingdom': 'assets/kingdoms/grand_kingdom.png',
+        'dominion': 'assets/kingdoms/dominion.png',
+        'empire': 'assets/kingdoms/empire.png'
+    };
+    return images[kingdomId] || images['village'];
+}
+
+// Update Kingdom UI with image background
+function updateKingdomUI() {
+    const currentKingdom = KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel) || KINGDOM_LEVELS[0];
+    const nextKingdom = getNextKingdom(currentKingdom);
+    const progress = getProgressToNext(kingdomState.consecutiveWins, nextKingdom);
+
+    // Update background image
+    const bgImg = document.getElementById('kingdomBackgroundImg');
+    if (bgImg) {
+        const imgPath = getKingdomImagePath(currentKingdom.id);
+        bgImg.src = imgPath;
+        bgImg.onerror = function() {
+            // Fallback if image doesn't load
+            this.style.display = 'none';
+            document.getElementById('kingdomImageContainer').style.background = '#fdecd2';
+        };
+    }
+
+    // Update crown
+    const crownEl = document.getElementById('kingdomRulerCrown');
+    if (crownEl) crownEl.textContent = currentKingdom.emoji;
+
+    // Update kingdom name badge
+    const badgeEl = document.getElementById('kingdomNameBadge');
+    if (badgeEl) badgeEl.textContent = currentKingdom.emoji + ' ' + currentKingdom.name;
+
+    // Update ruler name
+    const rulerName = document.getElementById('kingdomRulerName');
+    if (rulerName && typeof currentUsername !== 'undefined' && currentUsername) {
+        rulerName.textContent = currentUsername;
+    }
+
+    // Update ruler title
+    const rulerTitle = document.getElementById('kingdomRulerTitle');
+    if (rulerTitle) rulerTitle.textContent = currentKingdom.name;
+
+    // Update ruler avatar
+    const avatarEl = document.getElementById('kingdomRulerAvatar');
+    if (avatarEl && typeof currentUser !== 'undefined' && currentUser && currentUser.photoURL) {
+        avatarEl.src = currentUser.photoURL;
+    }
+
+    // Update stats
+    const statCurrent = document.getElementById('kingdomStatCurrent');
+    if (statCurrent) statCurrent.textContent = currentKingdom.name;
+
+    const statStreak = document.getElementById('kingdomStatStreak');
+    if (statStreak) statStreak.textContent = kingdomState.consecutiveWins;
+
+    const statWinsNeeded = document.getElementById('kingdomStatWinsNeeded');
+    if (statWinsNeeded) {
+        if (nextKingdom) {
+            const needed = nextKingdom.requiredStreak - kingdomState.consecutiveWins;
+            statWinsNeeded.textContent = Math.max(0, needed);
+        } else {
+            statWinsNeeded.textContent = '🎉';
+        }
+    }
+
+    // Update progress
+    const nextLabel = document.getElementById('kingdomNextLabel');
+    const progressFill = document.getElementById('kingdomProgressFill');
+    const progressText = document.getElementById('kingdomProgressText');
+
+    if (nextKingdom) {
+        if (nextLabel) nextLabel.textContent = nextKingdom.emoji + ' ' + nextKingdom.name;
+        if (progressFill) progressFill.style.width = Math.min(progress, 100) + '%';
+        if (progressText) progressText.textContent = kingdomState.consecutiveWins + ' / ' + nextKingdom.requiredStreak + ' wins';
+    } else {
+        if (nextLabel) nextLabel.textContent = '🏆 MAX LEVEL';
+        if (progressFill) progressFill.style.width = '100%';
+        if (progressText) progressText.textContent = 'Maximum level reached!';
+    }
+
+    // Update description
+    const descEl = document.getElementById('kingdomDescription');
+    if (descEl) descEl.textContent = currentKingdom.description;
+
+    // Update kingdom journey
+    updateKingdomJourney(currentKingdom);
+}
+
+function updateKingdomJourney(currentKingdom) {
+    const container = document.getElementById('kingdomJourney');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    KINGDOM_LEVELS.forEach(function(kingdom) {
+        const kingdomIndex = KINGDOM_LEVELS.indexOf(kingdom);
+        const currentIndex = KINGDOM_LEVELS.findIndex(k => k.id === kingdomState.currentLevel);
+        const isCompleted = kingdomIndex < currentIndex;
+        const isCurrent = kingdom.id === kingdomState.currentLevel;
+        const isLocked = kingdomIndex > currentIndex;
+
+        const step = document.createElement('div');
+        step.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 4px;
+            border-radius: 10px;
+            min-width: 44px;
+            flex: 1;
+            text-align: center;
+            background: ${isCompleted ? '#dcf5e4' : isCurrent ? '#ffe4d6' : '#f5f5f5'};
+            ${isCurrent ? 'border: 2px solid #FF7A1A;' : ''}
+            opacity: ${isLocked ? '0.5' : '1'};
+            transition: all 0.3s ease;
+        `;
+
+        step.innerHTML = `
+            <div style="font-size: 18px;">${kingdom.emoji}</div>
+            <div style="font-size: 7px; font-weight: 600; color: ${isCurrent ? '#FF7A1A' : isCompleted ? '#22c55e' : '#aaa'}; line-height: 1.2; max-width: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${kingdom.name}</div>
+            <div style="font-size: 10px; margin-top: 1px;">${isCompleted ? '✅' : isCurrent ? '●' : '🔒'}</div>
+        `;
+
+        container.appendChild(step);
+    });
+}
+
+// ===== END KINGDOM UI FUNCTIONS =====
