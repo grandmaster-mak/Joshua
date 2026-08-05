@@ -2595,3 +2595,368 @@ input::placeholder{ color:#4a5060; }
     border:1px solid rgba(255,122,26,0.3);
     border-radius:10px;
 }
+
+/* ============================================================
+   KINGDOM SYSTEM STYLES — Village → Town → Fortress → City → 
+   Kingdom → Grand Kingdom → Dominion → Empire
+   ============================================================ */
+
+/* Kingdom Screen Container */
+#kingdomScreen {
+    background: #0a0c10;
+    padding: 16px 16px 24px;
+    display: none;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* Kingdom Scene Container */
+#kingdomScene {
+    flex: 1;
+    min-height: 320px;
+    margin: 0 0 16px 0;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid rgba(255, 122, 26, 0.25);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+#kingdomBackground {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: background 0.8s ease;
+}
+
+/* Ground layer */
+.kingdomGround {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28%;
+    background: rgba(139, 69, 19, 0.25);
+    border-top: 2px solid rgba(139, 69, 19, 0.15);
+}
+
+/* Building containers */
+#kingdomBuildings {
+    position: absolute;
+    bottom: 38px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 4px;
+    padding: 0 20px;
+    flex-wrap: wrap;
+}
+
+/* Building base styles */
+.kingdomBuilding {
+    background: rgba(139, 69, 19, 0.55);
+    border: 1px solid rgba(139, 69, 19, 0.7);
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    min-width: 14px;
+    transition: all 0.3s ease;
+}
+
+.kingdomWall {
+    background: rgba(139, 69, 19, 0.4);
+    border: 1px solid rgba(139, 69, 19, 0.6);
+    width: 14px;
+    margin: 0 2px;
+    border-radius: 2px 2px 0 0;
+}
+
+.kingdomPalace {
+    background: rgba(184, 134, 11, 0.55);
+    border: 2px solid rgba(184, 134, 11, 0.7);
+    border-radius: 4px 4px 0 0;
+    position: relative;
+}
+
+.kingdomTerritory {
+    background: rgba(139, 69, 19, 0.35);
+    border: 1px solid rgba(139, 69, 19, 0.5);
+    margin: 0 3px;
+    border-radius: 3px 3px 0 0;
+}
+
+.kingdomEmpire {
+    background: rgba(184, 134, 11, 0.45);
+    border: 2px solid rgba(184, 134, 11, 0.65);
+    margin: 0 3px;
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 0 15px rgba(184, 134, 11, 0.1);
+}
+
+/* Ruler Container */
+#rulerContainer {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 10;
+}
+
+/* Glow ring animation */
+#rulerGlow {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto;
+    background: rgba(255, 215, 0, 0.15);
+    border: 2px solid rgba(255, 215, 0, 0.25);
+    animation: kingdomGlowPulse 2.4s ease-in-out infinite;
+    position: relative;
+}
+
+@keyframes kingdomGlowPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+
+/* Ruler Avatar */
+#rulerAvatar {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid #ffd700;
+    background: #1c2028;
+    object-fit: cover;
+    z-index: 2;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+/* Crown badge */
+#rulerCrown {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: rgba(0,0,0,0.75);
+    border-radius: 50%;
+    padding: 4px 6px;
+    z-index: 3;
+    font-size: 20px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+/* Ruler name */
+#rulerName {
+    margin-top: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-shadow: 0 0 12px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 0.3px;
+}
+
+/* Kingdom name display */
+#kingdomNameDisplay {
+    color: #ffd700;
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 2px;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+/* Particles container */
+#particlesContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Individual particle */
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.6), rgba(255, 215, 0, 0.1));
+    animation: kingdomFloatParticle 3s ease-in-out infinite;
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+@keyframes kingdomFloatParticle {
+    0% { 
+        transform: translateY(0) scale(0.5); 
+        opacity: 0; 
+    }
+    30% { opacity: 0.7; }
+    70% { opacity: 0.7; }
+    100% { 
+        transform: translateY(-60px) scale(1.2); 
+        opacity: 0; 
+    }
+}
+
+/* Kingdom Stats */
+#kingdomStats {
+    display: flex;
+    justify-content: space-around;
+    padding: 16px;
+    margin: 0 0 16px 0;
+    background: rgba(255,255,255,0.04);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.kingdomStatItem {
+    text-align: center;
+}
+
+.kingdomStatLabel {
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kingdomStatValue {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 800;
+    margin-top: 2px;
+}
+
+/* Kingdom Progress */
+#kingdomProgress {
+    margin: 0 0 16px 0;
+    background: rgba(255,255,255,0.04);
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+#kingdomProgressLabel {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+#kingdomProgressLabel span {
+    color: #ffd700;
+}
+
+.kingdomProgressBar {
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+#progressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffd700, #ff9d2e);
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#progressText {
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Kingdom Description */
+#kingdomDescription {
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+    text-align: center;
+    font-style: italic;
+    margin: 0;
+    padding: 16px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* Kingdom Badge for online games */
+.playerKingdomBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 215, 0, 0.12);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffd700;
+    margin-left: 6px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    white-space: nowrap;
+}
+
+/* Responsive adjustments for Kingdom screen */
+@media (max-width: 420px) {
+    #kingdomScene {
+        min-height: 260px;
+    }
+    
+    #rulerAvatar {
+        width: 50px;
+        height: 50px;
+        top: 8px;
+    }
+    
+    #rulerGlow {
+        width: 68px;
+        height: 68px;
+    }
+    
+    #rulerCrown {
+        font-size: 16px;
+        top: -6px;
+        right: -6px;
+        padding: 3px 5px;
+    }
+    
+    #kingdomNameDisplay {
+        font-size: 16px;
+    }
+    
+    .kingdomStatValue {
+        font-size: 20px;
+    }
+    
+    #kingdomBuildings {
+        bottom: 30px;
+        gap: 3px;
+    }
+    
+    .kingdomBuilding {
+        min-width: 10px;
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    #rulerGlow {
+        animation: none !important;
+    }
+    .particle {
+        animation: none !important;
+        opacity: 0.3;
+    }
+    #progressFill {
+        transition: none !important;
+    }
+}
