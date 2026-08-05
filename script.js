@@ -2720,14 +2720,14 @@ function updateKingdomJourney(currentKingdom) {
 // Kingdom image path mapping
 function getKingdomImagePath(kingdomId) {
     const images = {
-        'village': 'assets/kingdoms/village.png',
-        'town': 'assets/kingdoms/town.png',
-        'fortress': 'assets/kingdoms/fortress.png',
-        'city': 'assets/kingdoms/city.png',
-        'kingdom': 'assets/kingdoms/kingdom.png',
-        'grand-kingdom': 'assets/kingdoms/grand_kingdom.png',
-        'dominion': 'assets/kingdoms/dominion.png',
-        'empire': 'assets/kingdoms/empire.png'
+        'village': 'pieces/kingdoms/village.png',
+        'town': 'pieces/kingdoms/town.png',
+        'fortress': 'pieces/kingdoms/fortress.png',
+        'city': 'pieces/kingdoms/city.png',
+        'kingdom': 'pieces/kingdoms/kingdom.png',
+        'grand-kingdom': 'pieces/kingdoms/grand_kingdom.png',
+        'dominion': 'pieces/kingdoms/dominion.png',
+        'empire': 'pieces/kingdoms/empire.png'
     };
     return images[kingdomId] || images['village'];
 }
