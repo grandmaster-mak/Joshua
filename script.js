@@ -2166,7 +2166,48 @@ function loadRecentGames(){
             // above exactly as they are instead of clearing them out.
         });
 }
+// Full game history — up to 300 games, separate from the 5-item
+// Recent Games preview on Home. Reuses renderRecentGamesRows() with a
+// different container id, so rows look and behave identically
+// (clickable opponents, live online/offline status, Clone button).
+function openGameHistory(){
 
+    if(!db || !currentUser){
+        showInfoPopup("🔒 Log In Required", "Please log in to view your game history.");
+        return;
+    }
+
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("gameHistoryScreen").style.display = "flex";
+    history.pushState({ screen: "gameHistory" }, "", "#history");
+
+    const list = document.getElementById("gameHistoryList");
+    if(list) list.innerHTML = '<p class="sub">Loading...</p>';
+
+    db.ref("users/" + currentUser.uid + "/history")
+        .orderByChild("time")
+        .limitToLast(300)
+        .once("value")
+        .then(function(snapshot){
+
+            const entries = [];
+            snapshot.forEach(function(child){ entries.push(child.val()); });
+            entries.reverse();
+
+            renderRecentGamesRows(entries, "gameHistoryList");
+
+        }).catch(function(err){
+            if(list) list.innerHTML = '<p class="sub">Could not load game history: ' + err.message + '</p>';
+        });
+
+}
+
+function closeGameHistory(){
+    document.getElementById("gameHistoryScreen").style.display = "none";
+    if(history.state && history.state.screen === "gameHistory"){
+        history.back();
+    }
+}
 function formatRelativeTime(timestamp){
     if(!timestamp) return "";
     const diffMs = Date.now() - timestamp;
