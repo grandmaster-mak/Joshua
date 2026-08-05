@@ -26,7 +26,20 @@ function openPlayerProfile(uid){
 
     currentProfileUid = uid;
 
+    // A profile can be opened from several different full-screen panels
+    // (Game History, Leaderboard, Tournaments, Puzzle review, etc.) —
+    // explicitly hide whichever one triggered this so it can never keep
+    // rendering on top of (or underneath, invisibly) the profile screen
+    // that's about to show. Same root cause as the earlier Chat-vs-
+    // Profile stacking bug.
     document.getElementById("appShell").style.display = "none";
+    const gameHistoryEl = document.getElementById("gameHistoryScreen");
+    if(gameHistoryEl) gameHistoryEl.style.display = "none";
+    const leaderboardEl = document.getElementById("leaderboardScreen");
+    if(leaderboardEl) leaderboardEl.style.display = "none";
+    const tournamentsEl = document.getElementById("tournamentsScreen");
+    if(tournamentsEl) tournamentsEl.style.display = "none";
+
     document.getElementById("profileScreen").style.display = "flex";
     history.pushState({ screen: "profile", uid: uid }, "", "#profile");
 
