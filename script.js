@@ -2044,8 +2044,9 @@ function recordGameResult(myResult, opponentName){
             opponentColor: opponentColorForClone,
             result: myResult,
             time: Date.now()
+        }).catch(function(err){
+            console.error("Failed to save opponent game data for Clone:", err.message);
         });
-    }
 }
 
 function cacheRecentGames(entries){
