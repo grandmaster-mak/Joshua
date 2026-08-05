@@ -454,7 +454,53 @@
     </div>
 
 </div>
-                    
+
+        <!-- ========== KINGDOM SCREEN (NEW) ========== -->
+        <div id="kingdomScreen" class="screen" style="display:none; flex-direction:column; flex:1; background:#0a0c10; padding:16px;">
+            <div style="padding:16px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                <h2 style="color:#fff; margin:0; text-align:center;">My Kingdom</h2>
+            </div>
+
+            <!-- Kingdom Scene -->
+            <div id="kingdomScene" style="flex:1; margin:0 0 16px 0; border-radius:20px; overflow:hidden; position:relative; min-height:280px; border:2px solid rgba(255,122,26,0.25);">
+                <div id="kingdomBackground" style="width:100%; height:100%; position:relative; background:linear-gradient(135deg, #4a7c59, #2d4a3e);">
+                    <div style="position:absolute; bottom:0; left:0; right:0; height:28%; background:rgba(139,69,19,0.25);"></div>
+                    <div id="kingdomBuildings" style="position:absolute; bottom:38px; left:0; right:0; display:flex; justify-content:center; align-items:flex-end; gap:4px; padding:0 20px; flex-wrap:wrap;"></div>
+                    <div id="rulerContainer" style="position:absolute; top:18px; left:50%; transform:translateX(-50%); text-align:center; z-index:10;">
+                        <div id="rulerGlow" style="width:80px; height:80px; border-radius:50%; margin:0 auto; background:rgba(255,215,0,0.15); border:2px solid rgba(255,215,0,0.25); animation:kingdomGlowPulse 2.4s ease-in-out infinite; position:relative;"></div>
+                        <img id="rulerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" style="position:absolute; top:10px; left:50%; transform:translateX(-50%); width:60px; height:60px; border-radius:50%; border:3px solid #ffd700; background:#1c2028; object-fit:cover; z-index:2;">
+                        <div id="rulerCrown" style="position:absolute; top:-8px; right:-8px; background:rgba(0,0,0,0.75); border-radius:50%; padding:4px 6px; z-index:3; font-size:20px; border:2px solid rgba(255,215,0,0.3);">🏕️</div>
+                        <div id="rulerName" style="margin-top:8px; color:#fff; font-size:14px; font-weight:700; text-shadow:0 0 12px rgba(0,0,0,0.9);">Player</div>
+                        <div id="kingdomNameDisplay" style="color:#ffd700; font-size:18px; font-weight:700; margin-top:2px;">🏕️ Village</div>
+                    </div>
+                    <div id="particlesContainer" style="position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none; overflow:hidden;"></div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div style="display:flex; justify-content:space-around; padding:16px; margin:0 0 16px 0; background:rgba(255,255,255,0.04); border-radius:14px; border:1px solid rgba(255,255,255,0.06);">
+                <div style="text-align:center;">
+                    <div style="color:rgba(255,255,255,0.5); font-size:11px; font-weight:600; text-transform:uppercase;">Consecutive Wins</div>
+                    <div id="kingdomStreak" style="color:#fff; font-size:24px; font-weight:800;">0</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="color:rgba(255,255,255,0.5); font-size:11px; font-weight:600; text-transform:uppercase;">Total Wins</div>
+                    <div id="kingdomTotalWins" style="color:#fff; font-size:24px; font-weight:800;">0</div>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div id="kingdomProgress" style="margin:0 0 16px 0; background:rgba(255,255,255,0.04); padding:16px; border-radius:14px; border:1px solid rgba(255,255,255,0.06);">
+                <div id="kingdomProgressLabel" style="color:#fff; font-size:14px; font-weight:600; margin-bottom:8px;">Next: <span id="nextKingdomLabel" style="color:#ffd700;">🏘️ Town</span></div>
+                <div class="kingdomProgressBar" style="height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; margin-bottom:8px;">
+                    <div id="progressFill" style="height:100%; width:0%; background:linear-gradient(90deg, #ffd700, #ff9d2e); border-radius:4px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>
+                </div>
+                <div id="progressText" style="color:rgba(255,255,255,0.5); font-size:12px; text-align:center; font-weight:500;">0 / 3 wins</div>
+            </div>
+
+            <!-- Description -->
+            <div id="kingdomDescription" style="color:rgba(255,255,255,0.6); font-size:14px; text-align:center; font-style:italic; margin:0; padding:16px; background:rgba(255,255,255,0.03); border-radius:14px; border:1px solid rgba(255,255,255,0.04);">A modest settlement</div>
+        </div>
 
         <!-- Bottom Navigation -->
         <div id="bottomNav">
@@ -468,6 +514,11 @@
                 <span class="navIcon">👥</span>
                 <span class="navLabel">Friends</span>
                 <span class="navBadge" id="friendsNavBadge"></span>
+            </button>
+
+            <button class="navBtn" data-screen="kingdom" onclick="switchScreen('kingdom')">
+                <span class="navIcon">🏰</span>
+                <span class="navLabel">Kingdom</span>
             </button>
 
             <button class="navBtn" data-screen="account" onclick="switchScreen('account')">
