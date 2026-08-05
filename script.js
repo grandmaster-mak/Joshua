@@ -2299,6 +2299,7 @@ window.addEventListener("popstate", function(event){
         document.getElementById("analysisScreen").style.display = "none";
         document.getElementById("lessonsScreen").style.display = "none";
         document.getElementById("profileScreen").style.display = "none";
+        document.getElementById("gameHistoryScreen").style.display = "none";
         const dnaScreenEl2 = document.getElementById("chessDnaScreen");
         if(dnaScreenEl2) dnaScreenEl2.style.display = "none";
         if(typeof matchmakingSearchActive !== "undefined" && matchmakingSearchActive && typeof cancelQuickMatchManually === "function"){
