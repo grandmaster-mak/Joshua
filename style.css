@@ -2960,3 +2960,46 @@ input::placeholder{ color:#4a5060; }
         transition: none !important;
     }
 }
+/* ===== Kingdom Screen - Matching App Style ===== */
+
+#kingdomScreen .accountOrangeHeader {
+    background: var(--themeOrange, #FF7A1A);
+}
+
+#kingdomScreen .accountBodyLight {
+    background: #f2f0ee;
+}
+
+#kingdomScreen .accountStatsCardLight .stat-item {
+    border-right: 1px solid #eee1d6;
+    padding: 0 4px;
+}
+
+#kingdomScreen .accountStatsCardLight .stat-item:last-child {
+    border-right: none;
+}
+
+#kingdomScreen .stat-icon-circle.peach {
+    background: #fdecd2;
+    color: #e2681a;
+}
+
+#kingdomScreen .stat-icon-circle.mint {
+    background: #dcf5e4;
+    color: #22c55e;
+}
+
+/* Glow animation for the avatar crown (subtle) */
+@keyframes kingdomCrownGlow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+#kingdomScreen #rulerCrown {
+    animation: kingdomCrownGlow 2.4s ease-in-out infinite;
+}
+
+/* Make the progress bar fill use the app's orange */
+#kingdomScreen #progressFill {
+    background: linear-gradient(90deg, #FF7A1A, #ffb066);
+}
