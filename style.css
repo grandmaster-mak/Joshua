@@ -3106,3 +3106,46 @@ input::placeholder{ color:#4a5060; }
     font-size: 14px;
     margin-top: 2px;
 }
+/* ===== KINGDOM GLOW ANIMATION ===== */
+
+@keyframes kingdomGlowPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        opacity: 0.5; 
+    }
+    50% { 
+        transform: scale(1.15); 
+        opacity: 1; 
+    }
+}
+
+/* Kingdom image container */
+#kingdomImageContainer {
+    transition: opacity 0.6s ease;
+}
+
+#kingdomBackgroundImg {
+    transition: opacity 0.6s ease;
+}
+
+/* Kingdom step hover effect */
+#kingdomJourney > div:not([style*="opacity: 0.5"]) {
+    cursor: default;
+}
+
+/* Make journey scrollable on small screens */
+@media (max-width: 420px) {
+    #kingdomJourney {
+        gap: 2px !important;
+    }
+    #kingdomJourney > div {
+        min-width: 36px !important;
+        padding: 4px 2px !important;
+    }
+    #kingdomJourney > div > div:first-child {
+        font-size: 14px !important;
+    }
+    #kingdomJourney > div > div:last-child {
+        font-size: 8px !important;
+    }
+}
