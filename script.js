@@ -2004,6 +2004,38 @@ function recordGameResult(myResult, opponentName){
     if(typeof currentUser === "undefined" || !currentUser) return;
     if(typeof db === "undefined" || !db) return;
 
+    // ===== KINGDOM UPDATE =====
+    if (myResult === 'win') {
+        kingdomState.totalWins++;
+        kingdomState.consecutiveWins++;
+        
+        const currentKingdom = KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel);
+        const nextKingdom = getNextKingdom(currentKingdom);
+        
+        if (nextKingdom && kingdomState.consecutiveWins >= nextKingdom.requiredStreak) {
+            kingdomState.currentLevel = nextKingdom.id;
+            setTimeout(function() {
+                showInfoPopup('🎉 PROMOTION!', 'You advanced to ' + nextKingdom.emoji + ' ' + nextKingdom.name + '!');
+            }, 500);
+        }
+    } else if (myResult === 'loss' || myResult === 'draw') {
+        kingdomState.consecutiveWins = 0;
+    }
+
+    // Save kingdom data to Firebase
+    if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
+        db.ref("users/" + currentUser.uid + "/kingdom").set({
+            currentLevel: kingdomState.currentLevel,
+            consecutiveWins: kingdomState.consecutiveWins,
+            totalWins: kingdomState.totalWins
+        }).catch(function(err) {
+            console.error('Failed to save kingdom data:', err);
+        });
+    }
+    // ===== END KINGDOM UPDATE =====
+
+    // IMPORTANT: this only touches users/{uid}/public, never the parent
+
     // IMPORTANT: this only touches users/{uid}/public, never the parent
     // users/{uid} node. A transaction on the parent would also read/write
     // the sibling "history" path, and could silently clobber a concurrent
