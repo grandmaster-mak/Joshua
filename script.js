@@ -2048,6 +2048,7 @@ function recordGameResult(myResult, opponentName){
             console.error("Failed to save opponent game data for Clone:", err.message);
         });
 }
+}
 
 function cacheRecentGames(entries){
     try{ localStorage.setItem("cachedRecentGames", JSON.stringify(entries)); }catch(e){}
