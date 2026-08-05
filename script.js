@@ -2354,12 +2354,17 @@ window.addEventListener("popstate", function(event){
         document.getElementById("chatScreen").style.display = "flex";
         return;
     }
-
-    if(state.screen === "chessdna"){
+if(state.screen === "chessdna"){
         document.getElementById("chessDnaScreen").style.display = "flex";
         return;
     }
 
+    if(state.screen === "gameHistory"){
+        document.getElementById("gameHistoryScreen").style.display = "flex";
+        return;
+    }
+
 });
+    
 
 createCoordinates();
