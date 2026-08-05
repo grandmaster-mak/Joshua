@@ -2058,9 +2058,9 @@ function loadCachedRecentGames(){
     try{ return JSON.parse(localStorage.getItem("cachedRecentGames") || "null"); }catch(e){ return null; }
 }
 
-function renderRecentGamesRows(entries){
+function renderRecentGamesRows(entries, containerId){
 
-    const list = document.getElementById("recentGamesList");
+    const list = document.getElementById(containerId || "recentGamesList");
     if(!list) return;
 
     if(!entries) return; // nothing cached and nothing loaded yet — leave existing placeholder as-is
