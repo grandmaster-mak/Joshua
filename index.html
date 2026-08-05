@@ -388,69 +388,95 @@
             </div>
         </div>
 
-        <!-- ========== KINGDOM SCREEN (UPDATED TO MATCH APP STYLE) ========== -->
-        <div id="kingdomScreen" class="screen" style="display:none; flex-direction:column; flex:1; padding:0;">
+        <!-- ========== KINGDOM SCREEN (WITH IMAGES) ========== -->
+<div id="kingdomScreen" class="screen" style="display:none; flex-direction:column; flex:1; padding:0;">
 
-            <!-- Orange Header (matches Friends/Account) -->
-            <div class="accountOrangeHeader" style="padding:24px 20px 64px;">
-                <div class="accountHeaderArt" style="font-size:120px;">🏰</div>
-                <h2 class="accountHeaderTitleLight" style="font-size:28px;">My Kingdom</h2>
-                <p class="friendsHeaderSubLight" style="color:rgba(255,255,255,0.85); font-size:14px; margin-top:4px;">Rise through the ranks with consecutive wins</p>
+    <!-- Orange Header -->
+    <div class="accountOrangeHeader" style="padding:24px 20px 64px;">
+        <div class="accountHeaderArt" style="font-size:120px;">🏰</div>
+        <h2 class="accountHeaderTitleLight" style="font-size:28px;">My Kingdom</h2>
+        <p class="friendsHeaderSubLight" style="color:rgba(255,255,255,0.85); font-size:14px; margin-top:4px;">Rise through the ranks with consecutive wins</p>
+    </div>
+
+    <!-- White Body -->
+    <div class="accountBodyLight" style="background:#f2f0ee; border-radius:28px 28px 0 0; margin-top:-40px; padding:0 20px 24px;">
+
+        <!-- Kingdom Image Card (with background image) -->
+        <div style="margin-top:-56px; position:relative;">
+            <div style="position:relative; border-radius:20px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+                <!-- Kingdom Background Image -->
+                <div id="kingdomImageContainer" style="width:100%; height:200px; background:#fdecd2; position:relative; transition:opacity 0.6s ease;">
+                    <img id="kingdomBackgroundImg" src="" alt="Kingdom" style="width:100%; height:100%; object-fit:cover; display:block;">
+                    <!-- Dark gradient overlay for text readability -->
+                    <div style="position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(to top, rgba(0,0,0,0.5), transparent);"></div>
+                    
+                    <!-- Player Avatar with glow -->
+                    <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%);">
+                        <div style="position:relative; width:70px; height:70px;">
+                            <!-- Glow ring -->
+                            <div style="position:absolute; inset:-10px; border-radius:50%; background:rgba(255,215,0,0.3); filter:blur(10px); animation:kingdomGlowPulse 2.4s ease-in-out infinite;"></div>
+                            <!-- Avatar -->
+                            <img id="kingdomRulerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" style="width:70px; height:70px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 20px rgba(255,215,0,0.4); object-fit:cover;">
+                            <!-- Crown badge -->
+                            <div style="position:absolute; top:-4px; right:-4px; background:#FF7A1A; border-radius:50%; padding:4px 6px; font-size:18px; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.2);" id="kingdomRulerCrown">🏕️</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kingdom name badge (top right) -->
+                <div style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.95); padding:6px 14px; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                    <span style="font-weight:700; color:#1a1a1a; font-size:14px;" id="kingdomNameBadge">🏕️ Village</span>
+                </div>
             </div>
+            
+            <!-- Ruler name -->
+            <h3 style="text-align:center; margin:12px 0 4px; font-size:18px; color:#1a1a1a;" id="kingdomRulerName">Player</h3>
+            <p style="text-align:center; color:#8a8580; font-size:13px; margin-bottom:16px;">Ruler of <span style="color:#FF7A1A; font-weight:600;" id="kingdomRulerTitle">Village</span></p>
+        </div>
 
-            <!-- White Body (matches Account/Friends) -->
-            <div class="accountBodyLight" style="background:#f2f0ee; border-radius:28px 28px 0 0; margin-top:-40px; padding:0 20px 24px;">
-
-                <!-- Avatar + Kingdom Display -->
-                <div class="accountAvatarWrap" style="margin-top:-56px;">
-                    <div style="position:relative; width:130px; height:130px; margin:0 auto; border:4px solid #ffffff; border-radius:50%; box-shadow:0 8px 20px rgba(0,0,0,0.18); overflow:hidden; background:#1c2028;">
-                        <img id="rulerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" style="width:100%; height:100%; object-fit:cover;">
-                        <div id="rulerCrown" style="position:absolute; bottom:4px; right:4px; background:#FF7A1A; border-radius:50%; padding:6px 8px; font-size:22px; border:3px solid #f2f0ee; box-shadow:0 2px 8px rgba(0,0,0,0.2);">🏕️</div>
-                    </div>
-                </div>
-
-                <h2 id="rulerName" style="margin:14px 0 2px; font-size:22px; color:#1a1a1a; font-weight:700;">Player</h2>
-                <p style="color:#5a5550; font-size:14px; font-weight:600; margin-bottom:18px;">
-                    <span id="kingdomNameDisplay" style="color:#FF7A1A;">🏕️ Village</span>
-                </p>
-
-                <!-- Stats Card -->
-                <div class="stats-grid accountStatsCardLight" style="background:#ffffff; border-radius:18px; padding:20px 8px; box-shadow:0 4px 16px rgba(0,0,0,0.05); margin-bottom:16px;">
-                    <div class="stat-item" style="border-right:1px solid #eee1d6; text-align:center;">
-                        <div class="stat-icon-circle peach" style="width:44px; height:44px; border-radius:50%; margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:19px; background:#fdecd2;">🔥</div>
-                        <h3 id="kingdomStreak" style="color:#1a1a1a; font-size:20px; font-weight:700;">0</h3>
-                        <p style="color:#8a8580; font-size:11px;">Consecutive Wins</p>
-                    </div>
-                    <div class="stat-item" style="text-align:center; border-right:none;">
-                        <div class="stat-icon-circle mint" style="width:44px; height:44px; border-radius:50%; margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:19px; background:#dcf5e4;">🏆</div>
-                        <h3 id="kingdomTotalWins" style="color:#1a1a1a; font-size:20px; font-weight:700;">0</h3>
-                        <p style="color:#8a8580; font-size:11px;">Total Wins</p>
-                    </div>
-                </div>
-
-                <!-- Progress Card -->
-                <div style="background:#ffffff; border-radius:16px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span style="font-weight:700; color:#1a1a1a; font-size:14px;">Next: <span id="nextKingdomLabel" style="color:#FF7A1A;">🏘️ Town</span></span>
-                        <span style="font-weight:700; color:#8a8580; font-size:13px;" id="progressText">0 / 3 wins</span>
-                    </div>
-                    <div style="height:8px; background:rgba(255,122,26,0.15); border-radius:6px; overflow:hidden;">
-                        <div id="progressFill" style="height:100%; width:0%; background:linear-gradient(90deg, #FF7A1A, #ffb066); border-radius:6px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>
-                    </div>
-                </div>
-
-                <!-- Kingdom Journey -->
-                <div style="background:#ffffff; border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:14px;">
-                    <div style="font-weight:700; color:#1a1a1a; font-size:15px; margin-bottom:12px;">Kingdom Journey</div>
-                    <div id="kingdomJourney" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:4px;"></div>
-                </div>
-
-                <!-- Description Card -->
-                <div style="background:#ffffff; border-radius:16px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                    <p id="kingdomDescription" style="color:#8a8580; font-size:14px; text-align:center; font-style:italic; margin:0; line-height:1.5;">A modest settlement</p>
-                </div>
+        <!-- Stats Cards -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;">
+            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                <div style="font-size:22px; margin-bottom:2px;">🏘️</div>
+                <div style="font-weight:800; color:#FF7A1A; font-size:14px;" id="kingdomStatCurrent">Village</div>
+                <div style="color:#8a8580; font-size:10px;">Current</div>
+            </div>
+            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                <div style="font-size:22px; margin-bottom:2px;">🔥</div>
+                <div style="font-weight:800; color:#22c55e; font-size:14px;" id="kingdomStatStreak">0</div>
+                <div style="color:#8a8580; font-size:10px;">Consecutive Wins</div>
+            </div>
+            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                <div style="font-size:22px; margin-bottom:2px;">🏆</div>
+                <div style="font-weight:800; color:#e5484d; font-size:14px;" id="kingdomStatWinsNeeded">3</div>
+                <div style="color:#8a8580; font-size:10px;">Wins Needed</div>
             </div>
         </div>
+
+        <!-- Progress Card -->
+        <div style="background:#ffffff; border-radius:16px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:700; color:#1a1a1a; font-size:14px;">Next: <span id="kingdomNextLabel" style="color:#FF7A1A;">🏘️ Town</span></span>
+                <span style="font-weight:700; color:#8a8580; font-size:13px;" id="kingdomProgressText">0 / 3 wins</span>
+            </div>
+            <div style="height:8px; background:rgba(255,122,26,0.15); border-radius:6px; overflow:hidden;">
+                <div id="kingdomProgressFill" style="height:100%; width:0%; background:linear-gradient(90deg, #FF7A1A, #ffb066); border-radius:6px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>
+            </div>
+        </div>
+
+        <!-- Kingdom Journey -->
+        <div style="background:#ffffff; border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:14px;">
+            <div style="font-weight:700; color:#1a1a1a; font-size:15px; margin-bottom:12px;">Kingdom Journey</div>
+            <div id="kingdomJourney" style="display:flex; gap:4px; overflow-x:auto; padding-bottom:4px; justify-content:space-between;"></div>
+        </div>
+
+        <!-- Description -->
+        <div style="background:#ffffff; border-radius:16px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+            <p id="kingdomDescription" style="color:#8a8580; font-size:14px; text-align:center; font-style:italic; margin:0; line-height:1.5;">A modest settlement</p>
+        </div>
+
+    </div>
+</div>
 
         <!-- BOTTOM NAVIGATION -->
         <div id="bottomNav">
