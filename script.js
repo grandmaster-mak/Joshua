@@ -129,14 +129,14 @@ function getProgressToNext(currentStreak, nextKingdom) {
 
 function getKingdomImagePath(kingdomId) {
     const images = {
-        'village': 'pieces/kingdoms/village.png',
-        'town': 'pieces/kingdoms/town.png',
-        'fortress': 'pieces/kingdoms/fortress.png',
-        'city': 'pieces/kingdoms/city.png',
-        'kingdom': 'pieces/kingdoms/kingdom.png',
-        'grand-kingdom': 'pieces/kingdoms/grand_kingdom.png',
-        'dominion': 'pieces/kingdoms/dominion.png',
-        'empire': 'pieces/kingdoms/empire.png'
+        'village': 'pieces/village.png',
+        'town': 'pieces/town.png',
+        'fortress': 'pieces/fortress.png',
+        'city': 'pieces/city.png',
+        'kingdom': 'pieces/kingdom.png',
+        'grand-kingdom': 'pieces/grand_kingdom.png',
+        'dominion': 'pieces/dominion.png',
+        'empire': 'pieces/empire.png'
     };
     return images[kingdomId] || images['village'];
 }
