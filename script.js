@@ -73,6 +73,11 @@ let blackPhoto = null;
 let whiteUid = null;
 let blackUid = null;
 
+// ===== OPPONENT KINGDOM DATA (FIXED) =====
+let opponentKingdom = null;
+let opponentKingdomEmoji = '🏕️';
+let opponentKingdomName = 'Village';
+
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
 const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
 
@@ -85,7 +90,7 @@ const KINGDOM_LEVELS = [
   { id: 'kingdom', name: 'Kingdom', emoji: '👑', requiredStreak: 8, visualLevel: 5, description: 'A royal realm' },
   { id: 'grand-kingdom', name: 'Grand Kingdom', emoji: '⚜️', requiredStreak: 9, visualLevel: 6, description: 'A grand and powerful realm' },
   { id: 'dominion', name: 'Dominion', emoji: '🦁', requiredStreak: 10, visualLevel: 7, description: 'A vast territory' },
-  { id: 'empire', name: 'Empire', emoji: '🌎', requiredStreak: 12, visualLevel: 8, description: 'The greatest realm of all' }
+  { id: 'empire', name: 'Empire', emoji: '🌍', requiredStreak: 12, visualLevel: 8, description: 'The greatest realm of all' }
 ];
 
 let kingdomState = {
@@ -120,6 +125,20 @@ function getProgressToNext(currentStreak, nextKingdom) {
   const nextRequired = nextKingdom.requiredStreak;
   const progress = ((currentStreak - currentRequired) / (nextRequired - currentRequired)) * 100;
   return Math.min(Math.max(progress, 0), 100);
+}
+
+function getKingdomImagePath(kingdomId) {
+    const images = {
+        'village': 'pieces/kingdoms/village.png',
+        'town': 'pieces/kingdoms/town.png',
+        'fortress': 'pieces/kingdoms/fortress.png',
+        'city': 'pieces/kingdoms/city.png',
+        'kingdom': 'pieces/kingdoms/kingdom.png',
+        'grand-kingdom': 'pieces/kingdoms/grand_kingdom.png',
+        'dominion': 'pieces/kingdoms/dominion.png',
+        'empire': 'pieces/kingdoms/empire.png'
+    };
+    return images[kingdomId] || images['village'];
 }
 // ===== END KINGDOM SYSTEM =====
 
@@ -889,6 +908,7 @@ function updateTimers(){
 
     updatePlayerNames();
 }
+
 function updatePlayerNames(){
 
     const orientation = getOrientation();
@@ -899,11 +919,31 @@ function updatePlayerNames(){
     const topFlag = orientation.top === "white" ? whiteFlag : blackFlag;
     const bottomFlag = orientation.bottom === "white" ? whiteFlag : blackFlag;
 
-    const topKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
-    const bottomKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
+    // ===== GET KINGDOM FOR EACH PLAYER (FIXED) =====
+    const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
+    
+    let opponentKingdomData = myKingdom;
+    if (gameMode === "online" && typeof window.opponentKingdom !== 'undefined' && window.opponentKingdom) {
+        const oppKingdom = KINGDOM_LEVELS.find(k => k.id === window.opponentKingdom);
+        if (oppKingdom) opponentKingdomData = oppKingdom;
+    }
+    // ===== END KINGDOM =====
 
-    document.getElementById("topPlayerName").innerHTML = (topFlag ? topFlag + " " : "") + topName + ' <span class="playerKingdomBadge">' + topKingdom.emoji + ' ' + topKingdom.name + '</span>';
-    document.getElementById("bottomPlayerName").innerHTML = (bottomFlag ? bottomFlag + " " : "") + bottomName + ' <span class="playerKingdomBadge">' + bottomKingdom.emoji + ' ' + bottomKingdom.name + '</span>';
+    // Determine which side is you and which is opponent based on orientation
+    const topKingdom = orientation.top === "white" ? myKingdom : opponentKingdomData;
+    const bottomKingdom = orientation.bottom === "white" ? myKingdom : opponentKingdomData;
+
+    document.getElementById("topPlayerName").innerHTML = 
+        (topFlag ? topFlag + " " : "") + topName + 
+        ' <span class="playerKingdomBadge">' + 
+        topKingdom.emoji + ' ' + topKingdom.name + 
+        '</span>';
+
+    document.getElementById("bottomPlayerName").innerHTML = 
+        (bottomFlag ? bottomFlag + " " : "") + bottomName + 
+        ' <span class="playerKingdomBadge">' + 
+        bottomKingdom.emoji + ' ' + bottomKingdom.name + 
+        '</span>';
 
     const topRating = orientation.top === "white" ? whiteRating : blackRating;
     const bottomRating = orientation.bottom === "white" ? whiteRating : blackRating;
@@ -2014,7 +2054,7 @@ function recordGameResult(myResult, opponentName){
     if(typeof currentUser === "undefined" || !currentUser) return;
     if(typeof db === "undefined" || !db) return;
 
-    // ===== KINGDOM UPDATE =====
+    // ===== KINGDOM UPDATE (FIXED - STREAK RESETS AFTER PROMOTION) =====
     if (myResult === 'win') {
         kingdomState.totalWins++;
         kingdomState.consecutiveWins++;
@@ -2022,13 +2062,21 @@ function recordGameResult(myResult, opponentName){
         const currentKingdom = KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel);
         const nextKingdom = getNextKingdom(currentKingdom);
         
+        // Check if we can promote
         if (nextKingdom && kingdomState.consecutiveWins >= nextKingdom.requiredStreak) {
+            // PROMOTE!
             kingdomState.currentLevel = nextKingdom.id;
+            
+            // RESET STREAK TO 0 AFTER PROMOTION (FIXED)
+            kingdomState.consecutiveWins = 0;
+            
+            // Show promotion notification
             setTimeout(function() {
                 showInfoPopup('🎉 PROMOTION!', 'You advanced to ' + nextKingdom.emoji + ' ' + nextKingdom.name + '!');
             }, 500);
         }
     } else if (myResult === 'loss' || myResult === 'draw') {
+        // Loss resets streak, but NEVER demotes
         kingdomState.consecutiveWins = 0;
     }
 
@@ -2306,244 +2354,217 @@ function formatRelativeTime(timestamp){
 
 // ===== KINGDOM UI FUNCTIONS =====
 function updateKingdomUI() {
-  const currentKingdom = KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel) || KINGDOM_LEVELS[0];
-  const nextKingdom = getNextKingdom(currentKingdom);
-  const progress = getProgressToNext(kingdomState.consecutiveWins, nextKingdom);
-  
-  const crownEl = document.getElementById('rulerCrown');
-  const nameDisplayEl = document.getElementById('kingdomNameDisplay');
-  const descEl = document.getElementById('kingdomDescription');
-  const streakEl = document.getElementById('kingdomStreak');
-  const totalWinsEl = document.getElementById('kingdomTotalWins');
-  
-  if (crownEl) crownEl.textContent = currentKingdom.emoji;
-  if (nameDisplayEl) nameDisplayEl.textContent = currentKingdom.emoji + ' ' + currentKingdom.name;
-  if (descEl) descEl.textContent = currentKingdom.description;
-  if (streakEl) streakEl.textContent = kingdomState.consecutiveWins;
-  if (totalWinsEl) totalWinsEl.textContent = kingdomState.totalWins;
-  
-  const avatarEl = document.getElementById('rulerAvatar');
-  if (avatarEl && typeof currentUser !== 'undefined' && currentUser && currentUser.photoURL) {
-    avatarEl.src = currentUser.photoURL;
-  }
-  
-  const nameEl = document.getElementById('rulerName');
-  if (nameEl && typeof currentUsername !== 'undefined' && currentUsername) {
-    nameEl.textContent = currentUsername;
-  }
-  
-  const nextLabelEl = document.getElementById('nextKingdomLabel');
-  const progressFillEl = document.getElementById('progressFill');
-  const progressTextEl = document.getElementById('progressText');
-  
-  if (nextKingdom) {
-    if (nextLabelEl) nextLabelEl.textContent = nextKingdom.emoji + ' ' + nextKingdom.name;
-    if (progressFillEl) progressFillEl.style.width = Math.min(progress, 100) + '%';
-    if (progressTextEl) progressTextEl.textContent = kingdomState.consecutiveWins + ' / ' + nextKingdom.requiredStreak + ' wins';
-  } else {
-    if (nextLabelEl) nextLabelEl.textContent = '🏆 MAX LEVEL';
-    if (progressFillEl) progressFillEl.style.width = '100%';
-    if (progressTextEl) progressTextEl.textContent = 'Maximum level reached!';
-  }
-  
-  updateKingdomScene(currentKingdom.visualLevel);
-  updateParticles(currentKingdom.visualLevel);
+    const currentKingdom = KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel) || KINGDOM_LEVELS[0];
+    const nextKingdom = getNextKingdom(currentKingdom);
+    const progress = getProgressToNext(kingdomState.consecutiveWins, nextKingdom);
+
+    // Update background image
+    const bgImg = document.getElementById('kingdomBackgroundImg');
+    if (bgImg) {
+        const imgPath = getKingdomImagePath(currentKingdom.id);
+        bgImg.src = imgPath;
+        bgImg.onerror = function() {
+            this.style.display = 'none';
+            const container = document.getElementById('kingdomImageContainer');
+            if (container) container.style.background = '#fdecd2';
+        };
+        bgImg.style.display = 'block';
+    }
+
+    // Update crown
+    const crownEl = document.getElementById('kingdomRulerCrown');
+    if (crownEl) crownEl.textContent = currentKingdom.emoji;
+
+    // Update kingdom name badge
+    const badgeEl = document.getElementById('kingdomNameBadge');
+    if (badgeEl) badgeEl.textContent = currentKingdom.emoji + ' ' + currentKingdom.name;
+
+    // Update ruler name
+    const rulerName = document.getElementById('kingdomRulerName');
+    if (rulerName && typeof currentUsername !== 'undefined' && currentUsername) {
+        rulerName.textContent = currentUsername;
+    }
+
+    // Update ruler title
+    const rulerTitle = document.getElementById('kingdomRulerTitle');
+    if (rulerTitle) rulerTitle.textContent = currentKingdom.name;
+
+    // Update ruler avatar
+    const avatarEl = document.getElementById('kingdomRulerAvatar');
+    if (avatarEl) {
+        // Try to get photo from multiple sources
+        let photoSrc = null;
+        if (typeof currentUser !== 'undefined' && currentUser && currentUser.photoURL) {
+            photoSrc = currentUser.photoURL;
+        } else if (typeof currentUserPhotoURL !== 'undefined' && currentUserPhotoURL) {
+            photoSrc = currentUserPhotoURL;
+        } else {
+            // Try to copy from account profile
+            const accountAvatar = document.getElementById('accountProfileImg');
+            if (accountAvatar && accountAvatar.src && accountAvatar.src !== '') {
+                photoSrc = accountAvatar.src;
+            }
+        }
+        
+        if (photoSrc) {
+            avatarEl.src = photoSrc;
+        } else {
+            avatarEl.src = DEFAULT_AVATAR_SRC;
+        }
+    }
+
+    // Update stats
+    const statCurrent = document.getElementById('kingdomStatCurrent');
+    if (statCurrent) statCurrent.textContent = currentKingdom.name;
+
+    const statStreak = document.getElementById('kingdomStatStreak');
+    if (statStreak) statStreak.textContent = kingdomState.consecutiveWins;
+
+    const statWinsNeeded = document.getElementById('kingdomStatWinsNeeded');
+    if (statWinsNeeded) {
+        if (nextKingdom) {
+            const needed = nextKingdom.requiredStreak - kingdomState.consecutiveWins;
+            statWinsNeeded.textContent = Math.max(0, needed);
+        } else {
+            statWinsNeeded.textContent = '🎉';
+        }
+    }
+
+    // Update progress
+    const nextLabel = document.getElementById('kingdomNextLabel');
+    const progressFill = document.getElementById('kingdomProgressFill');
+    const progressText = document.getElementById('kingdomProgressText');
+
+    if (nextKingdom) {
+        if (nextLabel) nextLabel.textContent = nextKingdom.emoji + ' ' + nextKingdom.name;
+        if (progressFill) progressFill.style.width = Math.min(progress, 100) + '%';
+        if (progressText) progressText.textContent = kingdomState.consecutiveWins + ' / ' + nextKingdom.requiredStreak + ' wins';
+    } else {
+        if (nextLabel) nextLabel.textContent = '🏆 MAX LEVEL';
+        if (progressFill) progressFill.style.width = '100%';
+        if (progressText) progressText.textContent = 'Maximum level reached!';
+    }
+
+    // Update description
+    const descEl = document.getElementById('kingdomDescription');
+    if (descEl) descEl.textContent = currentKingdom.description;
+
+    // Update kingdom journey
+    updateKingdomJourney(currentKingdom);
 }
 
-function updateKingdomScene(level) {
-  const buildingsContainer = document.getElementById('kingdomBuildings');
-  if (!buildingsContainer) return;
-  buildingsContainer.innerHTML = '';
-  
-  const bg = document.getElementById('kingdomBackground');
-  if (!bg) return;
-  
-  const gradients = [
-    ['#4a7c59', '#2d4a3e'],
-    ['#6b8f71', '#4a6b50'],
-    ['#8a6e4b', '#5a4a3a'],
-    ['#7a9e9f', '#4a7a7b'],
-    ['#c9a96e', '#8a7a4a'],
-    ['#d4b896', '#a68b6a'],
-    ['#b89a7a', '#7a6a5a'],
-    ['#c9b896', '#a89a7a']
-  ];
-  const gradient = gradients[Math.min(level - 1, gradients.length - 1)] || gradients[0];
-  bg.style.background = 'linear-gradient(135deg, ' + gradient[0] + ', ' + gradient[1] + ')';
-  
-  if (level >= 1) {
-    const numHuts = Math.min(level + 2, 8);
-    for (let i = 0; i < numHuts; i++) {
-      const hut = document.createElement('div');
-      hut.className = 'kingdomBuilding';
-      hut.style.height = (20 + Math.random() * 20) + 'px';
-      hut.style.width = (15 + Math.random() * 15) + 'px';
-      buildingsContainer.appendChild(hut);
-    }
-  }
-  
-  if (level >= 3) {
-    for (let i = 0; i < 3; i++) {
-      const wall = document.createElement('div');
-      wall.className = 'kingdomWall';
-      wall.style.height = (30 + i * 15) + 'px';
-      buildingsContainer.appendChild(wall);
-    }
-  }
-  
-  if (level >= 5) {
-    const palace = document.createElement('div');
-    palace.className = 'kingdomPalace';
-    palace.style.width = '60px';
-    palace.style.height = '50px';
-    palace.style.position = 'relative';
-    buildingsContainer.appendChild(palace);
-    
-    for (let i = 0; i < 2; i++) {
-      const tower = document.createElement('div');
-      tower.className = 'kingdomBuilding';
-      tower.style.width = '15px';
-      tower.style.height = '35px';
-      tower.style.margin = '0 5px';
-      buildingsContainer.appendChild(tower);
-    }
-  }
-  
-  if (level >= 7) {
-    for (let i = 0; i < 3; i++) {
-      const territory = document.createElement('div');
-      territory.className = 'kingdomTerritory';
-      territory.style.height = (25 + i * 10) + 'px';
-      territory.style.width = (20 + i * 5) + 'px';
-      buildingsContainer.appendChild(territory);
-    }
-  }
-  
-  if (level >= 8) {
-    for (let i = 0; i < 4; i++) {
-      const empire = document.createElement('div');
-      empire.className = 'kingdomEmpire';
-      empire.style.height = (30 + i * 15) + 'px';
-      empire.style.width = (20 + i * 5) + 'px';
-      buildingsContainer.appendChild(empire);
-    }
-  }
-}
+function updateKingdomJourney(currentKingdom) {
+    const container = document.getElementById('kingdomJourney');
+    if (!container) return;
 
-function updateParticles(level) {
-  const container = document.getElementById('particlesContainer');
-  if (!container) return;
-  container.innerHTML = '';
-  
-  if (level < 3) return;
-  
-  const numParticles = Math.min(level * 2, 20);
-  for (let i = 0; i < numParticles; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    const size = 3 + Math.random() * 8;
-    particle.style.width = size + 'px';
-    particle.style.height = size + 'px';
-    particle.style.left = Math.random() * 100 + '%';
-    particle.style.top = Math.random() * 60 + '%';
-    particle.style.animationDelay = (Math.random() * 3) + 's';
-    particle.style.animationDuration = (2 + Math.random() * 2) + 's';
-    container.appendChild(particle);
-  }
+    container.innerHTML = '';
+
+    KINGDOM_LEVELS.forEach(function(kingdom) {
+        const kingdomIndex = KINGDOM_LEVELS.indexOf(kingdom);
+        const currentIndex = KINGDOM_LEVELS.findIndex(k => k.id === kingdomState.currentLevel);
+        const isCompleted = kingdomIndex < currentIndex;
+        const isCurrent = kingdom.id === kingdomState.currentLevel;
+        const isLocked = kingdomIndex > currentIndex;
+
+        const step = document.createElement('div');
+        step.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 4px;
+            border-radius: 10px;
+            min-width: 44px;
+            flex: 1;
+            text-align: center;
+            background: ${isCompleted ? '#dcf5e4' : isCurrent ? '#ffe4d6' : '#f5f5f5'};
+            ${isCurrent ? 'border: 2px solid #FF7A1A;' : ''}
+            opacity: ${isLocked ? '0.5' : '1'};
+            transition: all 0.3s ease;
+        `;
+
+        step.innerHTML = `
+            <div style="font-size: 18px;">${kingdom.emoji}</div>
+            <div style="font-size: 7px; font-weight: 600; color: ${isCurrent ? '#FF7A1A' : isCompleted ? '#22c55e' : '#aaa'}; line-height: 1.2; max-width: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${kingdom.name}</div>
+            <div style="font-size: 10px; margin-top: 1px;">${isCompleted ? '✅' : isCurrent ? '●' : '🔒'}</div>
+        `;
+
+        container.appendChild(step);
+    });
 }
+// ===== END KINGDOM UI FUNCTIONS =====
 
 // Load kingdom data when user logs in
-if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
-    db.ref("users/" + currentUser.uid + "/kingdom").once("value").then(function(snap) {
+function loadKingdomData(userId) {
+    if (!db || !userId) return;
+    
+    db.ref("users/" + userId + "/kingdom").once("value").then(function(snap) {
         const data = snap.val();
         if (data) {
             kingdomState.currentLevel = data.currentLevel || 'village';
             kingdomState.consecutiveWins = data.consecutiveWins || 0;
             kingdomState.totalWins = data.totalWins || 0;
-            if (document.getElementById('kingdomScreen') && document.getElementById('kingdomScreen').style.display === 'flex') {
+            
+            // Update UI if kingdom screen is open
+            if (document.getElementById('kingdomScreen') && 
+                document.getElementById('kingdomScreen').style.display === 'flex') {
                 updateKingdomUI();
             }
         }
     }).catch(function(err) {
         console.error('Failed to load kingdom data:', err);
     });
+}
 
-    // Listen for kingdom updates
-    db.ref("users/" + currentUser.uid + "/kingdom").on("value", function(snap) {
+// Listen for real-time kingdom updates
+function listenKingdomUpdates(userId) {
+    if (!db || !userId) return;
+    
+    db.ref("users/" + userId + "/kingdom").on("value", function(snap) {
         const data = snap.val();
         if (data) {
             kingdomState.currentLevel = data.currentLevel || 'village';
             kingdomState.consecutiveWins = data.consecutiveWins || 0;
             kingdomState.totalWins = data.totalWins || 0;
-            if (document.getElementById('kingdomScreen') && document.getElementById('kingdomScreen').style.display === 'flex') {
+            
+            if (document.getElementById('kingdomScreen') && 
+                document.getElementById('kingdomScreen').style.display === 'flex') {
                 updateKingdomUI();
             }
         }
     });
 }
-// ===== END KINGDOM UI FUNCTIONS =====
 
-// ===== Physical/phone back-button support =====
-// Every open___() function already does history.pushState({screen, view}, ...),
-// and newGame() does the same for the board. This listens for the back
-// button itself (which doesn't call our close___() functions) and re-syncs
-// the visible screen to match, so back steps through detail -> list -> Home,
-// same as the in-app back arrows — and never silently drops a live game.
+// ===== PHYSICAL BACK BUTTON SUPPORT =====
 window.addEventListener("popstate", function(event){
 
     const state = event.state;
 
-    // Closing the Analysis position-picker popup via the back button
-    // must just close the popup itself, the same as tapping Cancel —
-    // it should never fall through to whatever screen is showing
-    // underneath it (the Analysis board, or Home if no position has
-    // been picked yet). This check runs first since a .popup isn't a
-    // tracked history state on its own, so without this, back button
-    // presses were being absorbed by whatever WAS driving history
-    // (the screen behind the popup) instead of the popup itself.
     const analysisPopupEl = document.getElementById("analysisPositionPopup");
     if(analysisPopupEl && analysisPopupEl.classList.contains("show")){
         if(typeof closeAnalysisPositionPicker === "function") closeAnalysisPositionPicker();
         return;
     }
 
-    // Closing an open chat (in-game chat or a friend DM) via the back
-    // button must just close chat and reveal whatever's behind it — it
-    // should never trigger the live-game resign/draw/abort menu. This
-    // check must run FIRST: #game stays display:flex the entire time
-    // chat is open (chat is just an overlay on top of it), so without
-    // this check, the live-game branch below runs instead and wrongly
-    // assumes you're trying to leave the game itself.
     if(document.getElementById("chatScreen").style.display === "flex"){
         document.getElementById("chatScreen").style.display = "none";
         if(typeof closeChatListener === "function") closeChatListener();
         return;
     }
 
-    // A live game must never be silently left by the back button — push
-    // its state right back on and surface the same resign/draw/abort
-    // options the in-game menu icon shows.
     if(document.getElementById("game").style.display === "flex"){
 
         if(gameMode === "online" && myColor === null){
-            // Spectating — nothing to protect, just leave.
             leaveSpectating();
             return;
         }
 
         if(!gameOver){
-            // Game still in progress — protect it, ask before leaving.
             history.pushState({ screen: "game" }, "", "#game");
             showOnlineGameMenu();
             return;
         }
 
-        // Game already finished (resigned/aborted/drawn/checkmated/timed
-        // out) — nothing left to protect, so just leave the board and any
-        // leftover result popup, straight back to Home. Also close Chess
-        // DNA here if it's open — #game staying visible means THIS branch
-        // runs before the generic full-screen-panel cleanup below ever
-        // gets a chance to, which is exactly what let DNA get stuck onscreen.
         closePopup();
         const dnaScreenEl = document.getElementById("chessDnaScreen");
         if(dnaScreenEl) dnaScreenEl.style.display = "none";
@@ -2631,227 +2652,3 @@ if(state.screen === "chessdna"){
     
 
 createCoordinates();
-// ===== KINGDOM UI FUNCTIONS =====
-
-function updateKingdomUI() {
-    const currentKingdom = KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel) || KINGDOM_LEVELS[0];
-    const nextKingdom = getNextKingdom(currentKingdom);
-    const progress = getProgressToNext(kingdomState.consecutiveWins, nextKingdom);
-
-    // Update crown emoji
-    const crownEl = document.getElementById('rulerCrown');
-    if (crownEl) crownEl.textContent = currentKingdom.emoji;
-
-    // Update kingdom name display
-    const nameDisplayEl = document.getElementById('kingdomNameDisplay');
-    if (nameDisplayEl) nameDisplayEl.textContent = currentKingdom.emoji + ' ' + currentKingdom.name;
-
-    // Update description
-    const descEl = document.getElementById('kingdomDescription');
-    if (descEl) descEl.textContent = currentKingdom.description;
-
-    // Update stats
-    const streakEl = document.getElementById('kingdomStreak');
-    if (streakEl) streakEl.textContent = kingdomState.consecutiveWins;
-
-    const totalWinsEl = document.getElementById('kingdomTotalWins');
-    if (totalWinsEl) totalWinsEl.textContent = kingdomState.totalWins;
-
-    // Update ruler avatar
-    const avatarEl = document.getElementById('rulerAvatar');
-    if (avatarEl && typeof currentUser !== 'undefined' && currentUser && currentUser.photoURL) {
-        avatarEl.src = currentUser.photoURL;
-    }
-
-    // Update ruler name
-    const nameEl = document.getElementById('rulerName');
-    if (nameEl && typeof currentUsername !== 'undefined' && currentUsername) {
-        nameEl.textContent = currentUsername;
-    }
-
-    // Update progress
-    const nextLabelEl = document.getElementById('nextKingdomLabel');
-    const progressFillEl = document.getElementById('progressFill');
-    const progressTextEl = document.getElementById('progressText');
-
-    if (nextKingdom) {
-        if (nextLabelEl) nextLabelEl.textContent = nextKingdom.emoji + ' ' + nextKingdom.name;
-        if (progressFillEl) progressFillEl.style.width = Math.min(progress, 100) + '%';
-        if (progressTextEl) progressTextEl.textContent = kingdomState.consecutiveWins + ' / ' + nextKingdom.requiredStreak + ' wins';
-    } else {
-        if (nextLabelEl) nextLabelEl.textContent = '🏆 MAX LEVEL';
-        if (progressFillEl) progressFillEl.style.width = '100%';
-        if (progressTextEl) progressTextEl.textContent = 'Maximum level reached!';
-    }
-
-    // Update kingdom journey
-    updateKingdomJourney(currentKingdom);
-}
-
-function updateKingdomJourney(currentKingdom) {
-    const container = document.getElementById('kingdomJourney');
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    KINGDOM_LEVELS.forEach(function(kingdom) {
-        const isCompleted = kingdomState.currentLevel === kingdom.id || 
-            KINGDOM_LEVELS.indexOf(kingdom) < KINGDOM_LEVELS.findIndex(k => k.id === kingdomState.currentLevel);
-        const isCurrent = kingdom.id === kingdomState.currentLevel;
-        const isLocked = !isCompleted && !isCurrent;
-
-        const step = document.createElement('div');
-        step.className = 'kingdom-step';
-        if (isCompleted) step.classList.add('completed');
-        if (isCurrent) step.classList.add('current');
-        if (isLocked) step.classList.add('locked');
-
-        step.innerHTML = `
-            <span class="step-emoji">${kingdom.emoji}</span>
-            <span class="step-name">${kingdom.name}</span>
-            <span class="step-icon">${isCompleted ? '✅' : isCurrent ? '●' : '🔒'}</span>
-        `;
-
-        container.appendChild(step);
-    });
-}
-// ===== KINGDOM SYSTEM WITH IMAGES =====
-
-// Kingdom image path mapping
-function getKingdomImagePath(kingdomId) {
-    const images = {
-        'village': 'pieces/village.png',
-        'town': 'pieces/town.png',
-        'fortress': 'pieces/fortress.png',
-        'city': 'pieces/city.png',
-        'kingdom': 'pieces/kingdom.png',
-        'grand-kingdom': 'pieces/grand_kingdom.png',
-        'dominion': 'pieces/dominion.png',
-        'empire': 'pieces/empire.png'
-    };
-    return images[kingdomId] || images['village'];
-}
-
-// Update Kingdom UI with image background
-function updateKingdomUI() {
-    const currentKingdom = KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel) || KINGDOM_LEVELS[0];
-    const nextKingdom = getNextKingdom(currentKingdom);
-    const progress = getProgressToNext(kingdomState.consecutiveWins, nextKingdom);
-
-    // Update background image
-    const bgImg = document.getElementById('kingdomBackgroundImg');
-    if (bgImg) {
-        const imgPath = getKingdomImagePath(currentKingdom.id);
-        bgImg.src = imgPath;
-        bgImg.onerror = function() {
-            // Fallback if image doesn't load
-            this.style.display = 'none';
-            document.getElementById('kingdomImageContainer').style.background = '#fdecd2';
-        };
-    }
-
-    // Update crown
-    const crownEl = document.getElementById('kingdomRulerCrown');
-    if (crownEl) crownEl.textContent = currentKingdom.emoji;
-
-    // Update kingdom name badge
-    const badgeEl = document.getElementById('kingdomNameBadge');
-    if (badgeEl) badgeEl.textContent = currentKingdom.emoji + ' ' + currentKingdom.name;
-
-    // Update ruler name
-    const rulerName = document.getElementById('kingdomRulerName');
-    if (rulerName && typeof currentUsername !== 'undefined' && currentUsername) {
-        rulerName.textContent = currentUsername;
-    }
-
-    // Update ruler title
-    const rulerTitle = document.getElementById('kingdomRulerTitle');
-    if (rulerTitle) rulerTitle.textContent = currentKingdom.name;
-
-    // Update ruler avatar
-    const avatarEl = document.getElementById('kingdomRulerAvatar');
-    if (avatarEl && typeof currentUser !== 'undefined' && currentUser && currentUser.photoURL) {
-        avatarEl.src = currentUser.photoURL;
-    }
-
-    // Update stats
-    const statCurrent = document.getElementById('kingdomStatCurrent');
-    if (statCurrent) statCurrent.textContent = currentKingdom.name;
-
-    const statStreak = document.getElementById('kingdomStatStreak');
-    if (statStreak) statStreak.textContent = kingdomState.consecutiveWins;
-
-    const statWinsNeeded = document.getElementById('kingdomStatWinsNeeded');
-    if (statWinsNeeded) {
-        if (nextKingdom) {
-            const needed = nextKingdom.requiredStreak - kingdomState.consecutiveWins;
-            statWinsNeeded.textContent = Math.max(0, needed);
-        } else {
-            statWinsNeeded.textContent = '🎉';
-        }
-    }
-
-    // Update progress
-    const nextLabel = document.getElementById('kingdomNextLabel');
-    const progressFill = document.getElementById('kingdomProgressFill');
-    const progressText = document.getElementById('kingdomProgressText');
-
-    if (nextKingdom) {
-        if (nextLabel) nextLabel.textContent = nextKingdom.emoji + ' ' + nextKingdom.name;
-        if (progressFill) progressFill.style.width = Math.min(progress, 100) + '%';
-        if (progressText) progressText.textContent = kingdomState.consecutiveWins + ' / ' + nextKingdom.requiredStreak + ' wins';
-    } else {
-        if (nextLabel) nextLabel.textContent = '🏆 MAX LEVEL';
-        if (progressFill) progressFill.style.width = '100%';
-        if (progressText) progressText.textContent = 'Maximum level reached!';
-    }
-
-    // Update description
-    const descEl = document.getElementById('kingdomDescription');
-    if (descEl) descEl.textContent = currentKingdom.description;
-
-    // Update kingdom journey
-    updateKingdomJourney(currentKingdom);
-}
-
-function updateKingdomJourney(currentKingdom) {
-    const container = document.getElementById('kingdomJourney');
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    KINGDOM_LEVELS.forEach(function(kingdom) {
-        const kingdomIndex = KINGDOM_LEVELS.indexOf(kingdom);
-        const currentIndex = KINGDOM_LEVELS.findIndex(k => k.id === kingdomState.currentLevel);
-        const isCompleted = kingdomIndex < currentIndex;
-        const isCurrent = kingdom.id === kingdomState.currentLevel;
-        const isLocked = kingdomIndex > currentIndex;
-
-        const step = document.createElement('div');
-        step.style.cssText = `
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            padding: 6px 4px;
-            border-radius: 10px;
-            min-width: 44px;
-            flex: 1;
-            text-align: center;
-            background: ${isCompleted ? '#dcf5e4' : isCurrent ? '#ffe4d6' : '#f5f5f5'};
-            ${isCurrent ? 'border: 2px solid #FF7A1A;' : ''}
-            opacity: ${isLocked ? '0.5' : '1'};
-            transition: all 0.3s ease;
-        `;
-
-        step.innerHTML = `
-            <div style="font-size: 18px;">${kingdom.emoji}</div>
-            <div style="font-size: 7px; font-weight: 600; color: ${isCurrent ? '#FF7A1A' : isCompleted ? '#22c55e' : '#aaa'}; line-height: 1.2; max-width: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${kingdom.name}</div>
-            <div style="font-size: 10px; margin-top: 1px;">${isCompleted ? '✅' : isCurrent ? '●' : '🔒'}</div>
-        `;
-
-        container.appendChild(step);
-    });
-}
-
-// ===== END KINGDOM UI FUNCTIONS =====
