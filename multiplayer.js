@@ -90,7 +90,11 @@ function createOnlineRoom(){
     currentRoomCode = code;
 
     // ===== KINGDOM DATA =====
-    const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
+    // FIX: was getKingdomByStreak(kingdomState.consecutiveWins), which
+    // always resolves to Village right after a promotion (consecutiveWins
+    // resets to 0 on promotion). We want the player's actual saved tier,
+    // which lives in kingdomState.currentLevel.
+    const myKingdom = getMyCurrentKingdom();
     // ===== END KINGDOM DATA =====
 
     db.ref("rooms/" + code + "/players/white").set({
@@ -154,7 +158,9 @@ function joinOnlineRoom(){
         currentRoomCode = code;
 
         // ===== KINGDOM DATA =====
-        const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
+        // FIX: use the account's actual saved tier, not a streak-based
+        // lookup that resets to Village after every promotion.
+        const myKingdom = getMyCurrentKingdom();
         // ===== END KINGDOM DATA =====
 
         db.ref("rooms/" + code + "/players/black").set({
@@ -621,7 +627,9 @@ function startQuickMatch(){
         gameMode = "online";
 
         // ===== KINGDOM DATA =====
-        const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
+        // FIX: use the account's actual saved tier, not a streak-based
+        // lookup that resets to Village after every promotion.
+        const myKingdom = getMyCurrentKingdom();
         // ===== END KINGDOM DATA =====
 
         db.ref("rooms/" + info.roomCode + "/players/" + myColor).set({
