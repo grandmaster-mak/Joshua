@@ -73,7 +73,7 @@ const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.
 const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
 
 // ============================================================
-// ===== KINGDOM SYSTEM (FULLY FIXED) =====
+// ===== KINGDOM SYSTEM (WITH LOCAL STORAGE PERSISTENCE) =====
 // ============================================================
 
 const KINGDOM_LEVELS = [
@@ -92,6 +92,100 @@ let kingdomState = {
   consecutiveWins: 0,
   totalWins: 0
 };
+
+// ===== RESTORE KINGDOM FROM LOCAL STORAGE IMMEDIATELY =====
+try {
+  const saved = localStorage.getItem('kingdomState');
+  if (saved) {
+    const data = JSON.parse(saved);
+    if (data.currentLevel && KINGDOM_LEVELS.find(k => k.id === data.currentLevel)) {
+      kingdomState.currentLevel = data.currentLevel;
+      kingdomState.consecutiveWins = data.consecutiveWins || 0;
+      kingdomState.totalWins = data.totalWins || 0;
+    }
+  }
+} catch(e) {}
+
+// ===== SAVE TO BOTH FIREBASE AND LOCAL STORAGE =====
+function saveKingdomToFirebase() {
+    // Always save to local storage first, so next app load has it instantly
+    try {
+        localStorage.setItem('kingdomState', JSON.stringify({
+            currentLevel: kingdomState.currentLevel,
+            consecutiveWins: kingdomState.consecutiveWins,
+            totalWins: kingdomState.totalWins
+        }));
+    } catch(e) {}
+
+    // Then try to sync to Firebase
+    if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
+        db.ref("users/" + currentUser.uid + "/kingdom").set({
+            currentLevel: kingdomState.currentLevel,
+            consecutiveWins: kingdomState.consecutiveWins,
+            totalWins: kingdomState.totalWins
+        }).then(function() {
+            console.log('✅ Kingdom saved to Firebase');
+        }).catch(function(err) {
+            console.error('❌ Failed to save kingdom to Firebase:', err);
+            // Data is still in localStorage, so it won't be lost
+        });
+    }
+}
+
+// ===== LOAD KINGDOM FROM FIREBASE (MERGED WITH LOCAL) =====
+function loadKingdomData(userId) {
+    if (!db || !userId) return;
+    
+    db.ref("users/" + userId + "/kingdom").once("value").then(function(snap) {
+        const data = snap.val();
+        if (data) {
+            kingdomState.currentLevel = data.currentLevel || 'village';
+            kingdomState.consecutiveWins = data.consecutiveWins || 0;
+            kingdomState.totalWins = data.totalWins || 0;
+            
+            // Update local storage with the freshly fetched data
+            try {
+                localStorage.setItem('kingdomState', JSON.stringify(kingdomState));
+            } catch(e) {}
+
+            // Update UI if kingdom screen is open
+            if (document.getElementById('kingdomScreen') && 
+                document.getElementById('kingdomScreen').style.display === 'flex') {
+                updateKingdomUI();
+            }
+        }
+    }).catch(function(err) {
+        console.error('Failed to load kingdom data:', err);
+        // Local storage cache remains as fallback
+    });
+}
+
+// ===== LISTEN FOR KINGDOM UPDATES =====
+function listenKingdomUpdates(userId) {
+    if (!db || !userId) return;
+    
+    db.ref("users/" + userId + "/kingdom").on("value", function(snap) {
+        const data = snap.val();
+        if (data) {
+            kingdomState.currentLevel = data.currentLevel || 'village';
+            kingdomState.consecutiveWins = data.consecutiveWins || 0;
+            kingdomState.totalWins = data.totalWins || 0;
+            
+            try {
+                localStorage.setItem('kingdomState', JSON.stringify(kingdomState));
+            } catch(e) {}
+            
+            if (document.getElementById('kingdomScreen') && 
+                document.getElementById('kingdomScreen').style.display === 'flex') {
+                updateKingdomUI();
+            }
+        }
+    });
+}
+
+// ============================================================
+// ===== END KINGDOM SYSTEM =====
+// ============================================================
 
 function getKingdomByStreak(streak) {
   let kingdom = KINGDOM_LEVELS[0];
@@ -134,64 +228,6 @@ function getKingdomImagePath(kingdomId) {
     };
     return images[kingdomId] || images['village'];
 }
-
-// ===== SAVE KINGDOM TO FIREBASE =====
-function saveKingdomToFirebase() {
-    if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
-        db.ref("users/" + currentUser.uid + "/kingdom").set({
-            currentLevel: kingdomState.currentLevel,
-            consecutiveWins: kingdomState.consecutiveWins,
-            totalWins: kingdomState.totalWins
-        }).catch(function(err) {
-            console.error('Failed to save kingdom data:', err);
-        });
-    }
-}
-
-// ===== LOAD KINGDOM FROM FIREBASE =====
-function loadKingdomData(userId) {
-    if (!db || !userId) return;
-    
-    db.ref("users/" + userId + "/kingdom").once("value").then(function(snap) {
-        const data = snap.val();
-        if (data) {
-            kingdomState.currentLevel = data.currentLevel || 'village';
-            kingdomState.consecutiveWins = data.consecutiveWins || 0;
-            kingdomState.totalWins = data.totalWins || 0;
-            
-            // Update UI if kingdom screen is open
-            if (document.getElementById('kingdomScreen') && 
-                document.getElementById('kingdomScreen').style.display === 'flex') {
-                updateKingdomUI();
-            }
-        }
-    }).catch(function(err) {
-        console.error('Failed to load kingdom data:', err);
-    });
-}
-
-// ===== LISTEN FOR KINGDOM UPDATES =====
-function listenKingdomUpdates(userId) {
-    if (!db || !userId) return;
-    
-    db.ref("users/" + userId + "/kingdom").on("value", function(snap) {
-        const data = snap.val();
-        if (data) {
-            kingdomState.currentLevel = data.currentLevel || 'village';
-            kingdomState.consecutiveWins = data.consecutiveWins || 0;
-            kingdomState.totalWins = data.totalWins || 0;
-            
-            if (document.getElementById('kingdomScreen') && 
-                document.getElementById('kingdomScreen').style.display === 'flex') {
-                updateKingdomUI();
-            }
-        }
-    });
-}
-
-// ============================================================
-// ===== END KINGDOM SYSTEM =====
-// ============================================================
 
 // Reads coach/lesson text out loud using the browser's built-in
 // text-to-speech
@@ -954,8 +990,8 @@ function updatePlayerNames(){
     // My kingdom (the player using this device)
     const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
     
-    // Opponent kingdom (from multiplayer data)
-    let opponentKingdomData = myKingdom;
+    // Opponent kingdom: default to a placeholder, never fall back to my kingdom
+    let opponentKingdomData = { emoji: '❓', name: '?' };
     if (gameMode === "online" && typeof window.opponentKingdom !== 'undefined' && window.opponentKingdom) {
         const oppKingdom = KINGDOM_LEVELS.find(k => k.id === window.opponentKingdom);
         if (oppKingdom) opponentKingdomData = oppKingdom;
@@ -966,32 +1002,26 @@ function updatePlayerNames(){
     let topKingdom, bottomKingdom;
     
     if (gameMode === "online") {
-        // In online mode, the top player is the opponent if you're white
-        // and you if you're black (because board is flipped)
         if (myColor === "white") {
-            topKingdom = opponentKingdomData;
-            bottomKingdom = myKingdom;
+            topKingdom = opponentKingdomData;   // opponent
+            bottomKingdom = myKingdom;          // me
         } else {
-            topKingdom = myKingdom;
-            bottomKingdom = opponentKingdomData;
+            topKingdom = myKingdom;             // me (black appears on top when board flipped)
+            bottomKingdom = opponentKingdomData;// opponent
         }
     } else {
-        // Local games: both players use the same kingdom
-        topKingdom = myKingdom;
-        bottomKingdom = myKingdom;
+        // Local games: both players use the same placeholder (or could be omitted)
+        topKingdom = { emoji: '', name: '' };
+        bottomKingdom = { emoji: '', name: '' };
     }
 
     document.getElementById("topPlayerName").innerHTML = 
         (topFlag ? topFlag + " " : "") + topName + 
-        ' <span class="playerKingdomBadge">' + 
-        topKingdom.emoji + ' ' + topKingdom.name + 
-        '</span>';
+        (topKingdom.emoji ? ' <span class="playerKingdomBadge">' + topKingdom.emoji + ' ' + topKingdom.name + '</span>' : '');
 
     document.getElementById("bottomPlayerName").innerHTML = 
         (bottomFlag ? bottomFlag + " " : "") + bottomName + 
-        ' <span class="playerKingdomBadge">' + 
-        bottomKingdom.emoji + ' ' + bottomKingdom.name + 
-        '</span>';
+        (bottomKingdom.emoji ? ' <span class="playerKingdomBadge">' + bottomKingdom.emoji + ' ' + bottomKingdom.name + '</span>' : '');
 
     const topRating = orientation.top === "white" ? whiteRating : blackRating;
     const bottomRating = orientation.bottom === "white" ? whiteRating : blackRating;
@@ -2093,16 +2123,8 @@ function recordGameResult(myResult, opponentName){
         kingdomState.consecutiveWins = 0;
     }
 
-    // Save kingdom data to Firebase
-    if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
-        db.ref("users/" + currentUser.uid + "/kingdom").set({
-            currentLevel: kingdomState.currentLevel,
-            consecutiveWins: kingdomState.consecutiveWins,
-            totalWins: kingdomState.totalWins
-        }).catch(function(err) {
-            console.error('Failed to save kingdom data:', err);
-        });
-    }
+    // Save kingdom (both Firebase and localStorage)
+    saveKingdomToFirebase();
     // ===== END KINGDOM UPDATE =====
 
     // IMPORTANT: this only touches users/{uid}/public, never the parent
