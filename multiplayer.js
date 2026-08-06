@@ -369,8 +369,12 @@ function listenForPlayerInfo(code){
             const opponentColor = myColor === "white" ? "black" : "white";
             if(players[opponentColor] && players[opponentColor].kingdom){
                 window.opponentKingdom = players[opponentColor].kingdom;
+                opponentKingdomEmoji = players[opponentColor].kingdomEmoji || '🏕️';
+                opponentKingdomName = players[opponentColor].kingdomName || 'Village';
             } else {
                 window.opponentKingdom = null;
+                opponentKingdomEmoji = '🏕️';
+                opponentKingdomName = 'Village';
             }
         }
         // ===== END OPPONENT KINGDOM =====
@@ -574,18 +578,7 @@ function startOnlineClockDisplay(){
 }
 
 // ============================================================
-// Quick Match — automatic matchmaking. Searches for 15 seconds; if
-// someone else is also searching, they're paired atomically via a
-// single Firebase transaction (same pattern as the Tournament Arena
-// queue) with a randomly assigned color for each side. If nobody's
-// found in time, falls back to a RATED match against the AI, scaled
-// to the player's own rating.
-//
-// FIREBASE RULES: requires a rule for this top-level path —
-//   "matchmaking": {
-//     ".read": "auth != null",
-//     ".write": "auth != null"
-//   }
+// Quick Match
 // ============================================================
 
 let matchmakingSearchActive = false;
@@ -660,14 +653,6 @@ function startQuickMatch(){
         showInfoPopup("⚠️ Matchmaking Error", "Could not reach the matchmaking queue: " + (err.code || err.message));
     });
 
-    // Transaction runs on matchmakingQueue ONLY now — a much smaller,
-    // simpler node than before. If it finds someone else waiting, it
-    // pairs them (removing both from the queue) inside this SAME atomic
-    // transaction, which is what prevents two searchers ever double-
-    // matching. The actual matchmakingPending writes for both sides
-    // happen afterward, as plain writes, once the transaction has
-    // safely committed and we know for certain who — if anyone — was
-    // matched.
     let matchedOpponentUid = null;
     let matchedRoomCode = null;
     let matchedMyColor = null;
@@ -680,8 +665,6 @@ function startQuickMatch(){
         const myUid = currentUser.uid;
         const now = Date.now();
 
-        // Best-effort cleanup of anyone who's been sitting too long
-        // (closed the app mid-search without cancelling properly).
         Object.keys(queue).forEach(function(uid){
             if(now - (queue[uid].joinedAt || 0) > 60000) delete queue[uid];
         });
@@ -717,12 +700,8 @@ function startQuickMatch(){
             return;
         }
 
-        if(!committed) return; // aborted/retried internally by Firebase — no-op here
+        if(!committed) return;
 
-        // A match was found and both sides removed from the queue —
-        // now write both pending entries as plain (non-transactional)
-        // writes. Safe because the queue removal above already
-        // guarantees this opponent can't be matched twice.
         if(matchedOpponentUid){
             db.ref("matchmakingPending/" + currentUser.uid).set({ roomCode: matchedRoomCode, color: matchedMyColor });
             db.ref("matchmakingPending/" + matchedOpponentUid).set({ roomCode: matchedRoomCode, color: matchedOpponentColor });
