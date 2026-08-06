@@ -294,7 +294,7 @@ function initAuthListener(){
                 presenceRef.onDisconnect().set(false);
             }
 
-            // ===== LOAD KINGDOM DATA =====
+            // ===== LOAD KINGDOM DATA (after login) =====
             if (typeof loadKingdomData === "function") {
                 loadKingdomData(user.uid);
             }
