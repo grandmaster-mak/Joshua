@@ -73,18 +73,29 @@ const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.
 const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
 
 // ============================================================
-// ===== KINGDOM SYSTEM (WITH LOCAL STORAGE PERSISTENCE) =====
+// ===== KINGDOM SYSTEM (FULLY FIXED) =====
 // ============================================================
 
+// NOTE on requiredStreak: this is the number of CONSECUTIVE wins needed
+// for that specific promotion step (i.e. a delta), not a cumulative
+// total. That matters because kingdomState.consecutiveWins resets to 0
+// every time you promote (see recordGameResult's kingdom transaction),
+// so nextKingdom.requiredStreak is always compared directly against a
+// freshly-reset counter. These deltas (3,2,2,1,1,1,2) sum to 12, which
+// preserves the original design intent of "12 wins from scratch to
+// reach Empire" — it's just spread correctly across each reset now,
+// instead of each step (after Town) silently costing more wins than
+// intended because it was being compared against an old cumulative
+// number.
 const KINGDOM_LEVELS = [
   { id: 'village', name: 'Village', emoji: '🏕️', requiredStreak: 0, visualLevel: 1, description: 'A modest settlement' },
   { id: 'town', name: 'Town', emoji: '🏘️', requiredStreak: 3, visualLevel: 2, description: 'A growing community' },
-  { id: 'fortress', name: 'Fortress', emoji: '🏰', requiredStreak: 5, visualLevel: 3, description: 'Protected by strong walls' },
-  { id: 'city', name: 'City', emoji: '🏯', requiredStreak: 7, visualLevel: 4, description: 'A prosperous civilization' },
-  { id: 'kingdom', name: 'Kingdom', emoji: '👑', requiredStreak: 8, visualLevel: 5, description: 'A royal realm' },
-  { id: 'grand-kingdom', name: 'Grand Kingdom', emoji: '⚜️', requiredStreak: 9, visualLevel: 6, description: 'A grand and powerful realm' },
-  { id: 'dominion', name: 'Dominion', emoji: '🦁', requiredStreak: 10, visualLevel: 7, description: 'A vast territory' },
-  { id: 'empire', name: 'Empire', emoji: '🌍', requiredStreak: 12, visualLevel: 8, description: 'The greatest realm of all' }
+  { id: 'fortress', name: 'Fortress', emoji: '🏰', requiredStreak: 2, visualLevel: 3, description: 'Protected by strong walls' },
+  { id: 'city', name: 'City', emoji: '🏯', requiredStreak: 2, visualLevel: 4, description: 'A prosperous civilization' },
+  { id: 'kingdom', name: 'Kingdom', emoji: '👑', requiredStreak: 1, visualLevel: 5, description: 'A royal realm' },
+  { id: 'grand-kingdom', name: 'Grand Kingdom', emoji: '⚜️', requiredStreak: 1, visualLevel: 6, description: 'A grand and powerful realm' },
+  { id: 'dominion', name: 'Dominion', emoji: '🦁', requiredStreak: 1, visualLevel: 7, description: 'A vast territory' },
+  { id: 'empire', name: 'Empire', emoji: '🌍', requiredStreak: 2, visualLevel: 8, description: 'The greatest realm of all' }
 ];
 
 let kingdomState = {
@@ -93,100 +104,13 @@ let kingdomState = {
   totalWins: 0
 };
 
-// ===== RESTORE KINGDOM FROM LOCAL STORAGE IMMEDIATELY =====
-try {
-  const saved = localStorage.getItem('kingdomState');
-  if (saved) {
-    const data = JSON.parse(saved);
-    if (data.currentLevel && KINGDOM_LEVELS.find(k => k.id === data.currentLevel)) {
-      kingdomState.currentLevel = data.currentLevel;
-      kingdomState.consecutiveWins = data.consecutiveWins || 0;
-      kingdomState.totalWins = data.totalWins || 0;
-    }
-  }
-} catch(e) {}
-
-// ===== SAVE TO BOTH FIREBASE AND LOCAL STORAGE =====
-function saveKingdomToFirebase() {
-    // Always save to local storage first, so next app load has it instantly
-    try {
-        localStorage.setItem('kingdomState', JSON.stringify({
-            currentLevel: kingdomState.currentLevel,
-            consecutiveWins: kingdomState.consecutiveWins,
-            totalWins: kingdomState.totalWins
-        }));
-    } catch(e) {}
-
-    // Then try to sync to Firebase
-    if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
-        db.ref("users/" + currentUser.uid + "/kingdom").set({
-            currentLevel: kingdomState.currentLevel,
-            consecutiveWins: kingdomState.consecutiveWins,
-            totalWins: kingdomState.totalWins
-        }).then(function() {
-            console.log('✅ Kingdom saved to Firebase');
-        }).catch(function(err) {
-            console.error('❌ Failed to save kingdom to Firebase:', err);
-            // Data is still in localStorage, so it won't be lost
-        });
-    }
-}
-
-// ===== LOAD KINGDOM FROM FIREBASE (MERGED WITH LOCAL) =====
-function loadKingdomData(userId) {
-    if (!db || !userId) return;
-    
-    db.ref("users/" + userId + "/kingdom").once("value").then(function(snap) {
-        const data = snap.val();
-        if (data) {
-            kingdomState.currentLevel = data.currentLevel || 'village';
-            kingdomState.consecutiveWins = data.consecutiveWins || 0;
-            kingdomState.totalWins = data.totalWins || 0;
-            
-            // Update local storage with the freshly fetched data
-            try {
-                localStorage.setItem('kingdomState', JSON.stringify(kingdomState));
-            } catch(e) {}
-
-            // Update UI if kingdom screen is open
-            if (document.getElementById('kingdomScreen') && 
-                document.getElementById('kingdomScreen').style.display === 'flex') {
-                updateKingdomUI();
-            }
-        }
-    }).catch(function(err) {
-        console.error('Failed to load kingdom data:', err);
-        // Local storage cache remains as fallback
-    });
-}
-
-// ===== LISTEN FOR KINGDOM UPDATES =====
-function listenKingdomUpdates(userId) {
-    if (!db || !userId) return;
-    
-    db.ref("users/" + userId + "/kingdom").on("value", function(snap) {
-        const data = snap.val();
-        if (data) {
-            kingdomState.currentLevel = data.currentLevel || 'village';
-            kingdomState.consecutiveWins = data.consecutiveWins || 0;
-            kingdomState.totalWins = data.totalWins || 0;
-            
-            try {
-                localStorage.setItem('kingdomState', JSON.stringify(kingdomState));
-            } catch(e) {}
-            
-            if (document.getElementById('kingdomScreen') && 
-                document.getElementById('kingdomScreen').style.display === 'flex') {
-                updateKingdomUI();
-            }
-        }
-    });
-}
-
-// ============================================================
-// ===== END KINGDOM SYSTEM =====
-// ============================================================
-
+// DEPRECATED: this treats requiredStreak as a cumulative threshold,
+// which no longer matches KINGDOM_LEVELS now that requiredStreak is a
+// per-step delta (see the note above KINGDOM_LEVELS). Nothing in this
+// codebase calls it anymore — use getMyCurrentKingdom() to find a
+// player's actual current tier, and compare consecutiveWins directly
+// against nextKingdom.requiredStreak for promotion/progress checks.
+// Kept only in case older/external code still references it.
 function getKingdomByStreak(streak) {
   let kingdom = KINGDOM_LEVELS[0];
   for (let i = KINGDOM_LEVELS.length - 1; i >= 0; i--) {
@@ -198,6 +122,17 @@ function getKingdomByStreak(streak) {
   return kingdom;
 }
 
+// Returns the kingdom object for the account's actual saved tier.
+// IMPORTANT: this is the function to use for displaying "what kingdom
+// is this player currently in" (badges, names, etc). getKingdomByStreak()
+// is only for looking up a tier by a streak count (e.g. progress bars) —
+// consecutiveWins resets to 0 on every promotion, so calling
+// getKingdomByStreak(kingdomState.consecutiveWins) to find your CURRENT
+// kingdom will wrongly return Village right after any promotion.
+function getMyCurrentKingdom(){
+    return KINGDOM_LEVELS.find(function(k){ return k.id === kingdomState.currentLevel; }) || KINGDOM_LEVELS[0];
+}
+
 function getNextKingdom(currentKingdom) {
   const currentIndex = KINGDOM_LEVELS.findIndex(k => k.id === currentKingdom.id);
   if (currentIndex < KINGDOM_LEVELS.length - 1) {
@@ -206,12 +141,15 @@ function getNextKingdom(currentKingdom) {
   return null;
 }
 
+// FIX: requiredStreak is now a per-step delta (see note above
+// KINGDOM_LEVELS), and consecutiveWins already resets to 0 at the start
+// of each step — so progress toward the next tier is simply
+// consecutiveWins out of nextKingdom.requiredStreak. No need to look up
+// the current tier's own requiredStreak at all.
 function getProgressToNext(currentStreak, nextKingdom) {
   if (!nextKingdom) return 100;
-  const currentKingdom = getKingdomByStreak(currentStreak);
-  const currentRequired = currentKingdom.requiredStreak;
-  const nextRequired = nextKingdom.requiredStreak;
-  const progress = ((currentStreak - currentRequired) / (nextRequired - currentRequired)) * 100;
+  if (!nextKingdom.requiredStreak || nextKingdom.requiredStreak <= 0) return 100;
+  const progress = (currentStreak / nextKingdom.requiredStreak) * 100;
   return Math.min(Math.max(progress, 0), 100);
 }
 
@@ -228,6 +166,75 @@ function getKingdomImagePath(kingdomId) {
     };
     return images[kingdomId] || images['village'];
 }
+
+// ===== SAVE KINGDOM TO FIREBASE =====
+// Kept for callers that just want to persist whatever is currently in
+// local kingdomState verbatim (e.g. right after loading it from the
+// server). Game-result updates do NOT use this — see recordGameResult(),
+// which uses a transaction so it can never clobber the server's value
+// with a stale local kingdomState.
+function saveKingdomToFirebase() {
+    if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
+        db.ref("users/" + currentUser.uid + "/kingdom").set({
+            currentLevel: kingdomState.currentLevel,
+            consecutiveWins: kingdomState.consecutiveWins,
+            totalWins: kingdomState.totalWins
+        }).catch(function(err) {
+            console.error('Failed to save kingdom data:', err);
+        });
+    }
+}
+
+// ===== LOAD KINGDOM FROM FIREBASE =====
+function loadKingdomData(userId) {
+    if (!db || !userId) return;
+    
+    db.ref("users/" + userId + "/kingdom").once("value").then(function(snap) {
+        const data = snap.val();
+        if (data) {
+            kingdomState.currentLevel = data.currentLevel || 'village';
+            kingdomState.consecutiveWins = data.consecutiveWins || 0;
+            kingdomState.totalWins = data.totalWins || 0;
+            
+            // Update UI if kingdom screen is open
+            if (document.getElementById('kingdomScreen') && 
+                document.getElementById('kingdomScreen').style.display === 'flex') {
+                updateKingdomUI();
+            }
+
+            // Refresh player name badges (game screen) in case they were
+            // drawn before this data arrived.
+            if (typeof updatePlayerNames === "function") updatePlayerNames();
+        }
+    }).catch(function(err) {
+        console.error('Failed to load kingdom data:', err);
+    });
+}
+
+// ===== LISTEN FOR KINGDOM UPDATES =====
+function listenKingdomUpdates(userId) {
+    if (!db || !userId) return;
+    
+    db.ref("users/" + userId + "/kingdom").on("value", function(snap) {
+        const data = snap.val();
+        if (data) {
+            kingdomState.currentLevel = data.currentLevel || 'village';
+            kingdomState.consecutiveWins = data.consecutiveWins || 0;
+            kingdomState.totalWins = data.totalWins || 0;
+            
+            if (document.getElementById('kingdomScreen') && 
+                document.getElementById('kingdomScreen').style.display === 'flex') {
+                updateKingdomUI();
+            }
+
+            if (typeof updatePlayerNames === "function") updatePlayerNames();
+        }
+    });
+}
+
+// ============================================================
+// ===== END KINGDOM SYSTEM =====
+// ============================================================
 
 // Reads coach/lesson text out loud using the browser's built-in
 // text-to-speech
@@ -987,11 +994,14 @@ function updatePlayerNames(){
     const bottomFlag = orientation.bottom === "white" ? whiteFlag : blackFlag;
 
     // ===== GET KINGDOM FOR BOTH PLAYERS =====
-    // My kingdom (the player using this device)
-    const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
-    
-    // Opponent kingdom: default to a placeholder, never fall back to my kingdom
-    let opponentKingdomData = { emoji: '❓', name: '?' };
+    // My kingdom (the player using this device). FIX: this must be derived
+    // from kingdomState.currentLevel, NOT from getKingdomByStreak(consecutiveWins) —
+    // consecutiveWins resets to 0 on every promotion, so that lookup would
+    // always resolve back to Village right after being promoted.
+    const myKingdom = getMyCurrentKingdom();
+
+    // Opponent kingdom (from multiplayer data)
+    let opponentKingdomData = myKingdom;
     if (gameMode === "online" && typeof window.opponentKingdom !== 'undefined' && window.opponentKingdom) {
         const oppKingdom = KINGDOM_LEVELS.find(k => k.id === window.opponentKingdom);
         if (oppKingdom) opponentKingdomData = oppKingdom;
@@ -1002,26 +1012,32 @@ function updatePlayerNames(){
     let topKingdom, bottomKingdom;
     
     if (gameMode === "online") {
+        // In online mode, the top player is the opponent if you're white
+        // and you if you're black (because board is flipped)
         if (myColor === "white") {
-            topKingdom = opponentKingdomData;   // opponent
-            bottomKingdom = myKingdom;          // me
+            topKingdom = opponentKingdomData;
+            bottomKingdom = myKingdom;
         } else {
-            topKingdom = myKingdom;             // me (black appears on top when board flipped)
-            bottomKingdom = opponentKingdomData;// opponent
+            topKingdom = myKingdom;
+            bottomKingdom = opponentKingdomData;
         }
     } else {
-        // Local games: both players use the same placeholder (or could be omitted)
-        topKingdom = { emoji: '', name: '' };
-        bottomKingdom = { emoji: '', name: '' };
+        // Local games: both players use the same kingdom
+        topKingdom = myKingdom;
+        bottomKingdom = myKingdom;
     }
 
     document.getElementById("topPlayerName").innerHTML = 
         (topFlag ? topFlag + " " : "") + topName + 
-        (topKingdom.emoji ? ' <span class="playerKingdomBadge">' + topKingdom.emoji + ' ' + topKingdom.name + '</span>' : '');
+        ' <span class="playerKingdomBadge">' + 
+        topKingdom.emoji + ' ' + topKingdom.name + 
+        '</span>';
 
     document.getElementById("bottomPlayerName").innerHTML = 
         (bottomFlag ? bottomFlag + " " : "") + bottomName + 
-        (bottomKingdom.emoji ? ' <span class="playerKingdomBadge">' + bottomKingdom.emoji + ' ' + bottomKingdom.name + '</span>' : '');
+        ' <span class="playerKingdomBadge">' + 
+        bottomKingdom.emoji + ' ' + bottomKingdom.name + 
+        '</span>';
 
     const topRating = orientation.top === "white" ? whiteRating : blackRating;
     const bottomRating = orientation.bottom === "white" ? whiteRating : blackRating;
@@ -2097,34 +2113,77 @@ function recordGameResult(myResult, opponentName){
     if(typeof currentUser === "undefined" || !currentUser) return;
     if(typeof db === "undefined" || !db) return;
 
-    // ===== KINGDOM UPDATE (FIXED - STREAK RESETS AFTER PROMOTION) =====
-    if (myResult === 'win') {
-        kingdomState.totalWins++;
-        kingdomState.consecutiveWins++;
-        
-        const currentKingdom = KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel);
-        const nextKingdom = getNextKingdom(currentKingdom);
-        
-        // Check if we can promote
-        if (nextKingdom && kingdomState.consecutiveWins >= nextKingdom.requiredStreak) {
-            // PROMOTE!
-            kingdomState.currentLevel = nextKingdom.id;
-            
-            // RESET STREAK TO 0 AFTER PROMOTION
-            kingdomState.consecutiveWins = 0;
-            
-            // Show promotion notification
-            setTimeout(function() {
-                showInfoPopup('🎉 PROMOTION!', 'You advanced to ' + nextKingdom.emoji + ' ' + nextKingdom.name + '!');
-            }, 500);
-        }
-    } else if (myResult === 'loss' || myResult === 'draw') {
-        // Loss resets streak, but NEVER demotes
-        kingdomState.consecutiveWins = 0;
-    }
+    // ===== KINGDOM UPDATE (FIXED — TRANSACTION-BASED) =====
+    // This used to read/write kingdomState (a local JS variable) directly,
+    // via a plain .set(). If the page had just reloaded and this game
+    // finished before loadKingdomData()'s async read came back,
+    // kingdomState was still sitting at its default {village, 0, 0} —
+    // so the .set() call stomped the real saved progress back down to
+    // Village every time. A Firebase transaction fixes this: the update
+    // function always receives the CURRENT server value, so it can never
+    // be computed from stale local data.
+    if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
 
-    // Save kingdom (both Firebase and localStorage)
-    saveKingdomToFirebase();
+        const levelBeforeThisResult = kingdomState.currentLevel;
+
+        db.ref("users/" + currentUser.uid + "/kingdom").transaction(function(data){
+
+            if (!data) data = { currentLevel: 'village', consecutiveWins: 0, totalWins: 0 };
+
+            if (myResult === 'win') {
+                data.totalWins = (data.totalWins || 0) + 1;
+                data.consecutiveWins = (data.consecutiveWins || 0) + 1;
+
+                const currentKingdom = KINGDOM_LEVELS.find(function(k){ return k.id === data.currentLevel; }) || KINGDOM_LEVELS[0];
+                const nextKingdom = getNextKingdom(currentKingdom);
+
+                // Check if we can promote
+                if (nextKingdom && data.consecutiveWins >= nextKingdom.requiredStreak) {
+                    // PROMOTE!
+                    data.currentLevel = nextKingdom.id;
+                    // RESET STREAK TO 0 AFTER PROMOTION
+                    data.consecutiveWins = 0;
+                }
+            } else if (myResult === 'loss' || myResult === 'draw') {
+                // Loss/draw resets streak, but NEVER demotes
+                data.consecutiveWins = 0;
+            }
+
+            return data;
+
+        }, function(error, committed, snapshot){
+
+            if (error) {
+                console.error('Failed to save kingdom data:', error);
+                return;
+            }
+            if (!committed || !snapshot.val()) return;
+
+            // Sync local state to whatever actually landed on the server,
+            // so the UI (and outgoing multiplayer badge data) reflects
+            // the true, persisted kingdom immediately.
+            const finalData = snapshot.val();
+            kingdomState.currentLevel = finalData.currentLevel || 'village';
+            kingdomState.consecutiveWins = finalData.consecutiveWins || 0;
+            kingdomState.totalWins = finalData.totalWins || 0;
+
+            if (finalData.currentLevel !== levelBeforeThisResult) {
+                const newKingdom = KINGDOM_LEVELS.find(function(k){ return k.id === finalData.currentLevel; });
+                if (newKingdom) {
+                    setTimeout(function() {
+                        showInfoPopup('🎉 PROMOTION!', 'You advanced to ' + newKingdom.emoji + ' ' + newKingdom.name + '!');
+                    }, 500);
+                }
+            }
+
+            if (document.getElementById('kingdomScreen') &&
+                document.getElementById('kingdomScreen').style.display === 'flex') {
+                updateKingdomUI();
+            }
+            if (typeof updatePlayerNames === "function") updatePlayerNames();
+
+        });
+    }
     // ===== END KINGDOM UPDATE =====
 
     // IMPORTANT: this only touches users/{uid}/public, never the parent
