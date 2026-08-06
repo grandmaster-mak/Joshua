@@ -232,6 +232,13 @@ function signUp(){
                 puzzleRating: 800,
                 puzzleStreak: 0
             };
+            // ===== ADD KINGDOM INITIALIZATION =====
+            updates["users/" + uid + "/kingdom"] = {
+                currentLevel: 'village',
+                consecutiveWins: 0,
+                totalWins: 0
+            };
+            // ===== END KINGDOM INITIALIZATION =====
             updates["usernames/" + username] = uid;
 
             return db.ref().update(updates);
@@ -298,6 +305,15 @@ function initAuthListener(){
                 presenceRef.set(true);
                 presenceRef.onDisconnect().set(false);
             }
+
+            // ===== LOAD KINGDOM DATA =====
+            if (typeof loadKingdomData === "function") {
+                loadKingdomData(user.uid);
+            }
+            if (typeof listenKingdomUpdates === "function") {
+                listenKingdomUpdates(user.uid);
+            }
+            // ===== END KINGDOM LOAD =====
 
             // These don't depend on the profile fetch below — they only
             // need currentUser, which is already set at this point.
