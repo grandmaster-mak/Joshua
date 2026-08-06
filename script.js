@@ -12,24 +12,15 @@ let gameMode = "human";
 let isCoachMode = false;
 
 // Tracks which bottom-nav tab (home/friends/account) was last active.
-// The tab buttons don't push browser-history entries when tapped, so
-// when a full-screen panel (Tournaments, Puzzles, Profile, etc.) is
-// closed via the back button, the "previous" history state is often
-// null — this is what popstate falls back to instead of hardcoding
-// "home", so back correctly returns to whichever tab you actually came
-// from instead of flashing there and then jumping to Home a moment later.
 let lastActiveTab = "home";
 
 // Set by multiplayer.js's startRatedAIMatch() when Play Online falls
 // back to a rated AI opponent after no human match is found in time.
-// Affects rating changes, chat button visibility, undo availability,
-// and the restart-confirmation flow — everywhere a real online game
-// already behaves specially, a rated AI match now behaves the same way.
 let lastGameResult = null;
 let ratedAIActive = false;
 let ratedAISettings = null;
 
-// Online multiplayer state (used by multiplayer.js)
+// Online multiplayer state
 let myColor = null;
 let currentRoomCode = null;
 let applyingRemoteMove = false;
@@ -65,7 +56,7 @@ let whiteCaptured = [];
 let blackCaptured = [];
 let halfMoveClock = 0;
 
-// Online opponent metadata (populated by multiplayer.js listenForPlayerInfo)
+// Online opponent metadata
 let whiteRating = null;
 let blackRating = null;
 let whitePhoto = null;
@@ -73,7 +64,7 @@ let blackPhoto = null;
 let whiteUid = null;
 let blackUid = null;
 
-// ===== OPPONENT KINGDOM DATA (FIXED) =====
+// ===== OPPONENT KINGDOM DATA =====
 let opponentKingdom = null;
 let opponentKingdomEmoji = '🏕️';
 let opponentKingdomName = 'Village';
@@ -81,7 +72,10 @@ let opponentKingdomName = 'Village';
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
 const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
 
-// ===== KINGDOM SYSTEM =====
+// ============================================================
+// ===== KINGDOM SYSTEM (FULLY FIXED) =====
+// ============================================================
+
 const KINGDOM_LEVELS = [
   { id: 'village', name: 'Village', emoji: '🏕️', requiredStreak: 0, visualLevel: 1, description: 'A modest settlement' },
   { id: 'town', name: 'Town', emoji: '🏘️', requiredStreak: 3, visualLevel: 2, description: 'A growing community' },
@@ -140,24 +134,75 @@ function getKingdomImagePath(kingdomId) {
     };
     return images[kingdomId] || images['village'];
 }
+
+// ===== SAVE KINGDOM TO FIREBASE =====
+function saveKingdomToFirebase() {
+    if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined' && db) {
+        db.ref("users/" + currentUser.uid + "/kingdom").set({
+            currentLevel: kingdomState.currentLevel,
+            consecutiveWins: kingdomState.consecutiveWins,
+            totalWins: kingdomState.totalWins
+        }).catch(function(err) {
+            console.error('Failed to save kingdom data:', err);
+        });
+    }
+}
+
+// ===== LOAD KINGDOM FROM FIREBASE =====
+function loadKingdomData(userId) {
+    if (!db || !userId) return;
+    
+    db.ref("users/" + userId + "/kingdom").once("value").then(function(snap) {
+        const data = snap.val();
+        if (data) {
+            kingdomState.currentLevel = data.currentLevel || 'village';
+            kingdomState.consecutiveWins = data.consecutiveWins || 0;
+            kingdomState.totalWins = data.totalWins || 0;
+            
+            // Update UI if kingdom screen is open
+            if (document.getElementById('kingdomScreen') && 
+                document.getElementById('kingdomScreen').style.display === 'flex') {
+                updateKingdomUI();
+            }
+        }
+    }).catch(function(err) {
+        console.error('Failed to load kingdom data:', err);
+    });
+}
+
+// ===== LISTEN FOR KINGDOM UPDATES =====
+function listenKingdomUpdates(userId) {
+    if (!db || !userId) return;
+    
+    db.ref("users/" + userId + "/kingdom").on("value", function(snap) {
+        const data = snap.val();
+        if (data) {
+            kingdomState.currentLevel = data.currentLevel || 'village';
+            kingdomState.consecutiveWins = data.consecutiveWins || 0;
+            kingdomState.totalWins = data.totalWins || 0;
+            
+            if (document.getElementById('kingdomScreen') && 
+                document.getElementById('kingdomScreen').style.display === 'flex') {
+                updateKingdomUI();
+            }
+        }
+    });
+}
+
+// ============================================================
 // ===== END KINGDOM SYSTEM =====
+// ============================================================
 
 // Reads coach/lesson text out loud using the browser's built-in
-// text-to-speech (no external API or key needed). Strips emoji first
-// since screen readers/TTS engines otherwise try to announce them
-// ("grinning face emoji") which sounds broken.
+// text-to-speech
 let cachedMaleVoice = null;
 let maleVoiceSearched = false;
 
 function findMaleVoice(){
     const voices = window.speechSynthesis.getVoices();
     if(!voices || voices.length === 0) return null;
-
-    // Prefer a voice explicitly named "male" (and not also "female").
     let match = voices.find(function(v){ return /male/i.test(v.name) && !/female/i.test(v.name); });
     if(match) return match;
-
-    // Fallback: common male voice names across Android/Chrome/Windows TTS engines.
     const maleNames = ["david", "mark", "james", "daniel", "alex", "fred", "george", "guy", "thomas", "arthur"];
     match = voices.find(function(v){
         const name = v.name.toLowerCase();
@@ -171,40 +216,26 @@ function speakText(text){
     if(!("speechSynthesis" in window)) return;
     const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu, "").trim();
     if(!clean) return;
-
-    window.speechSynthesis.cancel(); // don't let lines queue up/overlap
-
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.15; // a bit faster than normal speaking pace
-    utterance.pitch = 0.75; // lower pitch as a fallback even without a male-labeled voice available
-
+    utterance.rate = 1.15;
+    utterance.pitch = 0.75;
     if(!cachedMaleVoice && !maleVoiceSearched){
         cachedMaleVoice = findMaleVoice();
         maleVoiceSearched = true;
-        // Voice list often loads asynchronously on first page load — if it
-        // wasn't ready yet, try again once it fires, for next time.
         if(!cachedMaleVoice && "onvoiceschanged" in window.speechSynthesis){
             window.speechSynthesis.onvoiceschanged = function(){
                 cachedMaleVoice = findMaleVoice();
             };
         }
     }
-
     if(cachedMaleVoice) utterance.voice = cachedMaleVoice;
-
-    // Mouth animates for exactly as long as speech is actually playing —
-    // this one hook covers every screen that calls speakText().
     utterance.onstart = function(){ setCoachTalking(true); };
     utterance.onend = function(){ setCoachTalking(false); };
     utterance.onerror = function(){ setCoachTalking(false); };
-
     window.speechSynthesis.speak(utterance);
 }
 
-// Coach face controller — applies mood/talking/thinking state to every
-// coach avatar currently in the DOM. Game bar, puzzle screen, and
-// lessons screen all share the same .coachFace markup, so one call
-// updates whichever one happens to be visible right now.
 function setCoachMood(mood){
     document.querySelectorAll(".coachFace").forEach(function(el){
         el.classList.remove("mood-neutral", "mood-happy", "mood-concerned");
@@ -919,9 +950,11 @@ function updatePlayerNames(){
     const topFlag = orientation.top === "white" ? whiteFlag : blackFlag;
     const bottomFlag = orientation.bottom === "white" ? whiteFlag : blackFlag;
 
-    // ===== GET KINGDOM FOR EACH PLAYER (FIXED) =====
+    // ===== GET KINGDOM FOR BOTH PLAYERS =====
+    // My kingdom (the player using this device)
     const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
     
+    // Opponent kingdom (from multiplayer data)
     let opponentKingdomData = myKingdom;
     if (gameMode === "online" && typeof window.opponentKingdom !== 'undefined' && window.opponentKingdom) {
         const oppKingdom = KINGDOM_LEVELS.find(k => k.id === window.opponentKingdom);
@@ -929,9 +962,24 @@ function updatePlayerNames(){
     }
     // ===== END KINGDOM =====
 
-    // Determine which side is you and which is opponent based on orientation
-    const topKingdom = orientation.top === "white" ? myKingdom : opponentKingdomData;
-    const bottomKingdom = orientation.bottom === "white" ? myKingdom : opponentKingdomData;
+    // Determine which side shows which kingdom based on orientation
+    let topKingdom, bottomKingdom;
+    
+    if (gameMode === "online") {
+        // In online mode, the top player is the opponent if you're white
+        // and you if you're black (because board is flipped)
+        if (myColor === "white") {
+            topKingdom = opponentKingdomData;
+            bottomKingdom = myKingdom;
+        } else {
+            topKingdom = myKingdom;
+            bottomKingdom = opponentKingdomData;
+        }
+    } else {
+        // Local games: both players use the same kingdom
+        topKingdom = myKingdom;
+        bottomKingdom = myKingdom;
+    }
 
     document.getElementById("topPlayerName").innerHTML = 
         (topFlag ? topFlag + " " : "") + topName + 
@@ -968,9 +1016,7 @@ function updatePlayerNames(){
         }
     }
 
-    // Avatars: online shows each side's real photo; AI/Coach mode shows
-    // your own photo on your side and a robot/coach icon on the other
-    // side; local two-player just shows a generic silhouette for both.
+    // Avatars
     const topAvatarEl = document.getElementById("topPlayerAvatar");
     const bottomAvatarEl = document.getElementById("bottomPlayerAvatar");
 
@@ -1068,10 +1114,6 @@ function clickSquare(r, c){
 
     const piece = pieces[r][c];
 
-    // Cut the coach off mid-sentence the moment the player interacts with
-    // the board again — only relevant once they're actually making a
-    // move (i.e. a piece is already selected and this tap completes it),
-    // not on the initial "select a piece" tap.
     if(selected != null && "speechSynthesis" in window){
         window.speechSynthesis.cancel();
         if(typeof setCoachTalking === "function") setCoachTalking(false);
@@ -1451,13 +1493,6 @@ function updateCaptured(){
         bottomBox.innerHTML += '<img src="pieces/' + piece + '.svg" class="capturedPiece">';
     });
 
-    // Material advantage, chess.com style — standard point values (not
-    // the AI's internal centipawn pieceValues), shown as "+N" beside
-    // whichever side has captured more material overall. Because this is
-    // a NET difference, trading a pawn for a pawn cancels back to 0
-    // automatically, and a captured queen (+9) followed by the opponent
-    // capturing a rook back correctly nets down to +4 — no extra logic
-    // needed for that, it falls out of the subtraction.
     const captureValues = { P: 1, N: 3, B: 3, R: 5, Q: 9 };
     const materialValue = list => list.reduce((sum, p) => sum + (captureValues[p[1]] || 0), 0);
 
@@ -1571,7 +1606,6 @@ if(gameMode === "ai"){
     if(coachBarEl) coachBarEl.style.display = isCoachMode ? "flex" : "none";
     if(isCoachMode && typeof resetCoachEval === "function") resetCoachEval();
 
-    // For online mode, names/flags are set separately by multiplayer.js
     if(selectedTime === -1){
         whiteTime = -1;
         blackTime = -1;
@@ -1623,12 +1657,6 @@ function createCoordinates(){
 
 }
 
-// Shows the game-over popup. Also resets any previous rating-change
-// indicator so it doesn't linger from a prior online game — the correct
-// value (if any) is filled back in by showRatingChangePopup() once
-// recordGameResult() has finished saving. Also shows/hides the Chess
-// DNA button depending on whether this game has "you" as a single
-// player to analyze (AI or online — including rated AI matches).
 function showPopup(title, message){
     document.getElementById("popupTitle").textContent = title;
     document.getElementById("popupMessage").textContent = message;
@@ -1708,11 +1736,6 @@ function undoMove(){
     createBoard();
 }
 
-// Undo doesn't make sense in a real online match against a live opponent
-// (there's no way to ask them to un-make their move), so it's swapped out
-// for Chat there instead — and a rated AI match behaves the same way
-// since it counts toward rating just like a real online game does.
-// Practice AI and local two-player games get Undo, no Chat.
 function updateInGameControlsVisibility(){
     const undoBtn = document.getElementById("undo");
     const chatBtn = document.getElementById("gameChatBtn");
@@ -1965,12 +1988,6 @@ function switchScreen(name){
 
 }
 
-// Home-screen quick-link cards (Tournaments/Puzzles/Leaderboards/Daily
-// Rewards, and any future ones) call this instead of their open___()
-// function directly. If the screen or the opener isn't actually available
-// — wrong/partial deploy, feature not built yet, whatever the reason — the
-// person sees a clear "Coming Soon" message instead of a click that
-// silently does nothing.
 function openFeatureOrComingSoon(screenId, openFnName, label){
     try{
         if(!document.getElementById(screenId) || typeof window[openFnName] !== "function"){
@@ -2017,10 +2034,6 @@ function myOpponentUidAndPhoto(){
     return { uid: (typeof whiteUid !== "undefined" ? whiteUid : null), photo: (typeof whitePhoto !== "undefined" ? whitePhoto : null) };
 }
 
-// Shows the "+8" / "-8" rating-change line on the game-over popup, once
-// the rating update has actually been saved. Applies to real online
-// games AND rated AI matches (ratedAIActive) — draws don't change
-// rating, and practice AI/local games never show this at all.
 function showRatingChangePopup(myResult){
 
     const el = document.getElementById("popupRatingChange");
@@ -2067,7 +2080,7 @@ function recordGameResult(myResult, opponentName){
             // PROMOTE!
             kingdomState.currentLevel = nextKingdom.id;
             
-            // RESET STREAK TO 0 AFTER PROMOTION (FIXED)
+            // RESET STREAK TO 0 AFTER PROMOTION
             kingdomState.consecutiveWins = 0;
             
             // Show promotion notification
@@ -2093,11 +2106,6 @@ function recordGameResult(myResult, opponentName){
     // ===== END KINGDOM UPDATE =====
 
     // IMPORTANT: this only touches users/{uid}/public, never the parent
-    // users/{uid} node. A transaction on the parent would also read/write
-    // the sibling "history" path, and could silently clobber a concurrent
-    // history push with a stale snapshot — which is what was wiping out
-    // recent games. Scoping it to /public keeps the two writes on
-    // non-overlapping paths so neither can stomp on the other.
     const userPublicRef = db.ref("users/" + currentUser.uid + "/public");
     const opponentInfo = myOpponentUidAndPhoto();
 
@@ -2121,16 +2129,13 @@ function recordGameResult(myResult, opponentName){
             data.winStreak = 0;
         }
 
-        // Rating changes for real online opponents AND for the rated
-        // quick-match AI fallback — everything else (practice AI, local
-        // 2-player, Coach) stays unrated.
         if(gameMode === "online" || ratedAIActive){
             data.rating = data.rating || 100;
             if(myResult === "win") data.rating += 8;
             else if(myResult === "loss") data.rating -= 8;
         }
         if(gameMode === "online"){
-            data.currentRoomCode = null; // game's over — no longer "currently playing"
+            data.currentRoomCode = null;
         }
 
         if(gameMode === "ai" && myResult === "win"){
@@ -2166,9 +2171,6 @@ function recordGameResult(myResult, opponentName){
     }
     if(typeof recordDailyChallengeProgress === "function") recordDailyChallengeProgress(myResult, gameMode);
 
-    // Save this game's full move list against this specific opponent —
-    // builds up the data an Opponent Clone is generated from (see
-    // clone.js). Only real online opponents can be cloned, never AI.
     if(gameMode === "online" && opponentInfo.uid && typeof moveHistory !== "undefined"){
         const opponentColorForClone = myColor === "white" ? "black" : "white";
         db.ref("users/" + currentUser.uid + "/opponentGames/" + opponentInfo.uid).push({
@@ -2195,7 +2197,7 @@ function renderRecentGamesRows(entries, containerId){
     const list = document.getElementById(containerId || "recentGamesList");
     if(!list) return;
 
-    if(!entries) return; // nothing cached and nothing loaded yet — leave existing placeholder as-is
+    if(!entries) return;
 
     if(entries.length === 0){
         list.innerHTML = '<p class="sub">No games played yet.</p>';
@@ -2275,9 +2277,6 @@ function renderRecentGamesRows(entries, containerId){
 function loadRecentGames(){
     if(!db || !currentUser) return;
 
-    // Paint instantly from whatever was cached last time this loaded
-    // successfully — keeps Recent Games usable while offline instead of
-    // sitting blank or stuck on a stale placeholder.
     renderRecentGamesRows(loadCachedRecentGames());
 
     db.ref("users/" + currentUser.uid + "/history")
@@ -2294,14 +2293,8 @@ function loadRecentGames(){
             renderRecentGamesRows(entries);
 
         }).catch(function(){
-            // Offline / request failed — leave the cache-painted rows
-            // above exactly as they are instead of clearing them out.
         });
 }
-// Full game history — up to 300 games, separate from the 5-item
-// Recent Games preview on Home. Reuses renderRecentGamesRows() with a
-// different container id, so rows look and behave identically
-// (clickable opponents, live online/offline status, Clone button).
 function openGameHistory(){
 
     if(!db || !currentUser){
@@ -2392,24 +2385,17 @@ function updateKingdomUI() {
     // Update ruler avatar
     const avatarEl = document.getElementById('kingdomRulerAvatar');
     if (avatarEl) {
-        // Try to get photo from multiple sources
-        let photoSrc = null;
         if (typeof currentUser !== 'undefined' && currentUser && currentUser.photoURL) {
-            photoSrc = currentUser.photoURL;
+            avatarEl.src = currentUser.photoURL;
         } else if (typeof currentUserPhotoURL !== 'undefined' && currentUserPhotoURL) {
-            photoSrc = currentUserPhotoURL;
+            avatarEl.src = currentUserPhotoURL;
         } else {
-            // Try to copy from account profile
             const accountAvatar = document.getElementById('accountProfileImg');
             if (accountAvatar && accountAvatar.src && accountAvatar.src !== '') {
-                photoSrc = accountAvatar.src;
+                avatarEl.src = accountAvatar.src;
+            } else {
+                avatarEl.src = DEFAULT_AVATAR_SRC;
             }
-        }
-        
-        if (photoSrc) {
-            avatarEl.src = photoSrc;
-        } else {
-            avatarEl.src = DEFAULT_AVATAR_SRC;
         }
     }
 
@@ -2493,47 +2479,6 @@ function updateKingdomJourney(currentKingdom) {
     });
 }
 // ===== END KINGDOM UI FUNCTIONS =====
-
-// Load kingdom data when user logs in
-function loadKingdomData(userId) {
-    if (!db || !userId) return;
-    
-    db.ref("users/" + userId + "/kingdom").once("value").then(function(snap) {
-        const data = snap.val();
-        if (data) {
-            kingdomState.currentLevel = data.currentLevel || 'village';
-            kingdomState.consecutiveWins = data.consecutiveWins || 0;
-            kingdomState.totalWins = data.totalWins || 0;
-            
-            // Update UI if kingdom screen is open
-            if (document.getElementById('kingdomScreen') && 
-                document.getElementById('kingdomScreen').style.display === 'flex') {
-                updateKingdomUI();
-            }
-        }
-    }).catch(function(err) {
-        console.error('Failed to load kingdom data:', err);
-    });
-}
-
-// Listen for real-time kingdom updates
-function listenKingdomUpdates(userId) {
-    if (!db || !userId) return;
-    
-    db.ref("users/" + userId + "/kingdom").on("value", function(snap) {
-        const data = snap.val();
-        if (data) {
-            kingdomState.currentLevel = data.currentLevel || 'village';
-            kingdomState.consecutiveWins = data.consecutiveWins || 0;
-            kingdomState.totalWins = data.totalWins || 0;
-            
-            if (document.getElementById('kingdomScreen') && 
-                document.getElementById('kingdomScreen').style.display === 'flex') {
-                updateKingdomUI();
-            }
-        }
-    });
-}
 
 // ===== PHYSICAL BACK BUTTON SUPPORT =====
 window.addEventListener("popstate", function(event){
