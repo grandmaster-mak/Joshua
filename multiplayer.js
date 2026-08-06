@@ -88,13 +88,24 @@ function createOnlineRoom(){
 
     myColor = "white";
     currentRoomCode = code;
-db.ref("rooms/" + code + "/players/white").set({
+
+    // ===== KINGDOM DATA =====
+    const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
+    // ===== END KINGDOM DATA =====
+
+    db.ref("rooms/" + code + "/players/white").set({
         username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
         flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
         rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null,
         photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
-        uid: currentUser ? currentUser.uid : null
+        uid: currentUser ? currentUser.uid : null,
+        // ===== KINGDOM DATA =====
+        kingdom: kingdomState.currentLevel,
+        kingdomEmoji: myKingdom.emoji,
+        kingdomName: myKingdom.name
+        // ===== END KINGDOM DATA =====
     });
+
     document.getElementById("roomCodeDisplay").textContent = "Room code: " + code + " — share this with your opponent";
     document.getElementById("onlineStatus").textContent = "Waiting for opponent to join...";
 
@@ -141,12 +152,22 @@ function joinOnlineRoom(){
 
         myColor = "black";
         currentRoomCode = code;
+
+        // ===== KINGDOM DATA =====
+        const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
+        // ===== END KINGDOM DATA =====
+
         db.ref("rooms/" + code + "/players/black").set({
             username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
             flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
             rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : null,
             photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
-            uid: currentUser ? currentUser.uid : null
+            uid: currentUser ? currentUser.uid : null,
+            // ===== KINGDOM DATA =====
+            kingdom: kingdomState.currentLevel,
+            kingdomEmoji: myKingdom.emoji,
+            kingdomName: myKingdom.name
+            // ===== END KINGDOM DATA =====
         });
 
         db.ref("rooms/" + code + "/status").set("playing");
@@ -316,6 +337,7 @@ function listenForOpponentPresence(code){
 
     });
 }
+
 function listenForPlayerInfo(code){
 
     const ref = db.ref("rooms/" + code + "/players");
@@ -342,10 +364,22 @@ function listenForPlayerInfo(code){
             blackUid = players.black.uid || null;
         }
 
+        // ===== OPPONENT KINGDOM =====
+        if(myColor){
+            const opponentColor = myColor === "white" ? "black" : "white";
+            if(players[opponentColor] && players[opponentColor].kingdom){
+                window.opponentKingdom = players[opponentColor].kingdom;
+            } else {
+                window.opponentKingdom = null;
+            }
+        }
+        // ===== END OPPONENT KINGDOM =====
+
         updatePlayerNames();
 
     });
 }
+
 function sendGameEvent(type, extra){
     if(!db || !currentRoomCode) return;
 
@@ -593,19 +627,21 @@ function startQuickMatch(){
         selectedTime = 600;
         gameMode = "online";
 
-        // Quick Match never had a "create room" step like Create Room /
-        // Join Room / Challenge — write our own player info into the
-        // room now, same shape those flows already use, so the board
-        // actually has a name/rating/photo to show instead of falling
-        // back to generic "White"/"Black". Each side only ever writes
-        // its OWN color's entry, so this is safe to run independently
-        // and simultaneously on both devices with no race condition.
+        // ===== KINGDOM DATA =====
+        const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
+        // ===== END KINGDOM DATA =====
+
         db.ref("rooms/" + info.roomCode + "/players/" + myColor).set({
             username: currentUsername,
             flag: currentUserFlag,
             rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
             photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
-            uid: currentUser.uid
+            uid: currentUser.uid,
+            // ===== KINGDOM DATA =====
+            kingdom: kingdomState.currentLevel,
+            kingdomEmoji: myKingdom.emoji,
+            kingdomName: myKingdom.name
+            // ===== END KINGDOM DATA =====
         });
         db.ref("rooms/" + info.roomCode + "/status").set("playing");
 
