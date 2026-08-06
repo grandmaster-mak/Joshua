@@ -12,7 +12,6 @@ let currentUserPhotoURL = null;
 let authNullRecoveryTimer = null;
 
 // ---- Title / star-rating tiers, shown under the player's name on Home ----
-// (Purely cosmetic — derived from rating, not stored separately.)
 const PLAYER_TITLE_TIERS = [
     { min: 0,    title: "Beginner",     stars: 1 },
     { min: 400,  title: "Novice",       stars: 2 },
@@ -68,11 +67,6 @@ function loadCachedProfile(){
 
         applyHomeHeader(cached);
 
-        // Show Account's logged-in view immediately from the cached
-        // copy, without waiting on a network round trip — this is what
-        // lets Account be viewed while offline. The real auth listener
-        // will overwrite this with live data once the network call
-        // actually completes.
         if(cached.username){
             const loggedOutEl = document.getElementById("loggedOutView");
             const loggedInEl = document.getElementById("loggedInView");
@@ -97,8 +91,6 @@ function countryCodeToFlag(code){
     return String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt()));
 }
 
-// Fills in every home-header/account element from a profile-shaped object
-// (works for both the live Firebase snapshot and the cached-offline copy).
 function applyHomeHeader(data){
 
     const usernameEl = document.getElementById("username");
@@ -144,7 +136,6 @@ function applyHomeHeader(data){
         if(accountAvatarImg) accountAvatarImg.src = data.photoURL;
     }
 
-    // Account screen mirrors
     const accountRatingEl = document.getElementById("accountRatingValue");
     const accountWinsEl = document.getElementById("accountWinsValue");
     const accountStreakEl = document.getElementById("accountStreakValue");
@@ -212,9 +203,6 @@ function signUp(){
 
             const uid = userCredential.user.uid;
 
-            // Reserve the username with the uid as its value, guarded by a
-            // security rule requiring this path to be currently empty — this
-            // closes the race window between the check above and this write.
             const updates = {};
             updates["users/" + uid + "/public"] = {
                 username: username,
@@ -315,13 +303,6 @@ function initAuthListener(){
             }
             // ===== END KINGDOM LOAD =====
 
-            // These don't depend on the profile fetch below — they only
-            // need currentUser, which is already set at this point.
-            // Calling them here (not inside .then()) means they run
-            // instantly whether or not the network is available, instead
-            // of hanging forever waiting on a Firebase promise that never
-            // rejects when offline (.once("value") just stalls silently
-            // with no connection — it doesn't reject).
             if(typeof loadRecentGames === "function") loadRecentGames();
             if(typeof loadFriendRequests === "function") loadFriendRequests();
 
@@ -354,18 +335,10 @@ function initAuthListener(){
 
         }else{
 
-            // Don't decide instantly — a null user can mean a genuine
-            // logout (session cleared) OR a brief network hiccup where
-            // Firebase hasn't confirmed the saved session yet. Wait a
-            // moment and check again. If still logged out AND online
-            // after that, treat it as real and show the login screen —
-            // otherwise a cleared cache leaves the device permanently
-            // stuck with no way back in, since there's no Log Out
-            // button to have set userExplicitlyLoggedOut.
             clearTimeout(authNullRecoveryTimer);
             authNullRecoveryTimer = setTimeout(function(){
 
-                if(auth.currentUser) return; // recovered on its own — was just a hiccup
+                if(auth.currentUser) return;
 
                 if(!navigator.onLine && !userExplicitlyLoggedOut){
                     console.log("Offline with no session yet — keeping cached profile displayed instead of showing the login screen.");
