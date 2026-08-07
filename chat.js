@@ -108,12 +108,6 @@ function closeChatListener(){
 
 function closeChat(){
     closeChatListener();
-    // Let popstate be the ONLY thing that hides chatScreen — same
-    // pattern as closePlayerProfile(). Hiding it here first (before
-    // history.back() even fires the popstate event) was making the
-    // chat-open check in script.js's popstate handler see it as already
-    // closed, so it fell through to the live-game branch and showed the
-    // resign/draw/abort menu on top of the board it had just revealed.
     if(history.state && history.state.screen === "chat"){
         history.back();
     }else{
@@ -153,10 +147,9 @@ function sendChatMessage(){
         aiChatMessages.push({ from: myFrom, text: text, time: myTime });
         renderChatMessage({ from: myFrom, text: text, time: myTime });
 
-        // --- Real AI chat via free Hugging Face API (retries when model is loading) ---
+        // --- Real AI chat via free Hugging Face API (error will be shown in alert) ---
         (async () => {
             try {
-                // Helper function to call the API with retries for 503 (model loading)
                 const callHuggingFace = async (retries = 3) => {
                     const response = await fetch(
                         "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
@@ -165,28 +158,28 @@ function sendChatMessage(){
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 inputs: text,
-                                options: { wait_for_model: true }  // tells HF to wait if model is loading
+                                options: { wait_for_model: true }
                             })
                         }
                     );
 
-                    // If model is still loading, Hugging Face returns 503 with estimated time
                     if (response.status === 503 && retries > 0) {
                         const errorData = await response.json();
                         const waitTime = (errorData.estimated_time || 5) * 1000;
-                        console.log("AI is loading, waiting " + waitTime/1000 + " seconds…");
                         await new Promise(r => setTimeout(r, waitTime));
                         return callHuggingFace(retries - 1);
                     }
 
-                    if (!response.ok) throw new Error("API error " + response.status);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error("API error " + response.status + ": " + errorText);
+                    }
                     return response.json();
                 };
 
                 const data = await callHuggingFace();
                 let reply = data.generated_text || "I didn't catch that.";
 
-                // The model often repeats the user input at the start – strip it off
                 if (reply.toLowerCase().startsWith(text.toLowerCase())) {
                     reply = reply.slice(text.length).trim();
                     if (!reply) reply = "Let's play!";
@@ -197,8 +190,8 @@ function sendChatMessage(){
                 renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
 
             } catch (err) {
-                console.error("AI chat failed:", err);
-                // If the API is down, fall back to a default reply
+                // Show the error so you can tell me what it says
+                alert("AI chat error: " + err.message);
                 const reply = "Hmm, I need a moment...";
                 const replyTime = Date.now();
                 aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
@@ -231,59 +224,8 @@ function insertEmoji(emoji){
     input.focus();
 }
 
-// ============================================================
-// Local AI chat — canned replies, pattern-matched against what the
-// player actually typed before falling back to generic small talk.
-// ============================================================
-
+// ===== AI chat message storage (local array) =====
 let aiChatMessages = [];
-
-const AI_CHAT_LINES = [
-    "Good luck, let's have a good game!",
-    "Nice move.",
-    "Hmm, interesting choice.",
-    "I need to think about this one.",
-    "This position is getting tricky.",
-    "You're playing well today.",
-    "Let's see how this unfolds.",
-    "I almost missed that.",
-    "Good game so far!",
-    "I'll have to be careful here."
-];
-
-function pickAIChatReply(){
-    return AI_CHAT_LINES[Math.floor(Math.random() * AI_CHAT_LINES.length)];
-}
-
-// Order matters: more specific patterns are checked before the
-// catch-all "ends with ?" pattern at the bottom.
-const AI_CHAT_PATTERNS = [
-    { re:/\b(hi|hello|hey|yo)\b/,                           replies:["Hey there!", "Hello! Ready for a good game.", "Hi! Good luck to both of us."] },
-    { re:/how\s*(are|'re)\s*(you|u)\b/,                     replies:["I'm doing well, thanks for asking! How about you?", "Can't complain — focused on this game though!"] },
-    { re:/\bcan i ask (you )?(a )?question\b/,               replies:["Go ahead, ask away.", "Sure, what's on your mind?"] },
-    { re:/\b(what'?s your name|who are you)\b/,              replies:["I'm your AI opponent for this match — no fancy name, just here to play!"] },
-    { re:/\byour rating\b|\bhow good are you\b|\bare you rated\b/, replies:["I'm playing at roughly your level today — should be a fair fight!"] },
-    { re:/\b(good game|gg|well played|nice game)\b/,         replies:["Good game to you too!", "That was fun — thanks for playing!"] },
-    { re:/\b(nice move|good move|great move)\b/,             replies:["Thanks! I try.", "Glad you liked that one."] },
-    { re:/\brematch\b|\bplay again\b/,                       replies:["Sounds good — let's see who wins the next one!"] },
-    { re:/\b(thank you|thanks|thx)\b/,                       replies:["You're welcome!", "No problem at all."] },
-    { re:/\b(bye|goodbye|see ya|see you|later)\b/,           replies:["See you next time — good luck out there!"] },
-    { re:/\bhint\b|\bwhat should i play\b|\bbest move\b|\btell me the move\b/, replies:["Ha, nice try — I can't give away hints mid-game!", "That wouldn't be a fair game if I told you!"] },
-    { re:/\b(lucky|luck)\b/,                                 replies:["Maybe a little — but I'll take it!", "Skill and a bit of luck, I think."] },
-    { re:/\b(nervous|scared|worried)\b/,                     replies:["Don't worry, just play your natural game."] },
-    { re:/\?\s*$/,                                           replies:["That's a good question — let's talk after the game, I need to focus!", "Hmm, good one — ask me again once we're done playing."] }
-];
-
-function getAIChatReply(userText){
-    const text = (userText || "").toLowerCase().trim();
-    for(let i = 0; i < AI_CHAT_PATTERNS.length; i++){
-        if(AI_CHAT_PATTERNS[i].re.test(text)){
-            const options = AI_CHAT_PATTERNS[i].replies;
-            return options[Math.floor(Math.random() * options.length)];
-        }
-    }
-    return pickAIChatReply();
-}
 
 // ===== Unread badge tracking: in-game chat =====
 
