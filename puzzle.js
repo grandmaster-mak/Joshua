@@ -672,22 +672,22 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
             '</div>';
     }
 
-    // The kingdom picture is now the card's background (set above), with
-    // a translucent white wash layered over it so text/tiles stay
-    // legible while the art still shows through — matching the "picture
-    // as background for 1-20" request. Everything else renders in a
-    // relatively-positioned wrapper ABOVE that wash.
+    // No wash over the image — it stays fully clear/vibrant. The header
+    // text just gets a white text-shadow so it stays readable no matter
+    // what colors are in the photo behind it; the numbered tiles below
+    // already sit on solid-colored boxes, so they need no help.
+    const headerTextShadow = "text-shadow:0 1px 4px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.7);";
+
     card.innerHTML =
-        '<div style="position:absolute; inset:0; background:rgba(255,255,255,0.87); z-index:1;"></div>' +
         '<div class="puzzleMapCardContent" style="position:relative; z-index:2; padding:18px;">' +
             '<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px;">' +
                 '<div style="min-width:0;">' +
-                    '<div style="display:flex; align-items:center; flex-wrap:wrap;"><span style="font-weight:800; font-size:19px; color:#1a1a1a;">' + escapeHtml(kingdom.name) + '</span>' + badgeHtml + '</div>' +
-                    '<p style="color:#5a5550; font-size:13px; margin:4px 0 0;">' + escapeHtml(descText) + '</p>' +
+                    '<div style="display:flex; align-items:center; flex-wrap:wrap;"><span style="font-weight:800; font-size:19px; color:#1a1a1a; ' + headerTextShadow + '">' + escapeHtml(kingdom.name) + '</span>' + badgeHtml + '</div>' +
+                    '<p style="color:#3a3530; font-size:13px; margin:4px 0 0; font-weight:600; ' + headerTextShadow + '">' + escapeHtml(descText) + '</p>' +
                 '</div>' +
                 '<div style="text-align:right; white-space:nowrap;">' +
-                    '<div style="font-weight:800; color:#1a1a1a; font-size:14px;">🚩 ' + solvedCount + '/' + PUZZLE_UNLOCKS_PER_TIER + '</div>' +
-                    '<div style="color:#5a5550; font-size:10px;">Puzzles Solved</div>' +
+                    '<div style="font-weight:800; color:#1a1a1a; font-size:14px; ' + headerTextShadow + '">🚩 ' + solvedCount + '/' + PUZZLE_UNLOCKS_PER_TIER + '</div>' +
+                    '<div style="color:#3a3530; font-size:10px; font-weight:600; ' + headerTextShadow + '">Puzzles Solved</div>' +
                 '</div>' +
             '</div>' +
             '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">' + tilesHtml + '</div>' +
