@@ -92,7 +92,10 @@ let kingdomState = {
   consecutiveWins: 0,
   totalWins: 0
 };
-
+// A loss doesn't wipe the streak to 0 — it just costs a fixed number
+// of wins off the current streak (never below 0). Promotion still
+// resets to exactly 0, since a fresh kingdom always starts clean.
+const WIN_STREAK_LOSS_PENALTY = 2;
 // ---- Immediately restore from localStorage (runs before Firebase connects) ----
 try {
   const saved = localStorage.getItem('kingdomState');
