@@ -2140,9 +2140,12 @@ function recordGameResult(myResult, opponentName){
                     data.consecutiveWins = 0;
                 }
             } else if (myResult === 'loss') {
-                data.consecutiveWins = 0;
+                // Authoritative penalty — a loss costs a fixed amount off
+                // the streak instead of wiping it to 0, and never goes
+                // negative. Draws intentionally have no branch here, so
+                // the streak passes through untouched.
+                data.consecutiveWins = Math.max(0, (data.consecutiveWins || 0) - WIN_STREAK_LOSS_PENALTY);
             }
-
             return data;
         }, function(error, committed, snapshot){
             if (error) {
