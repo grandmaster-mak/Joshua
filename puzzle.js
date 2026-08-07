@@ -15,6 +15,19 @@
 // Firebase is the ONLY source of truth for puzzles — there is no local
 // fallback pool. Add/edit puzzle entries directly under `puzzles/` in the
 // Firebase console (see the JSON structure above).
+//
+// ---- Kingdom-gated unlocks ----
+// How many puzzles are available depends on the player's kingdom tier
+// (see KINGDOM_LEVELS / kingdomState in script.js): Village unlocks the
+// first 20, Town unlocks another 20 (40 total), Fortress another 20 (60
+// total), and so on. "Puzzle N" means the Nth puzzle ever added under
+// puzzles/ in Firebase — push IDs sort chronologically — so this
+// assumes puzzles are added in the order you want them unlocked.
+//
+// This gating affects two things:
+//   1. Which puzzle CAN be picked as "today's" shared Daily Puzzle.
+//   2. What shows up in the Puzzle List screen, where a player can
+//      freely pick and replay any puzzle they've unlocked.
 // ============================================================
 
 let currentPuzzle = null;
@@ -115,6 +128,32 @@ function loadPuzzlePool(){
 
 }
 
+// ===== KINGDOM PUZZLE UNLOCKS =====
+
+const PUZZLE_UNLOCKS_PER_TIER = 20;
+
+// How many puzzles the current player has unlocked, based on their
+// saved kingdom tier (kingdomState.currentLevel, from script.js).
+// Village = 20, Town = 40, Fortress = 60, etc. Falls back to the
+// base amount if kingdom data isn't available for some reason.
+function getUnlockedPuzzleCount(){
+    if(typeof KINGDOM_LEVELS === "undefined" || typeof kingdomState === "undefined"){
+        return PUZZLE_UNLOCKS_PER_TIER;
+    }
+    const tierIndex = KINGDOM_LEVELS.findIndex(function(k){ return k.id === kingdomState.currentLevel; });
+    const safeIndex = tierIndex >= 0 ? tierIndex : 0;
+    return (safeIndex + 1) * PUZZLE_UNLOCKS_PER_TIER;
+}
+
+// Sorts the full pool chronologically by push ID (oldest first) and
+// slices it down to however many puzzles this player has unlocked.
+function getUnlockedPuzzlePool(pool){
+    const sorted = pool.slice().sort(function(a, b){
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
+    return sorted.slice(0, getUnlockedPuzzleCount());
+}
+
 // ---- Picking "today's" puzzle, shared by everyone, stored in Firebase ----
 
 function pickDeterministicPuzzle(pool){
@@ -191,6 +230,29 @@ function fenToPieces(fen){
     return newPieces;
 }
 
+// Shared setup used by both the Daily Puzzle flow and the Puzzle List —
+// takes a puzzle object and gets the board/state/coach text ready for it.
+function loadPuzzleIntoBoard(puzzle){
+
+    currentPuzzle = puzzle;
+    puzzleMoveIndex = 0;
+    puzzleSolved = false;
+    puzzleMistakeMade = false;
+    puzzleHintSquare = null;
+    selected = null;
+    possibleMoves = [];
+
+    pieces = fenToPieces(currentPuzzle.fen);
+    currentPlayer = currentPuzzle.fen.split(" ")[1] === "w" ? "white" : "black";
+    puzzleSnapshots = [{ pieces: JSON.parse(JSON.stringify(pieces)), currentPlayer: currentPlayer }];
+    puzzleViewIndex = 0;
+
+    showCoachDescription(currentPuzzle.description);
+    updatePuzzleStatsDisplay();
+    createPuzzleBoard();
+
+}
+
 function openDailyPuzzle(){
 
     currentPuzzle = null;
@@ -214,23 +276,14 @@ function openDailyPuzzle(){
 
     loadPuzzlePool().then(function(pool){
 
-        puzzlePool = pool;
+        const unlockedPool = getUnlockedPuzzlePool(pool);
+        puzzlePool = unlockedPool;
 
-        return loadTodaysPuzzle(pool);
+        return loadTodaysPuzzle(unlockedPool);
 
     }).then(function(puzzle){
 
-        currentPuzzle = puzzle;
-
-        pieces = fenToPieces(currentPuzzle.fen);
-        currentPlayer = currentPuzzle.fen.split(" ")[1] === "w" ? "white" : "black";
-        puzzleSnapshots = [{ pieces: JSON.parse(JSON.stringify(pieces)), currentPlayer: currentPlayer }];
-        puzzleViewIndex = 0;
-        puzzleHintSquare = null;
-
-        showCoachDescription(currentPuzzle.description);
-        updatePuzzleStatsDisplay();
-        createPuzzleBoard();
+        loadPuzzleIntoBoard(puzzle);
 
     }).catch(function(err){
         console.error("Failed to open daily puzzle:", err.message);
@@ -527,4 +580,100 @@ function updatePuzzleStatsDisplay(){
 
     });
 
+}
+
+// ===== PUZZLE LIST SCREEN =====
+// Lets a player browse and freely replay any puzzle they've unlocked
+// via their kingdom tier, instead of only ever seeing "today's puzzle".
+
+function openPuzzleList(){
+
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("puzzleListScreen").style.display = "flex";
+    history.pushState({ screen: "puzzleList" }, "", "#puzzleList");
+
+    const listEl = document.getElementById("puzzleListItems");
+    if(listEl) listEl.innerHTML = '<p class="sub">Loading...</p>';
+
+    const countEl = document.getElementById("puzzleListUnlockedCount");
+    if(countEl) countEl.textContent = getUnlockedPuzzleCount();
+
+    loadPuzzlePool().then(function(pool){
+
+        const unlockedPool = getUnlockedPuzzlePool(pool);
+
+        if(typeof currentUser === "undefined" || !currentUser || !db){
+            renderPuzzleList(unlockedPool, {});
+            return;
+        }
+
+        return db.ref("users/" + currentUser.uid + "/private/puzzleHistory").once("value").then(function(snapshot){
+            const solvedIds = {};
+            if(snapshot.exists()){
+                snapshot.forEach(function(child){
+                    const entry = child.val();
+                    if(entry && entry.puzzleId) solvedIds[entry.puzzleId] = true;
+                });
+            }
+            renderPuzzleList(unlockedPool, solvedIds);
+        });
+
+    }).catch(function(err){
+        console.error("Failed to load puzzle list:", err.message);
+        if(listEl) listEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
+    });
+
+}
+
+function renderPuzzleList(unlockedPool, solvedIds){
+
+    const listEl = document.getElementById("puzzleListItems");
+    if(!listEl) return;
+
+    if(!unlockedPool || unlockedPool.length === 0){
+        listEl.innerHTML = '<p class="sub">No puzzles have been added yet.</p>';
+        return;
+    }
+
+    listEl.innerHTML = "";
+
+    unlockedPool.forEach(function(puzzle, index){
+
+        const isSolved = !!solvedIds[puzzle.id];
+
+        const row = document.createElement("div");
+        row.className = "gameRow";
+        row.style.cursor = "pointer";
+        row.onclick = function(){ playSpecificPuzzle(puzzle); };
+
+        row.innerHTML =
+            '<div class="gameOpponentInfo">' +
+                '<div class="gameOpponentText">' +
+                    '<span class="gameOpponent">Puzzle ' + (index + 1) + '</span>' +
+                    '<span class="gameMeta">Rating ' + (puzzle.rating || "?") + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="gameResultCol">' +
+                '<span class="gameResult ' + (isSolved ? "gameWon" : "gameDrawn") + '">' + (isSolved ? "Solved" : "Unsolved") + '</span>' +
+            '</div>';
+
+        listEl.appendChild(row);
+
+    });
+
+}
+
+function closePuzzleList(){
+    document.getElementById("puzzleListScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
+    if(history.state && history.state.screen === "puzzleList"){
+        history.back();
+    }
+}
+
+function playSpecificPuzzle(puzzle){
+    document.getElementById("puzzleListScreen").style.display = "none";
+    document.getElementById("puzzleScreen").style.display = "flex";
+    history.pushState({ screen: "puzzle" }, "", "#puzzle");
+    loadPuzzleIntoBoard(puzzle);
 }
