@@ -2106,15 +2106,12 @@ function recordGameResult(myResult, opponentName){
                 kingdomState.consecutiveWins = 0;
             }
         } else if (myResult === 'loss') {
-                // FIX: a loss used to wipe the streak straight to 0. Now it
-                // only costs a fixed penalty off the current streak (never
-                // going negative) — e.g. 5 wins, lose once, down to 3; lose
-                // again, down to 1; lose a third time, down to 0. Losses
-                // still NEVER demote to a lower kingdom, and draws are left
-                // alone entirely (no branch for them here — the streak
-                // passes through untouched).
-                data.consecutiveWins = Math.max(0, (data.consecutiveWins || 0) - WIN_STREAK_LOSS_PENALTY);
-            }
+            // Local mirror of the penalty applied below in the Firebase
+            // transaction — just for instant UI feedback. The transaction
+            // is the source of truth; this only makes the screen update
+            // without waiting on the network round-trip.
+            kingdomState.consecutiveWins = Math.max(0, (kingdomState.consecutiveWins || 0) - WIN_STREAK_LOSS_PENALTY);
+        }
         cacheKingdomToLocalStorage();
         if (document.getElementById('kingdomScreen') &&
             document.getElementById('kingdomScreen').style.display === 'flex') {
