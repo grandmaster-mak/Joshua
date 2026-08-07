@@ -153,18 +153,37 @@ function sendChatMessage(){
         aiChatMessages.push({ from: myFrom, text: text, time: myTime });
         renderChatMessage({ from: myFrom, text: text, time: myTime });
 
-        // --- Real AI chat via free Hugging Face API (no key needed) ---
+        // --- Real AI chat via free Hugging Face API (retries when model is loading) ---
         (async () => {
             try {
-                const response = await fetch(
-                    "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ inputs: text })
+                // Helper function to call the API with retries for 503 (model loading)
+                const callHuggingFace = async (retries = 3) => {
+                    const response = await fetch(
+                        "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                inputs: text,
+                                options: { wait_for_model: true }  // tells HF to wait if model is loading
+                            })
+                        }
+                    );
+
+                    // If model is still loading, Hugging Face returns 503 with estimated time
+                    if (response.status === 503 && retries > 0) {
+                        const errorData = await response.json();
+                        const waitTime = (errorData.estimated_time || 5) * 1000;
+                        console.log("AI is loading, waiting " + waitTime/1000 + " seconds…");
+                        await new Promise(r => setTimeout(r, waitTime));
+                        return callHuggingFace(retries - 1);
                     }
-                );
-                const data = await response.json();
+
+                    if (!response.ok) throw new Error("API error " + response.status);
+                    return response.json();
+                };
+
+                const data = await callHuggingFace();
                 let reply = data.generated_text || "I didn't catch that.";
 
                 // The model often repeats the user input at the start – strip it off
@@ -176,7 +195,9 @@ function sendChatMessage(){
                 const replyTime = Date.now();
                 aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
                 renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
+
             } catch (err) {
+                console.error("AI chat failed:", err);
                 // If the API is down, fall back to a default reply
                 const reply = "Hmm, I need a moment...";
                 const replyTime = Date.now();
