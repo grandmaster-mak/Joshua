@@ -671,36 +671,58 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
                 num + extra +
             '</div>';
     }
-const contentWrap = card.querySelector(".puzzleMapCardContent");
 
-// Wire up clickable tiles: replay any solved one, or play the next one up.
-card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
-    const localIdx = Number(tileEl.dataset.localIdx);
-    const p = tierPuzzles[localIdx];
-    const isSolved = !!(p && solvedIds[p.id]);
-    if(isUnlocked && p && (isSolved || localIdx === nextPlayableLocal)){
-        tileEl.onclick = function(){ playPuzzleObject(p); };
+    // The kingdom picture is now the card's background (set above), with
+    // a translucent white wash layered over it so text/tiles stay
+    // legible while the art still shows through — matching the "picture
+    // as background for 1-20" request. Everything else renders in a
+    // relatively-positioned wrapper ABOVE that wash.
+    card.innerHTML =
+        '<div style="position:absolute; inset:0; background:rgba(255,255,255,0.87); z-index:1;"></div>' +
+        '<div class="puzzleMapCardContent" style="position:relative; z-index:2; padding:18px;">' +
+            '<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px;">' +
+                '<div style="min-width:0;">' +
+                    '<div style="display:flex; align-items:center; flex-wrap:wrap;"><span style="font-weight:800; font-size:19px; color:#1a1a1a;">' + escapeHtml(kingdom.name) + '</span>' + badgeHtml + '</div>' +
+                    '<p style="color:#5a5550; font-size:13px; margin:4px 0 0;">' + escapeHtml(descText) + '</p>' +
+                '</div>' +
+                '<div style="text-align:right; white-space:nowrap;">' +
+                    '<div style="font-weight:800; color:#1a1a1a; font-size:14px;">🚩 ' + solvedCount + '/' + PUZZLE_UNLOCKS_PER_TIER + '</div>' +
+                    '<div style="color:#5a5550; font-size:10px;">Puzzles Solved</div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">' + tilesHtml + '</div>' +
+        '</div>';
+
+    const contentWrap = card.querySelector(".puzzleMapCardContent");
+
+    // Wire up clickable tiles: replay any solved one, or play the next one up.
+    card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
+        const localIdx = Number(tileEl.dataset.localIdx);
+        const p = tierPuzzles[localIdx];
+        const isSolved = !!(p && solvedIds[p.id]);
+        if(isUnlocked && p && (isSolved || localIdx === nextPlayableLocal)){
+            tileEl.onclick = function(){ playPuzzleObject(p); };
+        }
+    });
+
+    if(conquered){
+        const banner = document.createElement("div");
+        banner.style.cssText = "margin-top:14px; background:#e6f7ea; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px;";
+        banner.innerHTML =
+            '<span style="color:#22c55e; font-size:18px;">✔</span>' +
+            '<div><b style="color:#1a1a1a; font-size:14px;">' + escapeHtml(kingdom.name) + ' Conquered!</b>' +
+            '<p style="margin:2px 0 0; color:#8a8580; font-size:12px;">You\'ve solved all ' + escapeHtml(kingdom.name) + ' puzzles.</p></div>';
+        contentWrap.appendChild(banner);
+    }else if(isUnlocked && nextPlayableLocal !== -1){
+        const playBtn = document.createElement("button");
+        playBtn.className = "btnPrimary";
+        playBtn.style.marginTop = "14px";
+        playBtn.textContent = "▶ Play";
+        playBtn.onclick = function(){ playPuzzleObject(tierPuzzles[nextPlayableLocal]); };
+        contentWrap.appendChild(playBtn);
     }
-});
 
-if(conquered){
-    const banner = document.createElement("div");
-    banner.style.cssText = "margin-top:14px; background:#e6f7ea; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px;";
-    banner.innerHTML =
-        '<span style="color:#22c55e; font-size:18px;">✔</span>' +
-        '<div><b style="color:#1a1a1a; font-size:14px;">' + escapeHtml(kingdom.name) + ' Conquered!</b>' +
-        '<p style="margin:2px 0 0; color:#8a8580; font-size:12px;">You\'ve solved all ' + escapeHtml(kingdom.name) + ' puzzles.</p></div>';
-    contentWrap.appendChild(banner);
-}else if(isUnlocked && nextPlayableLocal !== -1){
-    const playBtn = document.createElement("button");
-    playBtn.className = "btnPrimary";
-    playBtn.style.marginTop = "14px";
-    playBtn.textContent = "▶ Play";
-    playBtn.onclick = function(){ playPuzzleObject(tierPuzzles[nextPlayableLocal]); };
-    contentWrap.appendChild(playBtn);
-}
-
-return card;
+    return card;
 }
 
 // Opens a specific puzzle object (from the map) for play.
