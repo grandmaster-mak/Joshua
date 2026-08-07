@@ -672,21 +672,28 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
             '</div>';
     }
 
+    // The kingdom picture is now the card's background (set above), with
+    // a translucent white wash layered over it so text/tiles stay
+    // legible while the art still shows through — matching the "picture
+    // as background for 1-20" request. Everything else renders in a
+    // relatively-positioned wrapper ABOVE that wash.
     card.innerHTML =
-        '<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px;">' +
-            '<div style="display:flex; align-items:flex-start; gap:12px; min-width:0;">' +
-                '<img src="' + getKingdomImagePath(kingdom.id) + '" style="width:56px; height:56px; border-radius:12px; object-fit:cover; flex-shrink:0;" onerror="this.style.display=\'none\';">' +
+        '<div style="position:absolute; inset:0; background:rgba(255,255,255,0.87); z-index:1;"></div>' +
+        '<div class="puzzleMapCardContent" style="position:relative; z-index:2; padding:18px;">' +
+            '<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px;">' +
                 '<div style="min-width:0;">' +
                     '<div style="display:flex; align-items:center; flex-wrap:wrap;"><span style="font-weight:800; font-size:19px; color:#1a1a1a;">' + escapeHtml(kingdom.name) + '</span>' + badgeHtml + '</div>' +
-                    '<p style="color:#8a8580; font-size:13px; margin:4px 0 0;">' + escapeHtml(descText) + '</p>' +
+                    '<p style="color:#5a5550; font-size:13px; margin:4px 0 0;">' + escapeHtml(descText) + '</p>' +
+                '</div>' +
+                '<div style="text-align:right; white-space:nowrap;">' +
+                    '<div style="font-weight:800; color:#1a1a1a; font-size:14px;">🚩 ' + solvedCount + '/' + PUZZLE_UNLOCKS_PER_TIER + '</div>' +
+                    '<div style="color:#5a5550; font-size:10px;">Puzzles Solved</div>' +
                 '</div>' +
             '</div>' +
-            '<div style="text-align:right; white-space:nowrap;">' +
-                '<div style="font-weight:800; color:#1a1a1a; font-size:14px;">🚩 ' + solvedCount + '/' + PUZZLE_UNLOCKS_PER_TIER + '</div>' +
-                '<div style="color:#8a8580; font-size:10px;">Puzzles Solved</div>' +
-            '</div>' +
-        '</div>' +
-        '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">' + tilesHtml + '</div>';
+            '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">' + tilesHtml + '</div>' +
+        '</div>';
+
+    const contentWrap = card.querySelector(".puzzleMapCardContent");
 
     // Wire up clickable tiles: replay any solved one, or play the next one up.
     card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
@@ -705,14 +712,14 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
             '<span style="color:#22c55e; font-size:18px;">✔</span>' +
             '<div><b style="color:#1a1a1a; font-size:14px;">' + escapeHtml(kingdom.name) + ' Conquered!</b>' +
             '<p style="margin:2px 0 0; color:#8a8580; font-size:12px;">You\'ve solved all ' + escapeHtml(kingdom.name) + ' puzzles.</p></div>';
-        card.appendChild(banner);
+        contentWrap.appendChild(banner);
     }else if(isUnlocked && nextPlayableLocal !== -1){
         const playBtn = document.createElement("button");
         playBtn.className = "btnPrimary";
         playBtn.style.marginTop = "14px";
         playBtn.textContent = "▶ Play";
         playBtn.onclick = function(){ playPuzzleObject(tierPuzzles[nextPlayableLocal]); };
-        card.appendChild(playBtn);
+        contentWrap.appendChild(playBtn);
     }
 
     return card;
