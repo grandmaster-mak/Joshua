@@ -629,8 +629,11 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
         : (isCurrent ? '<span style="background:#ffe4d6; color:#FF7A1A; font-size:11px; font-weight:700; padding:3px 10px; border-radius:10px; margin-left:8px; white-space:nowrap;">Current</span>' : '');
 
     const card = document.createElement("div");
-    card.style.cssText = "background:#fff; border-radius:20px; padding:18px; margin-bottom:16px; box-shadow:0 4px 16px rgba(0,0,0,0.06);";
-
+    card.style.cssText =
+        "position:relative; overflow:hidden; border-radius:20px; margin-bottom:16px; " +
+        "box-shadow:0 4px 16px rgba(0,0,0,0.06); " +
+        "background-image:url('" + getKingdomImagePath(kingdom.id) + "'); " +
+        "background-size:cover; background-position:center;";
     let tilesHtml = "";
 
     for(let i = 0; i < PUZZLE_UNLOCKS_PER_TIER; i++){
