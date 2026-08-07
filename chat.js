@@ -153,12 +153,37 @@ function sendChatMessage(){
         aiChatMessages.push({ from: myFrom, text: text, time: myTime });
         renderChatMessage({ from: myFrom, text: text, time: myTime });
 
-        setTimeout(function(){
-            const reply = getAIChatReply(text);
-            const replyTime = Date.now();
-            aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
-            renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
-        }, 700 + Math.random() * 900);
+        // --- Real AI chat via free Hugging Face API (no key needed) ---
+        (async () => {
+            try {
+                const response = await fetch(
+                    "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ inputs: text })
+                    }
+                );
+                const data = await response.json();
+                let reply = data.generated_text || "I didn't catch that.";
+
+                // The model often repeats the user input at the start – strip it off
+                if (reply.toLowerCase().startsWith(text.toLowerCase())) {
+                    reply = reply.slice(text.length).trim();
+                    if (!reply) reply = "Let's play!";
+                }
+
+                const replyTime = Date.now();
+                aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
+                renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
+            } catch (err) {
+                // If the API is down, fall back to a default reply
+                const reply = "Hmm, I need a moment...";
+                const replyTime = Date.now();
+                aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
+                renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
+            }
+        })();
 
         input.value = "";
         return;
