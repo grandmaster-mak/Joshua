@@ -1706,6 +1706,7 @@ function hideAllScreensForGameEntry(){
     const screenIds = [
         "tournamentsScreen",
         "puzzleScreen",
+      "puzzleListScreen",
         "leaderboardScreen",
         "dailyRewardsScreen",
         "chatScreen",
