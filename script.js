@@ -76,15 +76,21 @@ const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/
 // ===== KINGDOM SYSTEM (PERSISTENT – LOCAL STORAGE + FIREBASE TRANSACTION) =====
 // ============================================================
 
+// requiredStreak = number of CONSECUTIVE wins needed FRESH (from 0)
+// for that specific promotion — not cumulative, not a delta of a
+// bigger total. Since consecutiveWins already resets to 0 the moment
+// a player is promoted, using these numbers directly gives: Village
+// -> Town needs 3, Town -> Fortress needs 5, Fortress -> City needs 7,
+// and so on — each one its own fresh target, exactly as intended.
 const KINGDOM_LEVELS = [
   { id: 'village', name: 'Village', emoji: '🏕️', requiredStreak: 0, visualLevel: 1, description: 'A modest settlement' },
   { id: 'town', name: 'Town', emoji: '🏘️', requiredStreak: 3, visualLevel: 2, description: 'A growing community' },
-  { id: 'fortress', name: 'Fortress', emoji: '🏰', requiredStreak: 2, visualLevel: 3, description: 'Protected by strong walls' },
-  { id: 'city', name: 'City', emoji: '🏯', requiredStreak: 2, visualLevel: 4, description: 'A prosperous civilization' },
-  { id: 'kingdom', name: 'Kingdom', emoji: '👑', requiredStreak: 1, visualLevel: 5, description: 'A royal realm' },
-  { id: 'grand-kingdom', name: 'Grand Kingdom', emoji: '⚜️', requiredStreak: 1, visualLevel: 6, description: 'A grand and powerful realm' },
-  { id: 'dominion', name: 'Dominion', emoji: '🦁', requiredStreak: 1, visualLevel: 7, description: 'A vast territory' },
-  { id: 'empire', name: 'Empire', emoji: '🌍', requiredStreak: 2, visualLevel: 8, description: 'The greatest realm of all' }
+  { id: 'fortress', name: 'Fortress', emoji: '🏰', requiredStreak: 5, visualLevel: 3, description: 'Protected by strong walls' },
+  { id: 'city', name: 'City', emoji: '🏯', requiredStreak: 7, visualLevel: 4, description: 'A prosperous civilization' },
+  { id: 'kingdom', name: 'Kingdom', emoji: '👑', requiredStreak: 8, visualLevel: 5, description: 'A royal realm' },
+  { id: 'grand-kingdom', name: 'Grand Kingdom', emoji: '⚜️', requiredStreak: 9, visualLevel: 6, description: 'A grand and powerful realm' },
+  { id: 'dominion', name: 'Dominion', emoji: '🦁', requiredStreak: 10, visualLevel: 7, description: 'A vast territory' },
+  { id: 'empire', name: 'Empire', emoji: '🌍', requiredStreak: 12, visualLevel: 8, description: 'The greatest realm of all' }
 ];
 
 let kingdomState = {
