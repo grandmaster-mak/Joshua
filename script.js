@@ -2184,10 +2184,11 @@ function recordGameResult(myResult, opponentName){
                     // RESET STREAK TO 0 AFTER PROMOTION
                     data.consecutiveWins = 0;
                 }
-            } else if (myResult === 'loss' || myResult === 'draw') {
-                // Loss/draw resets streak, but NEVER demotes
-                data.consecutiveWins = 0;
-            }
+            } else if (myResult === 'loss') {
+    // Loss resets streak, but NEVER demotes. Draws are left alone —
+    // they don't add to the streak, but they don't wipe it either.
+    data.consecutiveWins = 0;
+}
 
             return data;
 
