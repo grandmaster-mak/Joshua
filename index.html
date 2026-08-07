@@ -880,14 +880,11 @@
          screen "Puzzles" now opens (via the openDailyPuzzle() alias) —
          tapping a tile or the Play button on a kingdom card drops into
          the #puzzleScreen above to actually solve it. -->
-    <div id="puzzleMapScreen" class="fullScreenPanel" style="background:#f2f0ee; flex-direction:column; height:100dvh; overflow:hidden;">
-        <div style="position:sticky; top:0; z-index:20; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; background:rgba(255,122,26,0.78); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);">
-            <div style="display:flex; align-items:center; gap:6px; min-width:0;">
-                <button onclick="closePuzzleMap()" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1;">←</button>
-                <div style="min-width:0;">
-                    <h2 style="color:#fff; margin:0; font-size:24px; font-weight:800; line-height:1.1;">Puzzles</h2>
-                    <p style="color:rgba(255,255,255,0.9); margin:2px 0 0; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Solve puzzles. Improve. Conquer.</p>
-                </div>
+    <div style="position:sticky; top:0; z-index:20; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; background:rgba(255,122,26,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);">
+            <div style="width:36px; flex-shrink:0;"></div>
+            <div style="flex:1; text-align:center; min-width:0;">
+                <h2 style="color:#fff; margin:0; font-size:22px; font-weight:800; line-height:1.1;">Puzzles</h2>
+                <p style="color:rgba(255,255,255,0.9); margin:2px 0 0; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Solve puzzles. Improve. Conquer.</p>
             </div>
             <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
                 <div style="background:#fff; border-radius:12px; padding:6px 10px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
@@ -896,10 +893,6 @@
                 <button onclick="closePuzzleMap(); switchScreen('kingdom');" style="background:#fff; border:none; border-radius:12px; padding:6px 9px; font-size:16px; box-shadow:0 2px 10px rgba(0,0,0,0.1); cursor:pointer;">👑</button>
             </div>
         </div>
-        <div class="fsBody" style="padding:16px; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;" id="puzzleMapBody">
-            <p class="sub">Loading...</p>
-        </div>
-    </div>
 
     <div id="lessonsScreen" class="fullScreenPanel">
         <div class="fsHeader">
