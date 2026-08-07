@@ -1677,8 +1677,48 @@ if(gameMode === "ai"){
         history.pushState({ screen: "game" }, "", "#game");
     }
 
+    // FIX: entering a game used to only hide #appShell (Home/Friends/
+    // Kingdom/Account) before showing #game. That's the only screen you
+    // could be on when starting a LOCAL or "New Game" match, so it
+    // worked fine there. But an online game can also start while you're
+    // sitting on a completely different full-screen panel — most
+    // notably: you challenge someone from their Profile screen
+    // (#profileScreen), they accept, and the statusRef listener in
+    // multiplayer.js fires newGame() on YOUR side while #profileScreen
+    // is still open. Since that panel was never hidden, #game ends up
+    // rendered underneath it in the page instead of replacing it — you
+    // have to scroll/swipe past Home (revealed after pressing back,
+    // since the popstate handler's fallback branch happens to hide
+    // every screen) to find the board. Explicitly hiding every
+    // full-screen panel here — not just #appShell — means it doesn't
+    // matter which screen a game started from; the board always wins.
+    hideAllScreensForGameEntry();
+
     document.getElementById("appShell").style.display = "none";
     document.getElementById("game").style.display = "flex";
+}
+
+// Hides every top-level full-screen panel in the app. Called right
+// before #game is shown, so that starting a game (from ANY screen —
+// Home, Friends, Profile, Tournaments, wherever) always fully replaces
+// whatever was on screen, instead of stacking underneath it.
+function hideAllScreensForGameEntry(){
+    const screenIds = [
+        "tournamentsScreen",
+        "puzzleScreen",
+        "leaderboardScreen",
+        "dailyRewardsScreen",
+        "chatScreen",
+        "analysisScreen",
+        "lessonsScreen",
+        "profileScreen",
+        "gameHistoryScreen",
+        "chessDnaScreen"
+    ];
+    screenIds.forEach(function(id){
+        const el = document.getElementById(id);
+        if(el) el.style.display = "none";
+    });
 }
 
 function createCoordinates(){
