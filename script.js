@@ -2645,7 +2645,7 @@ window.addEventListener("popstate", function(event){
     if(!state || !state.screen){
         document.getElementById("tournamentsScreen").style.display = "none";
         document.getElementById("puzzleScreen").style.display = "none";
-      document.getElementById("puzzleListScreen").style.display = "none";
+      document.getElementById("puzzleMapScreen").style.display = "none";
         document.getElementById("leaderboardScreen").style.display = "none";
         document.getElementById("dailyRewardsScreen").style.display = "none";
         document.getElementById("chatScreen").style.display = "none";
@@ -2677,9 +2677,9 @@ window.addEventListener("popstate", function(event){
         document.getElementById("puzzleScreen").style.display = "flex";
         return;
     }
-if(state.screen === "puzzleList"){
+if(state.screen === "puzzleMap"){
         document.getElementById("appShell").style.display = "none";
-        document.getElementById("puzzleListScreen").style.display = "flex";
+        document.getElementById("puzzleMapScreen").style.display = "flex";
         return;
     }
     if(state.screen === "leaderboard"){
