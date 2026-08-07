@@ -1,13 +1,12 @@
 // ============================================================
-// Daily Puzzle — Firebase-controlled
+// Puzzles — Firebase-controlled, kingdom-gated, sequential unlock
 // ============================================================
 //
 // Firebase structure this file expects/creates:
 //
 //   puzzles/{pushId}            -> { fen, solution:[...], description, rating }
-//   dailyPuzzles/{YYYY-MM-DD}   -> { puzzleId }   (which puzzle is "today's puzzle")
 //   users/{uid}/public/puzzleRating       -> number (default 800)
-//   users/{uid}/public/puzzleStreak       -> number
+//   users/{uid}/public/puzzleStreak       -> number (daily SOLVE streak — separate from kingdom wins)
 //   users/{uid}/public/puzzleBestStreak   -> number
 //   users/{uid}/private/puzzleLastSolved  -> "YYYY-MM-DD"
 //   users/{uid}/private/puzzleHistory/{pushId} -> { puzzleId, result, ratingChange, time }
@@ -16,18 +15,26 @@
 // fallback pool. Add/edit puzzle entries directly under `puzzles/` in the
 // Firebase console (see the JSON structure above).
 //
-// ---- Kingdom-gated unlocks ----
-// How many puzzles are available depends on the player's kingdom tier
-// (see KINGDOM_LEVELS / kingdomState in script.js): Village unlocks the
-// first 20, Town unlocks another 20 (40 total), Fortress another 20 (60
-// total), and so on. "Puzzle N" means the Nth puzzle ever added under
-// puzzles/ in Firebase — push IDs sort chronologically — so this
-// assumes puzzles are added in the order you want them unlocked.
+// ---- How puzzles are organized ----
+// All puzzles in Firebase are sorted chronologically by push ID (oldest
+// first) and sliced into blocks of 20, one block per kingdom tier (see
+// KINGDOM_LEVELS / kingdomState in script.js): puzzles 1-20 belong to
+// Village, 21-40 to Town, 41-60 to Fortress, and so on.
 //
-// This gating affects two things:
-//   1. Which puzzle CAN be picked as "today's" shared Daily Puzzle.
-//   2. What shows up in the Puzzle List screen, where a player can
-//      freely pick and replay any puzzle they've unlocked.
+// A tier's puzzles are only visible/playable once the player's saved
+// kingdom (kingdomState.currentLevel) has reached that tier. WITHIN an
+// unlocked tier, puzzles must be solved in order — solving puzzle N
+// unlocks puzzle N+1; you can still tap back into an already-solved
+// puzzle to replay it, but you can't skip ahead.
+//
+// This is all driven by the "Puzzle Map" screen (openPuzzleMap /
+// renderPuzzleMap / buildPuzzleKingdomCard below), which replaces the
+// old single shared "puzzle of the day" screen and the separate
+// free-browse puzzle list — there is no more one puzzle everyone gets
+// on a given date; each player works through their own unlocked
+// puzzles at their own pace. openDailyPuzzle() is kept as a thin alias
+// to openPuzzleMap() purely so existing "Puzzles" buttons in the HTML
+// (which call it by that name) keep working unchanged.
 // ============================================================
 
 let currentPuzzle = null;
@@ -38,6 +45,8 @@ let puzzleMistakeMade = false;
 let puzzleSnapshots = [];
 let puzzleViewIndex = 0;
 let puzzleHintSquare = null;
+
+const PUZZLE_UNLOCKS_PER_TIER = 20;
 
 function pickRandom(arr){
     return arr[Math.floor(Math.random() * arr.length)];
@@ -128,82 +137,21 @@ function loadPuzzlePool(){
 
 }
 
-// ===== KINGDOM PUZZLE UNLOCKS =====
-
-const PUZZLE_UNLOCKS_PER_TIER = 20;
-
-// How many puzzles the current player has unlocked, based on their
-// saved kingdom tier (kingdomState.currentLevel, from script.js).
-// Village = 20, Town = 40, Fortress = 60, etc. Falls back to the
-// base amount if kingdom data isn't available for some reason.
-function getUnlockedPuzzleCount(){
-    if(typeof KINGDOM_LEVELS === "undefined" || typeof kingdomState === "undefined"){
-        return PUZZLE_UNLOCKS_PER_TIER;
-    }
-    const tierIndex = KINGDOM_LEVELS.findIndex(function(k){ return k.id === kingdomState.currentLevel; });
-    const safeIndex = tierIndex >= 0 ? tierIndex : 0;
-    return (safeIndex + 1) * PUZZLE_UNLOCKS_PER_TIER;
-}
-
-// Sorts the full pool chronologically by push ID (oldest first) and
-// slices it down to however many puzzles this player has unlocked.
-function getUnlockedPuzzlePool(pool){
-    const sorted = pool.slice().sort(function(a, b){
+function sortPuzzlesChronologically(pool){
+    return pool.slice().sort(function(a, b){
         return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
     });
-    return sorted.slice(0, getUnlockedPuzzleCount());
 }
 
-// ---- Picking "today's" puzzle, shared by everyone, stored in Firebase ----
-
-function pickDeterministicPuzzle(pool){
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 0);
-    const dayOfYear = Math.floor((now - start) / 86400000);
-    return pool[dayOfYear % pool.length];
-}
-
-function loadTodaysPuzzle(pool){
-
-    if(!pool || pool.length === 0){
-        return Promise.reject(new Error("No puzzles found in Firebase."));
+// Index (0-based) of the player's current kingdom tier within
+// KINGDOM_LEVELS. Falls back to 0 (Village) if kingdom data isn't
+// available for some reason.
+function getCurrentTierIndex(){
+    if(typeof KINGDOM_LEVELS === "undefined" || typeof kingdomState === "undefined"){
+        return 0;
     }
-
-    const dateKey = todayDateString();
-
-    if(!db){
-        return Promise.reject(new Error("Not connected to Firebase."));
-    }
-
-    const dailyRef = db.ref("dailyPuzzles/" + dateKey);
-
-    return dailyRef.once("value").then(function(snapshot){
-
-        if(snapshot.exists()){
-            const puzzleId = snapshot.val().puzzleId;
-            const found = pool.find(function(p){ return p.id === puzzleId; });
-            if(found) return found;
-        }
-
-        // Nobody has claimed today's puzzle yet — pick one deterministically
-        // and write it, guarded by a transaction so simultaneous visitors
-        // all converge on the same puzzle (like chess.com's puzzle of the day).
-        const chosen = pickDeterministicPuzzle(pool);
-
-        return dailyRef.transaction(function(current){
-            if(current) return current;
-            return { puzzleId: chosen.id };
-        }).then(function(result){
-            const finalId = result.snapshot.val() ? result.snapshot.val().puzzleId : chosen.id;
-            const found = pool.find(function(p){ return p.id === finalId; });
-            return found || chosen;
-        });
-
-    }).catch(function(err){
-        console.error("Failed to load today's puzzle:", err.message);
-        return pickDeterministicPuzzle(pool);
-    });
-
+    const idx = KINGDOM_LEVELS.findIndex(function(k){ return k.id === kingdomState.currentLevel; });
+    return idx >= 0 ? idx : 0;
 }
 
 function fenToPieces(fen){
@@ -230,7 +178,7 @@ function fenToPieces(fen){
     return newPieces;
 }
 
-// Shared setup used by both the Daily Puzzle flow and the Puzzle List —
+// Shared setup used whenever a specific puzzle is opened for play —
 // takes a puzzle object and gets the board/state/coach text ready for it.
 function loadPuzzleIntoBoard(puzzle){
 
@@ -253,48 +201,13 @@ function loadPuzzleIntoBoard(puzzle){
 
 }
 
+// Kept as a thin alias — every "Puzzles" entry point already in the app
+// (Home quicklink, Account stats row, Account Quick Access row) calls
+// this function by name. It now opens the Puzzle Map instead of a
+// single shared "today's puzzle" — see the notes at the top of this
+// file for why the old shared-daily-puzzle mechanic was retired.
 function openDailyPuzzle(){
-
-    currentPuzzle = null;
-    puzzleMoveIndex = 0;
-    puzzleSolved = false;
-    puzzleMistakeMade = false;
-    puzzleHintSquare = null;
-    selected = null;
-    possibleMoves = [];
-
-    document.getElementById("puzzleDescription").textContent = "Loading today's puzzle...";
-    document.getElementById("puzzleDescription").style.display = "block";
-    document.getElementById("puzzleFeedback").textContent = "";
-    document.getElementById("puzzleFeedback").style.display = "none";
-    document.getElementById("puzzleBoard").innerHTML = "";
-
-    document.getElementById("appShell").style.display = "none";
-    document.getElementById("puzzleScreen").style.display = "flex";
-
-    history.pushState({ screen: "puzzle" }, "", "#puzzle");
-
-    loadPuzzlePool().then(function(pool){
-
-        const unlockedPool = getUnlockedPuzzlePool(pool);
-        puzzlePool = unlockedPool;
-
-        return loadTodaysPuzzle(unlockedPool);
-
-    }).then(function(puzzle){
-
-        loadPuzzleIntoBoard(puzzle);
-
-    }).catch(function(err){
-        console.error("Failed to open daily puzzle:", err.message);
-        const message = (err && err.message === "No puzzles found in Firebase.")
-            ? "No puzzles have been added yet — add one under 'puzzles' in Firebase."
-            : "Couldn't load today's puzzle — check your connection and try again.";
-        document.getElementById("puzzleDescription").textContent = message;
-        document.getElementById("puzzleDescription").style.display = "block";
-        document.getElementById("puzzleFeedback").style.display = "none";
-    });
-
+    openPuzzleMap();
 }
 
 function closePuzzle(){
@@ -491,6 +404,8 @@ function updatePuzzleNavButtons(){
 }
 
 // ---- Recording results to Firebase: rating + streak, like chess.com ----
+// Note: puzzleStreak here is the DAILY SOLVE streak (solved at least one
+// puzzle today, yesterday, etc.) — a separate feature from kingdom wins.
 
 function recordPuzzleResult(){
 
@@ -582,28 +497,28 @@ function updatePuzzleStatsDisplay(){
 
 }
 
-// ===== PUZZLE LIST SCREEN =====
-// Lets a player browse and freely replay any puzzle they've unlocked
-// via their kingdom tier, instead of only ever seeing "today's puzzle".
+// ============================================================
+// ===== PUZZLE MAP SCREEN =====
+// Kingdom-by-kingdom puzzle path: each unlocked kingdom shows its own
+// 20-puzzle grid, solved in sequence. Replaces the old single shared
+// "puzzle of the day" screen and the separate free-browse puzzle list.
+// ============================================================
 
-function openPuzzleList(){
+function openPuzzleMap(){
 
     document.getElementById("appShell").style.display = "none";
-    document.getElementById("puzzleListScreen").style.display = "flex";
-    history.pushState({ screen: "puzzleList" }, "", "#puzzleList");
+    document.getElementById("puzzleMapScreen").style.display = "flex";
+    history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
 
-    const listEl = document.getElementById("puzzleListItems");
-    if(listEl) listEl.innerHTML = '<p class="sub">Loading...</p>';
-
-    const countEl = document.getElementById("puzzleListUnlockedCount");
-    if(countEl) countEl.textContent = getUnlockedPuzzleCount();
+    const bodyEl = document.getElementById("puzzleMapBody");
+    if(bodyEl) bodyEl.innerHTML = '<p class="sub">Loading...</p>';
 
     loadPuzzlePool().then(function(pool){
 
-        const unlockedPool = getUnlockedPuzzlePool(pool);
+        const sorted = sortPuzzlesChronologically(pool);
 
         if(typeof currentUser === "undefined" || !currentUser || !db){
-            renderPuzzleList(unlockedPool, {});
+            renderPuzzleMap(sorted, {});
             return;
         }
 
@@ -615,64 +530,195 @@ function openPuzzleList(){
                     if(entry && entry.puzzleId) solvedIds[entry.puzzleId] = true;
                 });
             }
-            renderPuzzleList(unlockedPool, solvedIds);
+            renderPuzzleMap(sorted, solvedIds);
         });
 
     }).catch(function(err){
-        console.error("Failed to load puzzle list:", err.message);
-        if(listEl) listEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
+        console.error("Failed to load puzzle map:", err.message);
+        if(bodyEl) bodyEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
     });
 
 }
 
-function renderPuzzleList(unlockedPool, solvedIds){
-
-    const listEl = document.getElementById("puzzleListItems");
-    if(!listEl) return;
-
-    if(!unlockedPool || unlockedPool.length === 0){
-        listEl.innerHTML = '<p class="sub">No puzzles have been added yet.</p>';
-        return;
-    }
-
-    listEl.innerHTML = "";
-
-    unlockedPool.forEach(function(puzzle, index){
-
-        const isSolved = !!solvedIds[puzzle.id];
-
-        const row = document.createElement("div");
-        row.className = "gameRow";
-        row.style.cursor = "pointer";
-        row.onclick = function(){ playSpecificPuzzle(puzzle); };
-
-        row.innerHTML =
-            '<div class="gameOpponentInfo">' +
-                '<div class="gameOpponentText">' +
-                    '<span class="gameOpponent">Puzzle ' + (index + 1) + '</span>' +
-                    '<span class="gameMeta">Rating ' + (puzzle.rating || "?") + '</span>' +
-                '</div>' +
-            '</div>' +
-            '<div class="gameResultCol">' +
-                '<span class="gameResult ' + (isSolved ? "gameWon" : "gameDrawn") + '">' + (isSolved ? "Solved" : "Unsolved") + '</span>' +
-            '</div>';
-
-        listEl.appendChild(row);
-
-    });
-
-}
-
-function closePuzzleList(){
-    document.getElementById("puzzleListScreen").style.display = "none";
+function closePuzzleMap(){
+    document.getElementById("puzzleMapScreen").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
-    if(history.state && history.state.screen === "puzzleList"){
+    if(history.state && history.state.screen === "puzzleMap"){
         history.back();
     }
 }
 
-function playSpecificPuzzle(puzzle){
-    document.getElementById("puzzleListScreen").style.display = "none";
+function renderPuzzleMap(sortedPool, solvedIds){
+
+    const bodyEl = document.getElementById("puzzleMapBody");
+    if(!bodyEl) return;
+
+    const currentTierIndex = getCurrentTierIndex();
+    const totalTiers = KINGDOM_LEVELS.length;
+    const totalPuzzlesInGame = totalTiers * PUZZLE_UNLOCKS_PER_TIER;
+
+    let totalSolved = 0;
+    Object.keys(solvedIds).forEach(function(){ totalSolved++; });
+
+    const totalSolvedEl = document.getElementById("puzzleMapTotalSolved");
+    const totalCountEl = document.getElementById("puzzleMapTotalCount");
+    if(totalSolvedEl) totalSolvedEl.textContent = totalSolved;
+    if(totalCountEl) totalCountEl.textContent = totalPuzzlesInGame;
+
+    bodyEl.innerHTML = "";
+
+    for(let tierIndex = 0; tierIndex < totalTiers; tierIndex++){
+
+        const kingdom = KINGDOM_LEVELS[tierIndex];
+        const tierPuzzles = sortedPool.slice(
+            tierIndex * PUZZLE_UNLOCKS_PER_TIER,
+            tierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
+        );
+
+        bodyEl.appendChild(buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex));
+    }
+
+    const progressPct = totalPuzzlesInGame > 0 ? Math.min(100, (totalSolved / totalPuzzlesInGame) * 100) : 0;
+
+    const progressCard = document.createElement("div");
+    progressCard.style.cssText = "background:#fdecd2; border-radius:16px; padding:16px 18px; display:flex; align-items:center; gap:14px; margin-top:4px;";
+    progressCard.innerHTML =
+        '<div style="font-size:22px;">🧩</div>' +
+        '<div style="flex:1;">' +
+            '<div style="display:flex; justify-content:space-between; font-weight:700; color:#1a1a1a; font-size:14px; margin-bottom:6px;">' +
+                '<span>Overall Progress</span><span>' + totalSolved + '/' + totalPuzzlesInGame + '</span>' +
+            '</div>' +
+            '<div style="height:8px; background:rgba(255,122,26,0.2); border-radius:6px; overflow:hidden;">' +
+                '<div style="height:100%; width:' + progressPct + '%; background:linear-gradient(90deg,#FF7A1A,#ffb066); border-radius:6px;"></div>' +
+            '</div>' +
+            '<p style="margin:6px 0 0; color:#8a7050; font-size:12px;">Keep solving to build your kingdom!</p>' +
+        '</div>';
+    bodyEl.appendChild(progressCard);
+
+}
+
+// Builds one kingdom's card: header (image, name, lock/current badge,
+// description, X/20 solved), the 20-tile grid, and either a "Play"
+// button (next unsolved puzzle) or a "Conquered" banner.
+function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex){
+
+    const isUnlocked = tierIndex <= currentTierIndex;
+    const isCurrent = tierIndex === currentTierIndex;
+
+    let solvedCount = 0;
+    let nextPlayableLocal = -1;
+
+    for(let i = 0; i < PUZZLE_UNLOCKS_PER_TIER; i++){
+        const p = tierPuzzles[i];
+        const isSolved = !!(p && solvedIds[p.id]);
+        if(isSolved) solvedCount++;
+        if(isUnlocked && p && nextPlayableLocal === -1 && !isSolved){
+            nextPlayableLocal = i;
+        }
+    }
+
+    const conquered = isUnlocked && solvedCount === PUZZLE_UNLOCKS_PER_TIER;
+    const prevKingdom = tierIndex > 0 ? KINGDOM_LEVELS[tierIndex - 1] : null;
+
+    const descText = !isUnlocked
+        ? ("Complete " + (prevKingdom ? prevKingdom.name : "the previous kingdom") + " puzzles to unlock this place.")
+        : (conquered ? ("You've solved all " + kingdom.name + " puzzles.") : kingdom.description);
+
+    const badgeHtml = !isUnlocked
+        ? '<span style="background:#eee; color:#8a8580; font-size:11px; font-weight:700; padding:3px 10px; border-radius:10px; margin-left:8px; white-space:nowrap;">🔒 Locked</span>'
+        : (isCurrent ? '<span style="background:#ffe4d6; color:#FF7A1A; font-size:11px; font-weight:700; padding:3px 10px; border-radius:10px; margin-left:8px; white-space:nowrap;">Current</span>' : '');
+
+    const card = document.createElement("div");
+    card.style.cssText = "background:#fff; border-radius:20px; padding:18px; margin-bottom:16px; box-shadow:0 4px 16px rgba(0,0,0,0.06);";
+
+    let tilesHtml = "";
+
+    for(let i = 0; i < PUZZLE_UNLOCKS_PER_TIER; i++){
+
+        const p = tierPuzzles[i];
+        const num = i + 1;
+        const isSolved = !!(p && solvedIds[p.id]);
+        const isPlayable = isUnlocked && !!p && (isSolved || i === nextPlayableLocal);
+
+        let tileBg, tileColor, extra;
+
+        if(!isUnlocked || !p){
+            tileBg = "#eeeeee";
+            tileColor = "#bbb";
+            extra = '<span style="font-size:10px;">🔒</span>';
+        }else if(isSolved){
+            tileBg = "#fdf0e4";
+            tileColor = "#FF7A1A";
+            extra = '<span style="color:#22c55e; font-size:12px;">✔</span>';
+        }else if(i === nextPlayableLocal){
+            tileBg = "#FF7A1A";
+            tileColor = "#fff";
+            extra = "";
+        }else{
+            tileBg = "#f5f5f5";
+            tileColor = "#bbb";
+            extra = "";
+        }
+
+        tilesHtml +=
+            '<div data-local-idx="' + i + '" class="puzzleMapTile" ' +
+                 'style="background:' + tileBg + '; color:' + tileColor + '; ' +
+                 'border-radius:12px; height:52px; display:flex; flex-direction:column; align-items:center; justify-content:center; ' +
+                 'font-weight:800; font-size:16px; gap:2px; ' + (isPlayable ? "cursor:pointer;" : "cursor:default;") + '">' +
+                num + extra +
+            '</div>';
+    }
+
+    card.innerHTML =
+        '<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px;">' +
+            '<div style="display:flex; align-items:flex-start; gap:12px; min-width:0;">' +
+                '<img src="' + getKingdomImagePath(kingdom.id) + '" style="width:56px; height:56px; border-radius:12px; object-fit:cover; flex-shrink:0;" onerror="this.style.display=\'none\';">' +
+                '<div style="min-width:0;">' +
+                    '<div style="display:flex; align-items:center; flex-wrap:wrap;"><span style="font-weight:800; font-size:19px; color:#1a1a1a;">' + escapeHtml(kingdom.name) + '</span>' + badgeHtml + '</div>' +
+                    '<p style="color:#8a8580; font-size:13px; margin:4px 0 0;">' + escapeHtml(descText) + '</p>' +
+                '</div>' +
+            '</div>' +
+            '<div style="text-align:right; white-space:nowrap;">' +
+                '<div style="font-weight:800; color:#1a1a1a; font-size:14px;">🚩 ' + solvedCount + '/' + PUZZLE_UNLOCKS_PER_TIER + '</div>' +
+                '<div style="color:#8a8580; font-size:10px;">Puzzles Solved</div>' +
+            '</div>' +
+        '</div>' +
+        '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">' + tilesHtml + '</div>';
+
+    // Wire up clickable tiles: replay any solved one, or play the next one up.
+    card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
+        const localIdx = Number(tileEl.dataset.localIdx);
+        const p = tierPuzzles[localIdx];
+        const isSolved = !!(p && solvedIds[p.id]);
+        if(isUnlocked && p && (isSolved || localIdx === nextPlayableLocal)){
+            tileEl.onclick = function(){ playPuzzleObject(p); };
+        }
+    });
+
+    if(conquered){
+        const banner = document.createElement("div");
+        banner.style.cssText = "margin-top:14px; background:#e6f7ea; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px;";
+        banner.innerHTML =
+            '<span style="color:#22c55e; font-size:18px;">✔</span>' +
+            '<div><b style="color:#1a1a1a; font-size:14px;">' + escapeHtml(kingdom.name) + ' Conquered!</b>' +
+            '<p style="margin:2px 0 0; color:#8a8580; font-size:12px;">You\'ve solved all ' + escapeHtml(kingdom.name) + ' puzzles.</p></div>';
+        card.appendChild(banner);
+    }else if(isUnlocked && nextPlayableLocal !== -1){
+        const playBtn = document.createElement("button");
+        playBtn.className = "btnPrimary";
+        playBtn.style.marginTop = "14px";
+        playBtn.textContent = "▶ Play";
+        playBtn.onclick = function(){ playPuzzleObject(tierPuzzles[nextPlayableLocal]); };
+        card.appendChild(playBtn);
+    }
+
+    return card;
+}
+
+// Opens a specific puzzle object (from the map) for play.
+function playPuzzleObject(puzzle){
+    if(!puzzle) return;
+    document.getElementById("puzzleMapScreen").style.display = "none";
     document.getElementById("puzzleScreen").style.display = "flex";
     history.pushState({ screen: "puzzle" }, "", "#puzzle");
     loadPuzzleIntoBoard(puzzle);
