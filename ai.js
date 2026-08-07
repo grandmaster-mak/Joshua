@@ -12,8 +12,8 @@ let multiPvMoves = {};
 let latestSearchScoreCp = null;
 
 const difficultySettings = {
-    easy:   { elo: 1320, movetime: 400,  multipv: 3 },
-    medium: { elo: 1600, movetime: 700,  multipv: 1 },
+    easy:   { elo: 1320, movetime: 400,  multipv: 5 },
+    medium: { elo: 1600, movetime: 700,  multipv: 3 },
     hard:   { elo: 0,    movetime: 1200, multipv: 1 }
 };
 
