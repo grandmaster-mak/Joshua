@@ -586,19 +586,20 @@ function openPuzzleMap(){
         const sorted = sortPuzzlesChronologically(pool);
 
         if(typeof currentUser === "undefined" || !currentUser || !db){
-            renderPuzzleMap(sorted, {});
+            renderPuzzleMap(sorted, {}, null);
             return;
         }
 
-        return db.ref("users/" + currentUser.uid + "/private/puzzleHistory").once("value").then(function(snapshot){
+        return db.ref("users/" + currentUser.uid + "/private").once("value").then(function(snapshot){
+            const priv = snapshot.val() || {};
             const solvedIds = {};
-            if(snapshot.exists()){
-                snapshot.forEach(function(child){
-                    const entry = child.val();
+            if(priv.puzzleHistory){
+                Object.keys(priv.puzzleHistory).forEach(function(key){
+                    const entry = priv.puzzleHistory[key];
                     if(entry && entry.puzzleId) solvedIds[entry.puzzleId] = true;
                 });
             }
-            renderPuzzleMap(sorted, solvedIds);
+            renderPuzzleMap(sorted, solvedIds, priv.puzzleLastSolved || null);
         });
 
     }).catch(function(err){
