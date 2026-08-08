@@ -27,14 +27,24 @@
 // unlocks puzzle N+1; you can still tap back into an already-solved
 // puzzle to replay it, but you can't skip ahead.
 //
-// This is all driven by the "Puzzle Map" screen (openPuzzleMap /
-// renderPuzzleMap / buildPuzzleKingdomCard below), which replaces the
-// old single shared "puzzle of the day" screen and the separate
-// free-browse puzzle list — there is no more one puzzle everyone gets
-// on a given date; each player works through their own unlocked
-// puzzles at their own pace. openDailyPuzzle() is kept as a thin alias
-// to openPuzzleMap() purely so existing "Puzzles" buttons in the HTML
-// (which call it by that name) keep working unchanged.
+// ---- Daily gating (NEW) ----
+// Within an unlocked tier, only ONE brand-new (never-solved) puzzle
+// becomes playable per calendar day. Solving today's new puzzle locks
+// the next new one until the next calendar day (isNewPuzzleUnlockedToday).
+// Already-solved puzzles are exempt from this — you can always replay
+// any of them any time, with no daily limit.
+//
+// ---- Navigation (NEW) ----
+// openDailyPuzzle() — bound to every "Puzzles" entry point in the app —
+// now behaves like this:
+//   - If there's an unsolved puzzle unlocked for TODAY specifically,
+//     it skips the map screen entirely and loads that puzzle's board
+//     directly.
+//   - Otherwise (already solved today's, or waiting on a new day, or
+//     waiting on kingdom promotion) it opens the Puzzle Map instead,
+//     where the player can freely replay any already-solved puzzle.
+// Finishing a puzzle (closePuzzle() while puzzleSolved is true) always
+// returns to the Puzzle Map, never to the home screen directly.
 // ============================================================
 
 let currentPuzzle = null;
@@ -74,6 +84,7 @@ function todayDateString(){
     const d = String(now.getDate()).padStart(2, "0");
     return y + "-" + m + "-" + d;
 }
+
 // A brand-new (never-solved) puzzle is only unlockable once per calendar
 // day — solving one today locks the next new puzzle until tomorrow.
 // Already-solved puzzles are exempt: you can always replay those.
@@ -81,6 +92,7 @@ function isNewPuzzleUnlockedToday(lastSolvedDate){
     if(!lastSolvedDate) return true;
     return lastSolvedDate !== todayDateString();
 }
+
 // ---- Coach speech bubble: only one line shown at a time ----
 // Showing a status message (feedback) replaces the puzzle description
 // instead of stacking underneath it.
@@ -207,11 +219,14 @@ function loadPuzzleIntoBoard(puzzle){
 
 }
 
-// Kept as a thin alias — every "Puzzles" entry point already in the app
-// (Home quicklink, Account stats row, Account Quick Access row) calls
-// this function by name. It now opens the Puzzle Map instead of a
-// single shared "today's puzzle" — see the notes at the top of this
-// file for why the old shared-daily-puzzle mechanic was retired.
+// Bound to every "Puzzles" entry point in the app (Home quicklink,
+// Account stats row, Account Quick Access row).
+//
+// If there's a fresh, never-solved puzzle unlocked for TODAY, this
+// skips the map screen and loads that puzzle's board directly. If not
+// (already solved today's, waiting on tomorrow, or waiting on kingdom
+// promotion), it opens the Puzzle Map instead so the player can freely
+// replay anything already solved.
 function openDailyPuzzle(){
 
     if(typeof currentUser === "undefined" || !currentUser || !db){
@@ -258,7 +273,7 @@ function openDailyPuzzle(){
                 history.pushState({ screen: "puzzle" }, "", "#puzzle");
                 loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal]);
             }else{
-                // Already solved today's, or waiting on kingdom promotion — show the map instead.
+                // Already solved today's, or waiting on tomorrow/promotion — show the map instead.
                 openPuzzleMap();
             }
 
@@ -271,6 +286,9 @@ function openDailyPuzzle(){
 
 }
 
+// Closes the puzzle board. If the puzzle was just solved, this always
+// routes to the Puzzle Map (batch/grid screen) — never straight back
+// to the home screen — so the player sees their progress update.
 function closePuzzle(){
 
     document.getElementById("puzzleScreen").style.display = "none";
@@ -568,8 +586,10 @@ function updatePuzzleStatsDisplay(){
 // ============================================================
 // ===== PUZZLE MAP SCREEN =====
 // Kingdom-by-kingdom puzzle path: each unlocked kingdom shows its own
-// 20-puzzle grid, solved in sequence. Replaces the old single shared
-// "puzzle of the day" screen and the separate free-browse puzzle list.
+// 20-puzzle grid, solved in sequence. This is where the player lands
+// once they've already solved today's new puzzle (or are waiting on
+// the next day / next promotion) — from here they can freely replay
+// any already-solved puzzle at their own pace.
 // ============================================================
 
 function openPuzzleMap(){
@@ -668,7 +688,8 @@ function renderPuzzleMap(sortedPool, solvedIds, lastSolvedDate){
 
 // Builds one kingdom's card: header (image, name, lock/current badge,
 // description, X/20 solved), the 20-tile grid, and either a "Play"
-// button (next unsolved puzzle) or a "Conquered" banner.
+// button (next unsolved puzzle, only if unlocked for today), a
+// "come back tomorrow" note, or a "Conquered" banner.
 function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex, lastSolvedDate){
 
     const isUnlocked = tierIndex <= currentTierIndex;
@@ -748,6 +769,10 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
             '</div>';
     }
 
+    // No wash over the image — it stays fully clear/vibrant. The header
+    // text just gets a white text-shadow so it stays readable no matter
+    // what colors are in the photo behind it; the numbered tiles below
+    // already sit on solid-colored boxes, so they need no help.
     const headerTextShadow = "text-shadow:0 1px 4px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.7);";
 
     card.innerHTML =
@@ -767,6 +792,8 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
 
     const contentWrap = card.querySelector(".puzzleMapCardContent");
 
+    // Wire up clickable tiles: replay any solved one any time, or play
+    // the next new one up ONLY if it's unlocked for today.
     card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
         const localIdx = Number(tileEl.dataset.localIdx);
         const p = tierPuzzles[localIdx];
@@ -797,59 +824,6 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
         waitNote.style.cssText = "margin-top:14px; background:#fff7ed; border-radius:14px; padding:10px 14px; text-align:center; color:#8a7050; font-size:13px; font-weight:600;";
         waitNote.textContent = "⏳ Come back tomorrow for your next puzzle!";
         contentWrap.appendChild(waitNote);
-    }
-
-    return card;
-}
-
-    // No wash over the image — it stays fully clear/vibrant. The header
-    // text just gets a white text-shadow so it stays readable no matter
-    // what colors are in the photo behind it; the numbered tiles below
-    // already sit on solid-colored boxes, so they need no help.
-    const headerTextShadow = "text-shadow:0 1px 4px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.7);";
-
-    card.innerHTML =
-        '<div class="puzzleMapCardContent" style="position:relative; z-index:2; padding:18px;">' +
-            '<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px;">' +
-                '<div style="min-width:0;">' +
-                    '<div style="display:flex; align-items:center; flex-wrap:wrap;"><span style="font-weight:800; font-size:19px; color:#1a1a1a; ' + headerTextShadow + '">' + escapeHtml(kingdom.name) + '</span>' + badgeHtml + '</div>' +
-                    '<p style="color:#3a3530; font-size:13px; margin:4px 0 0; font-weight:600; ' + headerTextShadow + '">' + escapeHtml(descText) + '</p>' +
-                '</div>' +
-                '<div style="text-align:right; white-space:nowrap;">' +
-                    '<div style="font-weight:800; color:#1a1a1a; font-size:14px; ' + headerTextShadow + '">🚩 ' + solvedCount + '/' + PUZZLE_UNLOCKS_PER_TIER + '</div>' +
-                    '<div style="color:#3a3530; font-size:10px; font-weight:600; ' + headerTextShadow + '">Puzzles Solved</div>' +
-                '</div>' +
-            '</div>' +
-            '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">' + tilesHtml + '</div>' +
-        '</div>';
-
-    const contentWrap = card.querySelector(".puzzleMapCardContent");
-
-    // Wire up clickable tiles: replay any solved one, or play the next one up.
-    card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
-        const localIdx = Number(tileEl.dataset.localIdx);
-        const p = tierPuzzles[localIdx];
-        const isSolved = !!(p && solvedIds[p.id]);
-        if(isUnlocked && p && (isSolved || localIdx === nextPlayableLocal)){
-            tileEl.onclick = function(){ playPuzzleObject(p); };
-        }
-    });
-
-    if(conquered){
-        const banner = document.createElement("div");
-        banner.style.cssText = "margin-top:14px; background:#e6f7ea; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px;";
-        banner.innerHTML =
-            '<span style="color:#22c55e; font-size:18px;">✔</span>' +
-            '<div><b style="color:#1a1a1a; font-size:14px;">' + escapeHtml(kingdom.name) + ' Conquered!</b>' +
-            '<p style="margin:2px 0 0; color:#8a8580; font-size:12px;">You\'ve solved all ' + escapeHtml(kingdom.name) + ' puzzles.</p></div>';
-        contentWrap.appendChild(banner);
-    }else if(isUnlocked && nextPlayableLocal !== -1){
-        const playBtn = document.createElement("button");
-        playBtn.className = "btnPrimary";
-        playBtn.style.marginTop = "14px";
-        playBtn.textContent = "▶ Play";
-        playBtn.onclick = function(){ playPuzzleObject(tierPuzzles[nextPlayableLocal]); };
-        contentWrap.appendChild(playBtn);
     }
 
     return card;
