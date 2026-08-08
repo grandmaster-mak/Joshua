@@ -74,7 +74,13 @@ function todayDateString(){
     const d = String(now.getDate()).padStart(2, "0");
     return y + "-" + m + "-" + d;
 }
-
+// A brand-new (never-solved) puzzle is only unlockable once per calendar
+// day — solving one today locks the next new puzzle until tomorrow.
+// Already-solved puzzles are exempt: you can always replay those.
+function isNewPuzzleUnlockedToday(lastSolvedDate){
+    if(!lastSolvedDate) return true;
+    return lastSolvedDate !== todayDateString();
+}
 // ---- Coach speech bubble: only one line shown at a time ----
 // Showing a status message (feedback) replaces the puzzle description
 // instead of stacking underneath it.
