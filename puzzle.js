@@ -27,16 +27,16 @@
 // unlocks puzzle N+1; you can still tap back into an already-solved
 // puzzle to replay it, but you can't skip ahead.
 //
-// ---- Daily gating (NEW) ----
+// ---- Daily gating ----
 // Within an unlocked tier, only ONE brand-new (never-solved) puzzle
 // becomes playable per calendar day. Solving today's new puzzle locks
 // the next new one until the next calendar day (isNewPuzzleUnlockedToday).
 // Already-solved puzzles are exempt from this — you can always replay
 // any of them any time, with no daily limit.
 //
-// ---- Navigation (NEW) ----
+// ---- Navigation ----
 // openDailyPuzzle() — bound to every "Puzzles" entry point in the app —
-// now behaves like this:
+// behaves like this:
 //   - If there's an unsolved puzzle unlocked for TODAY specifically,
 //     it skips the map screen entirely and loads that puzzle's board
 //     directly.
@@ -45,6 +45,24 @@
 //     where the player can freely replay any already-solved puzzle.
 // Finishing a puzzle (closePuzzle() while puzzleSolved is true) always
 // returns to the Puzzle Map, never to the home screen directly.
+//
+// ---- Replays don't affect rating/streak ----
+// A puzzle only awards puzzleRating, bumps puzzlesSolved, updates the
+// daily solve streak, and gets a new puzzleHistory entry the FIRST time
+// it's ever solved. Every subsequent solve of that same puzzle (a
+// deliberate replay from the Puzzle Map) is tracked purely client-side
+// for the "Solved!" feedback message — it does not touch Firebase at
+// all, so replaying old puzzles can never inflate your rating or count.
+// This is driven by the `puzzleIsReplay` flag, set whenever a puzzle is
+// loaded (loadPuzzleIntoBoard's second argument / playPuzzleObject's
+// second argument) based on whether it was already marked solved at
+// the point it was opened.
+//
+// ---- Done button ----
+// #puzzleDoneBtn in the puzzleScreen header stays hidden until the
+// current puzzle is solved (showPuzzleDoneButton()), then calls
+// closePuzzle() same as the back arrow — which, since puzzleSolved is
+// true at that point, routes to the Puzzle Map instead of Home.
 // ============================================================
 
 let currentPuzzle = null;
@@ -55,6 +73,7 @@ let puzzleMistakeMade = false;
 let puzzleSnapshots = [];
 let puzzleViewIndex = 0;
 let puzzleHintSquare = null;
+let puzzleIsReplay = false;
 
 const PUZZLE_UNLOCKS_PER_TIER = 20;
 
@@ -198,13 +217,20 @@ function fenToPieces(fen){
 
 // Shared setup used whenever a specific puzzle is opened for play —
 // takes a puzzle object and gets the board/state/coach text ready for it.
-function loadPuzzleIntoBoard(puzzle){
+//
+// isReplay: pass true when this puzzle was already marked solved at the
+// moment it was opened (i.e. the player deliberately picked an already-
+// solved tile from the Puzzle Map to practice again). When true, solving
+// it again will NOT touch Firebase rating/streak/history — see
+// recordPuzzleResult() below.
+function loadPuzzleIntoBoard(puzzle, isReplay){
 
     currentPuzzle = puzzle;
     puzzleMoveIndex = 0;
     puzzleSolved = false;
     puzzleMistakeMade = false;
     puzzleHintSquare = null;
+    puzzleIsReplay = !!isReplay;
     selected = null;
     possibleMoves = [];
 
@@ -212,6 +238,9 @@ function loadPuzzleIntoBoard(puzzle){
     currentPlayer = currentPuzzle.fen.split(" ")[1] === "w" ? "white" : "black";
     puzzleSnapshots = [{ pieces: JSON.parse(JSON.stringify(pieces)), currentPlayer: currentPlayer }];
     puzzleViewIndex = 0;
+
+    const doneBtn = document.getElementById("puzzleDoneBtn");
+    if(doneBtn) doneBtn.style.display = "none";
 
     showCoachDescription(currentPuzzle.description);
     updatePuzzleStatsDisplay();
@@ -267,11 +296,12 @@ function openDailyPuzzle(){
             const newUnlockedToday = isNewPuzzleUnlockedToday(priv.puzzleLastSolved || null);
 
             if(nextPlayableLocal !== -1 && newUnlockedToday && tierPuzzles[nextPlayableLocal]){
-                // There's a fresh puzzle waiting — skip the map, go straight to the board.
+                // There's a fresh, never-solved puzzle waiting — skip
+                // the map, go straight to the board. Never a replay.
                 document.getElementById("appShell").style.display = "none";
                 document.getElementById("puzzleScreen").style.display = "flex";
                 history.pushState({ screen: "puzzle" }, "", "#puzzle");
-                loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal]);
+                loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
             }else{
                 // Already solved today's, or waiting on tomorrow/promotion — show the map instead.
                 openPuzzleMap();
@@ -401,6 +431,7 @@ function clickPuzzleSquare(r, c){
         puzzleSolved = true;
         showCoachFeedback(puzzleMistakeMade ? "✅ Solved! You got there in the end." : "🏆 Flawless! Solved without a slip.", "good");
         createPuzzleBoard();
+        showPuzzleDoneButton();
         recordPuzzleResult();
         return;
     }
@@ -429,6 +460,7 @@ function clickPuzzleSquare(r, c){
         if(puzzleMoveIndex >= currentPuzzle.solution.length){
             puzzleSolved = true;
             showCoachFeedback(puzzleMistakeMade ? "✅ Solved! You got there in the end." : "🏆 Flawless! Solved without a slip.", "good");
+            showPuzzleDoneButton();
             recordPuzzleResult();
         }else{
             showCoachFeedback("Your opponent replied " + oppMove.substring(0,2) + "-" + oppMove.substring(2,4) + ". Your move.", null);
@@ -436,6 +468,14 @@ function clickPuzzleSquare(r, c){
 
     }, 500);
 
+}
+
+// Reveals the "✅ Done" button in the puzzle screen header once the
+// current puzzle has been solved, so the player can explicitly confirm
+// they're finished and head back to the batch/grid view.
+function showPuzzleDoneButton(){
+    const doneBtn = document.getElementById("puzzleDoneBtn");
+    if(doneBtn) doneBtn.style.display = "inline-block";
 }
 
 // ---- Hint: glow the square of the piece that should move next ----
@@ -492,8 +532,16 @@ function updatePuzzleNavButtons(){
 // ---- Recording results to Firebase: rating + streak, like chess.com ----
 // Note: puzzleStreak here is the DAILY SOLVE streak (solved at least one
 // puzzle today, yesterday, etc.) — a separate feature from kingdom wins.
+//
+// IMPORTANT: if this solve is a replay (puzzleIsReplay === true — the
+// player deliberately reopened an already-solved puzzle from the Puzzle
+// Map), this function does nothing at all. No rating change, no
+// puzzlesSolved bump, no streak update, no new history entry. Replays
+// are purely for practice and must never inflate stats.
 
 function recordPuzzleResult(){
+
+    if(puzzleIsReplay) return;
 
     if(typeof currentUser === "undefined" || !currentUser) return;
     if(typeof db === "undefined" || !db) return;
@@ -589,7 +637,8 @@ function updatePuzzleStatsDisplay(){
 // 20-puzzle grid, solved in sequence. This is where the player lands
 // once they've already solved today's new puzzle (or are waiting on
 // the next day / next promotion) — from here they can freely replay
-// any already-solved puzzle at their own pace.
+// any already-solved puzzle at their own pace, with no effect on
+// rating or streak.
 // ============================================================
 
 function openPuzzleMap(){
@@ -792,15 +841,16 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
 
     const contentWrap = card.querySelector(".puzzleMapCardContent");
 
-    // Wire up clickable tiles: replay any solved one any time, or play
-    // the next new one up ONLY if it's unlocked for today.
+    // Wire up clickable tiles: replay any solved one any time (pass
+    // isReplay=true so it never touches rating/streak), or play the
+    // next new one up ONLY if it's unlocked for today (isReplay=false).
     card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
         const localIdx = Number(tileEl.dataset.localIdx);
         const p = tierPuzzles[localIdx];
         const isSolved = !!(p && solvedIds[p.id]);
         const playable = isUnlocked && !!p && (isSolved || (localIdx === nextPlayableLocal && newUnlockedToday));
         if(playable){
-            tileEl.onclick = function(){ playPuzzleObject(p); };
+            tileEl.onclick = function(){ playPuzzleObject(p, isSolved); };
         }
     });
 
@@ -817,7 +867,7 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
         playBtn.className = "btnPrimary";
         playBtn.style.marginTop = "14px";
         playBtn.textContent = "▶ Play";
-        playBtn.onclick = function(){ playPuzzleObject(tierPuzzles[nextPlayableLocal]); };
+        playBtn.onclick = function(){ playPuzzleObject(tierPuzzles[nextPlayableLocal], false); };
         contentWrap.appendChild(playBtn);
     }else if(isUnlocked && nextPlayableLocal !== -1 && !newUnlockedToday){
         const waitNote = document.createElement("div");
@@ -830,10 +880,12 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
 }
 
 // Opens a specific puzzle object (from the map) for play.
-function playPuzzleObject(puzzle){
+// isReplay: true when this puzzle was already solved (so this solve
+// won't award rating/streak/history — see loadPuzzleIntoBoard).
+function playPuzzleObject(puzzle, isReplay){
     if(!puzzle) return;
     document.getElementById("puzzleMapScreen").style.display = "none";
     document.getElementById("puzzleScreen").style.display = "flex";
     history.pushState({ screen: "puzzle" }, "", "#puzzle");
-    loadPuzzleIntoBoard(puzzle);
+    loadPuzzleIntoBoard(puzzle, isReplay);
 }
