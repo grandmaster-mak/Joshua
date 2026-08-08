@@ -394,6 +394,7 @@ function actuallySendChallenge(friendUid, friendUsername){
     statusRef.on("value", function(snapshot){
         if(snapshot.val() === "playing"){
             statusRef.off();
+            closeInfoPopup();
             startOnlineGame(code);
         }
     });
