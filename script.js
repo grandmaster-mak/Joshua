@@ -1581,6 +1581,20 @@ function newGame(){
 
     if(typeof checkDailyPlayStreak === "function") checkDailyPlayStreak();
 
+    // Coach mode only ever applies to "ai" games (see openPlayVsCoach in
+    // coach.js). If a coach game just ended and the player starts an
+    // online or local game WITHOUT going through openPlaySetup() first —
+    // e.g. tapping "Play Online" directly, joining/creating a room,
+    // quick-matching, or accepting a challenge from a profile screen —
+    // isCoachMode was never reset there, so the coach bar and
+    // commentary kept firing in matches that have nothing to do with
+    // the coach. Every game-start path funnels through newGame(), so
+    // guarding it here (instead of at every call site in
+    // multiplayer.js) fixes it regardless of how the game was entered.
+    if(gameMode !== "ai"){
+        isCoachMode = false;
+    }
+
     pieces = [
         ["bR","bN","bB","bQ","bK","bB","bN","bR"],
         ["bP","bP","bP","bP","bP","bP","bP","bP"],
