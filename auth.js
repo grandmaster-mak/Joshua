@@ -288,6 +288,14 @@ function initAuthListener(){
 
             currentUser = user;
 
+            // ---- Check for a pending challenge link (NEW) ----
+            // Must run only once currentUser is actually known —
+            // running this at script-load time (before auth resolves)
+            // was the original bug: currentUser was always null at
+            // that point, so accepting a WhatsApp challenge link never
+            // worked. See checkForIncomingChallenge() in script.js.
+            if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
+
             if(db){
                 const presenceRef = db.ref("presence/" + user.uid);
                 presenceRef.set(true);
@@ -329,7 +337,7 @@ function initAuthListener(){
                 if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
                 if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
 
-                // ---- Handle pending challenge after login (NEW) ----
+                // ---- Handle pending challenge after login (unchanged) ----
                 if(typeof handlePendingChallenge === "function"){
                     handlePendingChallenge();
                 }
@@ -371,6 +379,14 @@ function showLoggedOutState(){
             currentUserRating = 100;
             currentUserPhotoURL = null;
             userExplicitlyLoggedOut = false;
+
+            // ---- Check for a pending challenge link (NEW) ----
+            // Covers the case where the WhatsApp link is opened while
+            // logged out: this stores the pending challenge ID and
+            // shows the login prompt (see checkForIncomingChallenge()
+            // in script.js). handlePendingChallenge() then picks it
+            // back up automatically once the person logs in.
+            if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
 
             document.getElementById("loggedOutView").style.display = "block";
             document.getElementById("loggedInView").style.display = "none";
