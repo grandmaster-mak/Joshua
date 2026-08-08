@@ -2795,10 +2795,17 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
     if(data.status === "accepted" && data.roomCode){
       challengeListenRef.off();
       challengeListenRef = null;
-      window.myColor = myColorVal;
-      window.currentRoomCode = data.roomCode;
-      window.selectedTime = timeSeconds;
-      window.gameMode = "online";
+      // FIX: was window.myColor / window.currentRoomCode / etc — since
+      // myColor, currentRoomCode, selectedTime, and gameMode are all
+      // declared with `let` at the top of this file, assigning to
+      // window.* creates a completely separate property and never
+      // touches the real variable the rest of the app (clickSquare,
+      // startOnlineGame, etc.) actually reads. That mismatch is what
+      // caused pieces to be unmovable after accepting a challenge.
+      myColor = myColorVal;
+      currentRoomCode = data.roomCode;
+      selectedTime = timeSeconds;
+      gameMode = "online";
       document.getElementById("challengeScreen").style.display = "none";
       startOnlineGame(data.roomCode);
     }
@@ -2809,7 +2816,8 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
 // Not run immediately at load — Firebase auth (currentUser) and db
 // aren't ready yet at that point. Instead this is called explicitly
 // from auth.js once onAuthStateChanged has actually resolved, so
-// currentUser reflects the real logged-in/out state.
+// currentUser reflects the real logged-in/out state. See
+// initAuthListener() and showLoggedOutState() in auth.js.
 function checkForIncomingChallenge(){
 
   if(window.challengeParamChecked) return; // only act on this once per page load
@@ -2886,10 +2894,17 @@ function showChallengeAcceptScreen(challengeId){
         opponentName: currentUsername
       });
 
-      window.myColor = opponentColor;
-      window.currentRoomCode = roomCode;
-      window.selectedTime = timeSeconds;
-      window.gameMode = "online";
+      // FIX: was window.myColor / window.currentRoomCode / etc — see the
+      // matching note in listenForChallengeAccepted() above. Assigning to
+      // window.* never reached the real `let` variables the rest of the
+      // app reads, so accepting a challenge always left myColor stuck at
+      // its original null/leftover value — pieces looked assigned to a
+      // color on screen but every click was blocked by clickSquare()'s
+      // currentPlayer !== myColor check.
+      myColor = opponentColor;
+      currentRoomCode = roomCode;
+      selectedTime = timeSeconds;
+      gameMode = "online";
       document.getElementById("challengeAcceptScreen").style.display = "none";
       startOnlineGame(roomCode);
     };
