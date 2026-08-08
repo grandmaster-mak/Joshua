@@ -669,10 +669,11 @@ function renderPuzzleMap(sortedPool, solvedIds, lastSolvedDate){
 // Builds one kingdom's card: header (image, name, lock/current badge,
 // description, X/20 solved), the 20-tile grid, and either a "Play"
 // button (next unsolved puzzle) or a "Conquered" banner.
-function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex){
+function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex, lastSolvedDate){
 
     const isUnlocked = tierIndex <= currentTierIndex;
     const isCurrent = tierIndex === currentTierIndex;
+    const newUnlockedToday = isNewPuzzleUnlockedToday(lastSolvedDate);
 
     let solvedCount = 0;
     let nextPlayableLocal = -1;
@@ -710,7 +711,7 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
         const p = tierPuzzles[i];
         const num = i + 1;
         const isSolved = !!(p && solvedIds[p.id]);
-        const isPlayable = isUnlocked && !!p && (isSolved || i === nextPlayableLocal);
+        const isPlayable = isUnlocked && !!p && (isSolved || (i === nextPlayableLocal && newUnlockedToday));
 
         let tileBg, tileColor, extra;
 
@@ -723,9 +724,15 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
             tileColor = "#FF7A1A";
             extra = '<span style="color:#22c55e; font-size:12px;">✔</span>';
         }else if(i === nextPlayableLocal){
-            tileBg = "#FF7A1A";
-            tileColor = "#fff";
-            extra = "";
+            if(newUnlockedToday){
+                tileBg = "#FF7A1A";
+                tileColor = "#fff";
+                extra = "";
+            }else{
+                tileBg = "#f5f5f5";
+                tileColor = "#bbb";
+                extra = '<span style="font-size:10px;">⏳</span>';
+            }
         }else{
             tileBg = "#f5f5f5";
             tileColor = "#bbb";
@@ -740,6 +747,60 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
                 num + extra +
             '</div>';
     }
+
+    const headerTextShadow = "text-shadow:0 1px 4px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.7);";
+
+    card.innerHTML =
+        '<div class="puzzleMapCardContent" style="position:relative; z-index:2; padding:18px;">' +
+            '<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px;">' +
+                '<div style="min-width:0;">' +
+                    '<div style="display:flex; align-items:center; flex-wrap:wrap;"><span style="font-weight:800; font-size:19px; color:#1a1a1a; ' + headerTextShadow + '">' + escapeHtml(kingdom.name) + '</span>' + badgeHtml + '</div>' +
+                    '<p style="color:#3a3530; font-size:13px; margin:4px 0 0; font-weight:600; ' + headerTextShadow + '">' + escapeHtml(descText) + '</p>' +
+                '</div>' +
+                '<div style="text-align:right; white-space:nowrap;">' +
+                    '<div style="font-weight:800; color:#1a1a1a; font-size:14px; ' + headerTextShadow + '">🚩 ' + solvedCount + '/' + PUZZLE_UNLOCKS_PER_TIER + '</div>' +
+                    '<div style="color:#3a3530; font-size:10px; font-weight:600; ' + headerTextShadow + '">Puzzles Solved</div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">' + tilesHtml + '</div>' +
+        '</div>';
+
+    const contentWrap = card.querySelector(".puzzleMapCardContent");
+
+    card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
+        const localIdx = Number(tileEl.dataset.localIdx);
+        const p = tierPuzzles[localIdx];
+        const isSolved = !!(p && solvedIds[p.id]);
+        const playable = isUnlocked && !!p && (isSolved || (localIdx === nextPlayableLocal && newUnlockedToday));
+        if(playable){
+            tileEl.onclick = function(){ playPuzzleObject(p); };
+        }
+    });
+
+    if(conquered){
+        const banner = document.createElement("div");
+        banner.style.cssText = "margin-top:14px; background:#e6f7ea; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px;";
+        banner.innerHTML =
+            '<span style="color:#22c55e; font-size:18px;">✔</span>' +
+            '<div><b style="color:#1a1a1a; font-size:14px;">' + escapeHtml(kingdom.name) + ' Conquered!</b>' +
+            '<p style="margin:2px 0 0; color:#8a8580; font-size:12px;">You\'ve solved all ' + escapeHtml(kingdom.name) + ' puzzles.</p></div>';
+        contentWrap.appendChild(banner);
+    }else if(isUnlocked && nextPlayableLocal !== -1 && newUnlockedToday){
+        const playBtn = document.createElement("button");
+        playBtn.className = "btnPrimary";
+        playBtn.style.marginTop = "14px";
+        playBtn.textContent = "▶ Play";
+        playBtn.onclick = function(){ playPuzzleObject(tierPuzzles[nextPlayableLocal]); };
+        contentWrap.appendChild(playBtn);
+    }else if(isUnlocked && nextPlayableLocal !== -1 && !newUnlockedToday){
+        const waitNote = document.createElement("div");
+        waitNote.style.cssText = "margin-top:14px; background:#fff7ed; border-radius:14px; padding:10px 14px; text-align:center; color:#8a7050; font-size:13px; font-weight:600;";
+        waitNote.textContent = "⏳ Come back tomorrow for your next puzzle!";
+        contentWrap.appendChild(waitNote);
+    }
+
+    return card;
+}
 
     // No wash over the image — it stays fully clear/vibrant. The header
     // text just gets a white text-shadow so it stays readable no matter
