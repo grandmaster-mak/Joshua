@@ -213,7 +213,62 @@ function loadPuzzleIntoBoard(puzzle){
 // single shared "today's puzzle" — see the notes at the top of this
 // file for why the old shared-daily-puzzle mechanic was retired.
 function openDailyPuzzle(){
-    openPuzzleMap();
+
+    if(typeof currentUser === "undefined" || !currentUser || !db){
+        openPuzzleMap();
+        return;
+    }
+
+    loadPuzzlePool().then(function(pool){
+
+        const sorted = sortPuzzlesChronologically(pool);
+        const currentTierIndex = getCurrentTierIndex();
+
+        return db.ref("users/" + currentUser.uid + "/private").once("value").then(function(snapshot){
+
+            const priv = snapshot.val() || {};
+            const solvedIds = {};
+            if(priv.puzzleHistory){
+                Object.keys(priv.puzzleHistory).forEach(function(key){
+                    const entry = priv.puzzleHistory[key];
+                    if(entry && entry.puzzleId) solvedIds[entry.puzzleId] = true;
+                });
+            }
+
+            const tierPuzzles = sorted.slice(
+                currentTierIndex * PUZZLE_UNLOCKS_PER_TIER,
+                currentTierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
+            );
+
+            let nextPlayableLocal = -1;
+            for(let i = 0; i < PUZZLE_UNLOCKS_PER_TIER; i++){
+                const p = tierPuzzles[i];
+                if(p && !solvedIds[p.id]){
+                    nextPlayableLocal = i;
+                    break;
+                }
+            }
+
+            const newUnlockedToday = isNewPuzzleUnlockedToday(priv.puzzleLastSolved || null);
+
+            if(nextPlayableLocal !== -1 && newUnlockedToday && tierPuzzles[nextPlayableLocal]){
+                // There's a fresh puzzle waiting — skip the map, go straight to the board.
+                document.getElementById("appShell").style.display = "none";
+                document.getElementById("puzzleScreen").style.display = "flex";
+                history.pushState({ screen: "puzzle" }, "", "#puzzle");
+                loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal]);
+            }else{
+                // Already solved today's, or waiting on kingdom promotion — show the map instead.
+                openPuzzleMap();
+            }
+
+        });
+
+    }).catch(function(err){
+        console.error("Failed to check today's puzzle:", err.message);
+        openPuzzleMap();
+    });
+
 }
 
 function closePuzzle(){
