@@ -617,7 +617,7 @@ function closePuzzleMap(){
     }
 }
 
-function renderPuzzleMap(sortedPool, solvedIds){
+function renderPuzzleMap(sortedPool, solvedIds, lastSolvedDate){
 
     const bodyEl = document.getElementById("puzzleMapBody");
     if(!bodyEl) return;
@@ -644,7 +644,7 @@ function renderPuzzleMap(sortedPool, solvedIds){
             tierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
         );
 
-        bodyEl.appendChild(buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex));
+        bodyEl.appendChild(buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex, lastSolvedDate));
     }
 
     const progressPct = totalPuzzlesInGame > 0 ? Math.min(100, (totalSolved / totalPuzzlesInGame) * 100) : 0;
