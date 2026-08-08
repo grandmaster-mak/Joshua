@@ -828,10 +828,11 @@
     </div>
 
     <div id="puzzleScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closePuzzle()">←</button>
-            <h2>🧩 Puzzle</h2>
-        </div>
+    <div class="fsHeader">
+        <button onclick="closePuzzle()">←</button>
+        <h2>🧩 Puzzle</h2>
+        <button id="puzzleDoneBtn" onclick="closePuzzle()" style="display:none; margin-left:auto; width:auto; background:#4ade80; color:#0f1117; font-weight:800; padding:8px 18px; border:none; border-radius:10px; font-size:14px;">✅ Done</button>
+    </div>
         <div class="fsBody" style="padding:0 0 20px;">
             <div class="coachRow">
                 <svg id="coachAvatar" class="coachFace coachAvatarImg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
