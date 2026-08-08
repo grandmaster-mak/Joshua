@@ -1129,6 +1129,46 @@
             <p id="dailyRewardStatus"></p>
         </div>
     </div>
+    <!-- Challenge a Friend screen (full screen) -->
+<div id="challengeScreen" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0f1117; color:#fff; padding:20px;">
+  <button id="challengeBackBtn" style="position:absolute; top:20px; left:20px; background:none; border:none; color:#fff; font-size:24px;">← Back</button>
+  <h2>⚔️ Challenge a Friend</h2>
+  <p style="color:#aaa; margin-bottom:30px;">Create a game and send a link to any friend</p>
+
+  <div style="width:100%; max-width:350px;">
+    <label style="color:#ccc;">Your colour</label>
+    <select id="challengeColor" style="width:100%; padding:12px; margin:8px 0 20px; border-radius:8px; background:#1c2028; color:#fff; border:1px solid #444; font-size:16px;">
+      <option value="white">White</option>
+      <option value="black">Black</option>
+    </select>
+
+    <label style="color:#ccc;">Time control</label>
+    <select id="challengeTime" style="width:100%; padding:12px; margin:8px 0 20px; border-radius:8px; background:#1c2028; color:#fff; border:1px solid #444; font-size:16px;">
+      <option value="1">1 minute</option>
+      <option value="3">3 minutes</option>
+      <option value="5">5 minutes</option>
+      <option value="10" selected>10 minutes</option>
+      <option value="15">15 minutes</option>
+    </select>
+
+    <button id="createChallengeBtn" style="width:100%; padding:14px; background:#FF7A1A; color:#fff; border:none; border-radius:10px; font-weight:bold; font-size:16px;">Create Challenge Link</button>
+
+    <div id="challengeLinkArea" style="display:none; margin-top:30px;">
+      <p style="color:#4ade80;">Share this link with your friend:</p>
+      <input id="challengeLinkInput" type="text" readonly style="width:100%; padding:12px; border-radius:8px; background:#2a2e38; color:#fff; border:1px solid #444; font-size:14px; margin:10px 0;">
+      <button id="copyChallengeLink" style="width:100%; padding:10px; background:#FF7A1A; color:#fff; border:none; border-radius:8px;">Copy Link</button>
+      <button id="shareChallengeLink" style="width:100%; padding:10px; margin-top:6px; background:#25D366; color:#fff; border:none; border-radius:8px;">Share via WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- Challenge accept screen (shown when friend opens the link) -->
+<div id="challengeAcceptScreen" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0f1117; color:#fff; padding:20px;">
+  <h2>⚡ Challenge</h2>
+  <p id="challengeAcceptInfo" style="color:#ccc; text-align:center; margin:20px 0;"></p>
+  <button id="acceptChallengeBtn" style="width:80%; max-width:300px; padding:14px; background:#4ade80; color:#000; border:none; border-radius:10px; font-weight:bold; font-size:16px;">Accept Challenge</button>
+  <button id="declineChallengeBtn" style="width:80%; max-width:300px; padding:14px; margin-top:10px; background:#e5484d; color:#fff; border:none; border-radius:10px;">Decline</button>
+</div>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
