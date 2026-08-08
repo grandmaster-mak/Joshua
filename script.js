@@ -2614,6 +2614,19 @@ window.addEventListener("popstate", function(event){
         return;
     }
 
+    // --- NEW: Challenge screen back button support ---
+    if(state && state.screen === "challenge"){
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("challengeScreen").style.display = "flex";
+        return;
+    }
+    if(state && state.screen === "challengeAccept"){
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("challengeAcceptScreen").style.display = "flex";
+        return;
+    }
+    // --- END NEW ---
+
     if(!state || !state.screen){
         document.getElementById("tournamentsScreen").style.display = "none";
         document.getElementById("puzzleScreen").style.display = "none";
@@ -2699,3 +2712,186 @@ if(state.screen === "chessdna"){
     
 
 createCoordinates();
+
+// ============================================================
+// Challenge-a-Friend (uses existing HTML screens)
+// ============================================================
+
+let challengeListenRef = null;
+
+// --- Open Challenge screen from Home (button is already in your HTML) ---
+function openChallengeScreen(){
+  if(!currentUser){
+    showInfoPopup("🔒 Login Required", "Please log in to challenge a friend.");
+    return;
+  }
+  document.getElementById("appShell").style.display = "none";
+  document.getElementById("challengeScreen").style.display = "flex";
+  document.getElementById("challengeLinkArea").style.display = "none";
+  history.pushState({ screen: "challenge" }, "", "#challenge");
+}
+
+// Attach to your existing "Challenge a Friend" button
+var challengeBtn = document.getElementById("challengeHomeBtn");
+if(challengeBtn) challengeBtn.addEventListener("click", openChallengeScreen);
+
+// --- Back button on Challenge screen ---
+document.getElementById("challengeBackBtn").addEventListener("click", function(){
+  document.getElementById("challengeScreen").style.display = "none";
+  document.getElementById("appShell").style.display = "flex";
+  history.back();
+});
+
+// --- Create challenge ---
+document.getElementById("createChallengeBtn").addEventListener("click", async function(){
+  var color = document.getElementById("challengeColor").value;
+  var minutes = parseInt(document.getElementById("challengeTime").value);
+  var seconds = minutes * 60;
+  if(!currentUser || !db) return;
+
+  var challengeId = generateRoomCode();
+  try {
+    await db.ref("challenges/" + challengeId).set({
+      creatorUid: currentUser.uid,
+      creatorName: currentUsername || "Player",
+      creatorFlag: currentUserFlag || "",
+      creatorColor: color,
+      timeControl: seconds,
+      createdAt: Date.now(),
+      status: "waiting"
+    });
+
+    var link = "https://joshua-sable-ten.vercel.app/?challenge=" + challengeId;
+    document.getElementById("challengeLinkInput").value = link;
+    document.getElementById("challengeLinkArea").style.display = "block";
+
+    listenForChallengeAccepted(challengeId, color, seconds);
+  } catch(err){
+    alert("Failed to create challenge: " + err.message);
+  }
+});
+
+// --- Copy link ---
+document.getElementById("copyChallengeLink").addEventListener("click", function(){
+  var input = document.getElementById("challengeLinkInput");
+  input.select();
+  document.execCommand("copy");
+  alert("Link copied!");
+});
+
+// --- Share via WhatsApp ---
+document.getElementById("shareChallengeLink").addEventListener("click", function(){
+  var link = document.getElementById("challengeLinkInput").value;
+  window.open("https://wa.me/?text=" + encodeURIComponent("Play chess with me! " + link));
+});
+
+// --- Listen for challenge acceptance (creator side) ---
+function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
+  if(challengeListenRef) challengeListenRef.off();
+  challengeListenRef = db.ref("challenges/" + challengeId);
+  challengeListenRef.on("value", function(snap){
+    var data = snap.val();
+    if(!data) return;
+    if(data.status === "accepted" && data.roomCode){
+      challengeListenRef.off();
+      challengeListenRef = null;
+      window.myColor = myColorVal;
+      window.currentRoomCode = data.roomCode;
+      window.selectedTime = timeSeconds;
+      window.gameMode = "online";
+      document.getElementById("challengeScreen").style.display = "none";
+      startOnlineGame(data.roomCode);
+    }
+  });
+}
+
+// --- Check for incoming challenge from URL ---
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var challengeId = params.get("challenge");
+  if(challengeId && db){
+    window.pendingChallengeId = challengeId;
+    if(currentUser){
+      showChallengeAcceptScreen(challengeId);
+    } else {
+      localStorage.setItem("pendingChallenge", challengeId);
+      showInfoPopup("🔒 Login Required", "Please sign up or log in to accept the challenge.");
+    }
+  }
+})();
+
+// --- Handle pending challenge after login (call this from auth.js) ---
+function handlePendingChallenge(){
+  var challengeId = localStorage.getItem("pendingChallenge");
+  if(challengeId && currentUser){
+    localStorage.removeItem("pendingChallenge");
+    showChallengeAcceptScreen(challengeId);
+  }
+}
+
+// --- Show accept screen (friend side) ---
+function showChallengeAcceptScreen(challengeId){
+  db.ref("challenges/" + challengeId).once("value").then(function(snap){
+    var data = snap.val();
+    if(!data || data.status !== "waiting"){
+      showInfoPopup("Challenge expired", "This challenge is no longer available.");
+      return;
+    }
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("challengeAcceptScreen").style.display = "flex";
+    document.getElementById("challengeAcceptInfo").textContent =
+      data.creatorName + " " + data.creatorFlag + " has challenged you! You'll play " +
+      (data.creatorColor === "white" ? "Black" : "White") + ". Time: " + (data.timeControl/60) + " min.";
+
+    document.getElementById("acceptChallengeBtn").onclick = async function(){
+      if(!currentUser) return;
+      var roomCode = generateRoomCode();
+      var opponentColor = data.creatorColor === "white" ? "black" : "white";
+      var timeSeconds = data.timeControl;
+
+      await db.ref("rooms/" + roomCode).set({ status: "playing", createdAt: Date.now() });
+      await db.ref("rooms/" + roomCode + "/players/" + data.creatorColor).set({
+        username: data.creatorName,
+        flag: data.creatorFlag,
+        uid: data.creatorUid,
+        rating: null,
+        photo: null,
+        kingdom: null,
+        kingdomEmoji: null,
+        kingdomName: null
+      });
+      var myKingdom = getMyCurrentKingdom ? getMyCurrentKingdom() : {emoji:'🏕️',name:'Village'};
+      await db.ref("rooms/" + roomCode + "/players/" + opponentColor).set({
+        username: currentUsername,
+        flag: currentUserFlag,
+        uid: currentUser.uid,
+        rating: currentUserRating || null,
+        photo: currentUserPhotoURL || null,
+        kingdom: myKingdom.id || null,
+        kingdomEmoji: myKingdom.emoji,
+        kingdomName: myKingdom.name
+      });
+      await db.ref("challenges/" + challengeId).update({
+        status: "accepted",
+        roomCode: roomCode,
+        opponentUid: currentUser.uid,
+        opponentName: currentUsername
+      });
+
+      window.myColor = opponentColor;
+      window.currentRoomCode = roomCode;
+      window.selectedTime = timeSeconds;
+      window.gameMode = "online";
+      document.getElementById("challengeAcceptScreen").style.display = "none";
+      startOnlineGame(roomCode);
+    };
+
+    document.getElementById("declineChallengeBtn").onclick = function(){
+      document.getElementById("challengeAcceptScreen").style.display = "none";
+      document.getElementById("appShell").style.display = "flex";
+      history.back();
+    };
+  }).catch(function(err){
+    showInfoPopup("Error", "Could not load challenge: " + err.message);
+  });
+}
