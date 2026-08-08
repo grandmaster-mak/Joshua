@@ -329,6 +329,11 @@ function initAuthListener(){
                 if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
                 if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
 
+                // ---- Handle pending challenge after login (NEW) ----
+                if(typeof handlePendingChallenge === "function"){
+                    handlePendingChallenge();
+                }
+
             }).catch(function(err){
                 console.log("Offline — showing cached profile instead.");
             });
