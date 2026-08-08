@@ -99,6 +99,13 @@
                     <p>Find an opponent automatically</p>
                     <span class="homeActionArrow">→</span>
                 </div>
+                <!-- Challenge a Friend card (NEW) -->
+                <div class="action-card challenge-friend homeActionPhoto homeActionGlobe" onclick="openChallengeScreen()">
+                    <span class="material-icons homeActionIconChip">person_add</span>
+                    <h3>Challenge a Friend</h3>
+                    <p>Send a link &amp; play</p>
+                    <span class="homeActionArrow">→</span>
+                </div>
             </div>
 
             <div class="stats-section">
@@ -1129,6 +1136,7 @@
             <p id="dailyRewardStatus"></p>
         </div>
     </div>
+
     <!-- Challenge a Friend screen (full screen) -->
 <div id="challengeScreen" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0f1117; color:#fff; padding:20px;">
   <button id="challengeBackBtn" style="position:absolute; top:20px; left:20px; background:none; border:none; color:#fff; font-size:24px;">← Back</button>
@@ -1169,7 +1177,7 @@
   <button id="acceptChallengeBtn" style="width:80%; max-width:300px; padding:14px; background:#4ade80; color:#000; border:none; border-radius:10px; font-weight:bold; font-size:16px;">Accept Challenge</button>
   <button id="declineChallengeBtn" style="width:80%; max-width:300px; padding:14px; margin-top:10px; background:#e5484d; color:#fff; border:none; border-radius:10px;">Decline</button>
 </div>
-<button onclick="openChallengeScreen()" style="padding:10px 20px; background:#FF7A1A; color:#fff; border:none; border-radius:8px; font-weight:bold;">🔗 Challenge a Friend</button>
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
