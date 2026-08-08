@@ -2806,19 +2806,27 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
 }
 
 // --- Check for incoming challenge from URL ---
-(function(){
+// Not run immediately at load — Firebase auth (currentUser) and db
+// aren't ready yet at that point. Instead this is called explicitly
+// from auth.js once onAuthStateChanged has actually resolved, so
+// currentUser reflects the real logged-in/out state.
+function checkForIncomingChallenge(){
+
+  if(window.challengeParamChecked) return; // only act on this once per page load
   var params = new URLSearchParams(window.location.search);
   var challengeId = params.get("challenge");
-  if(challengeId && db){
-    window.pendingChallengeId = challengeId;
-    if(currentUser){
-      showChallengeAcceptScreen(challengeId);
-    } else {
-      localStorage.setItem("pendingChallenge", challengeId);
-      showInfoPopup("🔒 Login Required", "Please sign up or log in to accept the challenge.");
-    }
+  if(!challengeId) return;
+
+  window.challengeParamChecked = true;
+  window.pendingChallengeId = challengeId;
+
+  if(currentUser && db){
+    showChallengeAcceptScreen(challengeId);
+  } else {
+    localStorage.setItem("pendingChallenge", challengeId);
+    showInfoPopup("🔒 Login Required", "Please sign up or log in to accept the challenge.");
   }
-})();
+}
 
 // --- Handle pending challenge after login (call this from auth.js) ---
 function handlePendingChallenge(){
