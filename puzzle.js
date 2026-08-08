@@ -272,7 +272,14 @@ function openDailyPuzzle(){
 }
 
 function closePuzzle(){
+
     document.getElementById("puzzleScreen").style.display = "none";
+
+    if(puzzleSolved){
+        openPuzzleMap();
+        return;
+    }
+
     document.getElementById("appShell").style.display = "flex";
     if(history.state && history.state.screen === "puzzle"){
         history.back();
