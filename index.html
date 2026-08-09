@@ -29,6 +29,100 @@
         .challengeFriendBarIcon { font-size: 18px; }
         .challengeFriendBarText { flex: 1; text-align: left; }
         .challengeFriendBarArrow { font-size: 16px; opacity: 0.85; }
+
+        /* ===== Challenge a Friend — Create screen (redesigned) ===== */
+        .challengeHeroWrap { position: relative; padding: 60px 20px 20px; }
+        .challengeBackCircle {
+            position: absolute; top: 20px; left: 20px;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(255,255,255,0.08); border: none; color: #fff;
+            font-size: 20px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .challengeHeroRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 36px; }
+        .challengeHeroTitle { font-size: 26px; font-weight: 800; margin: 0; }
+        .challengeHeroSub { color: #9aa0ac; font-size: 13px; margin: 6px 0 0; }
+        .challengeHeroArt { font-size: 52px; position: relative; white-space: nowrap; }
+        .challengeHeroPawn { font-size: 32px; margin-left: -14px; color: #555; }
+
+        .challengeBody { padding: 0 16px 30px; display: flex; flex-direction: column; gap: 16px; max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .challengeCard { background: #151822; border-radius: 18px; padding: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .challengeFieldLabel { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: #e5e5e5; margin-bottom: 10px; }
+        .challengeFieldIcon { font-size: 16px; }
+
+        .challengeColorPills { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .challengeColorPill {
+            position: relative; border: 1.5px solid #2a2e3a; border-radius: 14px; padding: 14px;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            cursor: pointer; background: #1a1e29; font-size: 14px; color: #e5e5e5;
+        }
+        .challengeColorPill .challengeColorPillPiece { font-size: 22px; }
+        .challengeColorPill .challengeColorPillCheck {
+            display: none; position: absolute; top: 8px; right: 8px;
+            width: 18px; height: 18px; border-radius: 50%; background: #22c55e; color: #04210f;
+            font-size: 11px; align-items: center; justify-content: center; font-weight: 800;
+        }
+        .challengeColorPill.active { border-color: #22c55e; background: rgba(34,197,94,0.08); }
+        .challengeColorPill.active .challengeColorPillCheck { display: flex; }
+
+        .challengeTimeWrap {
+            display: flex; align-items: center; gap: 10px;
+            background: #1a1e29; border: 1.5px solid #2a2e3a; border-radius: 14px; padding: 4px 14px;
+        }
+        .challengeTimeIcon { font-size: 16px; }
+        .challengeTimeSelect { flex: 1; background: transparent; border: none; color: #fff; font-size: 15px; font-weight: 600; padding: 12px 0; outline: none; }
+        .challengeTimeSelect option { background: #1a1e29; color: #fff; }
+
+        .challengeCreateBtn {
+            width: 100%; margin-top: 18px; padding: 15px; border: none; border-radius: 14px;
+            background: linear-gradient(90deg, #FF7A1A, #ffb066); color: #fff; font-weight: 800; font-size: 15px;
+            cursor: pointer; box-shadow: 0 6px 18px rgba(255,122,26,0.35);
+        }
+
+        .challengeFeatureRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #22262f; }
+        .challengeFeature { text-align: center; }
+        .challengeFeatureIcon { font-size: 18px; display: block; margin-bottom: 4px; }
+        .challengeFeature b { font-size: 11px; display: block; color: #e5e5e5; }
+        .challengeFeature p { font-size: 10px; color: #8a8f9c; margin: 2px 0 0; line-height: 1.3; }
+
+        .challengeLinkRow {
+            display: flex; align-items: center; gap: 8px;
+            background: #1a1e29; border: 1.5px solid #2a2e3a; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;
+        }
+        .challengeLinkIcon { font-size: 14px; }
+        .challengeLinkRow input { flex: 1; background: transparent; border: none; color: #c9cdd6; font-size: 13px; outline: none; min-width: 0; }
+
+        .challengeCopyBtn { width: 100%; padding: 13px; border: none; border-radius: 12px; background: linear-gradient(90deg,#8b5cf6,#a78bfa); color: #fff; font-weight: 700; font-size: 14px; margin-bottom: 8px; cursor: pointer; }
+        .challengeWhatsappBtn { width: 100%; padding: 13px; border: none; border-radius: 12px; background: #25D366; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .challengeInfoNote { font-size: 12px; color: #8a8f9c; text-align: center; margin: 14px 0 0; }
+
+        /* ===== Accept Challenge screen (redesigned) ===== */
+        .challengeAcceptGlowWrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .challengeAcceptGlow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%); filter: blur(6px); }
+        .challengeAcceptIconCircle { position: relative; width: 110px; height: 110px; border-radius: 50%; background: #151822; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(139,92,246,0.25); }
+        .challengeAcceptKnight { font-size: 52px; }
+        .challengeAcceptBolt { position: absolute; top: 4px; right: 0px; font-size: 26px; }
+        .challengeAcceptSparkle { position: absolute; font-size: 16px; opacity: 0.85; }
+        .challengeAcceptSparkleLeft { top: 6px; left: 4px; }
+        .challengeAcceptSparkleRight { bottom: 10px; right: 6px; }
+
+        .challengeAcceptHeading { font-size: 24px; font-weight: 800; margin: 0 0 20px; text-align: center; }
+        .challengeAcceptHeadingGreen { color: #4ade80; }
+
+        .challengeAcceptCard { width: 100%; max-width: 360px; background: #151822; border-radius: 18px; padding: 18px; margin-bottom: 22px; }
+        .challengeAcceptWhoRow { display: flex; align-items: center; gap: 14px; }
+        .challengeAcceptAvatar { width: 52px; height: 52px; border-radius: 50%; background: #1a1e29; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+        .challengeAcceptName { font-weight: 700; font-size: 16px; }
+        .challengeAcceptSub { color: #9aa0ac; font-size: 13px; margin-top: 2px; }
+        .challengeAcceptDivider { height: 1px; background: #22262f; margin: 16px 0; }
+        .challengeAcceptStatsRow { display: flex; justify-content: space-between; gap: 12px; }
+        .challengeAcceptStat { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .challengeAcceptStatIcon { font-size: 20px; width: 36px; height: 36px; border-radius: 50%; background: #1a1e29; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .challengeAcceptStatLabel { font-size: 10px; color: #8a8f9c; font-weight: 700; letter-spacing: 0.5px; }
+        .challengeAcceptStatValue { font-size: 15px; font-weight: 700; margin-top: 2px; }
+
+        .challengeAcceptBtnGreen { width: 100%; max-width: 360px; padding: 16px; border: none; border-radius: 14px; background: #4ade80; color: #04210f; font-weight: 800; font-size: 16px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 6px 20px rgba(74,222,128,0.3); }
+        .challengeAcceptBtnRed { width: 100%; max-width: 360px; padding: 16px; border: none; border-radius: 14px; background: #e5484d; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 
@@ -838,8 +932,7 @@
                 <p class="sub" id="tournamentDetailStatus"></p>
                 <p class="sub" id="tournamentDetailMeta"></p>
                 <button class="btnSecondary" onclick="shareTournamentLink(currentViewedTournamentId)">🔗 Share Link</button>
-<button class="btnPrimary" id="tournamentJoinBtn" onclick="joinTournament()" style="display:none;">Join Tournament</button>
-
+                <button class="btnPrimary" id="tournamentJoinBtn" onclick="joinTournament()" style="display:none;">Join Tournament</button>
                 <button class="btnGold" id="tournamentStartBtn" onclick="startTournament()" style="display:none;">Start Tournament</button>
                 <button class="btnGold" id="tournamentNextRoundBtn" onclick="advanceTournamentRound()" style="display:none;">Start Next Round</button>
                 <p class="sub" id="tournamentArenaCountdown" style="display:none; font-weight:700; font-size:16px; text-align:center; color:#4ade80;"></p>
@@ -1165,45 +1258,144 @@
         </div>
     </div>
 
-    <!-- Challenge a Friend screen (full screen) -->
-<div id="challengeScreen" style="display:none; position:fixed; inset:0; z-index:150; flex-direction:column; align-items:center; justify-content:center; background:#0f1117; color:#fff; padding:20px; overflow-y:auto;">
-  <button id="challengeBackBtn" style="position:absolute; top:20px; left:20px; background:none; border:none; color:#fff; font-size:24px;">← Back</button>
-  <h2>⚔️ Challenge a Friend</h2>
-  <p style="color:#aaa; margin-bottom:30px;">Create a game and send a link to any friend</p>
-
-  <div style="width:100%; max-width:350px;">
-    <label style="color:#ccc;">Your colour</label>
-    <select id="challengeColor" style="width:100%; padding:12px; margin:8px 0 20px; border-radius:8px; background:#1c2028; color:#fff; border:1px solid #444; font-size:16px;">
-      <option value="white">White</option>
-      <option value="black">Black</option>
-    </select>
-
-    <label style="color:#ccc;">Time control</label>
-    <select id="challengeTime" style="width:100%; padding:12px; margin:8px 0 20px; border-radius:8px; background:#1c2028; color:#fff; border:1px solid #444; font-size:16px;">
-      <option value="1">1 minute</option>
-      <option value="3">3 minutes</option>
-      <option value="5">5 minutes</option>
-      <option value="10" selected>10 minutes</option>
-      <option value="15">15 minutes</option>
-    </select>
-
-    <button id="createChallengeBtn" style="width:100%; padding:14px; background:#FF7A1A; color:#fff; border:none; border-radius:10px; font-weight:bold; font-size:16px;">Create Challenge Link</button>
-
-    <div id="challengeLinkArea" style="display:none; margin-top:30px;">
-      <p style="color:#4ade80;">Share this link with your friend:</p>
-      <input id="challengeLinkInput" type="text" readonly style="width:100%; padding:12px; border-radius:8px; background:#2a2e38; color:#fff; border:1px solid #444; font-size:14px; margin:10px 0;">
-      <button id="copyChallengeLink" style="width:100%; padding:10px; background:#FF7A1A; color:#fff; border:none; border-radius:8px;">Copy Link</button>
-      <button id="shareChallengeLink" style="width:100%; padding:10px; margin-top:6px; background:#25D366; color:#fff; border:none; border-radius:8px;">Share via WhatsApp</button>
+    <!-- ========== Challenge a Friend screen (REDESIGNED) ========== -->
+<div id="challengeScreen" style="display:none; position:fixed; inset:0; z-index:150; flex-direction:column; background:#0b0d13; color:#fff; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+  <div class="challengeHeroWrap">
+    <button id="challengeBackBtn" class="challengeBackCircle">←</button>
+    <div class="challengeHeroRow">
+      <div>
+        <h2 class="challengeHeroTitle">Challenge a Friend</h2>
+        <p class="challengeHeroSub">Create a game and send a link to any friend</p>
+      </div>
+      <div class="challengeHeroArt">♞<span class="challengeHeroPawn">♟</span></div>
     </div>
   </div>
-</div>
 
-<!-- Challenge accept screen (shown when friend opens the link) -->
-<div id="challengeAcceptScreen" style="display:none; position:fixed; inset:0; z-index:150; flex-direction:column; align-items:center; justify-content:center; background:#0f1117; color:#fff; padding:20px; overflow-y:auto;">
-  <h2>⚡ Challenge</h2>
-  <p id="challengeAcceptInfo" style="color:#ccc; text-align:center; margin:20px 0;"></p>
-  <button id="acceptChallengeBtn" style="width:80%; max-width:300px; padding:14px; background:#4ade80; color:#000; border:none; border-radius:10px; font-weight:bold; font-size:16px;">Accept Challenge</button>
-  <button id="declineChallengeBtn" style="width:80%; max-width:300px; padding:14px; margin-top:10px; background:#e5484d; color:#fff; border:none; border-radius:10px;">Decline</button>
+  <div class="challengeBody">
+
+    <div class="challengeCard">
+      <div class="challengeFieldLabel"><span class="challengeFieldIcon">🎨</span> Your colour</div>
+      <div class="challengeColorPills">
+        <div class="challengeColorPill active" id="challengeColorWhitePill" onclick="selectChallengeColor('white')">
+          <span class="challengeColorPillPiece">♙</span>
+          <span>White</span>
+          <span class="challengeColorPillCheck">✓</span>
+        </div>
+        <div class="challengeColorPill" id="challengeColorBlackPill" onclick="selectChallengeColor('black')">
+          <span class="challengeColorPillPiece">♟</span>
+          <span>Black</span>
+          <span class="challengeColorPillCheck">✓</span>
+        </div>
+      </div>
+      <select id="challengeColor" style="display:none;">
+        <option value="white" selected>White</option>
+        <option value="black">Black</option>
+      </select>
+
+      <div class="challengeFieldLabel" style="margin-top:20px;"><span class="challengeFieldIcon">⏱️</span> Time control</div>
+      <div class="challengeTimeWrap">
+        <span class="challengeTimeIcon">🕐</span>
+        <select id="challengeTime" class="challengeTimeSelect">
+          <option value="1">1 minute</option>
+          <option value="3">3 minutes</option>
+          <option value="5">5 minutes</option>
+          <option value="10" selected>10 minutes</option>
+          <option value="15">15 minutes</option>
+        </select>
+      </div>
+
+      <button id="createChallengeBtn" class="challengeCreateBtn">🔗 Create Challenge Link</button>
+
+      <div class="challengeFeatureRow">
+        <div class="challengeFeature">
+          <span class="challengeFeatureIcon">🛡️</span>
+          <b>Secure link</b>
+          <p>Only your friend with the link can join</p>
+        </div>
+        <div class="challengeFeature">
+          <span class="challengeFeatureIcon">⏳</span>
+          <b>Fair game</b>
+          <p>Same time control for both players</p>
+        </div>
+        <div class="challengeFeature">
+          <span class="challengeFeatureIcon">👥</span>
+          <b>Easy to share</b>
+          <p>Share via any app you prefer</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="challengeLinkArea" class="challengeCard" style="display:none;">
+      <div class="challengeFieldLabel"><span class="challengeFieldIcon">🔗</span> Share this link with your friend</div>
+      <div class="challengeLinkRow">
+        <span class="challengeLinkIcon">🔗</span>
+        <input id="challengeLinkInput" type="text" readonly>
+      </div>
+      <button id="copyChallengeLink" class="challengeCopyBtn">📋 Copy Link</button>
+      <button id="shareChallengeLink" class="challengeWhatsappBtn">💬 Share via WhatsApp</button>
+      <p class="challengeInfoNote">ℹ️ Your friend can open this link to join the challenge.</p>
+    </div>
+
+  </div>
+</div>
+<script>
+// Toggles the White/Black color pills on the redesigned Challenge a
+// Friend screen and keeps the hidden #challengeColor select in sync
+// (script.js's createChallengeBtn handler reads .value from it, so
+// this is purely a visual layer on top of unchanged logic).
+function selectChallengeColor(color){
+  var select = document.getElementById("challengeColor");
+  if(select) select.value = color;
+  var whitePill = document.getElementById("challengeColorWhitePill");
+  var blackPill = document.getElementById("challengeColorBlackPill");
+  if(whitePill) whitePill.classList.toggle("active", color === "white");
+  if(blackPill) blackPill.classList.toggle("active", color === "black");
+}
+</script>
+
+<!-- ========== Challenge accept screen (REDESIGNED) ========== -->
+<div id="challengeAcceptScreen" style="display:none; position:fixed; inset:0; z-index:150; flex-direction:column; align-items:center; justify-content:center; background:#0b0d13; color:#fff; padding:20px; overflow-y:auto;">
+  <div class="challengeAcceptGlowWrap">
+    <div class="challengeAcceptGlow"></div>
+    <div class="challengeAcceptIconCircle">
+      <span class="challengeAcceptSparkle challengeAcceptSparkleLeft">✨</span>
+      <span class="challengeAcceptKnight">♞</span>
+      <span class="challengeAcceptBolt">⚡</span>
+      <span class="challengeAcceptSparkle challengeAcceptSparkleRight">✨</span>
+    </div>
+  </div>
+  <h2 class="challengeAcceptHeading">You've been <span class="challengeAcceptHeadingGreen">challenged!</span></h2>
+
+  <div class="challengeAcceptCard">
+    <div class="challengeAcceptWhoRow">
+      <div class="challengeAcceptAvatar" id="challengeAcceptAvatar">🏳️</div>
+      <div>
+        <div class="challengeAcceptName" id="challengeAcceptName">Player</div>
+        <div class="challengeAcceptSub">has challenged you to a game</div>
+      </div>
+    </div>
+    <div class="challengeAcceptDivider"></div>
+    <div class="challengeAcceptStatsRow">
+      <div class="challengeAcceptStat">
+        <span class="challengeAcceptStatIcon" id="challengeAcceptColorIcon">♙</span>
+        <div>
+          <div class="challengeAcceptStatLabel">YOU PLAY</div>
+          <div class="challengeAcceptStatValue" id="challengeAcceptColorValue">White</div>
+        </div>
+      </div>
+      <div class="challengeAcceptStat">
+        <span class="challengeAcceptStatIcon">🕐</span>
+        <div>
+          <div class="challengeAcceptStatLabel">TIME CONTROL</div>
+          <div class="challengeAcceptStatValue" id="challengeAcceptTimeValue">5 min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button id="acceptChallengeBtn" class="challengeAcceptBtnGreen">✅ Accept Challenge</button>
+  <button id="declineChallengeBtn" class="challengeAcceptBtnRed">❌ Decline</button>
+  <p class="challengeInfoNote">ℹ️ You can decline if you're not ready.</p>
 </div>
 
     <!-- Firebase -->
