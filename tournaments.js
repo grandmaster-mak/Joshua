@@ -11,6 +11,16 @@
 //   second match), which is a common simplified variant.
 // - Arena uses a simple 2-player matchmaking queue rather than a large-
 //   scale matchmaking service.
+//
+// ---- Tournament share links (NEW) ----
+// shareTournamentLink() builds a link like ?tournament={id} and shares
+// or copies it. checkForIncomingTournament() checks for that param on
+// page load and, if present, skips the tournaments list and opens that
+// tournament's detail view directly — showing joined players and start
+// time, with a Join button if the visitor hasn't joined yet. Unlike the
+// challenge-a-friend link, this doesn't require login to VIEW (tournament
+// reads are public per the Firebase rules), so it's checked immediately
+// once this file loads rather than waiting on auth to resolve.
 // ============================================================
 
 let activeTournamentId = null;
@@ -1403,3 +1413,70 @@ function renderArenaPairings(tournamentId, t){
     });
 
 }
+
+// ============================================================
+// Tournament share link (NEW)
+// ============================================================
+
+// Shares (or copies, as a fallback) a link that opens this tournament's
+// detail view directly — the joined-players list and start time — for
+// anyone who taps it, regardless of whether they're logged in yet.
+function shareTournamentLink(tournamentId){
+
+    if(!tournamentId) return;
+
+    const link = "https://joshua-sable-ten.vercel.app/?tournament=" + tournamentId;
+
+    if(navigator.share){
+        navigator.share({
+            title: "Join my chess tournament!",
+            text: "Come join my tournament — tap to see who's in and when it starts.",
+            url: link
+        }).catch(function(){
+            // User cancelled the native share sheet — nothing to do.
+        });
+        return;
+    }
+
+    // Fallback for browsers without navigator.share: copy to clipboard.
+    const tempInput = document.createElement("input");
+    tempInput.value = link;
+    tempInput.style.position = "fixed";
+    tempInput.style.opacity = "0";
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    try{
+        document.execCommand("copy");
+        showInfoPopup("🔗 Link Copied", "Tournament link copied — paste it anywhere to invite people.");
+    }catch(e){
+        showInfoPopup("🔗 Tournament Link", link);
+    }
+    document.body.removeChild(tempInput);
+
+}
+
+// Checks the URL for a ?tournament={id} param and, if present, skips
+// the tournaments list and opens that tournament's detail view directly.
+// Unlike checkForIncomingChallenge() in script.js, this does NOT wait
+// for auth to resolve — tournament reads are public (".read": true in
+// the Firebase rules), so a visitor can see who's joined and the start
+// time before logging in; they'll only need to log in to tap Join.
+// Called once at the bottom of this file, since db is already
+// initialized by the time this script runs (multiplayer.js loads first).
+function checkForIncomingTournament(){
+
+    if(window.tournamentParamChecked) return; // only act on this once per page load
+    const params = new URLSearchParams(window.location.search);
+    const tournamentId = params.get("tournament");
+    if(!tournamentId) return;
+
+    window.tournamentParamChecked = true;
+
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("tournamentsScreen").style.display = "flex";
+    history.pushState({ screen: "tournaments", view: "detail", id: tournamentId }, "", "#tournaments-detail");
+    renderTournamentDetailView(tournamentId);
+
+}
+
+checkForIncomingTournament();
