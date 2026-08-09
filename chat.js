@@ -16,7 +16,7 @@ let activeChatReadKey = null;
 // tradeoff of calling an AI API directly from client-side code with no
 // backend server to hide it behind. Fine for a free hobby token; just
 // don't reuse a token you use elsewhere for anything sensitive.
-const HF_API_TOKEN = "PASTE_YOUR_TOKEN_HERE";
+const HF_API_TOKEN = "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";
 
 // A real instruction-following model instead of the old DialoGPT — this
 // is what actually lets it "just answer a normal question naturally"
