@@ -273,7 +273,10 @@ function fetchAIChatReply(text){
 
     }).catch(function(err){
         console.error("AI chat error:", err.message);
-        return AI_CHAT_FALLBACK_LINES[Math.floor(Math.random() * AI_CHAT_FALLBACK_LINES.length)];
+        // TEMPORARY — shows the real error as the reply itself so we can
+        // see it on mobile without needing dev tools. Revert this once
+        // the issue is found.
+        return "[DEBUG ERROR] " + err.message;
     });
 
 }
