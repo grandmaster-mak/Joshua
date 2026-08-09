@@ -2854,11 +2854,15 @@ function showChallengeAcceptScreen(challengeId){
       return;
     }
     document.getElementById("appShell").style.display = "none";
-    document.getElementById("challengeAcceptScreen").style.display = "flex";
-    document.getElementById("challengeAcceptInfo").textContent =
-      data.creatorName + " " + data.creatorFlag + " has challenged you! You'll play " +
-      (data.creatorColor === "white" ? "Black" : "White") + ". Time: " + (data.timeControl/60) + " min.";
+document.getElementById("challengeAcceptScreen").style.display = "flex";
 
+var myPlayColor = data.creatorColor === "white" ? "Black" : "White";
+
+document.getElementById("challengeAcceptAvatar").textContent = data.creatorFlag || "🏳️";
+document.getElementById("challengeAcceptName").textContent = data.creatorName + (data.creatorFlag ? " " + data.creatorFlag : "");
+document.getElementById("challengeAcceptColorValue").textContent = myPlayColor;
+document.getElementById("challengeAcceptColorIcon").textContent = myPlayColor === "White" ? "♙" : "♟";
+document.getElementById("challengeAcceptTimeValue").textContent = (data.timeControl/60) + " min";
     document.getElementById("acceptChallengeBtn").onclick = async function(){
       if(!currentUser) return;
       var roomCode = generateRoomCode();
