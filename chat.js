@@ -8,24 +8,29 @@ let activeChatRef = null;
 let activeChatPartnerName = "";
 let activeChatReadKey = null;
 
-// FIX: Hugging Face's free Inference API rejects almost all requests
-// with no auth token — that's what was silently failing every time and
-// falling back to the canned "give me a moment" line. Paste your free
-// token from huggingface.co/settings/tokens here. This token IS visible
-// to anyone who inspects your page's network requests — that's a real
-// tradeoff of calling an AI API directly from client-side code with no
-// backend server to hide it behind. Fine for a free hobby token; just
-// don't reuse a token you use elsewhere for anything sensitive.
-const HF_API_TOKEN = "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";
+// FIX: Hugging Face's free serverless Inference API turned out to be
+// broken/being phased out for the model we were using (confirmed via
+// widespread reports of 502s and CORS failures on zephyr-7b-beta,
+// completely unrelated to our setup — even Hugging Face's own official
+// chat page for that model has the same complaints). Switched to
+// OpenRouter instead: a stable, genuinely free tier (20 requests/min,
+// 1000/day — far more than a chat feature like this needs) built for
+// calling directly from browser-side fetch(), which is exactly what we
+// need here since there's no backend server involved.
+//
+// This reads from window.HF_API_TOKEN, set in config.js (a file kept
+// OUT of git via .gitignore, or otherwise added outside your GitHub
+// repo) so the real key doesn't have to live in this file. Despite the
+// variable name (kept as HF_API_TOKEN for continuity with our earlier
+// setup), it now holds your OpenRouter key (starts with "sk-or-v1-").
+const HF_API_TOKEN = (typeof window.HF_API_TOKEN !== "undefined") ? window.HF_API_TOKEN : "";
 
-// A real instruction-following model instead of the old DialoGPT — this
-// is what actually lets it "just answer a normal question naturally"
-// instead of producing disconnected, generic text.
-const AI_CHAT_MODEL = "HuggingFaceH4/zephyr-7b-beta";
+// A solid, stable free-tier chat model on OpenRouter.
+const AI_CHAT_MODEL = "mistralai/mistral-7b-instruct:free";
 
-// Used only if the API call fails outright (network issue, model
-// temporarily unavailable) — rotates so it's not the same line every
-// time, and is never shown via alert() anymore.
+// Used only if the API call fails outright (network issue, rate limit
+// hit, etc.) — rotates so it's not the same line every time, and is
+// never shown via alert() anymore.
 const AI_CHAT_FALLBACK_LINES = [
     "Sorry, having trouble thinking of a reply right now — ask me again?",
     "My brain's lagging a bit — try that again in a moment.",
@@ -197,73 +202,64 @@ function sendChatMessage(){
 
 }
 
-// Builds a short back-and-forth transcript from recent messages so the
-// model has context (so "how's it going" after "good morning" makes
-// sense), formatted the way Zephyr expects its chat prompts.
-function buildAIChatPrompt(latestText){
+// Builds the message list OpenRouter's chat-completions endpoint
+// expects: a system prompt setting the persona, followed by recent
+// back-and-forth so replies stay contextual (so "how's it going" after
+// "good morning" makes sense), ending with the newest thing said.
+function buildAIChatMessages(latestText){
+
+    const messages = [{
+        role: "system",
+        content: "You are a friendly, casual chess opponent chatting mid-game. Reply naturally and conversationally, like texting a friend — 1 to 3 sentences, no stage directions, no asterisks, no repeating the question back."
+    }];
 
     const recentHistory = aiChatMessages.slice(-6);
-    let transcript = "<|system|>\nYou are a friendly, casual chess opponent chatting mid-game. Reply naturally and conversationally, like texting a friend — 1 to 3 sentences, no stage directions, no asterisks, no repeating the question back.</s>\n";
-
     recentHistory.forEach(function(msg){
-        if(msg.from === "ai-opponent"){
-            transcript += "<|assistant|>\n" + msg.text + "</s>\n";
-        }else{
-            transcript += "<|user|>\n" + msg.text + "</s>\n";
-        }
+        messages.push({
+            role: msg.from === "ai-opponent" ? "assistant" : "user",
+            content: msg.text
+        });
     });
 
-    transcript += "<|user|>\n" + latestText + "</s>\n<|assistant|>\n";
+    messages.push({ role: "user", content: latestText });
 
-    return transcript;
+    return messages;
 }
 
 function fetchAIChatReply(text){
 
-    const prompt = buildAIChatPrompt(text);
+    if(!HF_API_TOKEN){
+        console.error("AI chat error: no API key set (window.HF_API_TOKEN is empty).");
+        return Promise.resolve(AI_CHAT_FALLBACK_LINES[Math.floor(Math.random() * AI_CHAT_FALLBACK_LINES.length)]);
+    }
 
-    const callHuggingFace = function(retries){
+    return fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + HF_API_TOKEN
+        },
+        body: JSON.stringify({
+            model: AI_CHAT_MODEL,
+            messages: buildAIChatMessages(text),
+            max_tokens: 120,
+            temperature: 0.8
+        })
+    }).then(function(response){
 
-        return fetch("https://api-inference.huggingface.co/models/" + AI_CHAT_MODEL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + HF_API_TOKEN
-            },
-            body: JSON.stringify({
-                inputs: prompt,
-                parameters: {
-                    max_new_tokens: 120,
-                    temperature: 0.8,
-                    return_full_text: false
-                },
-                options: { wait_for_model: true }
-            })
-        }).then(function(response){
+        if(!response.ok){
+            return response.text().then(function(errorText){
+                throw new Error("API error " + response.status + ": " + errorText);
+            });
+        }
 
-            if(response.status === 503 && retries > 0){
-                return response.json().then(function(errorData){
-                    const waitTime = (errorData.estimated_time || 5) * 1000;
-                    return new Promise(function(resolve){ setTimeout(resolve, waitTime); })
-                        .then(function(){ return callHuggingFace(retries - 1); });
-                });
-            }
+        return response.json();
 
-            if(!response.ok){
-                return response.text().then(function(errorText){
-                    throw new Error("API error " + response.status + ": " + errorText);
-                });
-            }
+    }).then(function(data){
 
-            return response.json();
-
-        });
-    };
-
-    return callHuggingFace(3).then(function(data){
-
-        let reply = (Array.isArray(data) && data[0] && data[0].generated_text) ? data[0].generated_text : "";
-        reply = reply.split("<|user|>")[0].split("</s>")[0].trim();
+        const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
+            ? data.choices[0].message.content.trim()
+            : "";
 
         if(!reply){
             return AI_CHAT_FALLBACK_LINES[Math.floor(Math.random() * AI_CHAT_FALLBACK_LINES.length)];
@@ -273,10 +269,7 @@ function fetchAIChatReply(text){
 
     }).catch(function(err){
         console.error("AI chat error:", err.message);
-        // TEMPORARY — shows the real error as the reply itself so we can
-        // see it on mobile without needing dev tools. Revert this once
-        // the issue is found.
-        return "[DEBUG ERROR] " + err.message;
+        return AI_CHAT_FALLBACK_LINES[Math.floor(Math.random() * AI_CHAT_FALLBACK_LINES.length)];
     });
 
 }
