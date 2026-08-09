@@ -8,6 +8,31 @@ let activeChatRef = null;
 let activeChatPartnerName = "";
 let activeChatReadKey = null;
 
+// FIX: Hugging Face's free Inference API rejects almost all requests
+// with no auth token — that's what was silently failing every time and
+// falling back to the canned "give me a moment" line. Paste your free
+// token from huggingface.co/settings/tokens here. This token IS visible
+// to anyone who inspects your page's network requests — that's a real
+// tradeoff of calling an AI API directly from client-side code with no
+// backend server to hide it behind. Fine for a free hobby token; just
+// don't reuse a token you use elsewhere for anything sensitive.
+const HF_API_TOKEN = "PASTE_YOUR_TOKEN_HERE";
+
+// A real instruction-following model instead of the old DialoGPT — this
+// is what actually lets it "just answer a normal question naturally"
+// instead of producing disconnected, generic text.
+const AI_CHAT_MODEL = "HuggingFaceH4/zephyr-7b-beta";
+
+// Used only if the API call fails outright (network issue, model
+// temporarily unavailable) — rotates so it's not the same line every
+// time, and is never shown via alert() anymore.
+const AI_CHAT_FALLBACK_LINES = [
+    "Sorry, having trouble thinking of a reply right now — ask me again?",
+    "My brain's lagging a bit — try that again in a moment.",
+    "Hmm, lost my train of thought. What were you saying?",
+    "Connection hiccup on my end — go ahead and repeat that."
+];
+
 function buildDirectChatId(uidA, uidB){
     return [uidA, uidB].sort().join("_");
 }
@@ -147,59 +172,14 @@ function sendChatMessage(){
         aiChatMessages.push({ from: myFrom, text: text, time: myTime });
         renderChatMessage({ from: myFrom, text: text, time: myTime });
 
-        // --- Real AI chat via free Hugging Face API (error will be shown in alert) ---
-        (async () => {
-            try {
-                const callHuggingFace = async (retries = 3) => {
-                    const response = await fetch(
-                        "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
-                        {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                inputs: text,
-                                options: { wait_for_model: true }
-                            })
-                        }
-                    );
-
-                    if (response.status === 503 && retries > 0) {
-                        const errorData = await response.json();
-                        const waitTime = (errorData.estimated_time || 5) * 1000;
-                        await new Promise(r => setTimeout(r, waitTime));
-                        return callHuggingFace(retries - 1);
-                    }
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error("API error " + response.status + ": " + errorText);
-                    }
-                    return response.json();
-                };
-
-                const data = await callHuggingFace();
-                let reply = data.generated_text || "I didn't catch that.";
-
-                if (reply.toLowerCase().startsWith(text.toLowerCase())) {
-                    reply = reply.slice(text.length).trim();
-                    if (!reply) reply = "Let's play!";
-                }
-
-                const replyTime = Date.now();
-                aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
-                renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
-
-            } catch (err) {
-                // Show the error so you can tell me what it says
-                alert("AI chat error: " + err.message);
-                const reply = "Hmm, I need a moment...";
-                const replyTime = Date.now();
-                aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
-                renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
-            }
-        })();
-
         input.value = "";
+
+        fetchAIChatReply(text).then(function(reply){
+            const replyTime = Date.now();
+            aiChatMessages.push({ from: "ai-opponent", text: reply, time: replyTime });
+            renderChatMessage({ from: "ai-opponent", text: reply, time: replyTime });
+        });
+
         return;
 
     }
@@ -214,6 +194,87 @@ function sendChatMessage(){
     });
 
     input.value = "";
+
+}
+
+// Builds a short back-and-forth transcript from recent messages so the
+// model has context (so "how's it going" after "good morning" makes
+// sense), formatted the way Zephyr expects its chat prompts.
+function buildAIChatPrompt(latestText){
+
+    const recentHistory = aiChatMessages.slice(-6);
+    let transcript = "<|system|>\nYou are a friendly, casual chess opponent chatting mid-game. Reply naturally and conversationally, like texting a friend — 1 to 3 sentences, no stage directions, no asterisks, no repeating the question back.</s>\n";
+
+    recentHistory.forEach(function(msg){
+        if(msg.from === "ai-opponent"){
+            transcript += "<|assistant|>\n" + msg.text + "</s>\n";
+        }else{
+            transcript += "<|user|>\n" + msg.text + "</s>\n";
+        }
+    });
+
+    transcript += "<|user|>\n" + latestText + "</s>\n<|assistant|>\n";
+
+    return transcript;
+}
+
+function fetchAIChatReply(text){
+
+    const prompt = buildAIChatPrompt(text);
+
+    const callHuggingFace = function(retries){
+
+        return fetch("https://api-inference.huggingface.co/models/" + AI_CHAT_MODEL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + HF_API_TOKEN
+            },
+            body: JSON.stringify({
+                inputs: prompt,
+                parameters: {
+                    max_new_tokens: 120,
+                    temperature: 0.8,
+                    return_full_text: false
+                },
+                options: { wait_for_model: true }
+            })
+        }).then(function(response){
+
+            if(response.status === 503 && retries > 0){
+                return response.json().then(function(errorData){
+                    const waitTime = (errorData.estimated_time || 5) * 1000;
+                    return new Promise(function(resolve){ setTimeout(resolve, waitTime); })
+                        .then(function(){ return callHuggingFace(retries - 1); });
+                });
+            }
+
+            if(!response.ok){
+                return response.text().then(function(errorText){
+                    throw new Error("API error " + response.status + ": " + errorText);
+                });
+            }
+
+            return response.json();
+
+        });
+    };
+
+    return callHuggingFace(3).then(function(data){
+
+        let reply = (Array.isArray(data) && data[0] && data[0].generated_text) ? data[0].generated_text : "";
+        reply = reply.split("<|user|>")[0].split("</s>")[0].trim();
+
+        if(!reply){
+            return AI_CHAT_FALLBACK_LINES[Math.floor(Math.random() * AI_CHAT_FALLBACK_LINES.length)];
+        }
+
+        return reply;
+
+    }).catch(function(err){
+        console.error("AI chat error:", err.message);
+        return AI_CHAT_FALLBACK_LINES[Math.floor(Math.random() * AI_CHAT_FALLBACK_LINES.length)];
+    });
 
 }
 
