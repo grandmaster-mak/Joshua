@@ -288,14 +288,6 @@ function initAuthListener(){
 
             currentUser = user;
 
-            // ---- Check for a pending challenge link (NEW) ----
-            // Must run only once currentUser is actually known —
-            // running this at script-load time (before auth resolves)
-            // was the original bug: currentUser was always null at
-            // that point, so accepting a WhatsApp challenge link never
-            // worked. See checkForIncomingChallenge() in script.js.
-            if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
-
             if(db){
                 const presenceRef = db.ref("presence/" + user.uid);
                 presenceRef.set(true);
@@ -342,6 +334,22 @@ function initAuthListener(){
                     handlePendingChallenge();
                 }
 
+                // ---- Check for a pending challenge link (MOVED HERE) ----
+                // This used to run immediately after `currentUser = user;`
+                // above — before currentUsername/currentUserFlag/
+                // currentUserRating/currentUserPhotoURL (all set just
+                // above this comment) had actually loaded. A friend who
+                // tapped Accept quickly after opening the link would
+                // trigger a Firebase write containing an undefined
+                // username/flag, which Firebase's SDK rejects outright —
+                // showing as a vague "permission" error, and any partial
+                // write that slipped through left their name blank and
+                // defaulted to a plain white flag in the room. Now this
+                // only runs once profile data is guaranteed to be ready,
+                // right alongside handlePendingChallenge() above, which
+                // was already correctly placed here.
+                if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
+
             }).catch(function(err){
                 console.log("Offline — showing cached profile instead.");
             });
@@ -380,12 +388,14 @@ function showLoggedOutState(){
             currentUserPhotoURL = null;
             userExplicitlyLoggedOut = false;
 
-            // ---- Check for a pending challenge link (NEW) ----
-            // Covers the case where the WhatsApp link is opened while
-            // logged out: this stores the pending challenge ID and
-            // shows the login prompt (see checkForIncomingChallenge()
-            // in script.js). handlePendingChallenge() then picks it
-            // back up automatically once the person logs in.
+            // ---- Check for a pending challenge link ----
+            // Safe to run immediately here (unlike the logged-in path
+            // above) since this branch never writes profile data to
+            // Firebase — it only stores the pending challenge ID locally
+            // and shows a login prompt. handlePendingChallenge() picks
+            // it back up once they actually log in, at which point the
+            // logged-in path above (with its profile-data-ready guard)
+            // takes over.
             if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
 
             document.getElementById("loggedOutView").style.display = "block";
