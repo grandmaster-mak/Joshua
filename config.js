@@ -1,1 +1,1 @@
-window.HF_API_TOKEN = "sk-or-v1-your-key-here";
+window.HF_API_TOKEN = "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";
