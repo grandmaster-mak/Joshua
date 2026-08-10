@@ -217,6 +217,43 @@ function listenKingdomUpdates(userId) {
 // ===== END KINGDOM SYSTEM =====
 // ============================================================
 
+// ===== Settings helpers =====
+function loadSettings() {
+    try { return JSON.parse(localStorage.getItem('appSettings')) || {}; } catch(e) { return {}; }
+}
+function isSoundEnabled(type) {
+    const s = loadSettings();
+    if (type === 'move') return s.moveSound !== false;
+    if (type === 'check') return s.checkSound !== false;
+    if (type === 'checkmate') return s.checkmateSound !== false;
+    return true;
+}
+function shouldAutoPromote() {
+    const s = loadSettings();
+    return s.autoPromote === true;
+}
+function shouldConfirmResign() {
+    const s = loadSettings();
+    return s.confirmResign !== false;
+}
+function shouldHighlightLastMove() {
+    const s = loadSettings();
+    return s.lastMoveHighlight !== false;
+}
+function shouldBoardFlipLocal() {
+    const s = loadSettings();
+    return s.boardFlip === true;
+}
+
+// Background music
+const bgMusic = document.getElementById('bgMusic');
+if (bgMusic) {
+    const s = loadSettings();
+    if (s.bgm === true) bgMusic.play();
+}
+
+let localBoardFlipped = false;   // for board flip setting
+
 // Reads coach/lesson text out loud using the browser's built-in
 // text-to-speech
 let cachedMaleVoice = null;
@@ -309,7 +346,12 @@ function createBoard(){
 
     board.innerHTML = "";
 
-    const flipped = (gameMode === "online" && myColor === "black");
+    // Board flip for offline games
+    let boardFlipped = false;
+    if (gameMode === "human" && shouldBoardFlipLocal()) {
+        boardFlipped = localBoardFlipped;
+    }
+    const flipped = (gameMode === "online" && myColor === "black") || boardFlipped;
 
     for(let i = 0; i < 8; i++){
 
@@ -895,16 +937,12 @@ function updateTurn(){
         if(hasLegalMoves(currentPlayer)){
 
             text += " - CHECK!";
-
-            checkSound.currentTime = 0;
-            checkSound.play();
+            if(isSoundEnabled('check')) { checkSound.currentTime = 0; checkSound.play(); }
 
         }else{
 
             text += " - CHECKMATE!";
-
-            checkmateSound.currentTime = 0;
-            checkmateSound.play();
+            if(isSoundEnabled('checkmate')) { checkmateSound.currentTime = 0; checkmateSound.play(); }
 
             const winner = currentPlayer === "white" ? "Black" : "White";
 
@@ -1322,8 +1360,7 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
     };
 
     if(isCapture){
-        captureSound.currentTime = 0;
-        captureSound.play();
+        if(isSoundEnabled('move')) { captureSound.currentTime = 0; captureSound.play(); }
 
         if(isWhite(capturedPiece)){
             blackCaptured.push(capturedPiece);
@@ -1331,8 +1368,7 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
             whiteCaptured.push(capturedPiece);
         }
     }else{
-        moveSound.currentTime = 0;
-        moveSound.play();
+        if(isSoundEnabled('move')) { moveSound.currentTime = 0; moveSound.play(); }
     }
 
     if(movedPiece.endsWith("P") || isCapture){
@@ -1390,11 +1426,16 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
             pieces[r][c] = "w" + (promotionPieceForThisMove || "Q");
             finishTurn(wasRemoteMove);
         }else{
-            promotionSquare = {r, c};
-            promotionColor = "w";
-            pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
-            createBoard();
-            showPromotion("w");
+            if(shouldAutoPromote()){
+                pieces[r][c] = "wQ";
+                finishTurn(false);
+            } else {
+                promotionSquare = {r, c};
+                promotionColor = "w";
+                pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
+                createBoard();
+                showPromotion("w");
+            }
         }
 
         return;
@@ -1409,11 +1450,16 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
             pieces[r][c] = "b" + (promotionPieceForThisMove || "Q");
             finishTurn(wasRemoteMove);
         }else{
-            promotionSquare = {r, c};
-            promotionColor = "b";
-            pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
-            createBoard();
-            showPromotion("b");
+            if(shouldAutoPromote()){
+                pieces[r][c] = "bQ";
+                finishTurn(false);
+            } else {
+                promotionSquare = {r, c};
+                promotionColor = "b";
+                pendingOnlinePromotionMove = (gameMode === "online") ? {fromR, fromC, toR:r, toC:c} : null;
+                createBoard();
+                showPromotion("b");
+            }
         }
 
         return;
@@ -1478,6 +1524,11 @@ function finishTurn(wasRemoteMove){
 
     if(!hasLegalMoves(currentPlayer)){
         gameOver = true;
+    }
+
+    // Board flip for local games
+    if(gameMode === "human" && shouldBoardFlipLocal()){
+        localBoardFlipped = !localBoardFlipped;
     }
 
     updateTurn();
@@ -1581,16 +1632,6 @@ function newGame(){
 
     if(typeof checkDailyPlayStreak === "function") checkDailyPlayStreak();
 
-    // Coach mode only ever applies to "ai" games (see openPlayVsCoach in
-    // coach.js). If a coach game just ended and the player starts an
-    // online or local game WITHOUT going through openPlaySetup() first —
-    // e.g. tapping "Play Online" directly, joining/creating a room,
-    // quick-matching, or accepting a challenge from a profile screen —
-    // isCoachMode was never reset there, so the coach bar and
-    // commentary kept firing in matches that have nothing to do with
-    // the coach. Every game-start path funnels through newGame(), so
-    // guarding it here (instead of at every call site in
-    // multiplayer.js) fixes it regardless of how the game was entered.
     if(gameMode !== "ai"){
         isCoachMode = false;
     }
@@ -1837,15 +1878,32 @@ function closeOnlineMenu(){
 }
 
 function resignGame(){
+    if(shouldConfirmResign()){
+        document.getElementById("drawOfferPopup").querySelector("h2").textContent = "Resign?";
+        document.getElementById("drawOfferPopup").querySelector(".sub").textContent = "Are you sure you want to resign?";
+        document.getElementById("drawOfferPopup").classList.add("show");
+        const acceptBtn = document.getElementById("drawOfferPopup").querySelector(".btnPrimary");
+        acceptBtn.textContent = "Yes, resign";
+        acceptBtn.onclick = function(){
+            document.getElementById("drawOfferPopup").classList.remove("show");
+            actuallyResign();
+        };
+        document.getElementById("drawOfferPopup").querySelector(".btnDanger").textContent = "Cancel";
+        document.getElementById("drawOfferPopup").querySelector(".btnDanger").onclick = function(){
+            document.getElementById("drawOfferPopup").classList.remove("show");
+        };
+        return;
+    }
+    actuallyResign();
+}
 
+function actuallyResign(){
     if(typeof sendGameEvent === "function"){
         sendGameEvent("resign");
     }
-
     gameOver = true;
     clearInterval(timer);
     closeOnlineMenu();
-
     const loser = gameMode === "online" ? myColor : currentPlayer;
     const winner = loser === "white" ? "Black" : "White";
     showPopup("🚩 Resignation", winner + " wins by resignation.");
@@ -2795,13 +2853,6 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
     if(data.status === "accepted" && data.roomCode){
       challengeListenRef.off();
       challengeListenRef = null;
-      // FIX: was window.myColor / window.currentRoomCode / etc — since
-      // myColor, currentRoomCode, selectedTime, and gameMode are all
-      // declared with `let` at the top of this file, assigning to
-      // window.* creates a completely separate property and never
-      // touches the real variable the rest of the app (clickSquare,
-      // startOnlineGame, etc.) actually reads. That mismatch is what
-      // caused pieces to be unmovable after accepting a challenge.
       myColor = myColorVal;
       currentRoomCode = data.roomCode;
       selectedTime = timeSeconds;
@@ -2813,14 +2864,9 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
 }
 
 // --- Check for incoming challenge from URL ---
-// Not run immediately at load — Firebase auth (currentUser) and db
-// aren't ready yet at that point. Instead this is called explicitly
-// from auth.js once onAuthStateChanged has actually resolved, so
-// currentUser reflects the real logged-in/out state. See
-// initAuthListener() and showLoggedOutState() in auth.js.
 function checkForIncomingChallenge(){
 
-  if(window.challengeParamChecked) return; // only act on this once per page load
+  if(window.challengeParamChecked) return;
   var params = new URLSearchParams(window.location.search);
   var challengeId = params.get("challenge");
   if(!challengeId) return;
@@ -2898,13 +2944,6 @@ document.getElementById("challengeAcceptTimeValue").textContent = (data.timeCont
         opponentName: currentUsername
       });
 
-      // FIX: was window.myColor / window.currentRoomCode / etc — see the
-      // matching note in listenForChallengeAccepted() above. Assigning to
-      // window.* never reached the real `let` variables the rest of the
-      // app reads, so accepting a challenge always left myColor stuck at
-      // its original null/leftover value — pieces looked assigned to a
-      // color on screen but every click was blocked by clickSquare()'s
-      // currentPlayer !== myColor check.
       myColor = opponentColor;
       currentRoomCode = roomCode;
       selectedTime = timeSeconds;
