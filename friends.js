@@ -209,9 +209,9 @@ function declineFriendRequest(fromUid){
     loadFriendRequests();
 }
 
-// ---- Loads (or reloads) the friends list. Guarded by friendsListLoadToken
-// so an overlapping/duplicate call can never clobber a newer one — this
-// is the fix for the "friends tab blinks and eats the unread badge" bug.
+// ---- Loads (or reloads) the friends list. Now it keeps the cached
+// rows visible while fetching live data, then swaps them in one go,
+// so the list never flashes blank.
 function cacheFriendsList(entries){
     try{ localStorage.setItem("cachedFriendsList", JSON.stringify(entries)); }catch(e){}
 }
@@ -251,8 +251,9 @@ function loadFriendsList(){
     const myToken = ++friendsListLoadToken;
 
     // Paint instantly from last-known friends data — keeps the Friends
-    // tab usable while offline. The live fetch below replaces this with
-    // fresh rows (presence dots, chat badges) as soon as it succeeds.
+    // tab usable while offline. The live fetch below will replace this
+    // with fresh rows (presence dots, chat badges) only once all data
+    // is ready, so there is never an empty gap.
     const cached = loadCachedFriendsList();
     if(cached && cached.length > 0){
         list.innerHTML = "";
@@ -277,59 +278,66 @@ function loadFriendsList(){
         const uids = [];
         snapshot.forEach(function(child){ uids.push(child.key); });
 
-        list.innerHTML = "";
-
         if(typeof startFriendChatWatchers === "function") startFriendChatWatchers(uids);
         if(typeof loadOnlineFriendsStrip === "function") loadOnlineFriendsStrip(uids);
 
-        uids.forEach(function(uid){
-            db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
+        // Build the new list offline first, then replace the current content
+        // all at once — no flicker.
+        let newRowsHtml = '';
 
-                if(myToken !== friendsListLoadToken) return;
-
+        // Gather all the user data + presence in one pass
+        const friendPromises = uids.map(function(uid){
+            return db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
                 const data = userSnap.val();
-                if(!data) return;
-
+                if(!data) return null;
                 cacheAccumulator[uid] = data;
-                cacheFriendsList(
-                    uids.map(function(u){ return { uid: u, data: cacheAccumulator[u] }; })
-                        .filter(function(e){ return e.data; })
-                );
 
-                db.ref("presence/" + uid).once("value").then(function(presenceSnap){
-
-                    if(myToken !== friendsListLoadToken) return;
-
+                return db.ref("presence/" + uid).once("value").then(function(presenceSnap){
                     const isOnline = presenceSnap.val() === true;
                     const safeUsername = escapeHtml(data.username);
 
-                    const row = document.createElement("div");
-                    row.className = "friendCard";
-                    row.innerHTML =
-                        '<div class="friendIdentity" style="cursor:pointer;" onclick="openPlayerProfile(\'' + uid + '\')">' +
-                            '<div class="friendAvatarWrap">' +
-                                '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
-                                (isOnline ? '<span class="onlineDotSmall"></span>' : '') +
+                    const rowHtml =
+                        '<div class="friendCard">' +
+                            '<div class="friendIdentity" style="cursor:pointer;" onclick="openPlayerProfile(\'' + uid + '\')">' +
+                                '<div class="friendAvatarWrap">' +
+                                    '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                                    (isOnline ? '<span class="onlineDotSmall"></span>' : '') +
+                                '</div>' +
+                                '<div class="friendInfo">' +
+                                    '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + safeUsername + '</span>' +
+                                    '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
+                                '</div>' +
                             '</div>' +
-                            '<div class="friendInfo">' +
-                                '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + safeUsername + '</span>' +
-                                '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
+                            '<div class="friendActions">' +
+                                '<button class="friendMessageBtn" data-uid="' + uid + '" data-name="' + safeUsername + '" onclick="openFriendChat(this.dataset.uid, this.dataset.name)" title="Message">💬<span class="cardBadge" id="friendChatBadge_' + uid + '" style="display:none;"></span></button>' +
+                                '<button class="btnPrimary" data-uid="' + uid + '" data-name="' + safeUsername + '" onclick="challengeFriend(this.dataset.uid, this.dataset.name)">⚔️ Challenge</button>' +
                             '</div>' +
-                        '</div>' +
-                        '<div class="friendActions">' +
-                            '<button class="friendMessageBtn" data-uid="' + uid + '" data-name="' + safeUsername + '" onclick="openFriendChat(this.dataset.uid, this.dataset.name)" title="Message">💬<span class="cardBadge" id="friendChatBadge_' + uid + '" style="display:none;"></span></button>' +
-                            '<button class="btnPrimary" data-uid="' + uid + '" data-name="' + safeUsername + '" onclick="challengeFriend(this.dataset.uid, this.dataset.name)">⚔️ Challenge</button>' +
                         '</div>';
 
-                    list.appendChild(row);
-
-                    if(typeof updateFriendChatBadge === "function"){
-                        updateFriendChatBadge(uid);
-                    }
-
+                    return rowHtml;
                 });
-
             });
+        });
+
+        Promise.all(friendPromises).then(function(rows){
+            if(myToken !== friendsListLoadToken) return;
+
+            // Filter out nulls (friends without public data)
+            newRowsHtml = rows.filter(function(r){ return r !== null; }).join('');
+
+            // Update the DOM in one fast operation — no blank moment
+            list.innerHTML = newRowsHtml || '<p class="sub">You haven\'t added any friends yet.</p>';
+
+            // Update the cache
+            cacheFriendsList(
+                uids.map(function(u){ return { uid: u, data: cacheAccumulator[u] }; })
+                    .filter(function(e){ return e.data; })
+            );
+
+            // Refresh any pending friend chat badges
+            if(typeof updateFriendChatBadge === "function"){
+                uids.forEach(function(uid){ updateFriendChatBadge(uid); });
+            }
         });
 
     });
