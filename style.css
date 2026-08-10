@@ -3149,3 +3149,24 @@ input::placeholder{ color:#4a5060; }
         font-size: 8px !important;
     }
 }
+
+/* ===== Challenge a Friend bar (shortened, centered) ===== */
+.challengeFriendBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    padding: 14px 20px;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    box-shadow: 0 4px 14px rgba(34,197,94,0.25);
+    cursor: pointer;
+}
