@@ -7,216 +7,194 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ========== DASHBOARD-INSPIRED DESIGN (HOME SCREEN ONLY) ========== */
-        body {
-            background-color: #f5f7fa;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', sans-serif;
-            color: #333;
+        /* ========== MERGED DASHBOARD DESIGN + SETTINGS SCREEN ========== */
+
+        /* --- global accent and board colour variables (defaults) --- */
+        :root {
+            --themeOrange: #FF7A1A;
+            --board-light: #ffffff;
+            --board-dark: #e2872e;
+            --last-move-glow: #ffc857;
         }
 
-        #appShell {
-            background: #f5f7fa;
+        /* Override board squares from variables */
+        .light { background: var(--board-light) !important; }
+        .dark  { background: var(--board-dark)  !important; }
+        .lastMove {
+            box-shadow: inset 0 0 0 4px var(--last-move-glow) !important;
         }
 
-        /* ---- Home Header (sticky, orange, full width) ---- */
-        .home-header {
+        /* ---------- Settings Screen ---------- */
+        #settingsScreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            background: #f2f0ee;
+            overflow-y: auto;
+            max-width: 420px;
+            margin: 0 auto;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #1a1a1a;
+        }
+
+        .settings-header {
             position: sticky;
             top: 0;
-            left: 0;
-            width: 100%;
-            box-sizing: border-box;
-            z-index: 20;
-            background: #ff6b00;
+            background: var(--themeOrange);
             color: #fff;
             padding: 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-            margin: 0;
+            gap: 16px;
+            z-index: 10;
         }
-        .home-header .header-text {
-            flex: 1;
-        }
-        .home-header .greeting-line {
-            font-size: 0.95em;
-            margin: 0;
-            color: #fff;
-            opacity: 0.9;
-        }
-        .home-header h1 {
-            font-size: 1.4em;
-            margin: 4px 0 6px;
-            color: #fff;
-        }
-        .home-header .stars-line {
-            font-size: 0.9em;
-            margin: 0;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .home-header .profile-box {
-            position: relative;
-            flex-shrink: 0;
-            margin-left: 16px;
-        }
-        .home-header .profile-box img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            object-fit: cover;
-        }
-        .home-header .online-dot {
-            position: absolute;
-            bottom: 4px;
-            right: 4px;
-            width: 10px;
-            height: 10px;
-            background: #00c853;
-            border-radius: 50%;
-            border: 2px solid #fff;
-        }
-
-        /* Remove any default padding on the home screen so the header sticks edge-to-edge */
-        #homeScreen {
-            padding-top: 0 !important;
-            margin: 0;
-            width: 100%;
-            background: #f5f7fa;
-        }
-
-        /* Stats / sections in white cards for consistency */
-        .stats-section {
-            background: #fff;
-            margin: 10px;
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        /* ========== CHALLENGE STYLES (unchanged) ========== */
-        .challengeFriendBar {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            box-sizing: border-box;
-            margin: 4px 0 18px;
-            padding: 14px 20px;
-            background: linear-gradient(90deg, #22c55e, #16a34a);
+        .settings-header button {
+            background: none;
             border: none;
-            border-radius: 14px;
             color: #fff;
+            font-size: 24px;
+            width: auto;
+            padding: 0;
+            cursor: pointer;
+        }
+        .settings-header h2 { font-size: 24px; font-weight: 800; }
+
+        .settings-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .settings-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+        .settings-card h3 {
+            font-size: 18px;
             font-weight: 700;
-            font-size: 15px;
-            box-shadow: 0 4px 14px rgba(34,197,94,0.25);
+            margin-bottom: 16px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-label { font-weight: 600; font-size: 15px; }
+
+        /* Toggle switch */
+        .toggle {
+            position: relative;
+            width: 48px;
+            height: 28px;
+        }
+        .toggle input { display: none; }
+        .toggle .slider {
+            position: absolute;
+            inset: 0;
+            background: #ccc;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: .2s;
+        }
+        .toggle .slider::before {
+            content: "";
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            left: 2px;
+            bottom: 2px;
+            background: #fff;
+            border-radius: 50%;
+            transition: .2s;
+        }
+        .toggle input:checked + .slider { background: var(--themeOrange); }
+        .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+        /* Colour buttons */
+        .color-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .color-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .color-btn.active { border-color: #1a1a1a; transform: scale(1.1); }
+
+        /* Board colour preset grid */
+        .board-presets {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .board-preset {
+            border-radius: 12px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+        }
+        .board-preset.active { border-color: #1a1a1a; }
+        .board-preset .mini-board {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 4px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .board-preset .mini-board div:nth-child(1) { background: var(--light); }
+        .board-preset .mini-board div:nth-child(2) { background: var(--dark); }
+        .board-preset .mini-board div:nth-child(3) { background: var(--dark); }
+        .board-preset .mini-board div:nth-child(4) { background: var(--light); }
+        .board-preset .preset-name { font-size: 11px; font-weight: 600; }
+
+        /* Dropdown */
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .btn-reset {
+            background: #e5484d;
+            color: #fff;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
             cursor: pointer;
         }
-        .challengeFriendBarIcon { font-size: 18px; }
-        .challengeFriendBarText { flex: 1; text-align: left; }
-        .challengeFriendBarArrow { font-size: 16px; opacity: 0.85; }
-
-        .challengeHeroWrap { position: relative; padding: 60px 20px 20px; }
-        .challengeBackCircle {
-            position: absolute; top: 20px; left: 20px;
-            width: 40px; height: 40px; border-radius: 50%;
-            background: rgba(255,255,255,0.08); border: none; color: #fff;
-            font-size: 20px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-        }
-        .challengeHeroRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 36px; }
-        .challengeHeroTitle { font-size: 26px; font-weight: 800; margin: 0; }
-        .challengeHeroSub { color: #9aa0ac; font-size: 13px; margin: 6px 0 0; }
-        .challengeHeroArt { font-size: 52px; position: relative; white-space: nowrap; }
-        .challengeHeroPawn { font-size: 32px; margin-left: -14px; color: #555; }
-
-        .challengeBody { padding: 0 16px 30px; display: flex; flex-direction: column; gap: 16px; max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
-        .challengeCard { background: #151822; border-radius: 18px; padding: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .challengeFieldLabel { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: #e5e5e5; margin-bottom: 10px; }
-        .challengeFieldIcon { font-size: 16px; }
-
-        .challengeColorPills { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .challengeColorPill {
-            position: relative; border: 1.5px solid #2a2e3a; border-radius: 14px; padding: 14px;
-            display: flex; flex-direction: column; align-items: center; gap: 4px;
-            cursor: pointer; background: #1a1e29; font-size: 14px; color: #e5e5e5;
-        }
-        .challengeColorPill .challengeColorPillPiece { font-size: 22px; }
-        .challengeColorPill .challengeColorPillCheck {
-            display: none; position: absolute; top: 8px; right: 8px;
-            width: 18px; height: 18px; border-radius: 50%; background: #22c55e; color: #04210f;
-            font-size: 11px; align-items: center; justify-content: center; font-weight: 800;
-        }
-        .challengeColorPill.active { border-color: #22c55e; background: rgba(34,197,94,0.08); }
-        .challengeColorPill.active .challengeColorPillCheck { display: flex; }
-
-        .challengeTimeWrap {
-            display: flex; align-items: center; gap: 10px;
-            background: #1a1e29; border: 1.5px solid #2a2e3a; border-radius: 14px; padding: 4px 14px;
-        }
-        .challengeTimeIcon { font-size: 16px; }
-        .challengeTimeSelect { flex: 1; background: transparent; border: none; color: #fff; font-size: 15px; font-weight: 600; padding: 12px 0; outline: none; }
-        .challengeTimeSelect option { background: #1a1e29; color: #fff; }
-
-        .challengeCreateBtn {
-            width: 100%; margin-top: 18px; padding: 15px; border: none; border-radius: 14px;
-            background: linear-gradient(90deg, #FF7A1A, #ffb066); color: #fff; font-weight: 800; font-size: 15px;
-            cursor: pointer; box-shadow: 0 6px 18px rgba(255,122,26,0.35);
-        }
-
-        .challengeFeatureRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #22262f; }
-        .challengeFeature { text-align: center; }
-        .challengeFeatureIcon { font-size: 18px; display: block; margin-bottom: 4px; }
-        .challengeFeature b { font-size: 11px; display: block; color: #e5e5e5; }
-        .challengeFeature p { font-size: 10px; color: #8a8f9c; margin: 2px 0 0; line-height: 1.3; }
-
-        .challengeLinkRow {
-            display: flex; align-items: center; gap: 8px;
-            background: #1a1e29; border: 1.5px solid #2a2e3a; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;
-        }
-        .challengeLinkIcon { font-size: 14px; }
-        .challengeLinkRow input { flex: 1; background: transparent; border: none; color: #c9cdd6; font-size: 13px; outline: none; min-width: 0; }
-
-        .challengeCopyBtn { width: 100%; padding: 13px; border: none; border-radius: 12px; background: linear-gradient(90deg,#8b5cf6,#a78bfa); color: #fff; font-weight: 700; font-size: 14px; margin-bottom: 8px; cursor: pointer; }
-        .challengeWhatsappBtn { width: 100%; padding: 13px; border: none; border-radius: 12px; background: #25D366; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
-        .challengeInfoNote { font-size: 12px; color: #8a8f9c; text-align: center; margin: 14px 0 0; }
-
-        .challengeAcceptGlowWrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-        .challengeAcceptGlow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%); filter: blur(6px); }
-        .challengeAcceptIconCircle { position: relative; width: 110px; height: 110px; border-radius: 50%; background: #151822; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(139,92,246,0.25); }
-        .challengeAcceptKnight { font-size: 52px; }
-        .challengeAcceptBolt { position: absolute; top: 4px; right: 0px; font-size: 26px; }
-        .challengeAcceptSparkle { position: absolute; font-size: 16px; opacity: 0.85; }
-        .challengeAcceptSparkleLeft { top: 6px; left: 4px; }
-        .challengeAcceptSparkleRight { bottom: 10px; right: 6px; }
-
-        .challengeAcceptHeading { font-size: 24px; font-weight: 800; margin: 0 0 20px; text-align: center; }
-        .challengeAcceptHeadingGreen { color: #4ade80; }
-
-        .challengeAcceptCard { width: 100%; max-width: 360px; background: #151822; border-radius: 18px; padding: 18px; margin-bottom: 22px; }
-        .challengeAcceptWhoRow { display: flex; align-items: center; gap: 14px; }
-        .challengeAcceptAvatar { width: 52px; height: 52px; border-radius: 50%; background: #1a1e29; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
-        .challengeAcceptName { font-weight: 700; font-size: 16px; }
-        .challengeAcceptSub { color: #9aa0ac; font-size: 13px; margin-top: 2px; }
-        .challengeAcceptDivider { height: 1px; background: #22262f; margin: 16px 0; }
-        .challengeAcceptStatsRow { display: flex; justify-content: space-between; gap: 12px; }
-        .challengeAcceptStat { display: flex; align-items: center; gap: 10px; flex: 1; }
-        .challengeAcceptStatIcon { font-size: 20px; width: 36px; height: 36px; border-radius: 50%; background: #1a1e29; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .challengeAcceptStatLabel { font-size: 10px; color: #8a8f9c; font-weight: 700; letter-spacing: 0.5px; }
-        .challengeAcceptStatValue { font-size: 15px; font-weight: 700; margin-top: 2px; }
-
-        .challengeAcceptBtnGreen { width: 100%; max-width: 360px; padding: 16px; border: none; border-radius: 14px; background: #4ade80; color: #04210f; font-weight: 800; font-size: 16px; margin-bottom: 10px; cursor: pointer; box-shadow: 0 6px 20px rgba(74,222,128,0.3); }
-        .challengeAcceptBtnRed { width: 100%; max-width: 360px; padding: 16px; border: none; border-radius: 14px; background: #e5484d; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 
 <body>
 
-    <!-- Splash Screen -->
+    <!-- Splash Screen (unchanged) -->
     <div id="splashScreen">
         <div class="splashBoardPattern"></div>
         <div class="splashGlow"></div>
@@ -242,10 +220,9 @@
     <!-- App Shell -->
     <div id="appShell">
 
-        <!-- HOME SCREEN -->
+        <!-- HOME SCREEN (redesigned header) -->
         <div id="homeScreen" class="screen">
 
-            <!-- Orange Sticky Header -->
             <div class="home-header">
                 <div class="header-text">
                     <p class="greeting-line" id="greetingLine">Good morning ☀️</p>
@@ -258,7 +235,6 @@
                 </div>
             </div>
 
-            <!-- Badge row -->
             <div class="badge-row homeBadgeRowLight">
                 <div class="homeBadgeCard" onclick="switchScreen('account')">
                     <span class="homeBadgeIcon">♟</span>
@@ -270,14 +246,13 @@
                     <b class="homeBadgeGreenText">Online</b>
                     <p>Active now</p>
                 </div>
-                <div class="homeBadgeCard" onclick="switchScreen('account')">
+                <div class="homeBadgeCard" onclick="openSettingsScreen()">
                     <span class="homeBadgeIcon">⚙️</span>
                     <b>Settings</b>
-                    <p>Account</p>
+                    <p>Customise</p>
                 </div>
             </div>
 
-            <!-- Daily Challenge -->
             <div class="daily-challenge">
                 <span class="dc-icon">🎯</span>
                 <div class="dc-body">
@@ -289,7 +264,6 @@
                 <span class="dc-gift">🎁</span>
             </div>
 
-            <!-- Quick Actions -->
             <div class="quick-actions">
                 <div class="action-card play-now homeActionPhoto homeActionPieces" onclick="openPlaySetup('human')">
                     <span class="material-icons homeActionIconChip">sports_esports</span>
@@ -311,7 +285,6 @@
                 </div>
             </div>
 
-            <!-- Stats -->
             <div class="stats-section">
                 <div class="stats-header">
                     <h2>Your Stats</h2>
@@ -345,7 +318,6 @@
                 </div>
             </div>
 
-            <!-- Recent Games -->
             <div class="stats-section">
                 <div class="stats-header">
                     <h2>Recent Games</h2>
@@ -356,7 +328,6 @@
                 </div>
             </div>
 
-            <!-- Quick Links -->
             <div class="quicklinks-scroll">
                 <div class="quicklink-card" onclick="openTournaments()">
                     <div class="quicklink-icon">🏆</div>
@@ -395,7 +366,6 @@
                 </div>
             </div>
 
-            <!-- Online Friends -->
             <div class="stats-section">
                 <div class="stats-header">
                     <h2>Online Friends (<span id="onlineFriendsCount">0</span>)</h2>
@@ -405,7 +375,7 @@
             </div>
         </div>
 
-        <!-- FRIENDS SCREEN -->
+        <!-- FRIENDS SCREEN (unchanged) -->
         <div id="friendsScreen" class="screen friendsScreenLight" style="display:none;">
             <div class="friendsOrangeHeader">
                 <div class="friendsHeaderArt">♟♞</div>
@@ -443,7 +413,7 @@
             </div>
         </div>
 
-        <!-- ACCOUNT SCREEN -->
+        <!-- ACCOUNT SCREEN (unchanged) -->
         <div id="accountScreen" class="screen accountScreenLight" style="display:none;">
             <div class="accountOrangeHeader">
                 <div class="accountHeaderArt">♔</div>
@@ -607,97 +577,71 @@
             </div>
         </div>
 
-        <!-- ========== KINGDOM SCREEN (WITH IMAGES) ========== -->
-<div id="kingdomScreen" class="screen" style="display:none; flex-direction:column; flex:1; padding:0;">
-
-    <!-- Orange Header -->
-    <div class="accountOrangeHeader" style="padding:24px 20px 64px;">
-        <div class="accountHeaderArt" style="font-size:120px;">🏰</div>
-        <h2 class="accountHeaderTitleLight" style="font-size:28px;">My Kingdom</h2>
-        <p class="friendsHeaderSubLight" style="color:rgba(255,255,255,0.85); font-size:14px; margin-top:4px;">Rise through the ranks with consecutive wins</p>
-    </div>
-
-    <!-- White Body -->
-    <div class="accountBodyLight" style="background:#f2f0ee; border-radius:28px 28px 0 0; margin-top:-40px; padding:0 20px 24px;">
-
-        <!-- Kingdom Image Card (with background image) -->
-        <div style="margin-top:-56px; position:relative;">
-            <div style="position:relative; border-radius:20px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.15);">
-                <!-- Kingdom Background Image -->
-                <div id="kingdomImageContainer" style="width:100%; height:200px; background:#fdecd2; position:relative; transition:opacity 0.6s ease;">
-                    <img id="kingdomBackgroundImg" src="" alt="Kingdom" style="width:100%; height:100%; object-fit:cover; display:block;">
-                    <!-- Dark gradient overlay for text readability -->
-                    <div style="position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(to top, rgba(0,0,0,0.5), transparent);"></div>
-                    
-                    <!-- Player Avatar with glow -->
-                    <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%);">
-                        <div style="position:relative; width:70px; height:70px;">
-                            <!-- Glow ring -->
-                            <div style="position:absolute; inset:-10px; border-radius:50%; background:rgba(255,215,0,0.3); filter:blur(10px); animation:kingdomGlowPulse 2.4s ease-in-out infinite;"></div>
-                            <!-- Avatar -->
-                            <img id="kingdomRulerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" style="width:70px; height:70px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 20px rgba(255,215,0,0.4); object-fit:cover;">
-                            <!-- Crown badge -->
-                            <div style="position:absolute; top:-4px; right:-4px; background:#FF7A1A; border-radius:50%; padding:4px 6px; font-size:18px; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.2);" id="kingdomRulerCrown">🏕️</div>
+        <!-- KINGDOM SCREEN (unchanged) -->
+        <div id="kingdomScreen" class="screen" style="display:none; flex-direction:column; flex:1; padding:0;">
+            <div class="accountOrangeHeader" style="padding:24px 20px 64px;">
+                <div class="accountHeaderArt" style="font-size:120px;">🏰</div>
+                <h2 class="accountHeaderTitleLight" style="font-size:28px;">My Kingdom</h2>
+                <p class="friendsHeaderSubLight" style="color:rgba(255,255,255,0.85); font-size:14px; margin-top:4px;">Rise through the ranks with consecutive wins</p>
+            </div>
+            <div class="accountBodyLight" style="background:#f2f0ee; border-radius:28px 28px 0 0; margin-top:-40px; padding:0 20px 24px;">
+                <div style="margin-top:-56px; position:relative;">
+                    <div style="position:relative; border-radius:20px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+                        <div id="kingdomImageContainer" style="width:100%; height:200px; background:#fdecd2; position:relative; transition:opacity 0.6s ease;">
+                            <img id="kingdomBackgroundImg" src="" alt="Kingdom" style="width:100%; height:100%; object-fit:cover; display:block;">
+                            <div style="position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(to top, rgba(0,0,0,0.5), transparent);"></div>
+                            <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%);">
+                                <div style="position:relative; width:70px; height:70px;">
+                                    <div style="position:absolute; inset:-10px; border-radius:50%; background:rgba(255,215,0,0.3); filter:blur(10px); animation:kingdomGlowPulse 2.4s ease-in-out infinite;"></div>
+                                    <img id="kingdomRulerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" style="width:70px; height:70px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 20px rgba(255,215,0,0.4); object-fit:cover;">
+                                    <div style="position:absolute; top:-4px; right:-4px; background:#FF7A1A; border-radius:50%; padding:4px 6px; font-size:18px; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.2);" id="kingdomRulerCrown">🏕️</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.95); padding:6px 14px; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                            <span style="font-weight:700; color:#1a1a1a; font-size:14px;" id="kingdomNameBadge">🏕️ Village</span>
                         </div>
                     </div>
+                    <h3 style="text-align:center; margin:12px 0 4px; font-size:18px; color:#1a1a1a;" id="kingdomRulerName">Player</h3>
+                    <p style="text-align:center; color:#8a8580; font-size:13px; margin-bottom:16px;">Ruler of <span style="color:#FF7A1A; font-weight:600;" id="kingdomRulerTitle">Village</span></p>
                 </div>
-                
-                <!-- Kingdom name badge (top right) -->
-                <div style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.95); padding:6px 14px; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                    <span style="font-weight:700; color:#1a1a1a; font-size:14px;" id="kingdomNameBadge">🏕️ Village</span>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;">
+                    <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                        <div style="font-size:22px; margin-bottom:2px;">🏘️</div>
+                        <div style="font-weight:800; color:#FF7A1A; font-size:14px;" id="kingdomStatCurrent">Village</div>
+                        <div style="color:#8a8580; font-size:10px;">Current</div>
+                    </div>
+                    <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                        <div style="font-size:22px; margin-bottom:2px;">🔥</div>
+                        <div style="font-weight:800; color:#22c55e; font-size:14px;" id="kingdomStatStreak">0</div>
+                        <div style="color:#8a8580; font-size:10px;">Consecutive Wins</div>
+                    </div>
+                    <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                        <div style="font-size:22px; margin-bottom:2px;">🏆</div>
+                        <div style="font-weight:800; color:#e5484d; font-size:14px;" id="kingdomStatWinsNeeded">3</div>
+                        <div style="color:#8a8580; font-size:10px;">Wins Needed</div>
+                    </div>
+                </div>
+                <div style="background:#ffffff; border-radius:16px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-weight:700; color:#1a1a1a; font-size:14px;">Next: <span id="kingdomNextLabel" style="color:#FF7A1A;">🏘️ Town</span></span>
+                        <span style="font-weight:700; color:#8a8580; font-size:13px;" id="kingdomProgressText">0 / 3 wins</span>
+                    </div>
+                    <div style="height:8px; background:rgba(255,122,26,0.15); border-radius:6px; overflow:hidden;">
+                        <div id="kingdomProgressFill" style="height:100%; width:0%; background:linear-gradient(90deg, #FF7A1A, #ffb066); border-radius:6px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>
+                    </div>
+                </div>
+                <div style="background:#ffffff; border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:14px;">
+                    <div style="font-weight:700; color:#1a1a1a; font-size:15px; margin-bottom:12px;">Kingdom Journey</div>
+                    <div id="kingdomJourney" style="display:flex; gap:4px; overflow-x:auto; padding-bottom:4px; justify-content:space-between;"></div>
+                </div>
+                <div style="background:#ffffff; border-radius:16px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                    <p id="kingdomDescription" style="color:#8a8580; font-size:14px; text-align:center; font-style:italic; margin:0; line-height:1.5;">A modest settlement</p>
                 </div>
             </div>
-            
-            <!-- Ruler name -->
-            <h3 style="text-align:center; margin:12px 0 4px; font-size:18px; color:#1a1a1a;" id="kingdomRulerName">Player</h3>
-            <p style="text-align:center; color:#8a8580; font-size:13px; margin-bottom:16px;">Ruler of <span style="color:#FF7A1A; font-weight:600;" id="kingdomRulerTitle">Village</span></p>
         </div>
 
-        <!-- Stats Cards -->
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;">
-            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                <div style="font-size:22px; margin-bottom:2px;">🏘️</div>
-                <div style="font-weight:800; color:#FF7A1A; font-size:14px;" id="kingdomStatCurrent">Village</div>
-                <div style="color:#8a8580; font-size:10px;">Current</div>
-            </div>
-            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                <div style="font-size:22px; margin-bottom:2px;">🔥</div>
-                <div style="font-weight:800; color:#22c55e; font-size:14px;" id="kingdomStatStreak">0</div>
-                <div style="color:#8a8580; font-size:10px;">Consecutive Wins</div>
-            </div>
-            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                <div style="font-size:22px; margin-bottom:2px;">🏆</div>
-                <div style="font-weight:800; color:#e5484d; font-size:14px;" id="kingdomStatWinsNeeded">3</div>
-                <div style="color:#8a8580; font-size:10px;">Wins Needed</div>
-            </div>
-        </div>
-
-        <!-- Progress Card -->
-        <div style="background:#ffffff; border-radius:16px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-weight:700; color:#1a1a1a; font-size:14px;">Next: <span id="kingdomNextLabel" style="color:#FF7A1A;">🏘️ Town</span></span>
-                <span style="font-weight:700; color:#8a8580; font-size:13px;" id="kingdomProgressText">0 / 3 wins</span>
-            </div>
-            <div style="height:8px; background:rgba(255,122,26,0.15); border-radius:6px; overflow:hidden;">
-                <div id="kingdomProgressFill" style="height:100%; width:0%; background:linear-gradient(90deg, #FF7A1A, #ffb066); border-radius:6px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>
-            </div>
-        </div>
-
-        <!-- Kingdom Journey -->
-        <div style="background:#ffffff; border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:14px;">
-            <div style="font-weight:700; color:#1a1a1a; font-size:15px; margin-bottom:12px;">Kingdom Journey</div>
-            <div id="kingdomJourney" style="display:flex; gap:4px; overflow-x:auto; padding-bottom:4px; justify-content:space-between;"></div>
-        </div>
-
-        <!-- Description -->
-        <div style="background:#ffffff; border-radius:16px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-            <p id="kingdomDescription" style="color:#8a8580; font-size:14px; text-align:center; font-style:italic; margin:0; line-height:1.5;">A modest settlement</p>
-        </div>
-
-    </div>
-</div>
-
-        <!-- BOTTOM NAVIGATION -->
+        <!-- BOTTOM NAVIGATION (unchanged) -->
         <div id="bottomNav">
             <button class="navBtn active" data-screen="home" onclick="switchScreen('home')">
                 <span class="navIcon">🏠</span>
@@ -717,7 +661,6 @@
                 <span class="navLabel">Account</span>
             </button>
         </div>
-
     </div>
 
     <!-- GAME SCREEN (unchanged) -->
@@ -1095,26 +1038,25 @@
         </div>
     </div>
 
-    <!-- ========== PUZZLE MAP SCREEN ========== -->
-<div id="puzzleMapScreen" class="fullScreenPanel" style="background:#f2f0ee; flex-direction:column; height:100dvh; overflow:hidden;">
-    <div class="accountOrangeHeader" style="position:sticky; top:0; z-index:20; flex-shrink:0; padding:12px 20px 13px; display:flex; align-items:center; gap:10px;">
-    <button onclick="closePuzzleMap()" style="width:auto; margin:0; background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:2px 0; line-height:1;">←</button>
-    <div style="font-size:24px; line-height:1;">🧩</div>
-    <div style="flex:1; min-width:0;">
-        <h2 style="color:#fff; margin:0; font-size:19px; font-weight:800; line-height:1.15;">Puzzles</h2>
-        <p style="color:rgba(255,255,255,0.85); margin:1px 0 0; font-size:11px;">Solve puzzles. Improve. Conquer.</p>
-    </div>
-    <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-        <div style="background:#fff; border-radius:10px; padding:4px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.15);">
-            <div style="font-weight:800; color:#1a1a1a; font-size:10px;">🧩 <span id="puzzleMapTotalSolved">0</span>/<span id="puzzleMapTotalCount">160</span></div>
+    <div id="puzzleMapScreen" class="fullScreenPanel" style="background:#f2f0ee; flex-direction:column; height:100dvh; overflow:hidden;">
+        <div class="accountOrangeHeader" style="position:sticky; top:0; z-index:20; flex-shrink:0; padding:12px 20px 13px; display:flex; align-items:center; gap:10px;">
+            <button onclick="closePuzzleMap()" style="width:auto; margin:0; background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:2px 0; line-height:1;">←</button>
+            <div style="font-size:24px; line-height:1;">🧩</div>
+            <div style="flex:1; min-width:0;">
+                <h2 style="color:#fff; margin:0; font-size:19px; font-weight:800; line-height:1.15;">Puzzles</h2>
+                <p style="color:rgba(255,255,255,0.85); margin:1px 0 0; font-size:11px;">Solve puzzles. Improve. Conquer.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                <div style="background:#fff; border-radius:10px; padding:4px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.15);">
+                    <div style="font-weight:800; color:#1a1a1a; font-size:10px;">🧩 <span id="puzzleMapTotalSolved">0</span>/<span id="puzzleMapTotalCount">160</span></div>
+                </div>
+                <button onclick="closePuzzleMap(); switchScreen('kingdom');" style="width:auto; margin:0; background:#fff; border:none; border-radius:10px; padding:4px 7px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,0.15); cursor:pointer;">👑</button>
+            </div>
         </div>
-        <button onclick="closePuzzleMap(); switchScreen('kingdom');" style="width:auto; margin:0; background:#fff; border:none; border-radius:10px; padding:4px 7px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,0.15); cursor:pointer;">👑</button>
+        <div class="fsBody" style="padding:16px; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;" id="puzzleMapBody">
+            <p class="sub">Loading...</p>
+        </div>
     </div>
-</div>
-    <div class="fsBody" style="padding:16px; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;" id="puzzleMapBody">
-        <p class="sub">Loading...</p>
-    </div>
-</div>
 
     <div id="lessonsScreen" class="fullScreenPanel">
         <div class="fsHeader">
@@ -1346,147 +1288,218 @@
         </div>
     </div>
 
-    <!-- ========== Challenge a Friend screen (REDESIGNED) ========== -->
-<div id="challengeScreen" style="display:none; position:fixed; inset:0; z-index:150; flex-direction:column; background:#0b0d13; color:#fff; overflow-y:auto; -webkit-overflow-scrolling:touch;">
-  <div class="challengeHeroWrap">
-    <button id="challengeBackBtn" class="challengeBackCircle">←</button>
-    <div class="challengeHeroRow">
-      <div>
-        <h2 class="challengeHeroTitle">Challenge a Friend</h2>
-        <p class="challengeHeroSub">Create a game and send a link to any friend</p>
-      </div>
-      <div class="challengeHeroArt">♞<span class="challengeHeroPawn">♟</span></div>
+    <!-- Challenge a Friend screen (redesigned) -->
+    <div id="challengeScreen" style="display:none; position:fixed; inset:0; z-index:150; flex-direction:column; background:#0b0d13; color:#fff; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+        <div class="challengeHeroWrap">
+            <button id="challengeBackBtn" class="challengeBackCircle">←</button>
+            <div class="challengeHeroRow">
+                <div>
+                    <h2 class="challengeHeroTitle">Challenge a Friend</h2>
+                    <p class="challengeHeroSub">Create a game and send a link to any friend</p>
+                </div>
+                <div class="challengeHeroArt">♞<span class="challengeHeroPawn">♟</span></div>
+            </div>
+        </div>
+        <div class="challengeBody">
+            <div class="challengeCard">
+                <div class="challengeFieldLabel"><span class="challengeFieldIcon">🎨</span> Your colour</div>
+                <div class="challengeColorPills">
+                    <div class="challengeColorPill active" id="challengeColorWhitePill" onclick="selectChallengeColor('white')">
+                        <span class="challengeColorPillPiece">♙</span>
+                        <span>White</span>
+                        <span class="challengeColorPillCheck">✓</span>
+                    </div>
+                    <div class="challengeColorPill" id="challengeColorBlackPill" onclick="selectChallengeColor('black')">
+                        <span class="challengeColorPillPiece">♟</span>
+                        <span>Black</span>
+                        <span class="challengeColorPillCheck">✓</span>
+                    </div>
+                </div>
+                <select id="challengeColor" style="display:none;">
+                    <option value="white" selected>White</option>
+                    <option value="black">Black</option>
+                </select>
+                <div class="challengeFieldLabel" style="margin-top:20px;"><span class="challengeFieldIcon">⏱️</span> Time control</div>
+                <div class="challengeTimeWrap">
+                    <span class="challengeTimeIcon">🕐</span>
+                    <select id="challengeTime" class="challengeTimeSelect">
+                        <option value="1">1 minute</option>
+                        <option value="3">3 minutes</option>
+                        <option value="5">5 minutes</option>
+                        <option value="10" selected>10 minutes</option>
+                        <option value="15">15 minutes</option>
+                    </select>
+                </div>
+                <button id="createChallengeBtn" class="challengeCreateBtn">🔗 Create Challenge Link</button>
+                <div class="challengeFeatureRow">
+                    <div class="challengeFeature">
+                        <span class="challengeFeatureIcon">🛡️</span>
+                        <b>Secure link</b>
+                        <p>Only your friend with the link can join</p>
+                    </div>
+                    <div class="challengeFeature">
+                        <span class="challengeFeatureIcon">⏳</span>
+                        <b>Fair game</b>
+                        <p>Same time control for both players</p>
+                    </div>
+                    <div class="challengeFeature">
+                        <span class="challengeFeatureIcon">👥</span>
+                        <b>Easy to share</b>
+                        <p>Share via any app you prefer</p>
+                    </div>
+                </div>
+            </div>
+            <div id="challengeLinkArea" class="challengeCard" style="display:none;">
+                <div class="challengeFieldLabel"><span class="challengeFieldIcon">🔗</span> Share this link with your friend</div>
+                <div class="challengeLinkRow">
+                    <span class="challengeLinkIcon">🔗</span>
+                    <input id="challengeLinkInput" type="text" readonly>
+                </div>
+                <button id="copyChallengeLink" class="challengeCopyBtn">📋 Copy Link</button>
+                <button id="shareChallengeLink" class="challengeWhatsappBtn">💬 Share via WhatsApp</button>
+                <p class="challengeInfoNote">ℹ️ Your friend can open this link to join the challenge.</p>
+            </div>
+        </div>
     </div>
-  </div>
+    <script>
+    function selectChallengeColor(color){
+        var select = document.getElementById("challengeColor");
+        if(select) select.value = color;
+        var whitePill = document.getElementById("challengeColorWhitePill");
+        var blackPill = document.getElementById("challengeColorBlackPill");
+        if(whitePill) whitePill.classList.toggle("active", color === "white");
+        if(blackPill) blackPill.classList.toggle("active", color === "black");
+    }
+    </script>
 
-  <div class="challengeBody">
-
-    <div class="challengeCard">
-      <div class="challengeFieldLabel"><span class="challengeFieldIcon">🎨</span> Your colour</div>
-      <div class="challengeColorPills">
-        <div class="challengeColorPill active" id="challengeColorWhitePill" onclick="selectChallengeColor('white')">
-          <span class="challengeColorPillPiece">♙</span>
-          <span>White</span>
-          <span class="challengeColorPillCheck">✓</span>
+    <!-- Challenge accept screen (redesigned) -->
+    <div id="challengeAcceptScreen" style="display:none; position:fixed; inset:0; z-index:150; flex-direction:column; align-items:center; justify-content:center; background:#0b0d13; color:#fff; padding:20px; overflow-y:auto;">
+        <div class="challengeAcceptGlowWrap">
+            <div class="challengeAcceptGlow"></div>
+            <div class="challengeAcceptIconCircle">
+                <span class="challengeAcceptSparkle challengeAcceptSparkleLeft">✨</span>
+                <span class="challengeAcceptKnight">♞</span>
+                <span class="challengeAcceptBolt">⚡</span>
+                <span class="challengeAcceptSparkle challengeAcceptSparkleRight">✨</span>
+            </div>
         </div>
-        <div class="challengeColorPill" id="challengeColorBlackPill" onclick="selectChallengeColor('black')">
-          <span class="challengeColorPillPiece">♟</span>
-          <span>Black</span>
-          <span class="challengeColorPillCheck">✓</span>
+        <h2 class="challengeAcceptHeading">You've been <span class="challengeAcceptHeadingGreen">challenged!</span></h2>
+        <div class="challengeAcceptCard">
+            <div class="challengeAcceptWhoRow">
+                <div class="challengeAcceptAvatar" id="challengeAcceptAvatar">🏳️</div>
+                <div>
+                    <div class="challengeAcceptName" id="challengeAcceptName">Player</div>
+                    <div class="challengeAcceptSub">has challenged you to a game</div>
+                </div>
+            </div>
+            <div class="challengeAcceptDivider"></div>
+            <div class="challengeAcceptStatsRow">
+                <div class="challengeAcceptStat">
+                    <span class="challengeAcceptStatIcon" id="challengeAcceptColorIcon">♙</span>
+                    <div>
+                        <div class="challengeAcceptStatLabel">YOU PLAY</div>
+                        <div class="challengeAcceptStatValue" id="challengeAcceptColorValue">White</div>
+                    </div>
+                </div>
+                <div class="challengeAcceptStat">
+                    <span class="challengeAcceptStatIcon">🕐</span>
+                    <div>
+                        <div class="challengeAcceptStatLabel">TIME CONTROL</div>
+                        <div class="challengeAcceptStatValue" id="challengeAcceptTimeValue">5 min</div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <select id="challengeColor" style="display:none;">
-        <option value="white" selected>White</option>
-        <option value="black">Black</option>
-      </select>
-
-      <div class="challengeFieldLabel" style="margin-top:20px;"><span class="challengeFieldIcon">⏱️</span> Time control</div>
-      <div class="challengeTimeWrap">
-        <span class="challengeTimeIcon">🕐</span>
-        <select id="challengeTime" class="challengeTimeSelect">
-          <option value="1">1 minute</option>
-          <option value="3">3 minutes</option>
-          <option value="5">5 minutes</option>
-          <option value="10" selected>10 minutes</option>
-          <option value="15">15 minutes</option>
-        </select>
-      </div>
-
-      <button id="createChallengeBtn" class="challengeCreateBtn">🔗 Create Challenge Link</button>
-
-      <div class="challengeFeatureRow">
-        <div class="challengeFeature">
-          <span class="challengeFeatureIcon">🛡️</span>
-          <b>Secure link</b>
-          <p>Only your friend with the link can join</p>
-        </div>
-        <div class="challengeFeature">
-          <span class="challengeFeatureIcon">⏳</span>
-          <b>Fair game</b>
-          <p>Same time control for both players</p>
-        </div>
-        <div class="challengeFeature">
-          <span class="challengeFeatureIcon">👥</span>
-          <b>Easy to share</b>
-          <p>Share via any app you prefer</p>
-        </div>
-      </div>
+        <button id="acceptChallengeBtn" class="challengeAcceptBtnGreen">✅ Accept Challenge</button>
+        <button id="declineChallengeBtn" class="challengeAcceptBtnRed">❌ Decline</button>
+        <p class="challengeInfoNote">ℹ️ You can decline if you're not ready.</p>
     </div>
 
-    <div id="challengeLinkArea" class="challengeCard" style="display:none;">
-      <div class="challengeFieldLabel"><span class="challengeFieldIcon">🔗</span> Share this link with your friend</div>
-      <div class="challengeLinkRow">
-        <span class="challengeLinkIcon">🔗</span>
-        <input id="challengeLinkInput" type="text" readonly>
-      </div>
-      <button id="copyChallengeLink" class="challengeCopyBtn">📋 Copy Link</button>
-      <button id="shareChallengeLink" class="challengeWhatsappBtn">💬 Share via WhatsApp</button>
-      <p class="challengeInfoNote">ℹ️ Your friend can open this link to join the challenge.</p>
-    </div>
-
-  </div>
-</div>
-<script>
-// Toggles the White/Black color pills on the redesigned Challenge a
-// Friend screen and keeps the hidden #challengeColor select in sync
-// (script.js's createChallengeBtn handler reads .value from it, so
-// this is purely a visual layer on top of unchanged logic).
-function selectChallengeColor(color){
-  var select = document.getElementById("challengeColor");
-  if(select) select.value = color;
-  var whitePill = document.getElementById("challengeColorWhitePill");
-  var blackPill = document.getElementById("challengeColorBlackPill");
-  if(whitePill) whitePill.classList.toggle("active", color === "white");
-  if(blackPill) blackPill.classList.toggle("active", color === "black");
-}
-</script>
-
-<!-- ========== Challenge accept screen (REDESIGNED) ========== -->
-<div id="challengeAcceptScreen" style="display:none; position:fixed; inset:0; z-index:150; flex-direction:column; align-items:center; justify-content:center; background:#0b0d13; color:#fff; padding:20px; overflow-y:auto;">
-  <div class="challengeAcceptGlowWrap">
-    <div class="challengeAcceptGlow"></div>
-    <div class="challengeAcceptIconCircle">
-      <span class="challengeAcceptSparkle challengeAcceptSparkleLeft">✨</span>
-      <span class="challengeAcceptKnight">♞</span>
-      <span class="challengeAcceptBolt">⚡</span>
-      <span class="challengeAcceptSparkle challengeAcceptSparkleRight">✨</span>
-    </div>
-  </div>
-  <h2 class="challengeAcceptHeading">You've been <span class="challengeAcceptHeadingGreen">challenged!</span></h2>
-
-  <div class="challengeAcceptCard">
-    <div class="challengeAcceptWhoRow">
-      <div class="challengeAcceptAvatar" id="challengeAcceptAvatar">🏳️</div>
-      <div>
-        <div class="challengeAcceptName" id="challengeAcceptName">Player</div>
-        <div class="challengeAcceptSub">has challenged you to a game</div>
-      </div>
-    </div>
-    <div class="challengeAcceptDivider"></div>
-    <div class="challengeAcceptStatsRow">
-      <div class="challengeAcceptStat">
-        <span class="challengeAcceptStatIcon" id="challengeAcceptColorIcon">♙</span>
-        <div>
-          <div class="challengeAcceptStatLabel">YOU PLAY</div>
-          <div class="challengeAcceptStatValue" id="challengeAcceptColorValue">White</div>
+    <!-- ========== SETTINGS SCREEN ========== -->
+    <div id="settingsScreen">
+        <div class="settings-header">
+            <button onclick="closeSettingsScreen()">←</button>
+            <h2>Settings</h2>
         </div>
-      </div>
-      <div class="challengeAcceptStat">
-        <span class="challengeAcceptStatIcon">🕐</span>
-        <div>
-          <div class="challengeAcceptStatLabel">TIME CONTROL</div>
-          <div class="challengeAcceptStatValue" id="challengeAcceptTimeValue">5 min</div>
+        <div class="settings-body">
+
+            <!-- APP ACCENT COLOUR -->
+            <div class="settings-card">
+                <h3>App Accent Colour</h3>
+                <div class="color-options" id="accentColorPicker">
+                    <button class="color-btn active" style="background:#FF7A1A;" data-accent="#FF7A1A" onclick="setAccentColor('#FF7A1A')"></button>
+                    <button class="color-btn" style="background:#22c55e;" data-accent="#22c55e" onclick="setAccentColor('#22c55e')"></button>
+                    <button class="color-btn" style="background:#3b82f6;" data-accent="#3b82f6" onclick="setAccentColor('#3b82f6')"></button>
+                    <button class="color-btn" style="background:#a855f7;" data-accent="#a855f7" onclick="setAccentColor('#a855f7')"></button>
+                    <button class="color-btn" style="background:#e5484d;" data-accent="#e5484d" onclick="setAccentColor('#e5484d')"></button>
+                </div>
+            </div>
+
+            <!-- BOARD COLOURS -->
+            <div class="settings-card">
+                <h3>Board Colours</h3>
+                <div class="board-presets" id="boardColorPicker"></div>
+            </div>
+
+            <!-- GAMEPLAY -->
+            <div class="settings-card">
+                <h3>Gameplay</h3>
+                <div class="setting-row">
+                    <span class="setting-label">Last-move highlight</span>
+                    <label class="toggle"><input type="checkbox" id="settingLastMove" checked onchange="saveSetting('lastMoveHighlight', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Auto-promote to Queen</span>
+                    <label class="toggle"><input type="checkbox" id="settingAutoPromote" onchange="saveSetting('autoPromote', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Confirm before resigning</span>
+                    <label class="toggle"><input type="checkbox" id="settingConfirmResign" checked onchange="saveSetting('confirmResign', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Board flip (offline games)</span>
+                    <label class="toggle"><input type="checkbox" id="settingBoardFlip" onchange="saveSetting('boardFlip', this.checked)"><span class="slider"></span></label>
+                </div>
+            </div>
+
+            <!-- SOUNDS -->
+            <div class="settings-card">
+                <h3>Sounds</h3>
+                <div class="setting-row">
+                    <span class="setting-label">Piece move sound</span>
+                    <label class="toggle"><input type="checkbox" id="settingMoveSound" checked onchange="saveSetting('moveSound', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Check sound</span>
+                    <label class="toggle"><input type="checkbox" id="settingCheckSound" checked onchange="saveSetting('checkSound', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Checkmate sound</span>
+                    <label class="toggle"><input type="checkbox" id="settingCheckmateSound" checked onchange="saveSetting('checkmateSound', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Background music</span>
+                    <label class="toggle"><input type="checkbox" id="settingBGM" onchange="saveSetting('bgm', this.checked)"><span class="slider"></span></label>
+                </div>
+            </div>
+
+            <!-- LANGUAGE -->
+            <div class="settings-card">
+                <h3>Language</h3>
+                <select id="settingLanguage" onchange="saveSetting('language', this.value)">
+                    <option value="en">English</option>
+                    <option value="fr">Français (French)</option>
+                    <option value="es">Español (Spanish)</option>
+                    <option value="pt">Português (Portuguese)</option>
+                </select>
+            </div>
+
+            <!-- RESET -->
+            <button class="btn-reset" onclick="resetAllSettings()">Reset to Defaults</button>
         </div>
-      </div>
     </div>
-  </div>
 
-  <button id="acceptChallengeBtn" class="challengeAcceptBtnGreen">✅ Accept Challenge</button>
-  <button id="declineChallengeBtn" class="challengeAcceptBtnRed">❌ Decline</button>
-  <p class="challengeInfoNote">ℹ️ You can decline if you're not ready.</p>
-</div>
-
-    <!-- Firebase -->
+    <!-- Firebase & Scripts -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -1510,6 +1523,166 @@ function selectChallengeColor(color){
     <script src="achievements.js"></script>
     <script src="clone.js"></script>
     <script src="config.js"></script>
+
+    <!-- Settings JavaScript -->
+    <script>
+        const boardPresets = [
+            { name: "Classic", light: "#ffffff", dark: "#e2872e" },
+            { name: "Wood", light: "#f0d9b5", dark: "#b58863" },
+            { name: "Blue", light: "#dee3e6", dark: "#8ca0ad" },
+            { name: "Green", light: "#eeeed2", dark: "#769656" },
+            { name: "Purple", light: "#e0d7ec", dark: "#8877a3" },
+            { name: "Red", light: "#f5e6e6", dark: "#b36868" },
+            { name: "Gray", light: "#dcdcdc", dark: "#9e9e9e" },
+            { name: "Dark", light: "#2c2c2c", dark: "#1a1a1a" },
+            { name: "Ice", light: "#cce5ff", dark: "#7aa9d4" },
+            { name: "Sand", light: "#fce4c8", dark: "#c49a6c" },
+            { name: "Midnight", light: "#3b3b58", dark: "#1e1e2f" },
+            { name: "Coral", light: "#ffe0d3", dark: "#e68a7c" }
+        ];
+
+        const defaultSettings = {
+            accent: '#FF7A1A',
+            boardPreset: 0,
+            lastMoveHighlight: true,
+            autoPromote: false,
+            confirmResign: true,
+            boardFlip: false,
+            moveSound: true,
+            checkSound: true,
+            checkmateSound: true,
+            bgm: false,
+            language: 'en'
+        };
+
+        function loadSettings(){
+            try { return JSON.parse(localStorage.getItem('appSettings')) || {}; } catch(e) { return {}; }
+        }
+
+        function saveSetting(key, value){
+            const settings = loadSettings();
+            settings[key] = value;
+            localStorage.setItem('appSettings', JSON.stringify(settings));
+            applySetting(key, value);
+        }
+
+        function applySetting(key, value){
+            const root = document.documentElement;
+            switch(key){
+                case 'accent':
+                    root.style.setProperty('--themeOrange', value);
+                    document.querySelectorAll('.color-btn.active').forEach(b => b.classList.remove('active'));
+                    const btn = document.querySelector(`.color-btn[data-accent="${value}"]`);
+                    if(btn) btn.classList.add('active');
+                    break;
+                case 'boardPreset':
+                    const preset = boardPresets[value];
+                    if(preset){
+                        root.style.setProperty('--board-light', preset.light);
+                        root.style.setProperty('--board-dark', preset.dark);
+                        document.querySelectorAll('.board-preset.active').forEach(b => b.classList.remove('active'));
+                        const presetBtn = document.querySelector(`.board-preset[data-index="${value}"]`);
+                        if(presetBtn) presetBtn.classList.add('active');
+                    }
+                    break;
+                case 'lastMoveHighlight':
+                    root.style.setProperty('--last-move-glow', value ? '#ffc857' : 'transparent');
+                    document.getElementById('settingLastMove').checked = value;
+                    break;
+                case 'autoPromote':
+                    document.getElementById('settingAutoPromote').checked = value;
+                    break;
+                case 'confirmResign':
+                    document.getElementById('settingConfirmResign').checked = value;
+                    break;
+                case 'boardFlip':
+                    document.getElementById('settingBoardFlip').checked = value;
+                    break;
+                case 'moveSound':
+                    document.getElementById('settingMoveSound').checked = value;
+                    break;
+                case 'checkSound':
+                    document.getElementById('settingCheckSound').checked = value;
+                    break;
+                case 'checkmateSound':
+                    document.getElementById('settingCheckmateSound').checked = value;
+                    break;
+                case 'bgm':
+                    document.getElementById('settingBGM').checked = value;
+                    break;
+                case 'language':
+                    document.getElementById('settingLanguage').value = value;
+                    break;
+            }
+        }
+
+        function applyAllSettings(){
+            const settings = loadSettings();
+            for(let key in defaultSettings){
+                if(settings[key] === undefined) settings[key] = defaultSettings[key];
+            }
+            for(let key in settings){
+                applySetting(key, settings[key]);
+            }
+        }
+
+        function resetAllSettings(){
+            localStorage.removeItem('appSettings');
+            applyAllSettings();
+        }
+
+        function renderBoardPresets(){
+            const container = document.getElementById('boardColorPicker');
+            container.innerHTML = '';
+            boardPresets.forEach((preset, index) => {
+                const div = document.createElement('div');
+                div.className = 'board-preset';
+                div.dataset.index = index;
+                div.innerHTML = `
+                    <div class="mini-board">
+                        <div style="background:${preset.light}"></div>
+                        <div style="background:${preset.dark}"></div>
+                        <div style="background:${preset.dark}"></div>
+                        <div style="background:${preset.light}"></div>
+                    </div>
+                    <div class="preset-name">${preset.name}</div>
+                `;
+                div.addEventListener('click', () => saveSetting('boardPreset', index));
+                container.appendChild(div);
+            });
+        }
+
+        function setAccentColor(color){
+            saveSetting('accent', color);
+        }
+
+        function openSettingsScreen(){
+            document.getElementById('appShell').style.display = 'none';
+            document.getElementById('settingsScreen').style.display = 'block';
+            history.pushState({ screen: 'settings' }, '', '#settings');
+        }
+
+        function closeSettingsScreen(){
+            document.getElementById('settingsScreen').style.display = 'none';
+            document.getElementById('appShell').style.display = 'flex';
+            history.back();
+        }
+
+        document.getElementById('settingsGear')?.addEventListener('click', openSettingsScreen);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderBoardPresets();
+            applyAllSettings();
+        });
+
+        window.addEventListener("popstate", function(event){
+            const state = event.state;
+            if(state && state.screen === "settings"){
+                document.getElementById("appShell").style.display = "none";
+                document.getElementById("settingsScreen").style.display = "block";
+            }
+        });
+    </script>
 
     <!-- Award reveal overlay -->
     <div id="awardRevealOverlay" style="display:none; position:fixed; inset:0; z-index:500; background:rgba(5,6,10,0.94); flex-direction:column; align-items:center; justify-content:center; text-align:center;">
