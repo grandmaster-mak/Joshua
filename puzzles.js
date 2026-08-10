@@ -247,6 +247,23 @@ function createPuzzleBoard(){
                 square.appendChild(img);
             }
 
+            // FIX: the puzzle board never had the a-h / 1-8 labels the
+            // main game board has, making it hard to locate the square
+            // the coach is talking about. Same labeling logic as
+            // createBoard() in script.js.
+            if(r === 7){
+                const file = document.createElement("span");
+                file.className = "fileLabel";
+                file.textContent = "abcdefgh"[c];
+                square.appendChild(file);
+            }
+            if(c === 0){
+                const rank = document.createElement("span");
+                rank.className = "rankLabel";
+                rank.textContent = 8 - r;
+                square.appendChild(rank);
+            }
+
             square.onclick = (function(row, col){ return function(){ clickPuzzleSquare(row, col); }; })(r, c);
 
             boardEl.appendChild(square);
