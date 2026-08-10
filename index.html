@@ -7,7 +7,98 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Challenge a Friend — long horizontal green bar */
+        /* ========== DASHBOARD-INSPIRED DESIGN (HOME SCREEN ONLY) ========== */
+        body {
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: #333;
+        }
+
+        #appShell {
+            background: #f5f7fa;
+        }
+
+        /* ---- Home Header (sticky, orange, full width) ---- */
+        .home-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 20;
+            background: #ff6b00;
+            color: #fff;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            margin: 0;
+        }
+        .home-header .header-text {
+            flex: 1;
+        }
+        .home-header .greeting-line {
+            font-size: 0.95em;
+            margin: 0;
+            color: #fff;
+            opacity: 0.9;
+        }
+        .home-header h1 {
+            font-size: 1.4em;
+            margin: 4px 0 6px;
+            color: #fff;
+        }
+        .home-header .stars-line {
+            font-size: 0.9em;
+            margin: 0;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .home-header .profile-box {
+            position: relative;
+            flex-shrink: 0;
+            margin-left: 16px;
+        }
+        .home-header .profile-box img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            object-fit: cover;
+        }
+        .home-header .online-dot {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            background: #00c853;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* Remove any default padding on the home screen so the header sticks edge-to-edge */
+        #homeScreen {
+            padding-top: 0 !important;
+            margin: 0;
+            width: 100%;
+            background: #f5f7fa;
+        }
+
+        /* Stats / sections in white cards for consistency */
+        .stats-section {
+            background: #fff;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        /* ========== CHALLENGE STYLES (unchanged) ========== */
         .challengeFriendBar {
             display: flex;
             align-items: center;
@@ -29,29 +120,6 @@
         .challengeFriendBarText { flex: 1; text-align: left; }
         .challengeFriendBarArrow { font-size: 16px; opacity: 0.85; }
 
-        /* Home header — pinned to the top, full width, original dark theme */
-        .home-header {
-            position: sticky;
-            top: 0;
-            left: 0;
-            width: 100%;
-            box-sizing: border-box;
-            z-index: 20;
-            background: linear-gradient(135deg, #1c1f2a 0%, #15181f 100%);
-            padding: 16px 20px 12px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-        }
-        #homeScreen {
-            padding-top: 0 !important;
-            margin: 0;
-            width: 100%;
-        }
-
-        /* ===== Challenge a Friend — Create screen (redesigned) ===== */
         .challengeHeroWrap { position: relative; padding: 60px 20px 20px; }
         .challengeBackCircle {
             position: absolute; top: 20px; left: 20px;
@@ -117,7 +185,6 @@
         .challengeWhatsappBtn { width: 100%; padding: 13px; border: none; border-radius: 12px; background: #25D366; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
         .challengeInfoNote { font-size: 12px; color: #8a8f9c; text-align: center; margin: 14px 0 0; }
 
-        /* ===== Accept Challenge screen (redesigned) ===== */
         .challengeAcceptGlowWrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
         .challengeAcceptGlow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%); filter: blur(6px); }
         .challengeAcceptIconCircle { position: relative; width: 110px; height: 110px; border-radius: 50%; background: #151822; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(139,92,246,0.25); }
@@ -178,6 +245,7 @@
         <!-- HOME SCREEN -->
         <div id="homeScreen" class="screen">
 
+            <!-- Orange Sticky Header -->
             <div class="home-header">
                 <div class="header-text">
                     <p class="greeting-line" id="greetingLine">Good morning ☀️</p>
@@ -190,6 +258,7 @@
                 </div>
             </div>
 
+            <!-- Badge row -->
             <div class="badge-row homeBadgeRowLight">
                 <div class="homeBadgeCard" onclick="switchScreen('account')">
                     <span class="homeBadgeIcon">♟</span>
@@ -208,6 +277,7 @@
                 </div>
             </div>
 
+            <!-- Daily Challenge -->
             <div class="daily-challenge">
                 <span class="dc-icon">🎯</span>
                 <div class="dc-body">
@@ -219,6 +289,7 @@
                 <span class="dc-gift">🎁</span>
             </div>
 
+            <!-- Quick Actions -->
             <div class="quick-actions">
                 <div class="action-card play-now homeActionPhoto homeActionPieces" onclick="openPlaySetup('human')">
                     <span class="material-icons homeActionIconChip">sports_esports</span>
@@ -240,6 +311,7 @@
                 </div>
             </div>
 
+            <!-- Stats -->
             <div class="stats-section">
                 <div class="stats-header">
                     <h2>Your Stats</h2>
@@ -273,6 +345,7 @@
                 </div>
             </div>
 
+            <!-- Recent Games -->
             <div class="stats-section">
                 <div class="stats-header">
                     <h2>Recent Games</h2>
@@ -283,6 +356,7 @@
                 </div>
             </div>
 
+            <!-- Quick Links -->
             <div class="quicklinks-scroll">
                 <div class="quicklink-card" onclick="openTournaments()">
                     <div class="quicklink-icon">🏆</div>
@@ -321,6 +395,7 @@
                 </div>
             </div>
 
+            <!-- Online Friends -->
             <div class="stats-section">
                 <div class="stats-header">
                     <h2>Online Friends (<span id="onlineFriendsCount">0</span>)</h2>
@@ -353,15 +428,11 @@
             <div id="friendsList" style="max-height:740px; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-right:2px;">
                 <p class="sub">Log in to see your friends.</p>
             </div>
-
-            <!-- Challenge a Friend — moved here from Home, sits right
-                 under the (internally scrolling) friends list. -->
             <button class="challengeFriendBar" onclick="openChallengeScreen()" style="margin:16px 20px;">
                 <span class="challengeFriendBarIcon">⚔️</span>
                 <span class="challengeFriendBarText">Challenge a Friend</span>
                 <span class="challengeFriendBarArrow">→</span>
             </button>
-
             <div class="addFriendsPromoCard">
                 <span class="addFriendsPromoIcon">👤</span>
                 <div class="addFriendsPromoText">
@@ -1025,11 +1096,6 @@
     </div>
 
     <!-- ========== PUZZLE MAP SCREEN ========== -->
-    <!-- Kingdom-by-kingdom puzzle path. Filled in dynamically by
-         openPuzzleMap()/renderPuzzleMap() in puzzle.js. This is the
-         screen "Puzzles" now opens (via the openDailyPuzzle() alias) —
-         tapping a tile or the Play button on a kingdom card drops into
-         the #puzzleScreen above to actually solve it. -->
 <div id="puzzleMapScreen" class="fullScreenPanel" style="background:#f2f0ee; flex-direction:column; height:100dvh; overflow:hidden;">
     <div class="accountOrangeHeader" style="position:sticky; top:0; z-index:20; flex-shrink:0; padding:12px 20px 13px; display:flex; align-items:center; gap:10px;">
     <button onclick="closePuzzleMap()" style="width:auto; margin:0; background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:2px 0; line-height:1;">←</button>
