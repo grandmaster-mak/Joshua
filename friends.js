@@ -543,3 +543,162 @@ function loadOnlineFriendsStrip(friendUids){
     });
 
 }
+// ============================================================
+// Challenge a Friend — redesigned screen wiring
+// (Powers the #challengeScreen / #challengeAcceptScreen markup —
+// this HTML had the screens but no JS behind them yet.)
+// ============================================================
+
+function openChallengeScreen(){
+    document.getElementById("challengeLinkArea").style.display = "none";
+    document.getElementById("challengeScreen").style.display = "flex";
+}
+
+function closeChallengeScreen(){
+    document.getElementById("challengeScreen").style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const backBtn = document.getElementById("challengeBackBtn");
+    if(backBtn) backBtn.addEventListener("click", closeChallengeScreen);
+
+    const createBtn = document.getElementById("createChallengeBtn");
+    if(createBtn) createBtn.addEventListener("click", function(){
+
+        if(!db){
+            alert("Could not connect — check your internet connection.");
+            return;
+        }
+
+        const colorChoice = document.getElementById("challengeColor").value;
+        const minutes = Number(document.getElementById("challengeTime").value);
+        const seconds = minutes * 60;
+
+        const code = generateRoomCode();
+
+        myColor = colorChoice;
+        currentRoomCode = code;
+        selectedTime = seconds;
+
+        db.ref("rooms/" + code).set({
+            status: "waiting",
+            createdAt: Date.now(),
+            timeControl: seconds
+        });
+
+        db.ref("rooms/" + code + "/players/" + colorChoice).set({
+            username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
+            flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
+            rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
+            photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
+            uid: currentUser ? currentUser.uid : null
+        });
+
+        const statusRef = db.ref("rooms/" + code + "/status");
+        statusRef.on("value", function(snapshot){
+            if(snapshot.val() === "playing"){
+                statusRef.off();
+                closeChallengeScreen();
+                startOnlineGame(code);
+            }
+        });
+
+        const link = location.origin + location.pathname + "#challenge=" + code;
+        document.getElementById("challengeLinkInput").value = link;
+        document.getElementById("challengeLinkArea").style.display = "block";
+
+    });
+
+    const copyBtn = document.getElementById("copyChallengeLink");
+    if(copyBtn) copyBtn.addEventListener("click", function(){
+        const input = document.getElementById("challengeLinkInput");
+        input.select();
+        if(navigator.clipboard && navigator.clipboard.writeText){
+            navigator.clipboard.writeText(input.value).then(function(){
+                showInfoPopup("🔗 Link Copied", "Challenge link copied — paste it anywhere to invite someone.");
+            });
+        }
+    });
+
+    const waBtn = document.getElementById("shareChallengeLink");
+    if(waBtn) waBtn.addEventListener("click", function(){
+        const link = document.getElementById("challengeLinkInput").value;
+        const name = (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Someone";
+        const text = encodeURIComponent(name + " challenged you to a game of chess! " + link);
+        window.open("https://wa.me/?text=" + text, "_blank");
+    });
+
+    // ---- Accepting a challenge link ----
+
+    let pendingChallengeCode = null;
+    let pendingChallengeColor = null;
+
+    const acceptBtn = document.getElementById("acceptChallengeBtn");
+    if(acceptBtn) acceptBtn.addEventListener("click", function(){
+
+        document.getElementById("challengeAcceptScreen").style.display = "none";
+        if(!pendingChallengeCode || !pendingChallengeColor) return;
+
+        myColor = pendingChallengeColor;
+        currentRoomCode = pendingChallengeCode;
+
+        db.ref("rooms/" + pendingChallengeCode + "/players/" + pendingChallengeColor).set({
+            username: (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "Guest",
+            flag: (typeof currentUserFlag !== "undefined" && currentUserFlag) ? currentUserFlag : "🏳️",
+            rating: (typeof currentUserRating !== "undefined" && currentUserRating) ? currentUserRating : 100,
+            photo: (typeof currentUserPhotoURL !== "undefined" && currentUserPhotoURL) ? currentUserPhotoURL : null,
+            uid: currentUser ? currentUser.uid : null
+        });
+
+        db.ref("rooms/" + pendingChallengeCode + "/status").set("playing");
+        startOnlineGame(pendingChallengeCode);
+
+    });
+
+    const declineBtn = document.getElementById("declineChallengeBtn");
+    if(declineBtn) declineBtn.addEventListener("click", function(){
+        document.getElementById("challengeAcceptScreen").style.display = "none";
+        pendingChallengeCode = null;
+        pendingChallengeColor = null;
+    });
+
+    // Checks the URL for #challenge=CODE on page load (this is what
+    // fires when someone opens a shared challenge link) and shows the
+    // Accept/Decline screen with the challenger's real info.
+    const hashMatch = (location.hash || "").match(/challenge=([A-Za-z0-9]+)/);
+    if(hashMatch && db){
+
+        const code = hashMatch[1].toUpperCase();
+        history.replaceState({ screen: null }, "", location.pathname);
+
+        db.ref("rooms/" + code).once("value").then(function(snapshot){
+
+            if(!snapshot.exists()) return;
+            const room = snapshot.val();
+            if(room.status !== "waiting") return;
+
+            const players = room.players || {};
+            const takenColor = players.white ? "white" : (players.black ? "black" : null);
+            if(!takenColor) return;
+
+            const openColor = takenColor === "white" ? "black" : "white";
+            const challenger = players[takenColor];
+
+            pendingChallengeCode = code;
+            pendingChallengeColor = openColor;
+
+            document.getElementById("challengeAcceptAvatar").textContent = (challenger && challenger.flag) ? challenger.flag : "🏳️";
+            document.getElementById("challengeAcceptName").textContent = (challenger && challenger.username) ? challenger.username : "Someone";
+            document.getElementById("challengeAcceptColorIcon").textContent = openColor === "white" ? "♙" : "♟";
+            document.getElementById("challengeAcceptColorValue").textContent = openColor === "white" ? "White" : "Black";
+            document.getElementById("challengeAcceptTimeValue").textContent =
+                (room.timeControl === -1) ? "Unlimited" : (Math.round((room.timeControl || 600) / 60) + " min");
+
+            document.getElementById("challengeAcceptScreen").style.display = "flex";
+
+        });
+
+    }
+
+});
