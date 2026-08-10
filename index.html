@@ -309,15 +309,6 @@
                 </div>
             </div>
 
-            <!-- Challenge a Friend — long horizontal green bar (moved to
-                 sit right under the Tournaments/Puzzles/Leaderboards/
-                 Daily Rewards/Coach/Lessons/Analysis row, per request) -->
-            <button class="challengeFriendBar" onclick="openChallengeScreen()">
-                <span class="challengeFriendBarIcon">⚔️</span>
-                <span class="challengeFriendBarText">Challenge a Friend</span>
-                <span class="challengeFriendBarArrow">→</span>
-            </button>
-
             <div class="stats-section">
                 <div class="stats-header">
                     <h2>Online Friends (<span id="onlineFriendsCount">0</span>)</h2>
@@ -347,9 +338,18 @@
                 <span class="friendsSectionTitleLight">Your Friends</span>
                 <span class="friendsSortPillLight">Recently Active ▾</span>
             </div>
-            <div id="friendsList">
+            <div id="friendsList" style="max-height:370px; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-right:2px;">
                 <p class="sub">Log in to see your friends.</p>
             </div>
+
+            <!-- Challenge a Friend — moved here from Home, sits right
+                 under the (internally scrolling) friends list. -->
+            <button class="challengeFriendBar" onclick="openChallengeScreen()" style="margin:16px 20px;">
+                <span class="challengeFriendBarIcon">⚔️</span>
+                <span class="challengeFriendBarText">Challenge a Friend</span>
+                <span class="challengeFriendBarArrow">→</span>
+            </button>
+
             <div class="addFriendsPromoCard">
                 <span class="addFriendsPromoIcon">👤</span>
                 <div class="addFriendsPromoText">
