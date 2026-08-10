@@ -7,7 +7,19 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ========== MERGED DASHBOARD DESIGN + SETTINGS SCREEN ========== */
+        /* ========== CORRECTED DASHBOARD DESIGN + SETTINGS ========== */
+
+        /* FULL light background (override dark external CSS) */
+        body {
+            background: #f5f7fa !important;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: #333;
+        }
+        #appShell {
+            background: #f5f7fa !important;
+        }
 
         /* --- global accent and board colour variables (defaults) --- */
         :root {
@@ -24,7 +36,80 @@
             box-shadow: inset 0 0 0 4px var(--last-move-glow) !important;
         }
 
-        /* ---------- Settings Screen ---------- */
+        /* ---- Orange home header (sticky, full width) ---- */
+        .home-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 20;
+            background: #ff6b00;
+            color: #fff;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            margin: 0;
+        }
+        .home-header .header-text { flex: 1; }
+        .home-header .greeting-line { font-size: 0.95em; margin: 0; color: #fff; opacity: 0.9; }
+        .home-header h1 { font-size: 1.4em; margin: 4px 0 6px; color: #fff; }
+        .home-header .stars-line { font-size: 0.9em; margin: 0; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .home-header .profile-box {
+            position: relative;
+            flex-shrink: 0;
+            margin-left: 16px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #fff;
+        }
+        .home-header .profile-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            display: block;
+        }
+        .home-header .online-dot {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            background: #00c853;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        #homeScreen {
+            padding-top: 0 !important;
+            margin: 0;
+            width: 100%;
+            background: #f5f7fa;
+        }
+
+        /* Stats / sections in white cards */
+        .stats-section {
+            background: #fff;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        /* ===== Player info boxes (light ash) ===== */
+        #topPlayerBox, #bottomPlayerBox {
+            background: #d5d5d5 !important;
+            color: #1a1a1a !important;
+            border: 1px solid #bbb !important;
+        }
+        #topPlayerBox p, #bottomPlayerBox p { color: #1a1a1a; }
+        #topTimer, #bottomTimer { color: #1a1a1a; }
+
+        /* ---------- Settings screen (unchanged) ---------- */
         #settingsScreen {
             display: none;
             position: fixed;
@@ -166,7 +251,6 @@
         .board-preset .mini-board div:nth-child(4) { background: var(--light); }
         .board-preset .preset-name { font-size: 11px; font-weight: 600; }
 
-        /* Dropdown */
         select {
             width: 100%;
             padding: 12px;
@@ -194,7 +278,7 @@
 
 <body>
 
-    <!-- Splash Screen (unchanged) -->
+    <!-- Splash Screen -->
     <div id="splashScreen">
         <div class="splashBoardPattern"></div>
         <div class="splashGlow"></div>
@@ -220,7 +304,7 @@
     <!-- App Shell -->
     <div id="appShell">
 
-        <!-- HOME SCREEN (redesigned header) -->
+        <!-- HOME SCREEN -->
         <div id="homeScreen" class="screen">
 
             <div class="home-header">
@@ -375,7 +459,7 @@
             </div>
         </div>
 
-        <!-- FRIENDS SCREEN (unchanged) -->
+        <!-- FRIENDS SCREEN -->
         <div id="friendsScreen" class="screen friendsScreenLight" style="display:none;">
             <div class="friendsOrangeHeader">
                 <div class="friendsHeaderArt">♟♞</div>
@@ -413,7 +497,7 @@
             </div>
         </div>
 
-        <!-- ACCOUNT SCREEN (unchanged) -->
+        <!-- ACCOUNT SCREEN -->
         <div id="accountScreen" class="screen accountScreenLight" style="display:none;">
             <div class="accountOrangeHeader">
                 <div class="accountHeaderArt">♔</div>
@@ -577,71 +661,97 @@
             </div>
         </div>
 
-        <!-- KINGDOM SCREEN (unchanged) -->
-        <div id="kingdomScreen" class="screen" style="display:none; flex-direction:column; flex:1; padding:0;">
-            <div class="accountOrangeHeader" style="padding:24px 20px 64px;">
-                <div class="accountHeaderArt" style="font-size:120px;">🏰</div>
-                <h2 class="accountHeaderTitleLight" style="font-size:28px;">My Kingdom</h2>
-                <p class="friendsHeaderSubLight" style="color:rgba(255,255,255,0.85); font-size:14px; margin-top:4px;">Rise through the ranks with consecutive wins</p>
+        <!-- ========== KINGDOM SCREEN (WITH IMAGES) ========== -->
+<div id="kingdomScreen" class="screen" style="display:none; flex-direction:column; flex:1; padding:0;">
+
+    <!-- Orange Header -->
+    <div class="accountOrangeHeader" style="padding:24px 20px 64px;">
+        <div class="accountHeaderArt" style="font-size:120px;">🏰</div>
+        <h2 class="accountHeaderTitleLight" style="font-size:28px;">My Kingdom</h2>
+        <p class="friendsHeaderSubLight" style="color:rgba(255,255,255,0.85); font-size:14px; margin-top:4px;">Rise through the ranks with consecutive wins</p>
+    </div>
+
+    <!-- White Body -->
+    <div class="accountBodyLight" style="background:#f2f0ee; border-radius:28px 28px 0 0; margin-top:-40px; padding:0 20px 24px;">
+
+        <!-- Kingdom Image Card (with background image) -->
+        <div style="margin-top:-56px; position:relative;">
+            <div style="position:relative; border-radius:20px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+                <!-- Kingdom Background Image -->
+                <div id="kingdomImageContainer" style="width:100%; height:200px; background:#fdecd2; position:relative; transition:opacity 0.6s ease;">
+                    <img id="kingdomBackgroundImg" src="" alt="Kingdom" style="width:100%; height:100%; object-fit:cover; display:block;">
+                    <!-- Dark gradient overlay for text readability -->
+                    <div style="position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(to top, rgba(0,0,0,0.5), transparent);"></div>
+                    
+                    <!-- Player Avatar with glow -->
+                    <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%);">
+                        <div style="position:relative; width:70px; height:70px;">
+                            <!-- Glow ring -->
+                            <div style="position:absolute; inset:-10px; border-radius:50%; background:rgba(255,215,0,0.3); filter:blur(10px); animation:kingdomGlowPulse 2.4s ease-in-out infinite;"></div>
+                            <!-- Avatar -->
+                            <img id="kingdomRulerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" style="width:70px; height:70px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 20px rgba(255,215,0,0.4); object-fit:cover;">
+                            <!-- Crown badge -->
+                            <div style="position:absolute; top:-4px; right:-4px; background:#FF7A1A; border-radius:50%; padding:4px 6px; font-size:18px; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.2);" id="kingdomRulerCrown">🏕️</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kingdom name badge (top right) -->
+                <div style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.95); padding:6px 14px; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                    <span style="font-weight:700; color:#1a1a1a; font-size:14px;" id="kingdomNameBadge">🏕️ Village</span>
+                </div>
             </div>
-            <div class="accountBodyLight" style="background:#f2f0ee; border-radius:28px 28px 0 0; margin-top:-40px; padding:0 20px 24px;">
-                <div style="margin-top:-56px; position:relative;">
-                    <div style="position:relative; border-radius:20px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.15);">
-                        <div id="kingdomImageContainer" style="width:100%; height:200px; background:#fdecd2; position:relative; transition:opacity 0.6s ease;">
-                            <img id="kingdomBackgroundImg" src="" alt="Kingdom" style="width:100%; height:100%; object-fit:cover; display:block;">
-                            <div style="position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(to top, rgba(0,0,0,0.5), transparent);"></div>
-                            <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%);">
-                                <div style="position:relative; width:70px; height:70px;">
-                                    <div style="position:absolute; inset:-10px; border-radius:50%; background:rgba(255,215,0,0.3); filter:blur(10px); animation:kingdomGlowPulse 2.4s ease-in-out infinite;"></div>
-                                    <img id="kingdomRulerAvatar" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E" style="width:70px; height:70px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 20px rgba(255,215,0,0.4); object-fit:cover;">
-                                    <div style="position:absolute; top:-4px; right:-4px; background:#FF7A1A; border-radius:50%; padding:4px 6px; font-size:18px; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.2);" id="kingdomRulerCrown">🏕️</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.95); padding:6px 14px; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-                            <span style="font-weight:700; color:#1a1a1a; font-size:14px;" id="kingdomNameBadge">🏕️ Village</span>
-                        </div>
-                    </div>
-                    <h3 style="text-align:center; margin:12px 0 4px; font-size:18px; color:#1a1a1a;" id="kingdomRulerName">Player</h3>
-                    <p style="text-align:center; color:#8a8580; font-size:13px; margin-bottom:16px;">Ruler of <span style="color:#FF7A1A; font-weight:600;" id="kingdomRulerTitle">Village</span></p>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;">
-                    <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                        <div style="font-size:22px; margin-bottom:2px;">🏘️</div>
-                        <div style="font-weight:800; color:#FF7A1A; font-size:14px;" id="kingdomStatCurrent">Village</div>
-                        <div style="color:#8a8580; font-size:10px;">Current</div>
-                    </div>
-                    <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                        <div style="font-size:22px; margin-bottom:2px;">🔥</div>
-                        <div style="font-weight:800; color:#22c55e; font-size:14px;" id="kingdomStatStreak">0</div>
-                        <div style="color:#8a8580; font-size:10px;">Consecutive Wins</div>
-                    </div>
-                    <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                        <div style="font-size:22px; margin-bottom:2px;">🏆</div>
-                        <div style="font-weight:800; color:#e5484d; font-size:14px;" id="kingdomStatWinsNeeded">3</div>
-                        <div style="color:#8a8580; font-size:10px;">Wins Needed</div>
-                    </div>
-                </div>
-                <div style="background:#ffffff; border-radius:16px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span style="font-weight:700; color:#1a1a1a; font-size:14px;">Next: <span id="kingdomNextLabel" style="color:#FF7A1A;">🏘️ Town</span></span>
-                        <span style="font-weight:700; color:#8a8580; font-size:13px;" id="kingdomProgressText">0 / 3 wins</span>
-                    </div>
-                    <div style="height:8px; background:rgba(255,122,26,0.15); border-radius:6px; overflow:hidden;">
-                        <div id="kingdomProgressFill" style="height:100%; width:0%; background:linear-gradient(90deg, #FF7A1A, #ffb066); border-radius:6px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>
-                    </div>
-                </div>
-                <div style="background:#ffffff; border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:14px;">
-                    <div style="font-weight:700; color:#1a1a1a; font-size:15px; margin-bottom:12px;">Kingdom Journey</div>
-                    <div id="kingdomJourney" style="display:flex; gap:4px; overflow-x:auto; padding-bottom:4px; justify-content:space-between;"></div>
-                </div>
-                <div style="background:#ffffff; border-radius:16px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
-                    <p id="kingdomDescription" style="color:#8a8580; font-size:14px; text-align:center; font-style:italic; margin:0; line-height:1.5;">A modest settlement</p>
-                </div>
+            
+            <!-- Ruler name -->
+            <h3 style="text-align:center; margin:12px 0 4px; font-size:18px; color:#1a1a1a;" id="kingdomRulerName">Player</h3>
+            <p style="text-align:center; color:#8a8580; font-size:13px; margin-bottom:16px;">Ruler of <span style="color:#FF7A1A; font-weight:600;" id="kingdomRulerTitle">Village</span></p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;">
+            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                <div style="font-size:22px; margin-bottom:2px;">🏘️</div>
+                <div style="font-weight:800; color:#FF7A1A; font-size:14px;" id="kingdomStatCurrent">Village</div>
+                <div style="color:#8a8580; font-size:10px;">Current</div>
+            </div>
+            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                <div style="font-size:22px; margin-bottom:2px;">🔥</div>
+                <div style="font-weight:800; color:#22c55e; font-size:14px;" id="kingdomStatStreak">0</div>
+                <div style="color:#8a8580; font-size:10px;">Consecutive Wins</div>
+            </div>
+            <div style="background:#ffffff; border-radius:14px; padding:12px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+                <div style="font-size:22px; margin-bottom:2px;">🏆</div>
+                <div style="font-weight:800; color:#e5484d; font-size:14px;" id="kingdomStatWinsNeeded">3</div>
+                <div style="color:#8a8580; font-size:10px;">Wins Needed</div>
             </div>
         </div>
 
-        <!-- BOTTOM NAVIGATION (unchanged) -->
+        <!-- Progress Card -->
+        <div style="background:#ffffff; border-radius:16px; padding:16px 18px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:700; color:#1a1a1a; font-size:14px;">Next: <span id="kingdomNextLabel" style="color:#FF7A1A;">🏘️ Town</span></span>
+                <span style="font-weight:700; color:#8a8580; font-size:13px;" id="kingdomProgressText">0 / 3 wins</span>
+            </div>
+            <div style="height:8px; background:rgba(255,122,26,0.15); border-radius:6px; overflow:hidden;">
+                <div id="kingdomProgressFill" style="height:100%; width:0%; background:linear-gradient(90deg, #FF7A1A, #ffb066); border-radius:6px; transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>
+            </div>
+        </div>
+
+        <!-- Kingdom Journey -->
+        <div style="background:#ffffff; border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:14px;">
+            <div style="font-weight:700; color:#1a1a1a; font-size:15px; margin-bottom:12px;">Kingdom Journey</div>
+            <div id="kingdomJourney" style="display:flex; gap:4px; overflow-x:auto; padding-bottom:4px; justify-content:space-between;"></div>
+        </div>
+
+        <!-- Description -->
+        <div style="background:#ffffff; border-radius:16px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,0.04);">
+            <p id="kingdomDescription" style="color:#8a8580; font-size:14px; text-align:center; font-style:italic; margin:0; line-height:1.5;">A modest settlement</p>
+        </div>
+
+    </div>
+</div>
+
+        <!-- BOTTOM NAVIGATION -->
         <div id="bottomNav">
             <button class="navBtn active" data-screen="home" onclick="switchScreen('home')">
                 <span class="navIcon">🏠</span>
@@ -661,6 +771,7 @@
                 <span class="navLabel">Account</span>
             </button>
         </div>
+
     </div>
 
     <!-- GAME SCREEN (unchanged) -->
@@ -1038,25 +1149,26 @@
         </div>
     </div>
 
-    <div id="puzzleMapScreen" class="fullScreenPanel" style="background:#f2f0ee; flex-direction:column; height:100dvh; overflow:hidden;">
-        <div class="accountOrangeHeader" style="position:sticky; top:0; z-index:20; flex-shrink:0; padding:12px 20px 13px; display:flex; align-items:center; gap:10px;">
-            <button onclick="closePuzzleMap()" style="width:auto; margin:0; background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:2px 0; line-height:1;">←</button>
-            <div style="font-size:24px; line-height:1;">🧩</div>
-            <div style="flex:1; min-width:0;">
-                <h2 style="color:#fff; margin:0; font-size:19px; font-weight:800; line-height:1.15;">Puzzles</h2>
-                <p style="color:rgba(255,255,255,0.85); margin:1px 0 0; font-size:11px;">Solve puzzles. Improve. Conquer.</p>
-            </div>
-            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-                <div style="background:#fff; border-radius:10px; padding:4px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.15);">
-                    <div style="font-weight:800; color:#1a1a1a; font-size:10px;">🧩 <span id="puzzleMapTotalSolved">0</span>/<span id="puzzleMapTotalCount">160</span></div>
-                </div>
-                <button onclick="closePuzzleMap(); switchScreen('kingdom');" style="width:auto; margin:0; background:#fff; border:none; border-radius:10px; padding:4px 7px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,0.15); cursor:pointer;">👑</button>
-            </div>
-        </div>
-        <div class="fsBody" style="padding:16px; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;" id="puzzleMapBody">
-            <p class="sub">Loading...</p>
-        </div>
+    <!-- ========== PUZZLE MAP SCREEN ========== -->
+<div id="puzzleMapScreen" class="fullScreenPanel" style="background:#f2f0ee; flex-direction:column; height:100dvh; overflow:hidden;">
+    <div class="accountOrangeHeader" style="position:sticky; top:0; z-index:20; flex-shrink:0; padding:12px 20px 13px; display:flex; align-items:center; gap:10px;">
+    <button onclick="closePuzzleMap()" style="width:auto; margin:0; background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:2px 0; line-height:1;">←</button>
+    <div style="font-size:24px; line-height:1;">🧩</div>
+    <div style="flex:1; min-width:0;">
+        <h2 style="color:#fff; margin:0; font-size:19px; font-weight:800; line-height:1.15;">Puzzles</h2>
+        <p style="color:rgba(255,255,255,0.85); margin:1px 0 0; font-size:11px;">Solve puzzles. Improve. Conquer.</p>
     </div>
+    <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+        <div style="background:#fff; border-radius:10px; padding:4px 8px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.15);">
+            <div style="font-weight:800; color:#1a1a1a; font-size:10px;">🧩 <span id="puzzleMapTotalSolved">0</span>/<span id="puzzleMapTotalCount">160</span></div>
+        </div>
+        <button onclick="closePuzzleMap(); switchScreen('kingdom');" style="width:auto; margin:0; background:#fff; border:none; border-radius:10px; padding:4px 7px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,0.15); cursor:pointer;">👑</button>
+    </div>
+</div>
+    <div class="fsBody" style="padding:16px; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;" id="puzzleMapBody">
+        <p class="sub">Loading...</p>
+    </div>
+</div>
 
     <div id="lessonsScreen" class="fullScreenPanel">
         <div class="fsHeader">
@@ -1435,7 +1547,7 @@
                 </div>
             </div>
 
-            <!-- BOARD COLOURS -->
+            <!-- BOARD COLOURS (12 presets, NO "Dark") -->
             <div class="settings-card">
                 <h3>Board Colours</h3>
                 <div class="board-presets" id="boardColorPicker"></div>
@@ -1499,7 +1611,7 @@
         </div>
     </div>
 
-    <!-- Firebase & Scripts -->
+    <!-- Firebase & Scripts (unchanged) -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -1534,11 +1646,11 @@
             { name: "Purple", light: "#e0d7ec", dark: "#8877a3" },
             { name: "Red", light: "#f5e6e6", dark: "#b36868" },
             { name: "Gray", light: "#dcdcdc", dark: "#9e9e9e" },
-            { name: "Dark", light: "#2c2c2c", dark: "#1a1a1a" },
             { name: "Ice", light: "#cce5ff", dark: "#7aa9d4" },
             { name: "Sand", light: "#fce4c8", dark: "#c49a6c" },
             { name: "Midnight", light: "#3b3b58", dark: "#1e1e2f" },
-            { name: "Coral", light: "#ffe0d3", dark: "#e68a7c" }
+            { name: "Coral", light: "#ffe0d3", dark: "#e68a7c" },
+            { name: "Crimson", light: "#ffe0e0", dark: "#c44" }
         ];
 
         const defaultSettings = {
@@ -1684,7 +1796,7 @@
         });
     </script>
 
-    <!-- Award reveal overlay -->
+    <!-- Award reveal overlay (unchanged) -->
     <div id="awardRevealOverlay" style="display:none; position:fixed; inset:0; z-index:500; background:rgba(5,6,10,0.94); flex-direction:column; align-items:center; justify-content:center; text-align:center;">
         <div id="awardRevealGlow" style="position:absolute; inset:0; pointer-events:none;"></div>
         <img id="awardRevealCoachImg" class="awardRevealCoach" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E" alt="Coach">
