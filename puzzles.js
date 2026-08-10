@@ -211,11 +211,15 @@ function openDailyPuzzle(){
 }
 
 function closePuzzle(){
+    // FIX: this used to call history.back(), which just rewound to
+    // whatever screen was on the stack before the puzzle (the Puzzle
+    // Map) instead of going all the way home. Finishing/leaving a
+    // puzzle should always land on Home directly.
     document.getElementById("puzzleScreen").style.display = "none";
+    document.getElementById("puzzleMapScreen").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
-    if(history.state && history.state.screen === "puzzle"){
-        history.back();
-    }
+    switchScreen("home");
+    history.pushState({ screen: null }, "", location.pathname);
 }
 
 function createPuzzleBoard(){
