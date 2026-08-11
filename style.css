@@ -3273,3 +3273,25 @@ input::placeholder{ color:#4a5060; }
         linear-gradient(160deg, #0f1f1c 0%, #0a1512 100%);
     background-attachment: fixed;
 }
+/* ===== Tournaments screen — light theme redesign ===== */
+#tournamentsScreen { background: #f2f0ee !important; color: #1a1a1a; }
+
+#tournamentsScreen .btnPrimary {
+    background: linear-gradient(90deg, #FF7A1A, #ff9d4d);
+    box-shadow: 0 8px 20px rgba(255,122,26,0.3);
+    border-radius: 16px;
+    padding: 17px;
+    font-size: 15.5px;
+}
+
+#tournamentsScreen .tournamentCard {
+    background: #ffffff;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    height: auto;
+    padding: 16px;
+}
+#tournamentsScreen .tournamentCardName { color: #1a1a1a; font-size: 16px; }
+#tournamentsScreen .tournamentCardMeta { color: #8a8580; }
+#tournamentsScreen .fieldLabel { color: #FF7A1A; }
