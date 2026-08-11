@@ -3295,3 +3295,5 @@ input::placeholder{ color:#4a5060; }
 #tournamentsScreen .tournamentCardName { color: #1a1a1a; font-size: 16px; }
 #tournamentsScreen .tournamentCardMeta { color: #8a8580; }
 #tournamentsScreen .fieldLabel { color: #FF7A1A; }
+/* ===== Analysis Position Picker — light theme redesign ===== */
+#analysisPositionPopup { background: #f2f0ee !important; color: #1a1a1a; }
