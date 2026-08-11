@@ -961,7 +961,15 @@
             <button class="btnDanger" onclick="respondToChallenge(false)">❌ Decline</button>
         </div>
     </div>
-
+<div id="challengeAcceptedPopup" class="popup">
+    <div class="popupContent">
+        <div class="badge gold">⚔️</div>
+        <h2>Challenge Accepted!</h2>
+        <p class="sub"><span id="challengeAcceptedName"></span> accepted your challenge. Ready to play?</p>
+        <button class="btnPrimary" onclick="startAcceptedChallengeGame()">▶️ Play Now</button>
+        <button class="btnSecondary" onclick="closeChallengeAcceptedPopup()">Later</button>
+    </div>
+</div>
     <div id="settingsPopup" class="popup">
         <div class="popupContent">
             <div class="badge blue">⚙️</div>
