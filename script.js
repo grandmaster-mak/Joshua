@@ -63,6 +63,7 @@ let whitePhoto = null;
 let blackPhoto = null;
 let whiteUid = null;
 let blackUid = null;
+let pendingAcceptedChallenge= null;
 
 // ===== OPPONENT KINGDOM DATA =====
 let opponentKingdom = null;
@@ -2853,14 +2854,43 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
     if(data.status === "accepted" && data.roomCode){
       challengeListenRef.off();
       challengeListenRef = null;
-      myColor = myColorVal;
-      currentRoomCode = data.roomCode;
-      selectedTime = timeSeconds;
-      gameMode = "online";
-      document.getElementById("challengeScreen").style.display = "none";
-      startOnlineGame(data.roomCode);
+
+      // Don't auto-start the game — store what we need and let the
+      // player choose when to jump in via the "Play Now" popup.
+      pendingAcceptedChallenge = {
+        roomCode: data.roomCode,
+        myColor: myColorVal,
+        timeSeconds: timeSeconds,
+        opponentName: data.opponentName || "Your friend"
+      };
+      showChallengeAcceptedNotification(pendingAcceptedChallenge.opponentName);
     }
+  }, function(err){
+    console.error("Challenge listener denied:", err.code, err.message);
+    showInfoPopup("⚠️ Challenge Error", "Could not watch for acceptance: " + (err.code || err.message));
   });
+}
+
+function showChallengeAcceptedNotification(name){
+  document.getElementById("challengeAcceptedName").textContent = name;
+  document.getElementById("challengeAcceptedPopup").classList.add("show");
+}
+
+function closeChallengeAcceptedPopup(){
+  document.getElementById("challengeAcceptedPopup").classList.remove("show");
+}
+
+function startAcceptedChallengeGame(){
+  if(!pendingAcceptedChallenge) return;
+  var p = pendingAcceptedChallenge;
+  pendingAcceptedChallenge = null;
+  closeChallengeAcceptedPopup();
+  myColor = p.myColor;
+  currentRoomCode = p.roomCode;
+  selectedTime = p.timeSeconds;
+  gameMode = "online";
+  document.getElementById("challengeScreen").style.display = "none";
+  startOnlineGame(p.roomCode);
 }
 
 // --- Check for incoming challenge from URL ---
