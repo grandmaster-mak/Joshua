@@ -1010,11 +1010,11 @@
         </div>
     </div>
 
-    <div id="tournamentsScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closeTournaments()">←</button>
-            <h2>🏆 Tournaments</h2>
-        </div>
+  <div id="tournamentsScreen" class="fullScreenPanel" style="background:#f2f0ee;">
+    <div class="accountOrangeHeader" style="padding:24px 20px 20px; display:flex; align-items:center; gap:14px; position:relative;">
+        <button onclick="closeTournaments()" style="width:auto; margin:0; background:#fff; border:none; border-radius:14px; width:42px; height:42px; color:#1a1a1a; font-size:20px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); flex-shrink:0;">←</button>
+        <h2 style="color:#fff; margin:0; font-size:26px; font-weight:800; display:flex; align-items:center; gap:8px;">🏆 Tournaments</h2>
+    </div>
         <div class="fsBody">
             <div id="tournamentsListView">
                 <button class="btnPrimary" onclick="showCreateTournament()">+ Create Tournament</button>
