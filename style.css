@@ -3297,3 +3297,22 @@ input::placeholder{ color:#4a5060; }
 #tournamentsScreen .fieldLabel { color: #FF7A1A; }
 /* ===== Analysis Position Picker — light theme redesign ===== */
 #analysisPositionPopup { background: #f2f0ee !important; color: #1a1a1a; }
+/* ===== Analysis Position Picker — full-screen light override ===== */
+#analysisPositionPopup.show {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+    background: #f2f0ee;
+}
+#analysisPositionPopup .popupContent {
+    width: 100%;
+    max-width: 420px;
+    height: 100%;
+    max-height: none;
+    margin: 0 auto;
+    border-radius: 0;
+    background: #f2f0ee;
+    color: #1a1a1a;
+    box-shadow: none;
+    overflow-y: auto;
+}
