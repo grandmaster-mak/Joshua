@@ -3316,3 +3316,15 @@ input::placeholder{ color:#4a5060; }
     box-shadow: none;
     overflow-y: auto;
 }
+/* ===== Force analysis position rows to light theme ===== */
+#analysisPositionList > * {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+    border: none !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+    margin-bottom: 10px !important;
+}
+#analysisPositionList > * * {
+    color: #1a1a1a !important;
+}
