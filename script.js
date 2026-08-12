@@ -2892,6 +2892,16 @@ function startAcceptedChallengeGame(){
   selectedTime = p.timeSeconds;
   gameMode = "online";
   document.getElementById("challengeScreen").style.display = "none";
+
+  // Signal the accepter's waiting screen that it's time to enter too.
+  if(p.challengeId && db){
+    db.ref("challenges/" + p.challengeId + "/status").set("ready").catch(function(err){
+      console.error("Failed to mark challenge ready:", err.code, err.message);
+    });
+  }
+
+  startOnlineGame(p.roomCode);
+}
 function showChallengeWaitingPopup(){
   var popup = document.getElementById("challengeWaitingPopup");
   if(popup) popup.classList.add("show");
@@ -2920,16 +2930,6 @@ function listenForChallengeReady(challengeId, roomCode){
     console.error("Challenge ready listener denied:", err.code, err.message);
   });
 }
-  // Signal the accepter's waiting screen that it's time to enter too.
-  if(p.challengeId && db){
-    db.ref("challenges/" + p.challengeId + "/status").set("ready").catch(function(err){
-      console.error("Failed to mark challenge ready:", err.code, err.message);
-    });
-  }
-
-  startOnlineGame(p.roomCode);
-}
-
 // --- Check for incoming challenge from URL ---
 function checkForIncomingChallenge(){
 
