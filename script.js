@@ -64,6 +64,7 @@ let blackPhoto = null;
 let whiteUid = null;
 let blackUid = null;
 let pendingAcceptedChallenge= null;
+let challengeReadyListenRef= null;
 
 // ===== OPPONENT KINGDOM DATA =====
 let opponentKingdom = null;
@@ -2858,11 +2859,12 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
       // Don't auto-start the game — store what we need and let the
       // player choose when to jump in via the "Play Now" popup.
       pendingAcceptedChallenge = {
-        roomCode: data.roomCode,
-        myColor: myColorVal,
-        timeSeconds: timeSeconds,
-        opponentName: data.opponentName || "Your friend"
-      };
+  roomCode: data.roomCode,
+  myColor: myColorVal,
+  timeSeconds: timeSeconds,
+  opponentName: data.opponentName || "Your friend",
+  challengeId: challengeId
+};
       showChallengeAcceptedNotification(pendingAcceptedChallenge.opponentName);
     }
   }, function(err){
