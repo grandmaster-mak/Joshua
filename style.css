@@ -3379,3 +3379,6 @@ input::placeholder{ color:#4a5060; }
 #analysisPositionList > div * {
     color: #1a1a1a !important;
 }
+/* ===== Lessons screen — light theme redesign ===== */
+#lessonsScreen { background: #f2f0ee !important; color: #1a1a1a; }
+#lessonsScreen .fsBody { padding: 16px; }
