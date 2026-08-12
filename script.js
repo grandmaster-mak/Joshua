@@ -2892,7 +2892,34 @@ function startAcceptedChallengeGame(){
   selectedTime = p.timeSeconds;
   gameMode = "online";
   document.getElementById("challengeScreen").style.display = "none";
-
+function showChallengeWaitingPopup(){
+  var popup = document.getElementById("challengeWaitingPopup");
+  if(popup) popup.classList.add("show");
+}
+function closeChallengeWaitingPopup(){
+  var popup = document.getElementById("challengeWaitingPopup");
+  if(popup) popup.classList.remove("show");
+}
+function cancelChallengeWaiting(){
+  if(challengeReadyListenRef){ challengeReadyListenRef.off(); challengeReadyListenRef = null; }
+  closeChallengeWaitingPopup();
+  document.getElementById("appShell").style.display = "flex";
+  switchScreen(lastActiveTab);
+}
+function listenForChallengeReady(challengeId, roomCode){
+  if(challengeReadyListenRef) challengeReadyListenRef.off();
+  challengeReadyListenRef = db.ref("challenges/" + challengeId + "/status");
+  challengeReadyListenRef.on("value", function(snap){
+    if(snap.val() === "ready"){
+      challengeReadyListenRef.off();
+      challengeReadyListenRef = null;
+      closeChallengeWaitingPopup();
+      startOnlineGame(roomCode);
+    }
+  }, function(err){
+    console.error("Challenge ready listener denied:", err.code, err.message);
+  });
+}
   // Signal the accepter's waiting screen that it's time to enter too.
   if(p.challengeId && db){
     db.ref("challenges/" + p.challengeId + "/status").set("ready").catch(function(err){
