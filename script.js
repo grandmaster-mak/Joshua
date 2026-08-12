@@ -2892,6 +2892,14 @@ function startAcceptedChallengeGame(){
   selectedTime = p.timeSeconds;
   gameMode = "online";
   document.getElementById("challengeScreen").style.display = "none";
+
+  // Signal the accepter's waiting screen that it's time to enter too.
+  if(p.challengeId && db){
+    db.ref("challenges/" + p.challengeId + "/status").set("ready").catch(function(err){
+      console.error("Failed to mark challenge ready:", err.code, err.message);
+    });
+  }
+
   startOnlineGame(p.roomCode);
 }
 
