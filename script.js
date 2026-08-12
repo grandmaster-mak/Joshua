@@ -2854,18 +2854,19 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
     if(!data) return;
     if(data.status === "accepted" && data.roomCode){
       challengeListenRef.off();
-      challengeListenRef = null;
+challengeListenRef = null;
 
-      // Don't auto-start the game — store what we need and let the
-      // player choose when to jump in via the "Play Now" popup.
-      pendingAcceptedChallenge = {
+// Make sure the challenge screen doesn't cover the popup
+document.getElementById("challengeScreen").style.display = "none";
+
+pendingAcceptedChallenge = {
   roomCode: data.roomCode,
   myColor: myColorVal,
   timeSeconds: timeSeconds,
   opponentName: data.opponentName || "Your friend",
   challengeId: challengeId
 };
-      showChallengeAcceptedNotification(pendingAcceptedChallenge.opponentName);
+showChallengeAcceptedNotification(pendingAcceptedChallenge.opponentName);
     }
   }, function(err){
     console.error("Challenge listener denied:", err.code, err.message);
