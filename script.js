@@ -2977,47 +2977,58 @@ document.getElementById("challengeAcceptColorValue").textContent = myPlayColor;
 document.getElementById("challengeAcceptColorIcon").textContent = myPlayColor === "White" ? "♙" : "♟";
 document.getElementById("challengeAcceptTimeValue").textContent = (data.timeControl/60) + " min";
     document.getElementById("acceptChallengeBtn").onclick = async function(){
-      if(!currentUser) return;
-      var roomCode = generateRoomCode();
-      var opponentColor = data.creatorColor === "white" ? "black" : "white";
-      var timeSeconds = data.timeControl;
+  if(!currentUser) return;
+  var roomCode = generateRoomCode();
+  var opponentColor = data.creatorColor === "white" ? "black" : "white";
+  var timeSeconds = data.timeControl;
 
-      await db.ref("rooms/" + roomCode).set({ status: "playing", createdAt: Date.now() });
-      await db.ref("rooms/" + roomCode + "/players/" + data.creatorColor).set({
-        username: data.creatorName,
-        flag: data.creatorFlag,
-        uid: data.creatorUid,
-        rating: null,
-        photo: null,
-        kingdom: null,
-        kingdomEmoji: null,
-        kingdomName: null
-      });
-      var myKingdom = getMyCurrentKingdom ? getMyCurrentKingdom() : {emoji:'🏕️',name:'Village'};
-      await db.ref("rooms/" + roomCode + "/players/" + opponentColor).set({
-        username: currentUsername,
-        flag: currentUserFlag,
-        uid: currentUser.uid,
-        rating: currentUserRating || null,
-        photo: currentUserPhotoURL || null,
-        kingdom: myKingdom.id || null,
-        kingdomEmoji: myKingdom.emoji,
-        kingdomName: myKingdom.name
-      });
-      await db.ref("challenges/" + challengeId).update({
-        status: "accepted",
-        roomCode: roomCode,
-        opponentUid: currentUser.uid,
-        opponentName: currentUsername
-      });
+  try {
+    await db.ref("rooms/" + roomCode).set({ status: "playing", createdAt: Date.now() });
+    await db.ref("rooms/" + roomCode + "/players/" + data.creatorColor).set({
+      username: data.creatorName,
+      flag: data.creatorFlag,
+      uid: data.creatorUid,
+      rating: null,
+      photo: null,
+      kingdom: null,
+      kingdomEmoji: null,
+      kingdomName: null
+    });
+    var myKingdom = getMyCurrentKingdom ? getMyCurrentKingdom() : {emoji:'🏕️',name:'Village'};
+    await db.ref("rooms/" + roomCode + "/players/" + opponentColor).set({
+      username: currentUsername,
+      flag: currentUserFlag,
+      uid: currentUser.uid,
+      rating: currentUserRating || null,
+      photo: currentUserPhotoURL || null,
+      kingdom: myKingdom.id || null,
+      kingdomEmoji: myKingdom.emoji,
+      kingdomName: myKingdom.name
+    });
 
-      myColor = opponentColor;
-      currentRoomCode = roomCode;
-      selectedTime = timeSeconds;
-      gameMode = "online";
-      document.getElementById("challengeAcceptScreen").style.display = "none";
-      startOnlineGame(roomCode);
-    };
+    // Set up everything needed to join, but DON'T start yet — wait for
+    // the creator to confirm via their own "Play Now" button first.
+    myColor = opponentColor;
+    currentRoomCode = roomCode;
+    selectedTime = timeSeconds;
+    gameMode = "online";
+
+    document.getElementById("challengeAcceptScreen").style.display = "none";
+    showChallengeWaitingPopup();
+
+    await db.ref("challenges/" + challengeId).update({
+      status: "accepted",
+      roomCode: roomCode,
+      opponentUid: currentUser.uid,
+      opponentName: currentUsername
+    });
+
+    listenForChallengeReady(challengeId, roomCode);
+  } catch(err){
+    console.error("Failed to accept challenge:", err.code, err.message);
+    showInfoPopup("⚠️ Challenge Error", "Something went wrong: " + (err.code || err.message));
+  }
+};
 
     document.getElementById("declineChallengeBtn").onclick = function(){
       document.getElementById("challengeAcceptScreen").style.display = "none";
