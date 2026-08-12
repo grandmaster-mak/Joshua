@@ -1170,11 +1170,14 @@
         </div>
     </div>
 
-    <div id="lessonsScreen" class="fullScreenPanel">
-        <div class="fsHeader">
-            <button onclick="closeLessons()">←</button>
-            <h2 id="lessonsHeaderTitle">📘 Lessons</h2>
+    <div id="lessonsScreen" class="fullScreenPanel" style="background:#f2f0ee;">
+    <div class="accountOrangeHeader" style="padding:24px 20px 20px; display:flex; flex-direction:column; gap:0;">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <button onclick="closeLessons()" style="width:auto; margin:0; background:#fff; border:none; border-radius:14px; width:42px; height:42px; color:#1a1a1a; font-size:20px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); flex-shrink:0;">←</button>
+            <h2 id="lessonsHeaderTitle" style="color:#fff; margin:0; font-size:24px; font-weight:800; display:flex; align-items:center; gap:8px;">📘 Lessons</h2>
         </div>
+        <p style="color:rgba(255,255,255,0.9); font-size:13.5px; margin:12px 0 0; line-height:1.4;">Bite-sized lessons on tactics and opening principles.</p>
+    </div>
         <div class="fsBody">
             <div id="lessonsListView">
                 <p class="sub">Bite-sized lessons on tactics and opening principles.</p>
