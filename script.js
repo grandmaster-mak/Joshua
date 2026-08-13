@@ -2718,16 +2718,18 @@ window.addEventListener("popstate", function(event){
     }
 
     if(state.screen === "puzzle"){
-        document.getElementById("appShell").style.display = "none";
-        document.getElementById("puzzleScreen").style.display = "flex";
-        return;
-    }
+    document.getElementById("puzzleMapScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("puzzleScreen").style.display = "flex";
+    return;
+}
 
-    if(state.screen === "puzzleMap"){
-        document.getElementById("appShell").style.display = "none";
-        document.getElementById("puzzleMapScreen").style.display = "flex";
-        return;
-    }
+if(state.screen === "puzzleMap"){
+    document.getElementById("puzzleScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("puzzleMapScreen").style.display = "flex";
+    return;
+}
 
     if(state.screen === "leaderboard"){
         document.getElementById("appShell").style.display = "none";
