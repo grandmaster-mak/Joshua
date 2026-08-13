@@ -460,9 +460,10 @@
                 <p class="friendsHeaderSubLight">Find people by their username and send a friend request.</p>
             </div>
             <div id="friendSearchRow">
-                <input type="text" id="friendSearchInput" placeholder="Search by username">
-                <button class="btnPrimary" onclick="searchForFriend()">Search</button>
-            </div>
+    <input type="text" id="friendSearchInput" placeholder="Search by username" oninput="handleFriendSearchSuggestions(this.value)">
+    <button class="btnPrimary" onclick="searchForFriend()">Search</button>
+</div>
+<div id="friendSuggestions" class="friendSuggestions"></div>
             <div id="friendSearchResult"></div>
             <div id="friendRequestsSection" style="display:none;">
                 <span class="fieldLabel">Friend Requests</span>
