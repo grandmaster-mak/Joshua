@@ -2956,9 +2956,19 @@ function listenForChallengeReady(challengeId, roomCode){
       challengeReadyListenRef = null;
       closeChallengeWaitingPopup();
       startOnlineGame(roomCode);
+    } else if(snap.val() === "cancelled"){
+      challengeReadyListenRef.off();
+      challengeReadyListenRef = null;
+      closeChallengeWaitingPopup();
+      // Inform the accepter that the creator cancelled
+      showInfoPopup("❌ Challenge Cancelled", "The creator is not ready to play right now.");
+      document.getElementById("appShell").style.display = "flex";
+      switchScreen(lastActiveTab);
     }
   }, function(err){
     console.error("Challenge ready listener denied:", err.code, err.message);
+    closeChallengeWaitingPopup();
+    showInfoPopup("⚠️ Challenge Error", "Could not monitor challenge status: " + (err.code || err.message));
   });
 }
 // --- Check for incoming challenge from URL ---
