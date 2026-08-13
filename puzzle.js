@@ -903,6 +903,7 @@ function playPuzzleObject(puzzle, isReplay){
     if(!puzzle) return;
     document.getElementById("puzzleMapScreen").style.display = "none";
     document.getElementById("puzzleScreen").style.display = "flex";
+    puzzleOpenedFromMap = true;   // opened from the map
     history.pushState({ screen: "puzzle" }, "", "#puzzle");
     loadPuzzleIntoBoard(puzzle, isReplay);
 }
