@@ -324,15 +324,24 @@ function closePuzzle(){
     document.getElementById("puzzleScreen").style.display = "none";
 
     if(puzzleSolved){
-        // Replace the current "puzzle" history entry with "puzzleMap"
-        // so the back button from the map goes to the previous screen,
-        // not back into the puzzle just finished.
-        openPuzzleMap(true);
+        if(puzzleOpenedFromMap){
+            // Return to the puzzle map that is already in history
+            document.getElementById("puzzleMapScreen").style.display = "flex";
+            history.back();
+        }else{
+            // Opened directly from daily: replace puzzle state with map
+            document.getElementById("puzzleMapScreen").style.display = "flex";
+            history.replaceState({ screen: "puzzleMap" }, "", "#puzzleMap");
+        }
         return;
     }
 
-    document.getElementById("appShell").style.display = "flex";
-    if(history.state && history.state.screen === "puzzle"){
+    // Not solved
+    if(puzzleOpenedFromMap){
+        document.getElementById("puzzleMapScreen").style.display = "flex";
+        history.back();
+    }else{
+        document.getElementById("appShell").style.display = "flex";
         history.back();
     }
 }
