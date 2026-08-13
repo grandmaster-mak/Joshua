@@ -70,6 +70,7 @@ let puzzlePool = [];
 let puzzleMoveIndex = 0;
 let puzzleSolved = false;
 let puzzleMistakeMade = false;
+let puzzleOpenedFromMap = false;
 let puzzleSnapshots = [];
 let puzzleViewIndex = 0;
 let puzzleHintSquare = null;
@@ -299,9 +300,10 @@ function openDailyPuzzle(){
                 // There's a fresh, never-solved puzzle waiting — skip
                 // the map, go straight to the board. Never a replay.
                 document.getElementById("appShell").style.display = "none";
-                document.getElementById("puzzleScreen").style.display = "flex";
-                history.pushState({ screen: "puzzle" }, "", "#puzzle");
-                loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
+document.getElementById("puzzleScreen").style.display = "flex";
+puzzleOpenedFromMap = false;   // opened directly from daily, not from map
+history.pushState({ screen: "puzzle" }, "", "#puzzle");
+loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
             }else{
                 // Already solved today's, or waiting on tomorrow/promotion — show the map instead.
                 openPuzzleMap();
