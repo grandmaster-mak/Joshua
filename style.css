@@ -3470,3 +3470,18 @@ input::placeholder{ color:#4a5060; }
     z-index: 1;                      /* below the header */
     padding-top: 0;
 }
+/* ===== Fix Lessons header overlap ===== */
+#lessonsScreen .accountOrangeHeader {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--themeOrange, #FF7A1A);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+#lessonsScreen .fsBody {
+    position: relative;
+    z-index: 1;
+    padding-top: 0;
+}
