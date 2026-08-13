@@ -2842,7 +2842,7 @@ document.getElementById("copyChallengeLink").addEventListener("click", function(
 // --- Share via WhatsApp ---
 document.getElementById("shareChallengeLink").addEventListener("click", function(){
   var link = document.getElementById("challengeLinkInput").value;
-  window.open("https://wa.me/?text=" + encodeURIComponent("Play chess with me! " + link));
+  window.location.href = "https://wa.me/?text=" + encodeURIComponent("Play chess with me! " + link);
 });
 
 // --- Listen for challenge acceptance (creator side) ---
