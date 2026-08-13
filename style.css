@@ -3455,3 +3455,18 @@ input::placeholder{ color:#4a5060; }
 #leaderboardScreen .lbName { color: #1a1a1a; font-size: 15px; }
 #leaderboardScreen .lbSub { color: #8a8580; }
 #leaderboardScreen .lbRating { color: #FF7A1A; font-size: 20px; font-weight: 800; }
+/* ===== Fix Tournaments header overlap ===== */
+#tournamentsScreen .accountOrangeHeader {
+    position: sticky;
+    top: 0;
+    z-index: 50;                     /* above the list */
+    background: var(--themeOrange, #FF7A1A);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+#tournamentsScreen .fsBody {
+    position: relative;
+    z-index: 1;                      /* below the header */
+    padding-top: 0;
+}
