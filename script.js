@@ -2883,6 +2883,12 @@ function showChallengeAcceptedNotification(name){
 
 function closeChallengeAcceptedPopup(){
   document.getElementById("challengeAcceptedPopup").classList.remove("show");
+
+  // If the creator chose "Later", cancel the challenge so the opponent
+  // stops waiting.
+  if(pendingAcceptedChallenge){
+    cancelAcceptedChallenge();
+  }
 }
 
 function startAcceptedChallengeGame(){
