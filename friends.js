@@ -21,7 +21,79 @@ function escapeHtml(str){
 // async work is abandoned instead of racing the second one and wiping
 // out a freshly-arrived unread badge.
 let friendsListLoadToken = 0;
+// Live username suggestions as the user types
+function handleFriendSearchSuggestions(query){
+    const container = document.getElementById("friendSuggestions");
+    if(!container) return;
 
+    const trimmed = query.trim();
+    if(!trimmed || !db || !currentUser){
+        container.classList.remove("show");
+        container.innerHTML = "";
+        return;
+    }
+
+    db.ref("usernames").once("value").then(function(snap){
+
+        const users = [];
+        snap.forEach(function(child){
+            users.push({ username: child.key, uid: child.val() });
+        });
+
+        const filtered = users.filter(function(u){
+            return u.uid !== currentUser.uid &&
+                   u.username.toLowerCase().startsWith(trimmed.toLowerCase());
+        }).slice(0, 8);
+
+        if(filtered.length === 0){
+            container.classList.remove("show");
+            container.innerHTML = "";
+            return;
+        }
+
+        // Show the suggestions
+        const promises = filtered.map(function(user){
+            return db.ref("users/" + user.uid + "/public").once("value").then(function(userSnap){
+                const data = userSnap.val() || {};
+                return {
+                    uid: user.uid,
+                    username: user.username,
+                    flag: data.flag || "",
+                    photoURL: data.photoURL || DEFAULT_AVATAR_SRC
+                };
+            });
+        });
+
+        Promise.all(promises).then(function(suggestions){
+            let html = "";
+            suggestions.forEach(function(s){
+                html +=
+                    '<div class="friendSuggestionItem" data-uid="' + s.uid + '" data-username="' + escapeHtml(s.username) + '" onclick="selectFriendSuggestion(this.dataset.uid, this.dataset.username)">' +
+                        '<img class="friendSuggestionAvatar" src="' + s.photoURL + '" alt="">' +
+                        '<span>' + escapeHtml(s.flag) + ' ' + escapeHtml(s.username) + '</span>' +
+                    '</div>';
+            });
+
+            container.innerHTML = html;
+            container.classList.add("show");
+        });
+
+    }).catch(function(err){
+        console.error("Friend suggestion error:", err.message);
+    });
+}
+
+// When a suggestion is clicked
+function selectFriendSuggestion(uid, username){
+    const input = document.getElementById("friendSearchInput");
+    const container = document.getElementById("friendSuggestions");
+    if(input) input.value = username;
+    if(container){
+        container.classList.remove("show");
+        container.innerHTML = "";
+    }
+    searchForFriend(); // runs the existing exact-search logic
+}
 function searchForFriend(){
 
     const query = document.getElementById("friendSearchInput").value.trim();
