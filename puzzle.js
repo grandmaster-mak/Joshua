@@ -324,7 +324,10 @@ function closePuzzle(){
     document.getElementById("puzzleScreen").style.display = "none";
 
     if(puzzleSolved){
-        openPuzzleMap();
+        // Replace the current "puzzle" history entry with "puzzleMap"
+        // so the back button from the map goes to the previous screen,
+        // not back into the puzzle just finished.
+        openPuzzleMap(true);
         return;
     }
 
