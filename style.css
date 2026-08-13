@@ -3485,15 +3485,4 @@ input::placeholder{ color:#4a5060; }
     z-index: 1;
     padding-top: 0;
 }
-/* ===== Semi-transparent sticky headers (Tournaments + Lessons) ===== */
-#tournamentsScreen .accountOrangeHeader,
-#lessonsScreen .accountOrangeHeader {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    flex-shrink: 0;
-    background: rgba(20, 22, 28, 0.65);   /* dark glass, adjust opacity as needed */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
+
