@@ -3485,4 +3485,8 @@ input::placeholder{ color:#4a5060; }
     z-index: 1;
     padding-top: 0;
 }
-
+#accountScreen #authStatus {
+    color: #e5484d;          /* red, clearly visible */
+    font-weight: 700;
+    margin-top: 12px;
+}
