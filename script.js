@@ -2890,7 +2890,29 @@ function closeChallengeAcceptedPopup(){
     cancelAcceptedChallenge();
   }
 }
+function cancelAcceptedChallenge(){
+  if(!pendingAcceptedChallenge) return;
 
+  var p = pendingAcceptedChallenge;
+  pendingAcceptedChallenge = null;
+
+  // Mark challenge as cancelled in Firebase
+  if(p.challengeId && db){
+    db.ref("challenges/" + p.challengeId).update({
+      status: "cancelled",
+      cancelledAt: Date.now()
+    }).catch(function(err){
+      console.error("Failed to cancel challenge:", err.code, err.message);
+    });
+
+    // Clean up the room the accepter already created
+    if(p.roomCode){
+      db.ref("rooms/" + p.roomCode).remove().catch(function(err){
+        console.error("Failed to remove room:", err.code, err.message);
+      });
+    }
+  }
+}
 function startAcceptedChallengeGame(){
   if(!pendingAcceptedChallenge) return;
   var p = pendingAcceptedChallenge;
