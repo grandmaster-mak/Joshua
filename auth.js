@@ -54,7 +54,19 @@ function cacheProfile(data){
         }));
     }catch(e){}
 }
+function togglePasswordVisibility() {
+    const input = document.getElementById("authPassword");
+    const btn = document.getElementById("togglePasswordBtn");
+    if (!input) return;
 
+    if (input.type === "password") {
+        input.type = "text";
+        if (btn) btn.textContent = "🙈";
+    } else {
+        input.type = "password";
+        if (btn) btn.textContent = "👁️";
+    }
+}
 function loadCachedProfile(){
     try{
         const cached = JSON.parse(localStorage.getItem("cachedProfile") || "null");
