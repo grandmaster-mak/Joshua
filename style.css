@@ -3490,3 +3490,31 @@ input::placeholder{ color:#4a5060; }
     font-weight: 700;
     margin-top: 12px;
 }
+.password-input-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.password-input-wrap input {
+    width: 100%;
+    padding-right: 50px;   /* space for the eye button */
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    margin: 0;
+    width: auto;
+}
+
+.toggle-password-btn:hover {
+    color: #333;
+}
