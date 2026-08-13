@@ -644,11 +644,16 @@ function updatePuzzleStatsDisplay(){
 // rating or streak.
 // ============================================================
 
-function openPuzzleMap(){
+function openPuzzleMap(replace){
 
     document.getElementById("appShell").style.display = "none";
     document.getElementById("puzzleMapScreen").style.display = "flex";
-    history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
+
+    if(replace){
+        history.replaceState({ screen: "puzzleMap" }, "", "#puzzleMap");
+    }else{
+        history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
+    }
 
     const bodyEl = document.getElementById("puzzleMapBody");
     if(bodyEl) bodyEl.innerHTML = '<p class="sub">Loading...</p>';
