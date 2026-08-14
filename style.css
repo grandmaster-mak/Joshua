@@ -3174,40 +3174,87 @@ input::placeholder{ color:#4a5060; }
 .challengeFriendBarText { flex: 1; text-align: left; }
 .challengeFriendBarArrow { font-size: 16px; opacity: 0.85; }
 
-/* ===== Challenge a Friend — light theme redesign ===== */
-
+/* ===== Challenge screen header (sticky, like other screens) ===== */
 #challengeScreen {
     background: #f2f0ee !important;
     color: #1a1a1a !important;
 }
 
-.challengeHeroWrap {
-    position: relative;
-    padding: 60px 20px 50px;
+.challengeHeader {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
     background: linear-gradient(135deg, #FF7A1A, #ff9d4d);
-    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    flex-shrink: 0;
 }
-.challengeBackCircle {
-    position: absolute; top: 20px; left: 20px;
-    width: 42px; height: 42px; border-radius: 14px;
-    background: #ffffff; border: none; color: #1a1a1a;
-    font-size: 20px; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
+.challengeBackBtn {
+    width: 42px;
+    height: 42px;
+    margin: 0;
+    background: #ffffff;
+    border: none;
+    border-radius: 14px;
+    color: #1a1a1a;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    flex-shrink: 0;
 }
-.challengeHeroRow {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; margin-top: 40px;
+
+.challengeHeaderText {
+    flex: 1;
+    min-width: 0;
 }
-.challengeHeroTitle { font-size: 28px; font-weight: 800; margin: 0; color: #ffffff; }
-.challengeHeroSub { color: rgba(255,255,255,0.9); font-size: 13.5px; margin: 8px 0 0; line-height: 1.4; }
-.challengeHeroArt {
-    font-size: 60px; position: relative; white-space: nowrap;
-    display: flex; align-items: flex-end; flex-shrink: 0;
-    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25));
+
+.challengeHeaderTitle {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    color: #ffffff;
+    line-height: 1.2;
 }
-.challengeHeroArt img { width: 66px; height: 66px; display: block; }
-.challengeHeroArt img:first-child { z-index: 2; }
-.challengeHeroPawn { width: 44px !important; height: 44px !important; margin-left: -16px; }
+
+.challengeHeaderSub {
+    color: rgba(255,255,255,0.9);
+    font-size: 13.5px;
+    margin: 4px 0 0;
+    line-height: 1.4;
+}
+
+.challengeHeaderArt {
+    font-size: 42px;
+    display: flex;
+    align-items: flex-end;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+.challengeHeroPawn {
+    width: 30px;
+    height: 30px;
+    margin-left: -10px;
+}
+
+/* Body below header (no overlap) */
+.challengeBody {
+    padding: 20px 16px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
 
 .challengeBody {
     padding: 24px 16px 30px;
