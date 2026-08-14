@@ -190,7 +190,8 @@ function signUp(){
     const password = document.getElementById("authPassword").value;
     const username = document.getElementById("authUsername").value.trim();
     const country = document.getElementById("authCountry").value;
-
+const preferredLanguage = document.getElementById("authLanguage").value;
+if(typeof applyLanguage === "function") applyLanguage(preferredLanguage);
     if(!email || !password || !username || !country){
         document.getElementById("authStatus").textContent = "Please fill in all fields, including country.";
         return;
