@@ -2644,11 +2644,7 @@ window.addEventListener("popstate", function(event){
 const challengeScreenEl = document.getElementById("challengeScreen");
 if(challengeScreenEl && challengeScreenEl.style.display === "flex"){
     if(!state || (state.screen !== "challenge")){
-        challengeScreenEl.style.display = "none";
-        document.getElementById("appShell").style.display = "flex";
-        // Replace the popped entry with a base state so back doesn't exit
-        history.replaceState({ screen: null }, "", location.href);
-        switchScreen(lastActiveTab);
+        closeChallengeScreen();
         return;
     }
 }
