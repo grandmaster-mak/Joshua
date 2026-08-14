@@ -259,7 +259,7 @@ function loadPuzzleIntoBoard(puzzle, isReplay){
 // replay anything already solved.
 function openDailyPuzzle(){
 
-    // Show the puzzle map immediately – no blank wait while Firebase loads.
+    // Show map immediately
     document.getElementById("appShell").style.display = "none";
     document.getElementById("puzzleMapScreen").style.display = "flex";
     history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
@@ -267,14 +267,12 @@ function openDailyPuzzle(){
     const bodyEl = document.getElementById("puzzleMapBody");
     if(bodyEl) bodyEl.innerHTML = '<p class="sub">Loading...</p>';
 
-    // If no user, just show the map (it will handle the rest)
+    // No user – just render map without any user data
     if(typeof currentUser === "undefined" || !currentUser || !db){
-        openPuzzleMap(true); // replace the existing map state, no duplicate
+        openPuzzleMap(true);
         return;
     }
 
-    // Fetch the data in the background. When ready, decide whether to
-    // jump straight into a new daily puzzle or keep the map open.
     loadPuzzlePool().then(function(pool){
 
         const sorted = sortPuzzlesChronologically(pool);
@@ -307,59 +305,28 @@ function openDailyPuzzle(){
 
             const newUnlockedToday = isNewPuzzleUnlockedToday(priv.puzzleLastSolved || null);
 
-            // Hide loading text only after we have the data
-            if(bodyEl) bodyEl.innerHTML = "";
-
             if(nextPlayableLocal !== -1 && newUnlockedToday && tierPuzzles[nextPlayableLocal]){
-                // There is a brand-new puzzle for today – switch to the puzzle board.
                 document.getElementById("puzzleMapScreen").style.display = "none";
                 document.getElementById("puzzleScreen").style.display = "flex";
                 puzzleOpenedFromMap = false;
                 history.replaceState({ screen: "puzzle" }, "", "#puzzle");
                 loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
             }else{
-                // No new puzzle for today – open the map completely.
-                openPuzzleMap(true); // This re-renders the map with the real data
+                openPuzzleMap(true);
             }
 
         });
 
     }).catch(function(err){
         console.error("Failed to check today's puzzle:", err.message);
-        // Keep the map open even on error, just show the error.
         if(bodyEl) bodyEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
     });
 
 }
 
-// Closes the puzzle board. If the puzzle was just solved, this always
-// routes to the Puzzle Map (batch/grid screen) — never straight back
-// to the home screen — so the player sees their progress update.
+// Closes the puzzle board.
 function closePuzzle(){
-
-    document.getElementById("puzzleScreen").style.display = "none";
-
-    if(puzzleSolved){
-        if(puzzleOpenedFromMap){
-            // Return to the puzzle map that is already in history
-            document.getElementById("puzzleMapScreen").style.display = "flex";
-            history.back();
-        }else{
-            // Opened directly from daily: replace puzzle state with map
-            document.getElementById("puzzleMapScreen").style.display = "flex";
-            history.replaceState({ screen: "puzzleMap" }, "", "#puzzleMap");
-        }
-        return;
-    }
-
-    // Not solved
-    if(puzzleOpenedFromMap){
-        document.getElementById("puzzleMapScreen").style.display = "flex";
-        history.back();
-    }else{
-        document.getElementById("appShell").style.display = "flex";
-        history.back();
-    }
+    history.back();
 }
 
 function createPuzzleBoard(){
@@ -671,8 +638,9 @@ function updatePuzzleStatsDisplay(){
 
 function openPuzzleMap(replace){
 
-    document.getElementById("appShell").style.display = "none";
     document.getElementById("puzzleMapScreen").style.display = "flex";
+    document.getElementById("puzzleScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "none";
 
     if(replace){
         history.replaceState({ screen: "puzzleMap" }, "", "#puzzleMap");
@@ -712,11 +680,7 @@ function openPuzzleMap(replace){
 }
 
 function closePuzzleMap(){
-    document.getElementById("puzzleMapScreen").style.display = "none";
-    document.getElementById("appShell").style.display = "flex";
-    if(history.state && history.state.screen === "puzzleMap"){
-        history.back();
-    }
+    history.back();
 }
 
 function renderPuzzleMap(sortedPool, solvedIds, lastSolvedDate){
@@ -851,10 +815,6 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
             '</div>';
     }
 
-    // No wash over the image — it stays fully clear/vibrant. The header
-    // text just gets a white text-shadow so it stays readable no matter
-    // what colors are in the photo behind it; the numbered tiles below
-    // already sit on solid-colored boxes, so they need no help.
     const headerTextShadow = "text-shadow:0 1px 4px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.7);";
 
     card.innerHTML =
@@ -874,9 +834,6 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
 
     const contentWrap = card.querySelector(".puzzleMapCardContent");
 
-    // Wire up clickable tiles: replay any solved one any time (pass
-    // isReplay=true so it never touches rating/streak), or play the
-    // next new one up ONLY if it's unlocked for today (isReplay=false).
     card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
         const localIdx = Number(tileEl.dataset.localIdx);
         const p = tierPuzzles[localIdx];
@@ -919,7 +876,7 @@ function playPuzzleObject(puzzle, isReplay){
     if(!puzzle) return;
     document.getElementById("puzzleMapScreen").style.display = "none";
     document.getElementById("puzzleScreen").style.display = "flex";
-    puzzleOpenedFromMap = true;   // opened from the map
+    puzzleOpenedFromMap = true;
     history.pushState({ screen: "puzzle" }, "", "#puzzle");
     loadPuzzleIntoBoard(puzzle, isReplay);
 }
