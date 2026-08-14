@@ -2639,7 +2639,19 @@ function updateKingdomJourney(currentKingdom) {
 window.addEventListener("popstate", function(event){
 
     const state = event.state;
-
+// Safety: if challenge screen is visible but state doesn't match,
+// just close it and keep the app alive.
+const challengeScreenEl = document.getElementById("challengeScreen");
+if(challengeScreenEl && challengeScreenEl.style.display === "flex"){
+    if(!state || (state.screen !== "challenge")){
+        challengeScreenEl.style.display = "none";
+        document.getElementById("appShell").style.display = "flex";
+        // Replace the popped entry with a base state so back doesn't exit
+        history.replaceState({ screen: null }, "", location.href);
+        switchScreen(lastActiveTab);
+        return;
+    }
+}
     const analysisPopupEl = document.getElementById("analysisPositionPopup");
     if(analysisPopupEl && analysisPopupEl.classList.contains("show")){
         if(typeof closeAnalysisPositionPicker === "function") closeAnalysisPositionPicker();
