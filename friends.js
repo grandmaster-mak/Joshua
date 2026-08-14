@@ -624,6 +624,8 @@ function loadOnlineFriendsStrip(friendUids){
 function openChallengeScreen(){
     document.getElementById("challengeLinkArea").style.display = "none";
     document.getElementById("challengeScreen").style.display = "flex";
+    // Add a history entry so back can return to Home instead of leaving the app
+    history.pushState({ screen: "challenge" }, "", "#challenge");
 }
 
 function closeChallengeScreen(){
