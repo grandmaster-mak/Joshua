@@ -275,13 +275,23 @@ function findMaleVoice(){
 }
 
 let externalAudio = null;
+let lastSpeakTime = 0;
+const MIN_SPEAK_GAP_MS = 1000; // 1 second between spoken lines
 
 function speakText(text){
     if(!text) return;
-    if(!("speechSynthesis" in window) && !window.Audio) return;
 
     const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu, "").trim();
     if(!clean) return;
+
+    const now = Date.now();
+
+    // If speech was requested too recently, skip it to avoid lag.
+    if(now - lastSpeakTime < MIN_SPEAK_GAP_MS){
+        return;
+    }
+
+    lastSpeakTime = now;
 
     // Determine language code (use currentLanguage from i18n.js)
     let langCode = "en";
@@ -289,8 +299,7 @@ function speakText(text){
         langCode = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
     }
 
-    // Stop previous audio / speech
-    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    // If an external audio is already playing, stop it before starting new one
     if(externalAudio){
         externalAudio.pause();
         externalAudio = null;
@@ -301,6 +310,7 @@ function speakText(text){
     // Try Google TTS first
     const googleTTS = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=" + encodeURIComponent(clean) + "&tl=" + langCode;
     const audio = new Audio(googleTTS);
+    audio.preload = "auto";
     externalAudio = audio;
 
     audio.onended = function(){
@@ -309,13 +319,19 @@ function speakText(text){
     };
 
     audio.onerror = function(){
-        // Fallback to built-in speechSynthesis if Google TTS fails
         externalAudio = null;
+        // Fallback to built-in speechSynthesis
         if("speechSynthesis" in window){
             const utterance = new SpeechSynthesisUtterance(clean);
             utterance.lang = langCode;
             utterance.rate = 1.1;
             utterance.pitch = 0.85;
+
+            // Try to find a matching voice
+            const voices = window.speechSynthesis.getVoices();
+            const matchingVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(langCode.toLowerCase()));
+            if(matchingVoice) utterance.voice = matchingVoice;
+
             utterance.onend = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
             utterance.onerror = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
             window.speechSynthesis.speak(utterance);
@@ -324,7 +340,27 @@ function speakText(text){
         }
     };
 
-    audio.play();
+    // Play, but don't await: if it fails, the error handler will fallback.
+    audio.play().catch(function(){
+        // Manually trigger fallback
+        if(externalAudio === audio){
+            externalAudio = null;
+            if("speechSynthesis" in window){
+                const utterance = new SpeechSynthesisUtterance(clean);
+                utterance.lang = langCode;
+                utterance.rate = 1.1;
+                utterance.pitch = 0.85;
+                const voices = window.speechSynthesis.getVoices();
+                const matchingVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(langCode.toLowerCase()));
+                if(matchingVoice) utterance.voice = matchingVoice;
+                utterance.onend = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
+                utterance.onerror = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
+                window.speechSynthesis.speak(utterance);
+            } else {
+                if(typeof setCoachTalking === "function") setCoachTalking(false);
+            }
+        }
+    });
 }
 
 function setCoachMood(mood){
