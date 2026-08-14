@@ -1,15 +1,17 @@
 // ============================================================
 // i18n – Language system for the whole app
-// (Complete translations for all listed languages)
+// Full translations for main languages; others fallback to English
 // ============================================================
 
 const translations = {
   en: {
+    // Navigation
     "nav.home": "Home",
     "nav.friends": "Friends",
     "nav.kingdom": "Kingdom",
     "nav.account": "Account",
 
+    // Home screen
     "home.greetingMorning": "Good morning ☀️",
     "home.greetingAfternoon": "Good afternoon 🌤️",
     "home.greetingEvening": "Good evening 🌙",
@@ -32,14 +34,28 @@ const translations = {
     "home.lessons": "Lessons",
     "home.analysis": "Analysis",
     "home.onlineFriends": "Online Friends",
+    "home.activeNow": "Active now",
+    "home.customise": "Customise",
+    "home.playNowDesc": "Two players, one device",
+    "home.playAIDesc": "Challenge the computer",
+    "home.playOnlineDesc": "Find an opponent automatically",
+    "home.dailyChallengeDesc": "Win one ranked game today",
 
+    // Friends screen
     "friends.title": "Friends",
     "friends.subtitle": "Find people by their username and send a friend request.",
     "friends.searchPlaceholder": "Search by username",
+    "friends.search": "Search",
+    "friends.recentlyActive": "Recently Active ▾",
     "friends.yourFriends": "Your Friends",
     "friends.friendRequests": "Friend Requests",
     "friends.noFriends": "Log in to see your friends.",
+    "friends.challengeFriend": "Challenge a Friend",
+    "friends.addMore": "Add more friends",
+    "friends.addMoreDesc": "The more friends you have, the better your games get!",
+    "friends.findFriends": "Find Friends",
 
+    // Account screen
     "account.title": "Account",
     "account.loggedOut": "Sign in to save your progress and rating",
     "account.email": "Email",
@@ -51,23 +67,71 @@ const translations = {
     "account.gamesWon": "Games Won",
     "account.winStreak": "Win Streak",
     "account.puzzleRating": "Puzzle Rating",
+    "account.changePhoto": "Change Profile Photo",
+    "account.puzzleStreakLabel": "Puzzle streak:",
+    "account.awards": "Awards",
+    "account.awardsTeaser": "Keep playing to earn awards!",
+    "account.awardsDesc": "Play games, solve puzzles and complete lessons to unlock achievements.",
+    "account.viewAwards": "View Awards",
+    "account.quickAccess": "Quick Access",
+    "account.puzzlesDesc": "Solve puzzles and improve your skills",
+    "account.lessonsDesc": "Learn from the best and level up",
+    "account.coachDesc": "Get live advice while you play",
+    "account.tournamentsDesc": "Compete and win exciting prizes",
+    "account.analysisDesc": "Explore positions with engine eval",
+    "account.friendsDesc": "Manage your friends list",
 
+    // Kingdom screen
     "kingdom.title": "My Kingdom",
+    "kingdom.current": "Current",
+    "kingdom.consecutiveWins": "Consecutive Wins",
+    "kingdom.winsNeeded": "Wins Needed",
+    "kingdom.journey": "Kingdom Journey",
+    "kingdom.rulerOf": "Ruler of",
 
+    // Settings screen
     "settings.title": "Settings",
     "settings.accent": "App Accent Colour",
     "settings.boardColours": "Board Colours",
     "settings.gameplay": "Gameplay",
     "settings.sounds": "Sounds",
     "settings.language": "Language",
-    "settings.reset": "Reset to Defaults"
+    "settings.reset": "Reset to Defaults",
+    "settings.lastMoveHighlight": "Last-move highlight",
+    "settings.autoPromote": "Auto-promote to Queen",
+    "settings.confirmResign": "Confirm before resigning",
+    "settings.boardFlip": "Board flip (offline games)",
+    "settings.moveSound": "Piece move sound",
+    "settings.checkSound": "Check sound",
+    "settings.checkmateSound": "Checkmate sound",
+    "settings.bgm": "Background music",
+
+    // Challenge screen
+    "challenge.subtitle": "Create a game and send a link to any friend",
+    "challenge.yourColor": "Your colour",
+    "challenge.white": "White",
+    "challenge.black": "Black",
+    "challenge.timeControl": "Time control",
+    "challenge.create": "Create Challenge Link",
+    "challenge.secureLink": "Secure link",
+    "challenge.secureLinkDesc": "Only your friend with the link can join",
+    "challenge.fairGame": "Fair game",
+    "challenge.fairGameDesc": "Same time control for both players",
+    "challenge.easyShare": "Easy to share",
+    "challenge.easyShareDesc": "Share via any app you prefer",
+    "challenge.shareLink": "Share this link with your friend",
+    "challenge.copyLink": "Copy Link",
+    "challenge.whatsapp": "Share via WhatsApp",
+    "challenge.infoNote": "Your friend can open this link to join the challenge."
   },
   fr: {
+    // Navigation
     "nav.home": "Accueil",
     "nav.friends": "Amis",
     "nav.kingdom": "Royaume",
     "nav.account": "Compte",
 
+    // Home screen
     "home.greetingMorning": "Bonjour ☀️",
     "home.greetingAfternoon": "Bon après-midi 🌤️",
     "home.greetingEvening": "Bonsoir 🌙",
@@ -90,14 +154,28 @@ const translations = {
     "home.lessons": "Leçons",
     "home.analysis": "Analyse",
     "home.onlineFriends": "Amis en ligne",
+    "home.activeNow": "Actif maintenant",
+    "home.customise": "Personnaliser",
+    "home.playNowDesc": "Deux joueurs, un appareil",
+    "home.playAIDesc": "Défier l'ordinateur",
+    "home.playOnlineDesc": "Trouver un adversaire automatiquement",
+    "home.dailyChallengeDesc": "Gagner une partie classée aujourd'hui",
 
+    // Friends screen
     "friends.title": "Amis",
     "friends.subtitle": "Trouvez des personnes par nom d'utilisateur et envoyez une demande d'ami.",
     "friends.searchPlaceholder": "Rechercher par nom d'utilisateur",
+    "friends.search": "Rechercher",
+    "friends.recentlyActive": "Récemment actif ▾",
     "friends.yourFriends": "Vos amis",
     "friends.friendRequests": "Demandes d'ami",
     "friends.noFriends": "Connectez-vous pour voir vos amis.",
+    "friends.challengeFriend": "Défier un ami",
+    "friends.addMore": "Ajouter plus d'amis",
+    "friends.addMoreDesc": "Plus vous avez d'amis, meilleures sont vos parties !",
+    "friends.findFriends": "Trouver des amis",
 
+    // Account screen
     "account.title": "Compte",
     "account.loggedOut": "Connectez-vous pour sauvegarder votre progression et votre classement",
     "account.email": "E-mail",
@@ -109,23 +187,71 @@ const translations = {
     "account.gamesWon": "Parties gagnées",
     "account.winStreak": "Série de victoires",
     "account.puzzleRating": "Classement puzzles",
+    "account.changePhoto": "Changer la photo de profil",
+    "account.puzzleStreakLabel": "Série de puzzles :",
+    "account.awards": "Récompenses",
+    "account.awardsTeaser": "Continuez à jouer pour gagner des récompenses !",
+    "account.awardsDesc": "Jouez à des parties, résolvez des puzzles et terminez des leçons pour débloquer des succès.",
+    "account.viewAwards": "Voir les récompenses",
+    "account.quickAccess": "Accès rapide",
+    "account.puzzlesDesc": "Résolvez des puzzles et améliorez vos compétences",
+    "account.lessonsDesc": "Apprenez des meilleurs et progressez",
+    "account.coachDesc": "Obtenez des conseils en direct pendant que vous jouez",
+    "account.tournamentsDesc": "Rivalisez et gagnez des prix passionnants",
+    "account.analysisDesc": "Explorez des positions avec l'évaluation du moteur",
+    "account.friendsDesc": "Gérez votre liste d'amis",
 
+    // Kingdom screen
     "kingdom.title": "Mon Royaume",
+    "kingdom.current": "Actuel",
+    "kingdom.consecutiveWins": "Victoires consécutives",
+    "kingdom.winsNeeded": "Victoires nécessaires",
+    "kingdom.journey": "Parcours du Royaume",
+    "kingdom.rulerOf": "Dirigeant de",
 
+    // Settings screen
     "settings.title": "Paramètres",
     "settings.accent": "Couleur d'accent de l'application",
     "settings.boardColours": "Couleurs de l'échiquier",
     "settings.gameplay": "Jeu",
     "settings.sounds": "Sons",
     "settings.language": "Langue",
-    "settings.reset": "Réinitialiser les paramètres"
+    "settings.reset": "Réinitialiser les paramètres",
+    "settings.lastMoveHighlight": "Surligner le dernier coup",
+    "settings.autoPromote": "Promotion automatique en Dame",
+    "settings.confirmResign": "Confirmer avant d'abandonner",
+    "settings.boardFlip": "Retourner l'échiquier (parties hors ligne)",
+    "settings.moveSound": "Son de déplacement des pièces",
+    "settings.checkSound": "Son d'échec",
+    "settings.checkmateSound": "Son d'échec et mat",
+    "settings.bgm": "Musique de fond",
+
+    // Challenge screen
+    "challenge.subtitle": "Créez une partie et envoyez un lien à un ami",
+    "challenge.yourColor": "Votre couleur",
+    "challenge.white": "Blanc",
+    "challenge.black": "Noir",
+    "challenge.timeControl": "Contrôle du temps",
+    "challenge.create": "Créer un lien de défi",
+    "challenge.secureLink": "Lien sécurisé",
+    "challenge.secureLinkDesc": "Seul votre ami avec le lien peut rejoindre",
+    "challenge.fairGame": "Partie équitable",
+    "challenge.fairGameDesc": "Même contrôle du temps pour les deux joueurs",
+    "challenge.easyShare": "Partage facile",
+    "challenge.easyShareDesc": "Partagez via l'application de votre choix",
+    "challenge.shareLink": "Partagez ce lien avec votre ami",
+    "challenge.copyLink": "Copier le lien",
+    "challenge.whatsapp": "Partager via WhatsApp",
+    "challenge.infoNote": "Votre ami peut ouvrir ce lien pour rejoindre le défi."
   },
   es: {
+    // Navigation
     "nav.home": "Inicio",
     "nav.friends": "Amigos",
     "nav.kingdom": "Reino",
     "nav.account": "Cuenta",
 
+    // Home screen
     "home.greetingMorning": "Buenos días ☀️",
     "home.greetingAfternoon": "Buenas tardes 🌤️",
     "home.greetingEvening": "Buenas noches 🌙",
@@ -148,14 +274,28 @@ const translations = {
     "home.lessons": "Lecciones",
     "home.analysis": "Análisis",
     "home.onlineFriends": "Amigos en línea",
+    "home.activeNow": "Activo ahora",
+    "home.customise": "Personalizar",
+    "home.playNowDesc": "Dos jugadores, un dispositivo",
+    "home.playAIDesc": "Desafía a la computadora",
+    "home.playOnlineDesc": "Encuentra un oponente automáticamente",
+    "home.dailyChallengeDesc": "Gana una partida clasificada hoy",
 
+    // Friends screen
     "friends.title": "Amigos",
     "friends.subtitle": "Encuentra personas por su nombre de usuario y envía una solicitud de amistad.",
     "friends.searchPlaceholder": "Buscar por nombre de usuario",
+    "friends.search": "Buscar",
+    "friends.recentlyActive": "Recientemente activo ▾",
     "friends.yourFriends": "Tus amigos",
     "friends.friendRequests": "Solicitudes de amistad",
     "friends.noFriends": "Inicia sesión para ver a tus amigos.",
+    "friends.challengeFriend": "Desafiar a un amigo",
+    "friends.addMore": "Añadir más amigos",
+    "friends.addMoreDesc": "¡Cuantos más amigos tengas, mejores serán tus partidas!",
+    "friends.findFriends": "Encontrar amigos",
 
+    // Account screen
     "account.title": "Cuenta",
     "account.loggedOut": "Inicia sesión para guardar tu progreso y clasificación",
     "account.email": "Correo electrónico",
@@ -167,23 +307,71 @@ const translations = {
     "account.gamesWon": "Partidas ganadas",
     "account.winStreak": "Racha de victorias",
     "account.puzzleRating": "Clasificación de rompecabezas",
+    "account.changePhoto": "Cambiar foto de perfil",
+    "account.puzzleStreakLabel": "Racha de rompecabezas:",
+    "account.awards": "Premios",
+    "account.awardsTeaser": "¡Sigue jugando para ganar premios!",
+    "account.awardsDesc": "Juega partidas, resuelve rompecabezas y completa lecciones para desbloquear logros.",
+    "account.viewAwards": "Ver premios",
+    "account.quickAccess": "Acceso rápido",
+    "account.puzzlesDesc": "Resuelve rompecabezas y mejora tus habilidades",
+    "account.lessonsDesc": "Aprende de los mejores y sube de nivel",
+    "account.coachDesc": "Recibe consejos en vivo mientras juegas",
+    "account.tournamentsDesc": "Compite y gana premios emocionantes",
+    "account.analysisDesc": "Explora posiciones con evaluación del motor",
+    "account.friendsDesc": "Administra tu lista de amigos",
 
+    // Kingdom screen
     "kingdom.title": "Mi Reino",
+    "kingdom.current": "Actual",
+    "kingdom.consecutiveWins": "Victorias consecutivas",
+    "kingdom.winsNeeded": "Victorias necesarias",
+    "kingdom.journey": "Viaje del Reino",
+    "kingdom.rulerOf": "Gobernante de",
 
+    // Settings screen
     "settings.title": "Ajustes",
     "settings.accent": "Color de acento de la app",
     "settings.boardColours": "Colores del tablero",
     "settings.gameplay": "Jugabilidad",
     "settings.sounds": "Sonidos",
     "settings.language": "Idioma",
-    "settings.reset": "Restablecer valores"
+    "settings.reset": "Restablecer valores",
+    "settings.lastMoveHighlight": "Resaltar último movimiento",
+    "settings.autoPromote": "Promoción automática a Dama",
+    "settings.confirmResign": "Confirmar antes de rendirse",
+    "settings.boardFlip": "Voltear tablero (partidas locales)",
+    "settings.moveSound": "Sonido de movimiento de piezas",
+    "settings.checkSound": "Sonido de jaque",
+    "settings.checkmateSound": "Sonido de jaque mate",
+    "settings.bgm": "Música de fondo",
+
+    // Challenge screen
+    "challenge.subtitle": "Crea una partida y envía un enlace a un amigo",
+    "challenge.yourColor": "Tu color",
+    "challenge.white": "Blanco",
+    "challenge.black": "Negro",
+    "challenge.timeControl": "Control de tiempo",
+    "challenge.create": "Crear enlace de desafío",
+    "challenge.secureLink": "Enlace seguro",
+    "challenge.secureLinkDesc": "Solo tu amigo con el enlace puede unirse",
+    "challenge.fairGame": "Partida justa",
+    "challenge.fairGameDesc": "Mismo control de tiempo para ambos jugadores",
+    "challenge.easyShare": "Compartir fácil",
+    "challenge.easyShareDesc": "Comparte a través de cualquier aplicación que prefieras",
+    "challenge.shareLink": "Comparte este enlace con tu amigo",
+    "challenge.copyLink": "Copiar enlace",
+    "challenge.whatsapp": "Compartir por WhatsApp",
+    "challenge.infoNote": "Tu amigo puede abrir este enlace para unirse al desafío."
   },
   pt: {
+    // Navigation
     "nav.home": "Início",
     "nav.friends": "Amigos",
     "nav.kingdom": "Reino",
     "nav.account": "Conta",
 
+    // Home screen
     "home.greetingMorning": "Bom dia ☀️",
     "home.greetingAfternoon": "Boa tarde 🌤️",
     "home.greetingEvening": "Boa noite 🌙",
@@ -206,14 +394,28 @@ const translations = {
     "home.lessons": "Lições",
     "home.analysis": "Análise",
     "home.onlineFriends": "Amigos online",
+    "home.activeNow": "Ativo agora",
+    "home.customise": "Personalizar",
+    "home.playNowDesc": "Dois jogadores, um dispositivo",
+    "home.playAIDesc": "Desafie o computador",
+    "home.playOnlineDesc": "Encontre um oponente automaticamente",
+    "home.dailyChallengeDesc": "Vença uma partida ranqueada hoje",
 
+    // Friends screen
     "friends.title": "Amigos",
     "friends.subtitle": "Encontre pessoas pelo nome de usuário e envie um pedido de amizade.",
     "friends.searchPlaceholder": "Pesquisar por nome de usuário",
+    "friends.search": "Pesquisar",
+    "friends.recentlyActive": "Recentemente ativo ▾",
     "friends.yourFriends": "Seus amigos",
     "friends.friendRequests": "Pedidos de amizade",
     "friends.noFriends": "Faça login para ver seus amigos.",
+    "friends.challengeFriend": "Desafiar um amigo",
+    "friends.addMore": "Adicionar mais amigos",
+    "friends.addMoreDesc": "Quanto mais amigos você tiver, melhores serão seus jogos!",
+    "friends.findFriends": "Encontrar amigos",
 
+    // Account screen
     "account.title": "Conta",
     "account.loggedOut": "Faça login para salvar seu progresso e classificação",
     "account.email": "E-mail",
@@ -225,23 +427,69 @@ const translations = {
     "account.gamesWon": "Partidas vencidas",
     "account.winStreak": "Sequência de vitórias",
     "account.puzzleRating": "Classificação de quebra-cabeças",
+    "account.changePhoto": "Alterar foto de perfil",
+    "account.puzzleStreakLabel": "Sequência de quebra-cabeças:",
+    "account.awards": "Prêmios",
+    "account.awardsTeaser": "Continue jogando para ganhar prêmios!",
+    "account.awardsDesc": "Jogue partidas, resolva quebra-cabeças e complete lições para desbloquear conquistas.",
+    "account.viewAwards": "Ver prêmios",
+    "account.quickAccess": "Acesso rápido",
+    "account.puzzlesDesc": "Resolva quebra-cabeças e melhore suas habilidades",
+    "account.lessonsDesc": "Aprenda com os melhores e suba de nível",
+    "account.coachDesc": "Receba conselhos ao vivo enquanto joga",
+    "account.tournamentsDesc": "Competir e ganhar prêmios emocionantes",
+    "account.analysisDesc": "Explore posições com avaliação do motor",
+    "account.friendsDesc": "Gerencie sua lista de amigos",
 
+    // Kingdom screen
     "kingdom.title": "Meu Reino",
+    "kingdom.current": "Atual",
+    "kingdom.consecutiveWins": "Vitórias consecutivas",
+    "kingdom.winsNeeded": "Vitórias necessárias",
+    "kingdom.journey": "Jornada do Reino",
+    "kingdom.rulerOf": "Governante de",
 
+    // Settings screen
     "settings.title": "Configurações",
     "settings.accent": "Cor de destaque do app",
     "settings.boardColours": "Cores do tabuleiro",
     "settings.gameplay": "Jogabilidade",
     "settings.sounds": "Sons",
     "settings.language": "Idioma",
-    "settings.reset": "Restaurar padrão"
+    "settings.reset": "Restaurar padrão",
+    "settings.lastMoveHighlight": "Destacar último movimento",
+    "settings.autoPromote": "Promoção automática para Dama",
+    "settings.confirmResign": "Confirmar antes de desistir",
+    "settings.boardFlip": "Virar tabuleiro (jogos locais)",
+    "settings.moveSound": "Som de movimento de peças",
+    "settings.checkSound": "Som de xeque",
+    "settings.checkmateSound": "Som de xeque-mate",
+    "settings.bgm": "Música de fundo",
+
+    // Challenge screen
+    "challenge.subtitle": "Crie uma partida e envie um link para um amigo",
+    "challenge.yourColor": "Sua cor",
+    "challenge.white": "Branco",
+    "challenge.black": "Preto",
+    "challenge.timeControl": "Controle de tempo",
+    "challenge.create": "Criar link de desafio",
+    "challenge.secureLink": "Link seguro",
+    "challenge.secureLinkDesc": "Somente seu amigo com o link pode entrar",
+    "challenge.fairGame": "Jogo justo",
+    "challenge.fairGameDesc": "Mesmo controle de tempo para ambos os jogadores",
+    "challenge.easyShare": "Compartilhamento fácil",
+    "challenge.easyShareDesc": "Compartilhe por qualquer aplicativo de sua preferência",
+    "challenge.shareLink": "Compartilhe este link com seu amigo",
+    "challenge.copyLink": "Copiar link",
+    "challenge.whatsapp": "Compartilhar via WhatsApp",
+    "challenge.infoNote": "Seu amigo pode abrir este link para entrar no desafio."
   },
+  // Other languages will fallback to English for missing keys
   de: {
     "nav.home": "Start",
     "nav.friends": "Freunde",
     "nav.kingdom": "Königreich",
     "nav.account": "Konto",
-
     "home.greetingMorning": "Guten Morgen ☀️",
     "home.greetingAfternoon": "Guten Tag 🌤️",
     "home.greetingEvening": "Guten Abend 🌙",
@@ -264,14 +512,12 @@ const translations = {
     "home.lessons": "Lektionen",
     "home.analysis": "Analyse",
     "home.onlineFriends": "Online-Freunde",
-
     "friends.title": "Freunde",
     "friends.subtitle": "Finde Personen über ihren Benutzernamen und sende eine Freundschaftsanfrage.",
     "friends.searchPlaceholder": "Nach Benutzernamen suchen",
     "friends.yourFriends": "Deine Freunde",
     "friends.friendRequests": "Freundschaftsanfragen",
     "friends.noFriends": "Melde dich an, um deine Freunde zu sehen.",
-
     "account.title": "Konto",
     "account.loggedOut": "Melde dich an, um Fortschritt und Bewertung zu speichern",
     "account.email": "E-Mail",
@@ -283,9 +529,7 @@ const translations = {
     "account.gamesWon": "Gewonnene Spiele",
     "account.winStreak": "Siegesserie",
     "account.puzzleRating": "Rätsel-Bewertung",
-
     "kingdom.title": "Mein Königreich",
-
     "settings.title": "Einstellungen",
     "settings.accent": "Akzentfarbe der App",
     "settings.boardColours": "Brettfarben",
@@ -299,7 +543,6 @@ const translations = {
     "nav.friends": "Amici",
     "nav.kingdom": "Regno",
     "nav.account": "Account",
-
     "home.greetingMorning": "Buongiorno ☀️",
     "home.greetingAfternoon": "Buon pomeriggio 🌤️",
     "home.greetingEvening": "Buonasera 🌙",
@@ -322,14 +565,12 @@ const translations = {
     "home.lessons": "Lezioni",
     "home.analysis": "Analisi",
     "home.onlineFriends": "Amici online",
-
     "friends.title": "Amici",
     "friends.subtitle": "Trova persone tramite nome utente e invia una richiesta di amicizia.",
     "friends.searchPlaceholder": "Cerca per nome utente",
     "friends.yourFriends": "I tuoi amici",
     "friends.friendRequests": "Richieste di amicizia",
     "friends.noFriends": "Accedi per vedere i tuoi amici.",
-
     "account.title": "Account",
     "account.loggedOut": "Accedi per salvare progressi e valutazione",
     "account.email": "Email",
@@ -341,9 +582,7 @@ const translations = {
     "account.gamesWon": "Partite vinte",
     "account.winStreak": "Serie di vittorie",
     "account.puzzleRating": "Valutazione puzzle",
-
     "kingdom.title": "Il mio Regno",
-
     "settings.title": "Impostazioni",
     "settings.accent": "Colore accento app",
     "settings.boardColours": "Colori della scacchiera",
@@ -357,7 +596,6 @@ const translations = {
     "nav.friends": "朋友",
     "nav.kingdom": "王国",
     "nav.account": "账户",
-
     "home.greetingMorning": "早上好 ☀️",
     "home.greetingAfternoon": "下午好 🌤️",
     "home.greetingEvening": "晚上好 🌙",
@@ -380,14 +618,12 @@ const translations = {
     "home.lessons": "课程",
     "home.analysis": "分析",
     "home.onlineFriends": "在线朋友",
-
     "friends.title": "朋友",
     "friends.subtitle": "通过用户名找人并发送好友请求。",
     "friends.searchPlaceholder": "按用户名搜索",
     "friends.yourFriends": "你的朋友",
     "friends.friendRequests": "好友请求",
     "friends.noFriends": "登录后查看好友。",
-
     "account.title": "账户",
     "account.loggedOut": "登录以保存进度和等级",
     "account.email": "邮箱",
@@ -399,9 +635,7 @@ const translations = {
     "account.gamesWon": "胜场",
     "account.winStreak": "连胜",
     "account.puzzleRating": "谜题等级",
-
     "kingdom.title": "我的王国",
-
     "settings.title": "设置",
     "settings.accent": "应用强调色",
     "settings.boardColours": "棋盘颜色",
@@ -415,7 +649,6 @@ const translations = {
     "nav.friends": "友達",
     "nav.kingdom": "王国",
     "nav.account": "アカウント",
-
     "home.greetingMorning": "おはようございます ☀️",
     "home.greetingAfternoon": "こんにちは 🌤️",
     "home.greetingEvening": "こんばんは 🌙",
@@ -438,14 +671,12 @@ const translations = {
     "home.lessons": "レッスン",
     "home.analysis": "分析",
     "home.onlineFriends": "オンラインの友達",
-
     "friends.title": "友達",
     "friends.subtitle": "ユーザー名で人を探して友達リクエストを送信。",
     "friends.searchPlaceholder": "ユーザー名で検索",
     "friends.yourFriends": "あなたの友達",
     "friends.friendRequests": "友達リクエスト",
     "friends.noFriends": "ログインして友達を表示。",
-
     "account.title": "アカウント",
     "account.loggedOut": "ログインして進行状況とレートを保存",
     "account.email": "メール",
@@ -457,9 +688,7 @@ const translations = {
     "account.gamesWon": "勝利数",
     "account.winStreak": "連勝",
     "account.puzzleRating": "パズルレート",
-
     "kingdom.title": "私の王国",
-
     "settings.title": "設定",
     "settings.accent": "アプリのアクセントカラー",
     "settings.boardColours": "ボードの色",
@@ -473,7 +702,6 @@ const translations = {
     "nav.friends": "친구",
     "nav.kingdom": "왕국",
     "nav.account": "계정",
-
     "home.greetingMorning": "좋은 아침 ☀️",
     "home.greetingAfternoon": "좋은 오후 🌤️",
     "home.greetingEvening": "좋은 저녁 🌙",
@@ -496,14 +724,12 @@ const translations = {
     "home.lessons": "레슨",
     "home.analysis": "분석",
     "home.onlineFriends": "온라인 친구",
-
     "friends.title": "친구",
     "friends.subtitle": "사용자 이름으로 사람을 찾아 친구 요청을 보내세요.",
     "friends.searchPlaceholder": "사용자 이름 검색",
     "friends.yourFriends": "내 친구",
     "friends.friendRequests": "친구 요청",
     "friends.noFriends": "로그인하여 친구를 확인하세요.",
-
     "account.title": "계정",
     "account.loggedOut": "진행 상황과 레이팅을 저장하려면 로그인하세요",
     "account.email": "이메일",
@@ -515,9 +741,7 @@ const translations = {
     "account.gamesWon": "승리한 게임",
     "account.winStreak": "연승",
     "account.puzzleRating": "퍼즐 레이팅",
-
     "kingdom.title": "내 왕국",
-
     "settings.title": "설정",
     "settings.accent": "앱 강조 색상",
     "settings.boardColours": "보드 색상",
@@ -531,7 +755,6 @@ const translations = {
     "nav.friends": "الأصدقاء",
     "nav.kingdom": "المملكة",
     "nav.account": "الحساب",
-
     "home.greetingMorning": "صباح الخير ☀️",
     "home.greetingAfternoon": "مساء الخير 🌤️",
     "home.greetingEvening": "مساء الخير 🌙",
@@ -554,14 +777,12 @@ const translations = {
     "home.lessons": "الدروس",
     "home.analysis": "التحليل",
     "home.onlineFriends": "أصدقاء متصلون",
-
     "friends.title": "الأصدقاء",
     "friends.subtitle": "ابحث عن أشخاص باستخدام اسم المستخدم وأرسل طلب صداقة.",
     "friends.searchPlaceholder": "ابحث بالاسم",
     "friends.yourFriends": "أصدقاؤك",
     "friends.friendRequests": "طلبات الصداقة",
     "friends.noFriends": "سجّل الدخول لرؤية أصدقائك.",
-
     "account.title": "الحساب",
     "account.loggedOut": "سجّل الدخول لحفظ تقدمك وتقييمك",
     "account.email": "البريد الإلكتروني",
@@ -573,9 +794,7 @@ const translations = {
     "account.gamesWon": "المباريات التي فزت بها",
     "account.winStreak": "سلسلة الانتصارات",
     "account.puzzleRating": "تقييم الألغاز",
-
     "kingdom.title": "مملكتي",
-
     "settings.title": "الإعدادات",
     "settings.accent": "لون التمييز للتطبيق",
     "settings.boardColours": "ألوان اللوحة",
@@ -589,7 +808,6 @@ const translations = {
     "nav.friends": "मित्र",
     "nav.kingdom": "राज्य",
     "nav.account": "खाता",
-
     "home.greetingMorning": "सुप्रभात ☀️",
     "home.greetingAfternoon": "नमस्ते 🌤️",
     "home.greetingEvening": "शुभ संध्या 🌙",
@@ -612,14 +830,12 @@ const translations = {
     "home.lessons": "पाठ",
     "home.analysis": "विश्लेषण",
     "home.onlineFriends": "ऑनलाइन मित्र",
-
     "friends.title": "मित्र",
     "friends.subtitle": "उपयोगकर्ता नाम से लोगों को खोजें और मित्र अनुरोध भेजें।",
     "friends.searchPlaceholder": "उपयोगकर्ता नाम से खोजें",
     "friends.yourFriends": "आपके मित्र",
     "friends.friendRequests": "मित्र अनुरोध",
     "friends.noFriends": "अपने मित्रों को देखने के लिए लॉग इन करें।",
-
     "account.title": "खाता",
     "account.loggedOut": "प्रगति और रेटिंग सहेजने के लिए लॉग इन करें",
     "account.email": "ईमेल",
@@ -631,9 +847,7 @@ const translations = {
     "account.gamesWon": "जीते गए खेल",
     "account.winStreak": "जीत की लकीर",
     "account.puzzleRating": "पहेली रेटिंग",
-
     "kingdom.title": "मेरा राज्य",
-
     "settings.title": "सेटिंग्स",
     "settings.accent": "ऐप एक्सेंट रंग",
     "settings.boardColours": "बोर्ड के रंग",
@@ -647,7 +861,6 @@ const translations = {
     "nav.friends": "Друзья",
     "nav.kingdom": "Королевство",
     "nav.account": "Аккаунт",
-
     "home.greetingMorning": "Доброе утро ☀️",
     "home.greetingAfternoon": "Добрый день 🌤️",
     "home.greetingEvening": "Добрый вечер 🌙",
@@ -670,14 +883,12 @@ const translations = {
     "home.lessons": "Уроки",
     "home.analysis": "Анализ",
     "home.onlineFriends": "Друзья в сети",
-
     "friends.title": "Друзья",
     "friends.subtitle": "Находите людей по имени пользователя и отправляйте запросы в друзья.",
     "friends.searchPlaceholder": "Поиск по имени пользователя",
     "friends.yourFriends": "Ваши друзья",
     "friends.friendRequests": "Запросы в друзья",
     "friends.noFriends": "Войдите, чтобы увидеть друзей.",
-
     "account.title": "Аккаунт",
     "account.loggedOut": "Войдите, чтобы сохранить прогресс и рейтинг",
     "account.email": "Электронная почта",
@@ -689,9 +900,7 @@ const translations = {
     "account.gamesWon": "Выигранные игры",
     "account.winStreak": "Серия побед",
     "account.puzzleRating": "Рейтинг головоломок",
-
     "kingdom.title": "Моё королевство",
-
     "settings.title": "Настройки",
     "settings.accent": "Акцентный цвет приложения",
     "settings.boardColours": "Цвета доски",
@@ -705,7 +914,6 @@ const translations = {
     "nav.friends": "Arkadaşlar",
     "nav.kingdom": "Krallık",
     "nav.account": "Hesap",
-
     "home.greetingMorning": "Günaydın ☀️",
     "home.greetingAfternoon": "İyi günler 🌤️",
     "home.greetingEvening": "İyi akşamlar 🌙",
@@ -728,14 +936,12 @@ const translations = {
     "home.lessons": "Dersler",
     "home.analysis": "Analiz",
     "home.onlineFriends": "Çevrimiçi Arkadaşlar",
-
     "friends.title": "Arkadaşlar",
     "friends.subtitle": "Kullanıcı adına göre insanları bul ve arkadaşlık isteği gönder.",
     "friends.searchPlaceholder": "Kullanıcı adı ile ara",
     "friends.yourFriends": "Arkadaşların",
     "friends.friendRequests": "Arkadaşlık İstekleri",
     "friends.noFriends": "Arkadaşlarını görmek için giriş yap.",
-
     "account.title": "Hesap",
     "account.loggedOut": "İlerlemeni ve puanını kaydetmek için giriş yap",
     "account.email": "E-posta",
@@ -747,9 +953,7 @@ const translations = {
     "account.gamesWon": "Kazanılan Oyunlar",
     "account.winStreak": "Galibiyet Serisi",
     "account.puzzleRating": "Bulmaca Puanı",
-
     "kingdom.title": "Krallığım",
-
     "settings.title": "Ayarlar",
     "settings.accent": "Uygulama Vurgu Rengi",
     "settings.boardColours": "Tahta Renkleri",
@@ -763,7 +967,6 @@ const translations = {
     "nav.friends": "Vrienden",
     "nav.kingdom": "Koninkrijk",
     "nav.account": "Account",
-
     "home.greetingMorning": "Goedemorgen ☀️",
     "home.greetingAfternoon": "Goedemiddag 🌤️",
     "home.greetingEvening": "Goedenavond 🌙",
@@ -786,14 +989,12 @@ const translations = {
     "home.lessons": "Lessen",
     "home.analysis": "Analyse",
     "home.onlineFriends": "Online vrienden",
-
     "friends.title": "Vrienden",
     "friends.subtitle": "Vind mensen op gebruikersnaam en stuur een vriendschapsverzoek.",
     "friends.searchPlaceholder": "Zoek op gebruikersnaam",
     "friends.yourFriends": "Jouw vrienden",
     "friends.friendRequests": "Vriendschapsverzoeken",
     "friends.noFriends": "Log in om je vrienden te zien.",
-
     "account.title": "Account",
     "account.loggedOut": "Log in om voortgang en beoordeling op te slaan",
     "account.email": "E-mail",
@@ -805,9 +1006,7 @@ const translations = {
     "account.gamesWon": "Gewonnen partijen",
     "account.winStreak": "Winstreeks",
     "account.puzzleRating": "Puzzelbeoordeling",
-
     "kingdom.title": "Mijn Koninkrijk",
-
     "settings.title": "Instellingen",
     "settings.accent": "Accentkleur app",
     "settings.boardColours": "Bordkleuren",
@@ -821,7 +1020,6 @@ const translations = {
     "nav.friends": "Znajomi",
     "nav.kingdom": "Królestwo",
     "nav.account": "Konto",
-
     "home.greetingMorning": "Dzień dobry ☀️",
     "home.greetingAfternoon": "Dzień dobry 🌤️",
     "home.greetingEvening": "Dobry wieczór 🌙",
@@ -844,14 +1042,12 @@ const translations = {
     "home.lessons": "Lekcje",
     "home.analysis": "Analiza",
     "home.onlineFriends": "Znajomi online",
-
     "friends.title": "Znajomi",
     "friends.subtitle": "Znajdź osoby po nazwie użytkownika i wyślij zaproszenie do znajomych.",
     "friends.searchPlaceholder": "Szukaj po nazwie użytkownika",
     "friends.yourFriends": "Twoi znajomi",
     "friends.friendRequests": "Zaproszenia do znajomych",
     "friends.noFriends": "Zaloguj się, aby zobaczyć znajomych.",
-
     "account.title": "Konto",
     "account.loggedOut": "Zaloguj się, aby zapisać postęp i ocenę",
     "account.email": "E-mail",
@@ -863,9 +1059,7 @@ const translations = {
     "account.gamesWon": "Wygrane gry",
     "account.winStreak": "Seria zwycięstw",
     "account.puzzleRating": "Ocena zagadek",
-
     "kingdom.title": "Moje Królestwo",
-
     "settings.title": "Ustawienia",
     "settings.accent": "Kolor akcentu aplikacji",
     "settings.boardColours": "Kolory szachownicy",
@@ -879,7 +1073,6 @@ const translations = {
     "nav.friends": "Vänner",
     "nav.kingdom": "Rike",
     "nav.account": "Konto",
-
     "home.greetingMorning": "God morgon ☀️",
     "home.greetingAfternoon": "God eftermiddag 🌤️",
     "home.greetingEvening": "God kväll 🌙",
@@ -902,14 +1095,12 @@ const translations = {
     "home.lessons": "Lektioner",
     "home.analysis": "Analys",
     "home.onlineFriends": "Vänner online",
-
     "friends.title": "Vänner",
     "friends.subtitle": "Hitta personer via användarnamn och skicka vänförfrågan.",
     "friends.searchPlaceholder": "Sök efter användarnamn",
     "friends.yourFriends": "Dina vänner",
     "friends.friendRequests": "Vänförfrågningar",
     "friends.noFriends": "Logga in för att se dina vänner.",
-
     "account.title": "Konto",
     "account.loggedOut": "Logga in för att spara framsteg och betyg",
     "account.email": "E-post",
@@ -921,9 +1112,7 @@ const translations = {
     "account.gamesWon": "Vunna partier",
     "account.winStreak": "Vinstserie",
     "account.puzzleRating": "Pusselbetyg",
-
     "kingdom.title": "Mitt Rike",
-
     "settings.title": "Inställningar",
     "settings.accent": "Appens accentfärg",
     "settings.boardColours": "Brädfärger",
@@ -937,7 +1126,6 @@ const translations = {
     "nav.friends": "Venner",
     "nav.kingdom": "Rike",
     "nav.account": "Konto",
-
     "home.greetingMorning": "God morgen ☀️",
     "home.greetingAfternoon": "God ettermiddag 🌤️",
     "home.greetingEvening": "God kveld 🌙",
@@ -960,14 +1148,12 @@ const translations = {
     "home.lessons": "Leksjoner",
     "home.analysis": "Analyse",
     "home.onlineFriends": "Venner online",
-
     "friends.title": "Venner",
     "friends.subtitle": "Finn personer etter brukernavn og send venneforespørsel.",
     "friends.searchPlaceholder": "Søk etter brukernavn",
     "friends.yourFriends": "Dine venner",
     "friends.friendRequests": "Venneforespørsler",
     "friends.noFriends": "Logg inn for å se vennene dine.",
-
     "account.title": "Konto",
     "account.loggedOut": "Logg inn for å lagre fremgang og vurdering",
     "account.email": "E-post",
@@ -979,9 +1165,7 @@ const translations = {
     "account.gamesWon": "Vunne spill",
     "account.winStreak": "Seiersrekke",
     "account.puzzleRating": "Puslespillvurdering",
-
     "kingdom.title": "Mitt Rike",
-
     "settings.title": "Innstillinger",
     "settings.accent": "Appens aksentfarge",
     "settings.boardColours": "Brettfarger",
@@ -995,7 +1179,6 @@ const translations = {
     "nav.friends": "Venner",
     "nav.kingdom": "Rige",
     "nav.account": "Konto",
-
     "home.greetingMorning": "God morgen ☀️",
     "home.greetingAfternoon": "God eftermiddag 🌤️",
     "home.greetingEvening": "God aften 🌙",
@@ -1018,14 +1201,12 @@ const translations = {
     "home.lessons": "Lektioner",
     "home.analysis": "Analyse",
     "home.onlineFriends": "Online venner",
-
     "friends.title": "Venner",
     "friends.subtitle": "Find personer efter brugernavn og send venneanmodning.",
     "friends.searchPlaceholder": "Søg efter brugernavn",
     "friends.yourFriends": "Dine venner",
     "friends.friendRequests": "Venneanmodninger",
     "friends.noFriends": "Log ind for at se dine venner.",
-
     "account.title": "Konto",
     "account.loggedOut": "Log ind for at gemme fremskridt og bedømmelse",
     "account.email": "E-mail",
@@ -1037,9 +1218,7 @@ const translations = {
     "account.gamesWon": "Vundne spil",
     "account.winStreak": "Sejrsrække",
     "account.puzzleRating": "Puslespilsbedømmelse",
-
     "kingdom.title": "Mit Rige",
-
     "settings.title": "Indstillinger",
     "settings.accent": "Appens accentfarve",
     "settings.boardColours": "Brætfarver",
@@ -1053,7 +1232,6 @@ const translations = {
     "nav.friends": "Kaverit",
     "nav.kingdom": "Valtakunta",
     "nav.account": "Tili",
-
     "home.greetingMorning": "Hyvää huomenta ☀️",
     "home.greetingAfternoon": "Hyvää iltapäivää 🌤️",
     "home.greetingEvening": "Hyvää iltaa 🌙",
@@ -1076,14 +1254,12 @@ const translations = {
     "home.lessons": "Oppitunnit",
     "home.analysis": "Analyysi",
     "home.onlineFriends": "Kaverit verkossa",
-
     "friends.title": "Kaverit",
     "friends.subtitle": "Etsi ihmisiä käyttäjänimellä ja lähetä kaveripyyntö.",
     "friends.searchPlaceholder": "Hae käyttäjänimellä",
     "friends.yourFriends": "Kaverisi",
     "friends.friendRequests": "Kaveripyynnöt",
     "friends.noFriends": "Kirjaudu sisään nähdäksesi kaverit.",
-
     "account.title": "Tili",
     "account.loggedOut": "Kirjaudu sisään tallentaaksesi edistymisen ja arvosanan",
     "account.email": "Sähköposti",
@@ -1095,9 +1271,7 @@ const translations = {
     "account.gamesWon": "Voitetut pelit",
     "account.winStreak": "Voittoputki",
     "account.puzzleRating": "Palapelin arvosana",
-
     "kingdom.title": "Valtakuntani",
-
     "settings.title": "Asetukset",
     "settings.accent": "Sovelluksen korostusväri",
     "settings.boardColours": "Laudan värit",
@@ -1111,7 +1285,6 @@ const translations = {
     "nav.friends": "Φίλοι",
     "nav.kingdom": "Βασίλειο",
     "nav.account": "Λογαριασμός",
-
     "home.greetingMorning": "Καλημέρα ☀️",
     "home.greetingAfternoon": "Καλό απόγευμα 🌤️",
     "home.greetingEvening": "Καλησπέρα 🌙",
@@ -1134,14 +1307,12 @@ const translations = {
     "home.lessons": "Μαθήματα",
     "home.analysis": "Ανάλυση",
     "home.onlineFriends": "Φίλοι σε σύνδεση",
-
     "friends.title": "Φίλοι",
     "friends.subtitle": "Βρείτε άτομα με βάση το όνομα χρήστη και στείλτε αίτημα φιλίας.",
     "friends.searchPlaceholder": "Αναζήτηση με όνομα χρήστη",
     "friends.yourFriends": "Οι φίλοι σας",
     "friends.friendRequests": "Αιτήματα φιλίας",
     "friends.noFriends": "Συνδεθείτε για να δείτε τους φίλους σας.",
-
     "account.title": "Λογαριασμός",
     "account.loggedOut": "Συνδεθείτε για να αποθηκεύσετε την πρόοδο και την αξιολόγηση",
     "account.email": "E-mail",
@@ -1153,9 +1324,7 @@ const translations = {
     "account.gamesWon": "Νικηφόρα παιχνίδια",
     "account.winStreak": "Σερί νικών",
     "account.puzzleRating": "Αξιολόγηση παζλ",
-
     "kingdom.title": "Το Βασίλειό μου",
-
     "settings.title": "Ρυθμίσεις",
     "settings.accent": "Χρώμα έμφασης εφαρμογής",
     "settings.boardColours": "Χρώματα σκακιέρας",
@@ -1169,7 +1338,6 @@ const translations = {
     "nav.friends": "חברים",
     "nav.kingdom": "ממלכה",
     "nav.account": "חשבון",
-
     "home.greetingMorning": "בוקר טוב ☀️",
     "home.greetingAfternoon": "צהריים טובים 🌤️",
     "home.greetingEvening": "ערב טוב 🌙",
@@ -1192,14 +1360,12 @@ const translations = {
     "home.lessons": "שיעורים",
     "home.analysis": "ניתוח",
     "home.onlineFriends": "חברים מחוברים",
-
     "friends.title": "חברים",
     "friends.subtitle": "מצא אנשים לפי שם משתמש ושלח בקשת חברות.",
     "friends.searchPlaceholder": "חפש לפי שם משתמש",
     "friends.yourFriends": "החברים שלך",
     "friends.friendRequests": "בקשות חברות",
     "friends.noFriends": "התחבר כדי לראות את החברים שלך.",
-
     "account.title": "חשבון",
     "account.loggedOut": "התחבר כדי לשמור התקדמות ודירוג",
     "account.email": "דואר אלקטרוני",
@@ -1211,9 +1377,7 @@ const translations = {
     "account.gamesWon": "משחקים שניצחת",
     "account.winStreak": "רצף ניצחונות",
     "account.puzzleRating": "דירוג פאזלים",
-
     "kingdom.title": "הממלכה שלי",
-
     "settings.title": "הגדרות",
     "settings.accent": "צבע הדגשה של האפליקציה",
     "settings.boardColours": "צבעי הלוח",
@@ -1227,7 +1391,6 @@ const translations = {
     "nav.friends": "เพื่อน",
     "nav.kingdom": "อาณาจักร",
     "nav.account": "บัญชี",
-
     "home.greetingMorning": "สวัสดีตอนเช้า ☀️",
     "home.greetingAfternoon": "สวัสดีตอนบ่าย 🌤️",
     "home.greetingEvening": "สวัสดีตอนเย็น 🌙",
@@ -1250,14 +1413,12 @@ const translations = {
     "home.lessons": "บทเรียน",
     "home.analysis": "วิเคราะห์",
     "home.onlineFriends": "เพื่อนออนไลน์",
-
     "friends.title": "เพื่อน",
     "friends.subtitle": "ค้นหาผู้คนด้วยชื่อผู้ใช้และส่งคำขอเป็นเพื่อน",
     "friends.searchPlaceholder": "ค้นหาด้วยชื่อผู้ใช้",
     "friends.yourFriends": "เพื่อนของคุณ",
     "friends.friendRequests": "คำขอเป็นเพื่อน",
     "friends.noFriends": "เข้าสู่ระบบเพื่อดูเพื่อน",
-
     "account.title": "บัญชี",
     "account.loggedOut": "เข้าสู่ระบบเพื่อบันทึกความคืบหน้าและคะแนน",
     "account.email": "อีเมล",
@@ -1269,9 +1430,7 @@ const translations = {
     "account.gamesWon": "เกมที่ชนะ",
     "account.winStreak": "ชนะติดต่อกัน",
     "account.puzzleRating": "คะแนนปริศนา",
-
     "kingdom.title": "อาณาจักรของฉัน",
-
     "settings.title": "การตั้งค่า",
     "settings.accent": "สีเน้นของแอป",
     "settings.boardColours": "สีกระดาน",
@@ -1285,7 +1444,6 @@ const translations = {
     "nav.friends": "Bạn bè",
     "nav.kingdom": "Vương quốc",
     "nav.account": "Tài khoản",
-
     "home.greetingMorning": "Chào buổi sáng ☀️",
     "home.greetingAfternoon": "Chào buổi chiều 🌤️",
     "home.greetingEvening": "Chào buổi tối 🌙",
@@ -1308,14 +1466,12 @@ const translations = {
     "home.lessons": "Bài học",
     "home.analysis": "Phân tích",
     "home.onlineFriends": "Bạn bè trực tuyến",
-
     "friends.title": "Bạn bè",
     "friends.subtitle": "Tìm người theo tên người dùng và gửi lời mời kết bạn.",
     "friends.searchPlaceholder": "Tìm kiếm theo tên người dùng",
     "friends.yourFriends": "Bạn bè của bạn",
     "friends.friendRequests": "Lời mời kết bạn",
     "friends.noFriends": "Đăng nhập để xem bạn bè.",
-
     "account.title": "Tài khoản",
     "account.loggedOut": "Đăng nhập để lưu tiến trình và xếp hạng",
     "account.email": "Email",
@@ -1327,9 +1483,7 @@ const translations = {
     "account.gamesWon": "Trận thắng",
     "account.winStreak": "Chuỗi thắng",
     "account.puzzleRating": "Xếp hạng câu đố",
-
     "kingdom.title": "Vương quốc của tôi",
-
     "settings.title": "Cài đặt",
     "settings.accent": "Màu nhấn của ứng dụng",
     "settings.boardColours": "Màu bàn cờ",
@@ -1343,7 +1497,6 @@ const translations = {
     "nav.friends": "Teman",
     "nav.kingdom": "Kerajaan",
     "nav.account": "Akun",
-
     "home.greetingMorning": "Selamat pagi ☀️",
     "home.greetingAfternoon": "Selamat siang 🌤️",
     "home.greetingEvening": "Selamat malam 🌙",
@@ -1366,14 +1519,12 @@ const translations = {
     "home.lessons": "Pelajaran",
     "home.analysis": "Analisis",
     "home.onlineFriends": "Teman online",
-
     "friends.title": "Teman",
     "friends.subtitle": "Temukan orang berdasarkan nama pengguna dan kirim permintaan pertemanan.",
     "friends.searchPlaceholder": "Cari berdasarkan nama pengguna",
     "friends.yourFriends": "Teman Anda",
     "friends.friendRequests": "Permintaan pertemanan",
     "friends.noFriends": "Masuk untuk melihat teman.",
-
     "account.title": "Akun",
     "account.loggedOut": "Masuk untuk menyimpan kemajuan dan peringkat",
     "account.email": "Email",
@@ -1385,9 +1536,7 @@ const translations = {
     "account.gamesWon": "Pertandingan dimenangkan",
     "account.winStreak": "Kemenangan beruntun",
     "account.puzzleRating": "Peringkat teka-teki",
-
     "kingdom.title": "Kerajaanku",
-
     "settings.title": "Pengaturan",
     "settings.accent": "Warna aksen aplikasi",
     "settings.boardColours": "Warna papan",
@@ -1401,7 +1550,6 @@ const translations = {
     "nav.friends": "Rakan",
     "nav.kingdom": "Kerajaan",
     "nav.account": "Akaun",
-
     "home.greetingMorning": "Selamat pagi ☀️",
     "home.greetingAfternoon": "Selamat tengah hari 🌤️",
     "home.greetingEvening": "Selamat petang 🌙",
@@ -1424,14 +1572,12 @@ const translations = {
     "home.lessons": "Pelajaran",
     "home.analysis": "Analisis",
     "home.onlineFriends": "Rakan dalam talian",
-
     "friends.title": "Rakan",
     "friends.subtitle": "Cari orang mengikut nama pengguna dan hantar permintaan rakan.",
     "friends.searchPlaceholder": "Cari dengan nama pengguna",
     "friends.yourFriends": "Rakan anda",
     "friends.friendRequests": "Permintaan rakan",
     "friends.noFriends": "Log masuk untuk melihat rakan.",
-
     "account.title": "Akaun",
     "account.loggedOut": "Log masuk untuk simpan kemajuan dan penilaian",
     "account.email": "E-mel",
@@ -1443,9 +1589,7 @@ const translations = {
     "account.gamesWon": "Permainan dimenangi",
     "account.winStreak": "Rentetan kemenangan",
     "account.puzzleRating": "Penilaian teka-teki",
-
     "kingdom.title": "Kerajaanku",
-
     "settings.title": "Tetapan",
     "settings.accent": "Warna aksen aplikasi",
     "settings.boardColours": "Warna papan",
@@ -1459,7 +1603,6 @@ const translations = {
     "nav.friends": "Marafiki",
     "nav.kingdom": "Ufalme",
     "nav.account": "Akaunti",
-
     "home.greetingMorning": "Habari za asubuhi ☀️",
     "home.greetingAfternoon": "Habari za mchana 🌤️",
     "home.greetingEvening": "Habari za jioni 🌙",
@@ -1482,14 +1625,12 @@ const translations = {
     "home.lessons": "Masomo",
     "home.analysis": "Uchambuzi",
     "home.onlineFriends": "Marafiki mtandaoni",
-
     "friends.title": "Marafiki",
     "friends.subtitle": "Tafuta watu kwa jina la mtumiaji na tuma ombi la urafiki.",
     "friends.searchPlaceholder": "Tafuta kwa jina la mtumiaji",
     "friends.yourFriends": "Marafiki zako",
     "friends.friendRequests": "Maombi ya urafiki",
     "friends.noFriends": "Ingia ili kuona marafiki.",
-
     "account.title": "Akaunti",
     "account.loggedOut": "Ingia ili kuhifadhi maendeleo na ukadiriaji",
     "account.email": "Barua pepe",
@@ -1501,9 +1642,7 @@ const translations = {
     "account.gamesWon": "Michezo iliyoshinda",
     "account.winStreak": "Mfululizo wa ushindi",
     "account.puzzleRating": "Ukadiriaji wa mafumbo",
-
     "kingdom.title": "Ufalme Wangu",
-
     "settings.title": "Mipangilio",
     "settings.accent": "Rangi ya msisitizo ya programu",
     "settings.boardColours": "Rangi za ubao",
@@ -1517,7 +1656,6 @@ const translations = {
     "nav.friends": "ጓደኞች",
     "nav.kingdom": "መንግሥት",
     "nav.account": "መለያ",
-
     "home.greetingMorning": "እንደምን አደሩ ☀️",
     "home.greetingAfternoon": "እንደምን ዋሉ 🌤️",
     "home.greetingEvening": "እንደምን አመሸሁ 🌙",
@@ -1540,14 +1678,12 @@ const translations = {
     "home.lessons": "ትምህርቶች",
     "home.analysis": "ትንተና",
     "home.onlineFriends": "የመስመር ላይ ጓደኞች",
-
     "friends.title": "ጓደኞች",
     "friends.subtitle": "በተጠቃሚ ስም ሰዎችን ይፈልጉ እና የጓደኝነት ጥያቄ ይላኩ።",
     "friends.searchPlaceholder": "በተጠቃሚ ስም ይፈልጉ",
     "friends.yourFriends": "ጓደኞችዎ",
     "friends.friendRequests": "የጓደኝነት ጥያቄዎች",
     "friends.noFriends": "ጓደኞችዎን ለማየት ይግቡ።",
-
     "account.title": "መለያ",
     "account.loggedOut": "እድገትዎን እና ደረጃዎን ለማስቀመጥ ይግቡ",
     "account.email": "ኢሜል",
@@ -1559,9 +1695,7 @@ const translations = {
     "account.gamesWon": "የተሸነፉ ጨዋታዎች",
     "account.winStreak": "ተከታታይ ድሎች",
     "account.puzzleRating": "የእንቆቅልሽ ደረጃ",
-
     "kingdom.title": "የእኔ መንግሥት",
-
     "settings.title": "ቅንብሮች",
     "settings.accent": "የመተግበሪያ ድምቀት ቀለም",
     "settings.boardColours": "የቦርድ ቀለሞች",
@@ -1575,7 +1709,6 @@ const translations = {
     "nav.friends": "Abokai",
     "nav.kingdom": "Masarauta",
     "nav.account": "Asusu",
-
     "home.greetingMorning": "Barka da safiya ☀️",
     "home.greetingAfternoon": "Barka da rana 🌤️",
     "home.greetingEvening": "Barka da yamma 🌙",
@@ -1598,14 +1731,12 @@ const translations = {
     "home.lessons": "Darussa",
     "home.analysis": "Nazari",
     "home.onlineFriends": "Abokai kan layi",
-
     "friends.title": "Abokai",
     "friends.subtitle": "Nemo mutane ta sunan mai amfani kuma aika buƙatar abota.",
     "friends.searchPlaceholder": "Nemo ta sunan mai amfani",
     "friends.yourFriends": "Abokan ku",
     "friends.friendRequests": "Buƙatun abota",
     "friends.noFriends": "Shiga don ganin abokan ku.",
-
     "account.title": "Asusu",
     "account.loggedOut": "Shiga don adana ci gaba da kimantawa",
     "account.email": "Imel",
@@ -1617,9 +1748,7 @@ const translations = {
     "account.gamesWon": "Wasannin da aka ci",
     "account.winStreak": "Jerin nasara",
     "account.puzzleRating": "Kimantawar tantancewa",
-
     "kingdom.title": "Masarautata",
-
     "settings.title": "Saituna",
     "settings.accent": "Launin ƙarfafawa na app",
     "settings.boardColours": "Launukan allo",
@@ -1633,7 +1762,6 @@ const translations = {
     "nav.friends": "Awọn ọrẹ",
     "nav.kingdom": "Ijọba",
     "nav.account": "Akọọlẹ",
-
     "home.greetingMorning": "Ẹ kaaro ☀️",
     "home.greetingAfternoon": "Ẹ kaasan 🌤️",
     "home.greetingEvening": "Ẹ ku irole 🌙",
@@ -1656,14 +1784,12 @@ const translations = {
     "home.lessons": "Awọn ẹkọ",
     "home.analysis": "Itupalẹ",
     "home.onlineFriends": "Awọn ọrẹ lori ayelujara",
-
     "friends.title": "Awọn ọrẹ",
     "friends.subtitle": "Wa awọn eniyan nipasẹ orukọ olumulo ki o fi ibeere ọrẹ ranṣẹ.",
     "friends.searchPlaceholder": "Wa nipasẹ orukọ olumulo",
     "friends.yourFriends": "Awọn ọrẹ rẹ",
     "friends.friendRequests": "Awọn ibeere ọrẹ",
     "friends.noFriends": "Wọle lati wo awọn ọrẹ rẹ.",
-
     "account.title": "Akọọlẹ",
     "account.loggedOut": "Wọle lati fi ilọsiwaju ati oṣuwọn pamọ",
     "account.email": "Imeeli",
@@ -1675,9 +1801,7 @@ const translations = {
     "account.gamesWon": "Awọn ere ti o bori",
     "account.winStreak": "Ọna iṣẹgun",
     "account.puzzleRating": "Oṣuwọn adojuru",
-
     "kingdom.title": "Ijọba mi",
-
     "settings.title": "Eto",
     "settings.accent": "Awọ itọkasi app",
     "settings.boardColours": "Awọn awọ ọkọ",
@@ -1691,7 +1815,6 @@ const translations = {
     "nav.friends": "Ndị enyi",
     "nav.kingdom": "Alaeze",
     "nav.account": "Akaụntụ",
-
     "home.greetingMorning": "Ụtụtụ ọma ☀️",
     "home.greetingAfternoon": "Ehihie ọma 🌤️",
     "home.greetingEvening": "Mgbede ọma 🌙",
@@ -1714,14 +1837,12 @@ const translations = {
     "home.lessons": "Ihe ọmụmụ",
     "home.analysis": "Nyocha",
     "home.onlineFriends": "Ndị enyi n'ịntanetị",
-
     "friends.title": "Ndị enyi",
     "friends.subtitle": "Chọta ndị mmadụ site na aha njirimara ma ziga arịrịọ enyi.",
     "friends.searchPlaceholder": "Chọọ site na aha njirimara",
     "friends.yourFriends": "Ndị enyi gị",
     "friends.friendRequests": "Arịrịọ enyi",
     "friends.noFriends": "Banye iji hụ ndị enyi gị.",
-
     "account.title": "Akaụntụ",
     "account.loggedOut": "Banye iji chekwaa ọganihu na ntụle",
     "account.email": "Email",
@@ -1733,9 +1854,7 @@ const translations = {
     "account.gamesWon": "Egwuregwu ndị e meriri",
     "account.winStreak": "Usoro mmeri",
     "account.puzzleRating": "Ntụle ihe omimi",
-
     "kingdom.title": "Alaeze m",
-
     "settings.title": "Ntọala",
     "settings.accent": "Agba ngosi ngwa",
     "settings.boardColours": "Agba bọọdụ",
@@ -1749,7 +1868,6 @@ const translations = {
     "nav.friends": "Abangane",
     "nav.kingdom": "Umbuso",
     "nav.account": "I-akhawunti",
-
     "home.greetingMorning": "Sawubona ekuseni ☀️",
     "home.greetingAfternoon": "Sawubona ntambama 🌤️",
     "home.greetingEvening": "Sawubona kusihlwa 🌙",
@@ -1772,14 +1890,12 @@ const translations = {
     "home.lessons": "Izifundo",
     "home.analysis": "Ukuhlaziya",
     "home.onlineFriends": "Abangane ku-inthanethi",
-
     "friends.title": "Abangane",
     "friends.subtitle": "Thola abantu ngegama lomsebenzisi bese uthumela isicelo sobungani.",
     "friends.searchPlaceholder": "Sesha ngegama lomsebenzisi",
     "friends.yourFriends": "Abangane bakho",
     "friends.friendRequests": "Izicelo zobungani",
     "friends.noFriends": "Ngena ukuze ubone abangane bakho.",
-
     "account.title": "I-akhawunti",
     "account.loggedOut": "Ngena ukuze ulondoloze inqubekelaphambili nesilinganiso",
     "account.email": "I-imeyili",
@@ -1791,9 +1907,7 @@ const translations = {
     "account.gamesWon": "Imidlalo eyawinwa",
     "account.winStreak": "Uchungechunge lokuwina",
     "account.puzzleRating": "Isilinganiso sendida",
-
     "kingdom.title": "Umbuso wami",
-
     "settings.title": "Izilungiselelo",
     "settings.accent": "Umbala wokugqamisa wohlelo",
     "settings.boardColours": "Imibala yebhodi",
@@ -1807,7 +1921,6 @@ const translations = {
     "nav.friends": "Abahlobo",
     "nav.kingdom": "Ubukumkani",
     "nav.account": "Iakhawunti",
-
     "home.greetingMorning": "Molo kusasa ☀️",
     "home.greetingAfternoon": "Molo emva kwemini 🌤️",
     "home.greetingEvening": "Molo ngokuhlwa 🌙",
@@ -1830,14 +1943,12 @@ const translations = {
     "home.lessons": "Izifundo",
     "home.analysis": "Uhlalutyo",
     "home.onlineFriends": "Abahlobo kwi-intanethi",
-
     "friends.title": "Abahlobo",
     "friends.subtitle": "Fumana abantu ngegama lomsebenzisi kwaye uthumele isicelo sobuhlobo.",
     "friends.searchPlaceholder": "Khangela ngegama lomsebenzisi",
     "friends.yourFriends": "Abahlobo bakho",
     "friends.friendRequests": "Izicelo zobuhlobo",
     "friends.noFriends": "Ngena ukuze ubone abahlobo bakho.",
-
     "account.title": "Iakhawunti",
     "account.loggedOut": "Ngena ukuze ugcine inkqubela kunye nokuvavanya",
     "account.email": "I-imeyile",
@@ -1849,9 +1960,7 @@ const translations = {
     "account.gamesWon": "Imidlalo ephumeleleyo",
     "account.winStreak": "Uthotho lokuphumelela",
     "account.puzzleRating": "Ukuvavanywa kweepuzzle",
-
     "kingdom.title": "Ubukumkani bam",
-
     "settings.title": "Isetingi",
     "settings.accent": "Umbala wokugqamisa we-app",
     "settings.boardColours": "Imibala yebhodi",
@@ -1865,7 +1974,6 @@ const translations = {
     "nav.friends": "Vriende",
     "nav.kingdom": "Koninkryk",
     "nav.account": "Rekening",
-
     "home.greetingMorning": "Goeie môre ☀️",
     "home.greetingAfternoon": "Goeie middag 🌤️",
     "home.greetingEvening": "Goeienaand 🌙",
@@ -1888,14 +1996,12 @@ const translations = {
     "home.lessons": "Lessies",
     "home.analysis": "Analise",
     "home.onlineFriends": "Aanlyn vriende",
-
     "friends.title": "Vriende",
     "friends.subtitle": "Vind mense op gebruikersnaam en stuur 'n vriendskapsversoek.",
     "friends.searchPlaceholder": "Soek op gebruikersnaam",
     "friends.yourFriends": "Jou vriende",
     "friends.friendRequests": "Vriendskapsversoeke",
     "friends.noFriends": "Meld aan om jou vriende te sien.",
-
     "account.title": "Rekening",
     "account.loggedOut": "Meld aan om vordering en gradering te stoor",
     "account.email": "E-pos",
@@ -1907,9 +2013,7 @@ const translations = {
     "account.gamesWon": "Gewonne speletjies",
     "account.winStreak": "Wenreeks",
     "account.puzzleRating": "Legkaartgradering",
-
     "kingdom.title": "My Koninkryk",
-
     "settings.title": "Instellings",
     "settings.accent": "App-aksentkleur",
     "settings.boardColours": "Bordkleure",
