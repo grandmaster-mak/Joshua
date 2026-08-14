@@ -4,15 +4,13 @@
 
 const translations = {
   en: {
-    // Navigation
     "nav.home": "Home",
     "nav.friends": "Friends",
     "nav.kingdom": "Kingdom",
     "nav.account": "Account",
 
-    // Home screen
     "home.greetingMorning": "Good morning ☀️",
-    "home.greetingAfternoon": "Good afternoon ☀️",
+    "home.greetingAfternoon": "Good afternoon 🌤️",
     "home.greetingEvening": "Good evening 🌙",
     "home.hello": "Hello",
     "home.rating": "Rating",
@@ -34,7 +32,6 @@ const translations = {
     "home.analysis": "Analysis",
     "home.onlineFriends": "Online Friends",
 
-    // Friends screen
     "friends.title": "Friends",
     "friends.subtitle": "Find people by their username and send a friend request.",
     "friends.searchPlaceholder": "Search by username",
@@ -42,7 +39,6 @@ const translations = {
     "friends.friendRequests": "Friend Requests",
     "friends.noFriends": "Log in to see your friends.",
 
-    // Account screen
     "account.title": "Account",
     "account.loggedOut": "Sign in to save your progress and rating",
     "account.email": "Email",
@@ -55,10 +51,8 @@ const translations = {
     "account.winStreak": "Win Streak",
     "account.puzzleRating": "Puzzle Rating",
 
-    // Kingdom screen
     "kingdom.title": "My Kingdom",
 
-    // Settings
     "settings.title": "Settings",
     "settings.accent": "App Accent Colour",
     "settings.boardColours": "Board Colours",
@@ -74,7 +68,7 @@ const translations = {
     "nav.account": "Compte",
 
     "home.greetingMorning": "Bonjour ☀️",
-    "home.greetingAfternoon": "Bon après-midi ☀️",
+    "home.greetingAfternoon": "Bon après-midi 🌤️",
     "home.greetingEvening": "Bonsoir 🌙",
     "home.hello": "Bonjour",
     "home.rating": "Classement",
@@ -125,12 +119,37 @@ const translations = {
     "settings.language": "Langue",
     "settings.reset": "Réinitialiser les paramètres"
   },
-  es: {
-    // Add Spanish translations here (same keys)
-  },
-  pt: {
-    // Add Portuguese translations here (same keys)
-  }
+  es: {},
+  pt: {},
+  de: {},
+  it: {},
+  zh: {},
+  ja: {},
+  ko: {},
+  ar: {},
+  hi: {},
+  ru: {},
+  tr: {},
+  nl: {},
+  pl: {},
+  sv: {},
+  no: {},
+  da: {},
+  fi: {},
+  el: {},
+  he: {},
+  th: {},
+  vi: {},
+  id: {},
+  ms: {},
+  sw: {},
+  am: {},
+  ha: {},
+  yo: {},
+  ig: {},
+  zu: {},
+  xh: {},
+  af: {}
 };
 
 let currentLanguage = 'en';
@@ -147,13 +166,11 @@ function applyLanguage(lang) {
         localStorage.setItem('appSettings', JSON.stringify(settings));
     } catch(e) {}
 
-    // Update text
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         el.textContent = t(key);
     });
 
-    // Update placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         el.placeholder = t(key);
@@ -169,7 +186,6 @@ function getStoredLanguage() {
     }
 }
 
-// Apply the stored language as soon as the DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     currentLanguage = getStoredLanguage();
     applyLanguage(currentLanguage);
