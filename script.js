@@ -2806,7 +2806,13 @@ function openChallengeScreen(){
   document.getElementById("challengeLinkArea").style.display = "none";
   history.pushState({ screen: "challenge" }, "", "#challenge");
 }
-
+function closeChallengeScreen(){
+    document.getElementById("challengeScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
+    // Replace the current history entry with a base state so back never exits the app
+    history.replaceState({ screen: null }, "", location.href);
+    switchScreen(lastActiveTab);
+}
 // Attach to your existing "Challenge a Friend" button
 var challengeBtn = document.getElementById("challengeHomeBtn");
 if(challengeBtn) challengeBtn.addEventListener("click", openChallengeScreen);
