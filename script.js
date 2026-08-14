@@ -274,44 +274,57 @@ function findMaleVoice(){
     return match || null;
 }
 
+let externalAudio = null;
+
 function speakText(text){
     if(!text) return;
-    if(!("speechSynthesis" in window)) return;
+    if(!("speechSynthesis" in window) && !window.Audio) return;
+
     const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu, "").trim();
     if(!clean) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.15;
-    utterance.pitch = 0.75;
 
-    // Set language from the app's current language (defined in i18n.js)
+    // Determine language code (use currentLanguage from i18n.js)
+    let langCode = "en";
     if(typeof currentLanguage !== "undefined" && currentLanguage){
-        utterance.lang = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
+        langCode = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
     }
 
-    // Try to find a voice that matches the selected language
-    const voices = window.speechSynthesis.getVoices();
-    let matchingVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith((currentLanguage || "en").toLowerCase()));
-    if(matchingVoice){
-        utterance.voice = matchingVoice;
-    } else {
-        // Fallback to male voice as before
-        if(!cachedMaleVoice && !maleVoiceSearched){
-            cachedMaleVoice = findMaleVoice();
-            maleVoiceSearched = true;
-            if(!cachedMaleVoice && "onvoiceschanged" in window.speechSynthesis){
-                window.speechSynthesis.onvoiceschanged = function(){
-                    cachedMaleVoice = findMaleVoice();
-                };
-            }
+    // Stop previous audio / speech
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    if(externalAudio){
+        externalAudio.pause();
+        externalAudio = null;
+    }
+
+    if(typeof setCoachTalking === "function") setCoachTalking(true);
+
+    // Try Google TTS first
+    const googleTTS = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=" + encodeURIComponent(clean) + "&tl=" + langCode;
+    const audio = new Audio(googleTTS);
+    externalAudio = audio;
+
+    audio.onended = function(){
+        if(typeof setCoachTalking === "function") setCoachTalking(false);
+        externalAudio = null;
+    };
+
+    audio.onerror = function(){
+        // Fallback to built-in speechSynthesis if Google TTS fails
+        externalAudio = null;
+        if("speechSynthesis" in window){
+            const utterance = new SpeechSynthesisUtterance(clean);
+            utterance.lang = langCode;
+            utterance.rate = 1.1;
+            utterance.pitch = 0.85;
+            utterance.onend = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
+            utterance.onerror = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
+            window.speechSynthesis.speak(utterance);
+        } else {
+            if(typeof setCoachTalking === "function") setCoachTalking(false);
         }
-        if(cachedMaleVoice) utterance.voice = cachedMaleVoice;
-    }
+    };
 
-    utterance.onstart = function(){ setCoachTalking(true); };
-    utterance.onend = function(){ setCoachTalking(false); };
-    utterance.onerror = function(){ setCoachTalking(false); };
-    window.speechSynthesis.speak(utterance);
+    audio.play();
 }
 
 function setCoachMood(mood){
