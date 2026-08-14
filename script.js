@@ -283,16 +283,31 @@ function speakText(text){
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.rate = 1.15;
     utterance.pitch = 0.75;
-    if(!cachedMaleVoice && !maleVoiceSearched){
-        cachedMaleVoice = findMaleVoice();
-        maleVoiceSearched = true;
-        if(!cachedMaleVoice && "onvoiceschanged" in window.speechSynthesis){
-            window.speechSynthesis.onvoiceschanged = function(){
-                cachedMaleVoice = findMaleVoice();
-            };
-        }
+
+    // Set language from the app's current language (defined in i18n.js)
+    if(typeof currentLanguage !== "undefined" && currentLanguage){
+        utterance.lang = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
     }
-    if(cachedMaleVoice) utterance.voice = cachedMaleVoice;
+
+    // Try to find a voice that matches the selected language
+    const voices = window.speechSynthesis.getVoices();
+    let matchingVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith((currentLanguage || "en").toLowerCase()));
+    if(matchingVoice){
+        utterance.voice = matchingVoice;
+    } else {
+        // Fallback to male voice as before
+        if(!cachedMaleVoice && !maleVoiceSearched){
+            cachedMaleVoice = findMaleVoice();
+            maleVoiceSearched = true;
+            if(!cachedMaleVoice && "onvoiceschanged" in window.speechSynthesis){
+                window.speechSynthesis.onvoiceschanged = function(){
+                    cachedMaleVoice = findMaleVoice();
+                };
+            }
+        }
+        if(cachedMaleVoice) utterance.voice = cachedMaleVoice;
+    }
+
     utterance.onstart = function(){ setCoachTalking(true); };
     utterance.onend = function(){ setCoachTalking(false); };
     utterance.onerror = function(){ setCoachTalking(false); };
