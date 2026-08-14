@@ -319,7 +319,7 @@ function openDailyPuzzle(){
                 loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
             }else{
                 // No new puzzle for today – open the map completely.
-                openPuzzleMap(); // This re-renders the map with the real data
+                openPuzzleMap(true); // This re-renders the map with the real data
             }
 
         });
