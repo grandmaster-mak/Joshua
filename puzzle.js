@@ -259,11 +259,22 @@ function loadPuzzleIntoBoard(puzzle, isReplay){
 // replay anything already solved.
 function openDailyPuzzle(){
 
+    // Show the puzzle map immediately – no blank wait while Firebase loads.
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("puzzleMapScreen").style.display = "flex";
+    history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
+
+    const bodyEl = document.getElementById("puzzleMapBody");
+    if(bodyEl) bodyEl.innerHTML = '<p class="sub">Loading...</p>';
+
+    // If no user, just show the map (it will handle the rest)
     if(typeof currentUser === "undefined" || !currentUser || !db){
-        openPuzzleMap();
+        openPuzzleMap(); // this will re-render the map properly
         return;
     }
 
+    // Fetch the data in the background. When ready, decide whether to
+    // jump straight into a new daily puzzle or keep the map open.
     loadPuzzlePool().then(function(pool){
 
         const sorted = sortPuzzlesChronologically(pool);
@@ -296,24 +307,27 @@ function openDailyPuzzle(){
 
             const newUnlockedToday = isNewPuzzleUnlockedToday(priv.puzzleLastSolved || null);
 
+            // Hide loading text only after we have the data
+            if(bodyEl) bodyEl.innerHTML = "";
+
             if(nextPlayableLocal !== -1 && newUnlockedToday && tierPuzzles[nextPlayableLocal]){
-                // There's a fresh, never-solved puzzle waiting — skip
-                // the map, go straight to the board. Never a replay.
-                document.getElementById("appShell").style.display = "none";
-document.getElementById("puzzleScreen").style.display = "flex";
-puzzleOpenedFromMap = false;   // opened directly from daily, not from map
-history.pushState({ screen: "puzzle" }, "", "#puzzle");
-loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
+                // There is a brand-new puzzle for today – switch to the puzzle board.
+                document.getElementById("puzzleMapScreen").style.display = "none";
+                document.getElementById("puzzleScreen").style.display = "flex";
+                puzzleOpenedFromMap = false;
+                history.replaceState({ screen: "puzzle" }, "", "#puzzle");
+                loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
             }else{
-                // Already solved today's, or waiting on tomorrow/promotion — show the map instead.
-                openPuzzleMap();
+                // No new puzzle for today – open the map completely.
+                openPuzzleMap(); // This re-renders the map with the real data
             }
 
         });
 
     }).catch(function(err){
         console.error("Failed to check today's puzzle:", err.message);
-        openPuzzleMap();
+        // Keep the map open even on error, just show the error.
+        if(bodyEl) bodyEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
     });
 
 }
