@@ -120,13 +120,12 @@ const englishToKey = {
   "Your friend can open this link to join the challenge.": "challenge.infoNote"
 };
 
-function autoAddI18n(){
-  // Handle all elements with text
+function autoAddI18n() {
+  // Handle leaf elements with text
   document.querySelectorAll('body *').forEach(el => {
-    // Only process elements that have no child elements (leaf nodes)
-    if(el.children.length === 0){
+    if (el.children.length === 0) {
       const text = (el.textContent || '').trim();
-      if(text && englishToKey[text]){
+      if (text && englishToKey[text]) {
         el.setAttribute('data-i18n', englishToKey[text]);
       }
     }
@@ -135,17 +134,15 @@ function autoAddI18n(){
   // Handle placeholders
   document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
     const ph = el.getAttribute('placeholder');
-    if(ph && englishToKey[ph]){
+    if (ph && englishToKey[ph]) {
       el.setAttribute('data-i18n-placeholder', englishToKey[ph]);
     }
   });
 }
 
-// Run after DOM is ready, before applyLanguage
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', function() {
   autoAddI18n();
-  // Then apply language (from i18n.js)
-  if(typeof applyLanguage === 'function'){
+  if (typeof applyLanguage === 'function') {
     applyLanguage(getStoredLanguage());
   }
 });
