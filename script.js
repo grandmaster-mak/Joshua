@@ -2688,25 +2688,27 @@ window.addEventListener("popstate", function(event){
     // --- END NEW ---
 
     if(!state || !state.screen){
-        document.getElementById("tournamentsScreen").style.display = "none";
-        document.getElementById("puzzleScreen").style.display = "none";
-        document.getElementById("puzzleMapScreen").style.display = "none";
-        document.getElementById("leaderboardScreen").style.display = "none";
-        document.getElementById("dailyRewardsScreen").style.display = "none";
-        document.getElementById("chatScreen").style.display = "none";
-        document.getElementById("analysisScreen").style.display = "none";
-        document.getElementById("lessonsScreen").style.display = "none";
-        document.getElementById("profileScreen").style.display = "none";
-        document.getElementById("gameHistoryScreen").style.display = "none";
-        const dnaScreenEl2 = document.getElementById("chessDnaScreen");
-        if(dnaScreenEl2) dnaScreenEl2.style.display = "none";
-        if(typeof matchmakingSearchActive !== "undefined" && matchmakingSearchActive && typeof cancelQuickMatchManually === "function"){
-            cancelQuickMatchManually();
-        }
-        document.getElementById("appShell").style.display = "flex";
-        switchScreen(lastActiveTab);
-        return;
+    document.getElementById("tournamentsScreen").style.display = "none";
+    document.getElementById("puzzleScreen").style.display = "none";
+    document.getElementById("puzzleMapScreen").style.display = "none";
+    document.getElementById("leaderboardScreen").style.display = "none";
+    document.getElementById("dailyRewardsScreen").style.display = "none";
+    document.getElementById("chatScreen").style.display = "none";
+    document.getElementById("analysisScreen").style.display = "none";
+    document.getElementById("lessonsScreen").style.display = "none";
+    document.getElementById("profileScreen").style.display = "none";
+    document.getElementById("gameHistoryScreen").style.display = "none";
+    document.getElementById("challengeScreen").style.display = "none";
+    document.getElementById("challengeAcceptScreen").style.display = "none";
+    const dnaScreenEl2 = document.getElementById("chessDnaScreen");
+    if(dnaScreenEl2) dnaScreenEl2.style.display = "none";
+    if(typeof matchmakingSearchActive !== "undefined" && matchmakingSearchActive && typeof cancelQuickMatchManually === "function"){
+        cancelQuickMatchManually();
     }
+    document.getElementById("appShell").style.display = "flex";
+    switchScreen(lastActiveTab);
+    return;
+}
 
     if(state.screen === "tournaments"){
         document.getElementById("appShell").style.display = "none";
