@@ -3567,3 +3567,4 @@ input::placeholder{ color:#4a5060; }
     object-fit: cover;
     background: #1c2028;
 }
+.homeBadgeRowLight{ display:flex; gap:8px; margin-top:16px; }
