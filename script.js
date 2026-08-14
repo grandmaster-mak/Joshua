@@ -2819,7 +2819,7 @@ if(challengeBtn) challengeBtn.addEventListener("click", openChallengeScreen);
 
 // --- Back button on Challenge screen ---
 document.getElementById("challengeBackBtn").addEventListener("click", function(){
-  history.back();
+  closeChallengeScreen();
 });
 
 // --- Create challenge ---
