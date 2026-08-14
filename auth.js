@@ -439,7 +439,17 @@ function showLoggedOutState(){
 
 initAuthListener();
 loadCachedProfile();
-
+// ---- Language selector on login screen ----
+const authLanguageSelect = document.getElementById("authLanguage");
+if(authLanguageSelect){
+    authLanguageSelect.value = (typeof currentLanguage !== "undefined") ? currentLanguage : "en";
+    authLanguageSelect.addEventListener("change", function(){
+        const lang = this.value;
+        if(typeof applyLanguage === "function") applyLanguage(lang);
+        const settingLang = document.getElementById("settingLanguage");
+        if(settingLang) settingLang.value = lang;
+    });
+}
 function handleProfilePhotoSelect(event){
 
     const file = event.target.files[0];
