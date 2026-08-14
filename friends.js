@@ -630,6 +630,10 @@ function openChallengeScreen(){
 
 function closeChallengeScreen(){
     document.getElementById("challengeScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
+    // Replace the current history entry with a clean state, so the browser never exits
+    history.replaceState({ screen: null }, "", location.href);
+    switchScreen(lastActiveTab);
 }
 
 document.addEventListener("DOMContentLoaded", function(){
