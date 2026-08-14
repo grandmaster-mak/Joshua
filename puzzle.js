@@ -269,7 +269,7 @@ function openDailyPuzzle(){
 
     // If no user, just show the map (it will handle the rest)
     if(typeof currentUser === "undefined" || !currentUser || !db){
-        openPuzzleMap(); // this will re-render the map properly
+        openPuzzleMap(true); // replace the existing map state, no duplicate
         return;
     }
 
