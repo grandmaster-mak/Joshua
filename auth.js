@@ -264,6 +264,8 @@ function logIn(){
 
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
+    const preferredLanguage = document.getElementById("authLanguage").value;
+if(typeof applyLanguage === "function") applyLanguage(preferredLanguage);
 
     if(!email || !password){
         document.getElementById("authStatus").textContent = "Please enter your email and password.";
