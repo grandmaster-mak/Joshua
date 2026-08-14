@@ -1696,11 +1696,14 @@
         }
 
         function saveSetting(key, value){
-            const settings = loadSettings();
-            settings[key] = value;
-            localStorage.setItem('appSettings', JSON.stringify(settings));
-            applySetting(key, value);
-        }
+    const settings = loadSettings();
+    settings[key] = value;
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+    applySetting(key, value);
+    if(key === 'language'){
+        applyLanguage(value);
+    }
+}
 
         function applySetting(key, value){
             const root = document.documentElement;
