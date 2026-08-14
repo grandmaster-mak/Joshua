@@ -17,7 +17,13 @@
 // ============================================================
 
 let coachLastEvalCp = null;
-
+function coachT(key, fallback){
+    if(typeof t === "function"){
+        const translated = t(key);
+        if(translated !== key) return translated;
+    }
+    return fallback;
+}
 function openPlayVsCoach(){
 
     isCoachMode = true;
