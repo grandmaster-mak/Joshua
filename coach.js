@@ -35,7 +35,7 @@ function openPlayVsCoach(){
     closeTimeControl();
     newGame();
 
-    setCoachText("Let's play — I'll comment on your moves as we go. Good luck!");
+    setCoachText(coachT("coach.openingLine", "Let's play — I'll comment on your moves as we go. Good luck!"));
 
 }
 
