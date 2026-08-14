@@ -2803,7 +2803,9 @@ if(challengeBtn) challengeBtn.addEventListener("click", openChallengeScreen);
 document.getElementById("challengeBackBtn").addEventListener("click", function(){
   document.getElementById("challengeScreen").style.display = "none";
   document.getElementById("appShell").style.display = "flex";
-  history.back();
+  // Replace the current challenge state instead of going back,
+  // so no stale challenge entry remains in the history stack.
+  history.replaceState({ screen: null }, "", location.href);
 });
 
 // --- Create challenge ---
