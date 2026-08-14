@@ -2801,11 +2801,7 @@ if(challengeBtn) challengeBtn.addEventListener("click", openChallengeScreen);
 
 // --- Back button on Challenge screen ---
 document.getElementById("challengeBackBtn").addEventListener("click", function(){
-  document.getElementById("challengeScreen").style.display = "none";
-  document.getElementById("appShell").style.display = "flex";
-  // Replace the current challenge state instead of going back,
-  // so no stale challenge entry remains in the history stack.
-  history.replaceState({ screen: null }, "", location.href);
+  history.back();
 });
 
 // --- Create challenge ---
