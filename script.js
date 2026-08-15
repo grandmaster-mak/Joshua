@@ -274,6 +274,43 @@ function findMaleVoice(){
     return match || null;
 }
 
+// Preferred language variants for natural pronunciation
+const LANG_VARIANT_MAP = {
+    en: "en-GB",      // or "en-US" if you prefer
+    fr: "fr-CA",      // Canadian French
+    pt: "pt-BR",      // Brazilian Portuguese
+    es: "es-MX",      // Mexican Spanish
+    zh: "zh-CN",
+    ja: "ja-JP",
+    ko: "ko-KR",
+    ar: "ar-SA",
+    hi: "hi-IN",
+    ru: "ru-RU",
+    tr: "tr-TR",
+    nl: "nl-NL",
+    pl: "pl-PL",
+    sv: "sv-SE",
+    no: "no-NO",
+    da: "da-DK",
+    fi: "fi-FI",
+    el: "el-GR",
+    he: "he-IL",
+    th: "th-TH",
+    vi: "vi-VN",
+    id: "id-ID",
+    ms: "ms-MY",
+    sw: "sw-KE",
+    am: "am-ET",
+    ha: "ha-NG",
+    yo: "yo-NG",
+    ig: "ig-NG",
+    zu: "zu-ZA",
+    xh: "xh-ZA",
+    af: "af-ZA",
+    de: "de-DE",
+    it: "it-IT"
+};
+
 let voiceCache = {};
 
 function getBestVoiceForLang(lang){
@@ -282,14 +319,14 @@ function getBestVoiceForLang(lang){
     const voices = window.speechSynthesis.getVoices();
     if(!voices || voices.length === 0) return null;
 
-    // Try to find a voice that exactly matches the language code
+    // Try exact match first
     let match = voices.find(v => v.lang && v.lang.toLowerCase() === lang.toLowerCase());
     if(match){
         voiceCache[lang] = match;
         return match;
     }
 
-    // Otherwise, find a voice that starts with the same language code
+    // Then starts with
     match = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(lang.toLowerCase()));
     if(match){
         voiceCache[lang] = match;
@@ -310,18 +347,25 @@ function speakText(text){
 
     const utterance = new SpeechSynthesisUtterance(clean);
 
-    // Set language from the app's current language (defined in i18n.js)
+    // Base language from app setting
+    let baseLang = "en";
     if(typeof currentLanguage !== "undefined" && currentLanguage){
-        utterance.lang = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
-    } else {
-        utterance.lang = "en";
+        baseLang = currentLanguage;
     }
+
+    // Use regional variant if available
+    const preferredLang = LANG_VARIANT_MAP[baseLang] || baseLang;
+    utterance.lang = preferredLang;
 
     utterance.rate = 1.1;
     utterance.pitch = 0.85;
 
-    // Pick the best available voice for the selected language
-    const voice = getBestVoiceForLang(utterance.lang);
+    // Try to find a voice that matches the preferred variant
+    let voice = getBestVoiceForLang(preferredLang);
+    if(!voice){
+        // Fallback: try base language
+        voice = getBestVoiceForLang(baseLang);
+    }
     if(voice) utterance.voice = voice;
 
     utterance.onstart = function(){ if(typeof setCoachTalking === "function") setCoachTalking(true); };
