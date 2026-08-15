@@ -3657,28 +3657,32 @@ html, body {
     overflow-x: hidden !important;
     box-sizing: border-box;
 }
-/* Fixed home header — always stays at top */
+/* Make the home screen its own scroll container */
+#homeScreen {
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: 14px !important; /* original top spacing */
+    box-sizing: border-box;
+}
+
+/* Sticky header inside the scroll container */
 .home-header {
-    position: fixed !important;
+    position: sticky !important;
     top: 0 !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 100% !important;
-    max-width: 420px !important;
-    margin: 0 !important;
+    z-index: 100 !important;
+    margin: 0 0 12px !important;
     padding: 20px !important;
-    box-sizing: border-box !important;
     background: var(--themeOrange, #FF7A1A) !important;
     color: #fff !important;
     box-shadow: 0 2px 12px rgba(0,0,0,0.2) !important;
-    z-index: 1000 !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
     gap: 14px !important;
 }
 
-/* Add space at the top of home screen so the fixed header doesn't cover content */
-#homeScreen {
-    padding-top: 90px !important; /* adjust if header height changes */
+/* Prevent the sticky header from being covered by other elements */
+.home-header * {
+    pointer-events: auto;
 }
