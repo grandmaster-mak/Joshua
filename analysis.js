@@ -246,7 +246,21 @@ function createAnalysisBoard(){
                 img.className = "piece";
                 square.appendChild(img);
             }
+// Rank label on first column (actual coordinate)
+if(c === 0){
+    const rank = document.createElement("span");
+    rank.className = "rankLabel";
+    rank.textContent = 8 - r;
+    square.appendChild(rank);
+}
 
+// File label on last row (actual coordinate)
+if(r === 7){
+    const file = document.createElement("span");
+    file.className = "fileLabel";
+    file.textContent = "abcdefgh"[c];
+    square.appendChild(file);
+}
             square.onclick = (function(row, col){ return function(){ clickAnalysisSquare(row, col); }; })(r, c);
 
             boardEl.appendChild(square);
