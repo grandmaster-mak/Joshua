@@ -135,7 +135,8 @@ function loadLessonChallenge(){
     pieces = fenToPieces(challenge.fen);
     currentPlayer = challenge.fen.split(" ")[1] === "w" ? "white" : "black";
 
-    showLessonInstruction(challenge.instruction || "Find the best move.");
+    const turnLabel = currentPlayer === "white" ? "White to move" : "Black to move";
+showLessonInstruction(turnLabel + ". " + (challenge.instruction || "Find the best move."));
     drawLessonArrow(challenge.arrowFrom, challenge.arrowTo);
     updateLessonProgress();
     createLessonBoard();
