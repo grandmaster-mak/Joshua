@@ -274,93 +274,68 @@ function findMaleVoice(){
     return match || null;
 }
 
-let externalAudio = null;
-let lastSpeakTime = 0;
-const MIN_SPEAK_GAP_MS = 1000; // 1 second between spoken lines
+let voiceCache = {};
+
+function getBestVoiceForLang(lang){
+    if(voiceCache[lang]) return voiceCache[lang];
+
+    const voices = window.speechSynthesis.getVoices();
+    if(!voices || voices.length === 0) return null;
+
+    // Try to find a voice that exactly matches the language code
+    let match = voices.find(v => v.lang && v.lang.toLowerCase() === lang.toLowerCase());
+    if(match){
+        voiceCache[lang] = match;
+        return match;
+    }
+
+    // Otherwise, find a voice that starts with the same language code
+    match = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(lang.toLowerCase()));
+    if(match){
+        voiceCache[lang] = match;
+        return match;
+    }
+
+    return null;
+}
 
 function speakText(text){
     if(!text) return;
+    if(!("speechSynthesis" in window)) return;
 
     const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu, "").trim();
     if(!clean) return;
 
-    const now = Date.now();
+    window.speechSynthesis.cancel();
 
-    // If speech was requested too recently, skip it to avoid lag.
-    if(now - lastSpeakTime < MIN_SPEAK_GAP_MS){
-        return;
-    }
+    const utterance = new SpeechSynthesisUtterance(clean);
 
-    lastSpeakTime = now;
-
-    // Determine language code (use currentLanguage from i18n.js)
-    let langCode = "en";
+    // Set language from the app's current language (defined in i18n.js)
     if(typeof currentLanguage !== "undefined" && currentLanguage){
-        langCode = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
+        utterance.lang = currentLanguage === "zh" ? "zh-CN" : currentLanguage;
+    } else {
+        utterance.lang = "en";
     }
 
-    // If an external audio is already playing, stop it before starting new one
-    if(externalAudio){
-        externalAudio.pause();
-        externalAudio = null;
-    }
+    utterance.rate = 1.1;
+    utterance.pitch = 0.85;
 
-    if(typeof setCoachTalking === "function") setCoachTalking(true);
+    // Pick the best available voice for the selected language
+    const voice = getBestVoiceForLang(utterance.lang);
+    if(voice) utterance.voice = voice;
 
-    // Try Google TTS first
-    const googleTTS = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=" + encodeURIComponent(clean) + "&tl=" + langCode;
-    const audio = new Audio(googleTTS);
-    audio.preload = "auto";
-    externalAudio = audio;
+    utterance.onstart = function(){ if(typeof setCoachTalking === "function") setCoachTalking(true); };
+    utterance.onend = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
+    utterance.onerror = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
 
-    audio.onended = function(){
-        if(typeof setCoachTalking === "function") setCoachTalking(false);
-        externalAudio = null;
+    window.speechSynthesis.speak(utterance);
+}
+
+// Reload voice cache when voices change
+if("speechSynthesis" in window){
+    window.speechSynthesis.onvoiceschanged = function(){
+        voiceCache = {};
     };
-
-    audio.onerror = function(){
-        externalAudio = null;
-        // Fallback to built-in speechSynthesis
-        if("speechSynthesis" in window){
-            const utterance = new SpeechSynthesisUtterance(clean);
-            utterance.lang = langCode;
-            utterance.rate = 1.1;
-            utterance.pitch = 0.85;
-
-            // Try to find a matching voice
-            const voices = window.speechSynthesis.getVoices();
-            const matchingVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(langCode.toLowerCase()));
-            if(matchingVoice) utterance.voice = matchingVoice;
-
-            utterance.onend = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
-            utterance.onerror = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
-            window.speechSynthesis.speak(utterance);
-        } else {
-            if(typeof setCoachTalking === "function") setCoachTalking(false);
-        }
-    };
-
-    // Play, but don't await: if it fails, the error handler will fallback.
-    audio.play().catch(function(){
-        // Manually trigger fallback
-        if(externalAudio === audio){
-            externalAudio = null;
-            if("speechSynthesis" in window){
-                const utterance = new SpeechSynthesisUtterance(clean);
-                utterance.lang = langCode;
-                utterance.rate = 1.1;
-                utterance.pitch = 0.85;
-                const voices = window.speechSynthesis.getVoices();
-                const matchingVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(langCode.toLowerCase()));
-                if(matchingVoice) utterance.voice = matchingVoice;
-                utterance.onend = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
-                utterance.onerror = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
-                window.speechSynthesis.speak(utterance);
-            } else {
-                if(typeof setCoachTalking === "function") setCoachTalking(false);
-            }
-        }
-    });
 }
 
 function setCoachMood(mood){
