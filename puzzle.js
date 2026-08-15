@@ -358,6 +358,22 @@ function createPuzzleBoard(){
                 square.appendChild(img);
             }
 
+            // Rank label on first column
+            if(c === 0){
+                const rank = document.createElement("span");
+                rank.className = "rankLabel";
+                rank.textContent = 8 - r;
+                square.appendChild(rank);
+            }
+
+            // File label on last row
+            if(r === 7){
+                const file = document.createElement("span");
+                file.className = "fileLabel";
+                file.textContent = "abcdefgh"[c];
+                square.appendChild(file);
+            }
+
             square.onclick = (function(row, col){ return function(){ clickPuzzleSquare(row, col); }; })(r, c);
 
             boardEl.appendChild(square);
