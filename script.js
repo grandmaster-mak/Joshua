@@ -276,10 +276,12 @@ function findMaleVoice(){
 
 // Preferred language variants for natural pronunciation
 const LANG_VARIANT_MAP = {
-    en: "en-GB",      // or "en-US" if you prefer
-    fr: "fr-CA",      // Canadian French
-    pt: "pt-BR",      // Brazilian Portuguese
-    es: "es-MX",      // Mexican Spanish
+    en: "en-GB",
+    fr: "fr-CA",
+    pt: "pt-BR",
+    es: "es-MX",
+    de: "de-DE",
+    it: "it-IT",
     zh: "zh-CN",
     ja: "ja-JP",
     ko: "ko-KR",
@@ -306,9 +308,7 @@ const LANG_VARIANT_MAP = {
     ig: "ig-NG",
     zu: "zu-ZA",
     xh: "xh-ZA",
-    af: "af-ZA",
-    de: "de-DE",
-    it: "it-IT"
+    af: "af-ZA"
 };
 
 let voiceCache = {};
@@ -319,14 +319,12 @@ function getBestVoiceForLang(lang){
     const voices = window.speechSynthesis.getVoices();
     if(!voices || voices.length === 0) return null;
 
-    // Try exact match first
     let match = voices.find(v => v.lang && v.lang.toLowerCase() === lang.toLowerCase());
     if(match){
         voiceCache[lang] = match;
         return match;
     }
 
-    // Then starts with
     match = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(lang.toLowerCase()));
     if(match){
         voiceCache[lang] = match;
@@ -334,6 +332,14 @@ function getBestVoiceForLang(lang){
     }
 
     return null;
+}
+
+function expandForSpeech(text){
+    // Chess squares: "e4" -> "e 4"
+    text = text.replace(/\b([a-h])([1-8])\b/g, "$1 $2");
+    // AI abbreviation: "AI" -> "A I" (or "artificial intelligence")
+    text = text.replace(/\bAI\b/g, "A I");
+    return text;
 }
 
 function speakText(text){
@@ -345,25 +351,24 @@ function speakText(text){
 
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(clean);
+    // Expand tricky tokens before speaking
+    const speechText = expandForSpeech(clean);
 
-    // Base language from app setting
+    const utterance = new SpeechSynthesisUtterance(speechText);
+
     let baseLang = "en";
     if(typeof currentLanguage !== "undefined" && currentLanguage){
         baseLang = currentLanguage;
     }
 
-    // Use regional variant if available
     const preferredLang = LANG_VARIANT_MAP[baseLang] || baseLang;
     utterance.lang = preferredLang;
 
     utterance.rate = 1.1;
     utterance.pitch = 0.85;
 
-    // Try to find a voice that matches the preferred variant
     let voice = getBestVoiceForLang(preferredLang);
     if(!voice){
-        // Fallback: try base language
         voice = getBestVoiceForLang(baseLang);
     }
     if(voice) utterance.voice = voice;
@@ -375,7 +380,6 @@ function speakText(text){
     window.speechSynthesis.speak(utterance);
 }
 
-// Reload voice cache when voices change
 if("speechSynthesis" in window){
     window.speechSynthesis.onvoiceschanged = function(){
         voiceCache = {};
