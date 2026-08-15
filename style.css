@@ -3639,3 +3639,21 @@ input::placeholder{ color:#4a5060; }
 .profileScreenLight .coachBubble .sub {
     color: #1a1a1a !important;
 }
+/* Prevent horizontal overflow everywhere */
+html, body {
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100%;
+}
+
+#appShell,
+.screen,
+.fullScreenPanel,
+#game,
+#challengeScreen,
+#challengeAcceptScreen,
+#settingsScreen {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box;
+}
