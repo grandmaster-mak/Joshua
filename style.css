@@ -3616,3 +3616,26 @@ input::placeholder{ color:#4a5060; }
     background: #1c2028;
 }
 .homeBadgeRowLight{ display:flex; gap:8px; margin-top:16px; }
+/* Coach bubble text always readable */
+.coachBubble {
+    color: #eef0f3 !important;
+}
+
+.coachBubble .sub,
+.coachBubble p {
+    color: #eef0f3 !important;
+}
+
+/* In light-themed screens (if coach bubble appears on light background) */
+.friendsScreenLight .coachBubble,
+.accountScreenLight .coachBubble,
+.profileScreenLight .coachBubble {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+}
+
+.friendsScreenLight .coachBubble .sub,
+.accountScreenLight .coachBubble .sub,
+.profileScreenLight .coachBubble .sub {
+    color: #1a1a1a !important;
+}
