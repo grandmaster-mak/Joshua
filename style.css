@@ -3680,5 +3680,5 @@ html, body {
 
 /* Add top padding to home content so the fixed header doesn't cover it */
 #homeScreen {
-    padding-top: 120px !important;  /* Adjust this value if header height changes */
+    padding-top: 140px !important;  /* Adjust this value if header height changes */
 }
