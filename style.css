@@ -3700,3 +3700,23 @@ html, body {
 #lessonsScreen .tournamentCardMeta {
     color: #8a8580 !important;
 }
+/* Lesson detail: reduce top coach area */
+#lessonDetailView .coachAvatarImg {
+    width: 64px !important;
+    height: 64px !important;
+}
+
+#lessonDetailView .coachRow {
+    padding: 6px 0 8px !important;
+}
+
+/* Back to Lessons button: centered and always visible at bottom */
+#lessonDetailView .btnSecondary {
+    display: block;
+    width: auto;
+    margin: 16px auto !important;
+    text-align: center;
+    position: sticky;
+    bottom: 10px;
+    z-index: 10;
+}
