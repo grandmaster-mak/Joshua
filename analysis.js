@@ -292,6 +292,8 @@ function clickAnalysisSquare(r, c){
 
     if(selected == null){
         if(piece === "") return;
+        const pieceColor = isWhite(piece) ? "white" : "black";
+        if(pieceColor !== currentPlayer) return;   // only allow moving pieces for the side to move
         selected = { r: r, c: c };
         possibleMoves = getLegalMoves(piece, r, c);
         createAnalysisBoard();
@@ -302,10 +304,13 @@ function clickAnalysisSquare(r, c){
 
     if(!isTarget){
         if(piece !== ""){
-            selected = { r: r, c: c };
-            possibleMoves = getLegalMoves(piece, r, c);
-            createAnalysisBoard();
-            return;
+            const pieceColor = isWhite(piece) ? "white" : "black";
+            if(pieceColor === currentPlayer){
+                selected = { r: r, c: c };
+                possibleMoves = getLegalMoves(piece, r, c);
+                createAnalysisBoard();
+                return;
+            }
         }
         selected = null;
         possibleMoves = [];
