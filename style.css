@@ -3926,3 +3926,173 @@ html, body {
 }
 
 /* Tournament game board already uses #game, which already has the same green background */
+/* ===== Premium Analysis Board Redesign ===== */
+
+/* Intro text */
+.analysis-intro {
+    margin-bottom: 12px;
+    color: #cbd5e1;
+    font-size: 13px;
+}
+
+/* Board wrapper */
+.analysis-board-wrap {
+    position: relative;
+    width: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Cards */
+.analysis-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    backdrop-filter: blur(4px);
+}
+
+.analysis-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.analysis-card-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #e2e8f0;
+    letter-spacing: 0.3px;
+}
+
+/* Engine status */
+.engine-status {
+    background: #22c55e;
+    color: #04210f;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+/* Eval row */
+.analysis-eval-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.analysis-eval-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #4ade80;
+    line-height: 1;
+}
+
+.analysis-eval-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+/* Eval bar */
+.analysis-eval-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.analysis-eval-bar-fill {
+    height: 100%;
+    width: 50%; /* will be updated by JS */
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Best line content */
+.best-line-content {
+    margin-top: 8px;
+    color: #e2e8f0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.best-line-content p {
+    margin: 4px 0;
+}
+
+/* Move history */
+.move-history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    min-height: 24px;
+}
+
+.move-history-move {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.move-history-move:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Analysis controls (bottom action bar) */
+.analysis-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    padding-bottom: 4px;
+}
+
+.analysis-control-btn {
+    flex: 1;
+    background: #15181f;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #cbd5e1;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.analysis-control-btn:hover {
+    background: #1c2028;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.analysis-control-btn span {
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* Responsive tweaks */
+@media (max-width: 420px) {
+    .analysis-eval-value {
+        font-size: 24px;
+    }
+}
