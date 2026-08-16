@@ -3804,3 +3804,44 @@ html, body {
 #analysisScreen .sub {
     color: #eef0f3 !important;
 }
+/* Analysis position picker dark green background */
+#analysisPositionPopup {
+    background:
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 40px),
+        radial-gradient(circle at 25% 15%, rgba(45,212,191,0.14), transparent 50%),
+        radial-gradient(circle at 85% 90%, rgba(34,197,94,0.10), transparent 55%),
+        linear-gradient(160deg, #0f1f1c 0%, #0a1512 100%) !important;
+    background-attachment: fixed;
+}
+
+#analysisPositionPopup .popupContent {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+#analysisPositionPopup h2,
+#analysisPositionPopup h3,
+#analysisPositionPopup h4,
+#analysisPositionPopup .fieldLabel {
+    color: #eef0f3 !important;
+}
+
+#analysisPositionPopup #analysisPositionList > div {
+    background: #15181f !important;
+    color: #eef0f3 !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+#analysisPositionPopup #analysisPositionList > div * {
+    color: #eef0f3 !important;
+}
+
+/* Ensure main Analysis screen also uses the same dark green background */
+#analysisScreen {
+    background:
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 40px),
+        radial-gradient(circle at 25% 15%, rgba(45,212,191,0.14), transparent 50%),
+        radial-gradient(circle at 85% 90%, rgba(34,197,94,0.10), transparent 55%),
+        linear-gradient(160deg, #0f1f1c 0%, #0a1512 100%) !important;
+    background-attachment: fixed;
+}
