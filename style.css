@@ -3734,3 +3734,44 @@ html, body {
 #lessonsScreen .sub {
     color: #eef0f3 !important;
 }
+/* Lesson progress stepper */
+.lesson-step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #ddd;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.lesson-step-dot.completed {
+    background: #FF7A1A;
+    color: #fff;
+}
+
+.lesson-step-dot.current {
+    background: #FF7A1A;
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(255,122,26,0.25);
+}
+
+.lesson-step-line {
+    flex: 1;
+    height: 2px;
+    background: #ddd;
+    margin: 0 4px;
+}
+
+.lesson-step-line.completed {
+    background: #FF7A1A;
+}
+
+#lessonProgressCount {
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
