@@ -20,6 +20,9 @@ let analysisEvalIsMate = false;
 let analysisEvalPerspective = "white";
 let analysisQueryTimer = null;
 let analysisFlipped = false;
+let analysisMoveHistory = [];   // store moves as objects { from, to, notation }
+let analysisDepth = 0;
+let analysisNodes = 0;
 
 function initAnalysisEngine(){
 
