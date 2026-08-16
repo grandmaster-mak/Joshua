@@ -218,7 +218,18 @@ function listenKingdomUpdates(userId) {
 // ============================================================
 // ===== END KINGDOM SYSTEM =====
 // ============================================================
+let appShellScrollPos = 0;
 
+function saveAppShellScroll(){
+    appShellScrollPos = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+}
+
+function restoreAppShellScroll(){
+    // Use requestAnimationFrame to ensure layout is ready
+    requestAnimationFrame(function(){
+        window.scrollTo(0, appShellScrollPos);
+    });
+}
 // ===== Settings helpers =====
 function loadSettings() {
     try { return JSON.parse(localStorage.getItem('appSettings')) || {}; } catch(e) { return {}; }
