@@ -69,8 +69,25 @@ function initAnalysisEngine(){
                     }
                 }
 
+                // Parse depth
+                const depthIdx = tokens.indexOf("depth");
+                if(depthIdx !== -1 && tokens[depthIdx + 1]){
+                    analysisDepth = parseInt(tokens[depthIdx + 1], 10);
+                }
+
+                // Parse nodes
+                const nodesIdx = tokens.indexOf("nodes");
+                if(nodesIdx !== -1 && tokens[nodesIdx + 1]){
+                    analysisNodes = parseInt(tokens[nodesIdx + 1], 10);
+                }
+
+                // Capture full Principal Variation (all moves after pv)
                 const pvIdx = tokens.indexOf("pv");
-                if(pvIdx !== -1 && tokens[pvIdx + 1]) analysisBestMoveUci = tokens[pvIdx + 1];
+                if(pvIdx !== -1 && tokens[pvIdx + 1]){
+                    const pvMoves = tokens.slice(pvIdx + 1).filter(m => m.length >= 4 && /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m));
+                    analysisBestMoveUci = pvMoves[0] || null;
+                    window._analysisFullPV = pvMoves;
+                }
 
                 updateAnalysisDisplay();
                 return;
@@ -130,6 +147,7 @@ function resetAnalysisBoard(){
     selected = null;
     possibleMoves = [];
     lastMove = null;
+    analysisMoveHistory = [];
     createAnalysisBoard();
     queueAnalysisQuery();
 }
@@ -184,15 +202,11 @@ function closeAnalysisPositionPicker(){
     }
 
 }
-// Hides just the popup itself, no side effects — used when a position
-// was actually picked (a board is about to be built immediately after,
-// so there's nothing to "fall back" from). Kept separate from
-// closeAnalysisPositionPicker(), which has extra logic for the Cancel/
-// back-button case where NOTHING was picked and the board may still be
-// empty.
+
 function hideAnalysisPositionPopupOnly(){
     document.getElementById("analysisPositionPopup").classList.remove("show");
 }
+
 function loadAnalysisPosition(fen){
 
     pieces = fenToPieces(fen); // fenToPieces is defined in puzzle.js
@@ -202,18 +216,15 @@ function loadAnalysisPosition(fen){
     possibleMoves = [];
     lastMove = null;
     analysisFlipped = false;
+    analysisMoveHistory = [];
 
-    // Just hide the popup — NOT closeAnalysisPositionPicker(), which
-    // would incorrectly treat a still-empty board (true on a fresh app
-    // load, before createAnalysisBoard() below has ever run) as "nothing
-    // was picked" and bounce back to Home even though a position WAS
-    // just chosen.
     hideAnalysisPositionPopupOnly();
 
     createAnalysisBoard();
     queueAnalysisQuery();
 
 }
+
 function createAnalysisBoard(){
 
     const boardEl = document.getElementById("analysisBoard");
@@ -223,6 +234,7 @@ function createAnalysisBoard(){
     const ponderArrow = document.getElementById("analysisArrowPonder");
     if(mainArrow) mainArrow.style.display = "none";
     if(ponderArrow) ponderArrow.style.display = "none";
+
     for(let i = 0; i < 8; i++){
         for(let j = 0; j < 8; j++){
 
@@ -249,21 +261,23 @@ function createAnalysisBoard(){
                 img.className = "piece";
                 square.appendChild(img);
             }
-// Rank label on first column (actual coordinate)
-if(c === 0){
-    const rank = document.createElement("span");
-    rank.className = "rankLabel";
-    rank.textContent = 8 - r;
-    square.appendChild(rank);
-}
 
-// File label on last row (actual coordinate)
-if(r === 7){
-    const file = document.createElement("span");
-    file.className = "fileLabel";
-    file.textContent = "abcdefgh"[c];
-    square.appendChild(file);
-}
+            // Rank label on first column (actual coordinate)
+            if(c === 0){
+                const rank = document.createElement("span");
+                rank.className = "rankLabel";
+                rank.textContent = 8 - r;
+                square.appendChild(rank);
+            }
+
+            // File label on last row (actual coordinate)
+            if(r === 7){
+                const file = document.createElement("span");
+                file.className = "fileLabel";
+                file.textContent = "abcdefgh"[c];
+                square.appendChild(file);
+            }
+
             square.onclick = (function(row, col){ return function(){ clickAnalysisSquare(row, col); }; })(r, c);
 
             boardEl.appendChild(square);
@@ -272,10 +286,6 @@ if(r === 7){
 
 }
 
-// Unlike a real game, any piece of either color can be moved at any
-// time — this is a sandbox for exploring positions, not a rule-enforced
-// match. getLegalMoves already derives the piece's own color internally,
-// so no "is it your turn" gate is needed here.
 function clickAnalysisSquare(r, c){
 
     const piece = pieces[r][c];
@@ -312,8 +322,7 @@ function clickAnalysisSquare(r, c){
     pieces[r][c] = movedPiece;
     pieces[fromR][fromC] = "";
 
-    // Simple auto-queen promotion — analysis positions rarely hinge on
-    // underpromotion, and keeping this a one-tap sandbox matters more here.
+    // Simple auto-queen promotion
     if(movedPiece === "wP" && r === 0) pieces[r][c] = "wQ";
     if(movedPiece === "bP" && r === 7) pieces[r][c] = "bQ";
 
@@ -321,15 +330,18 @@ function clickAnalysisSquare(r, c){
     selected = null;
     possibleMoves = [];
 
+    // Record move in history
+    const files = "abcdefgh";
+    const fromSq = files[fromC] + (8 - fromR);
+    const toSq = files[c] + (8 - r);
+    const moveNotation = fromSq + " → " + toSq;
+    analysisMoveHistory.push({ from: {r: fromR, c: fromC}, to: {r, c}, notation: moveNotation });
+
     createAnalysisBoard();
     queueAnalysisQuery();
 
 }
 
-// Builds a FEN for whatever is on the board right now. Castling rights
-// and move counters aren't tracked for freely-arranged analysis
-// positions — a fixed "no castling, move 1" is a safe, standard
-// simplification for ad-hoc position evaluation.
 function analysisBoardToFEN(){
 
     let fen = "";
@@ -380,9 +392,7 @@ function runAnalysisQuery(){
     analysisStockfish.postMessage("go movetime 800");
 
 }
-// Draws a move arrow on the analysis board — from-square to to-square,
-// accounting for board flip. lineId/headId pick which of the two arrow
-// styles (solid green "best move" vs dashed blue "then likely") to draw.
+
 function drawAnalysisArrow(lineId, uciMove){
 
     const line = document.getElementById(lineId);
@@ -405,8 +415,6 @@ function drawAnalysisArrow(lineId, uciMove){
     const p1 = displayCoords(from.r, from.c);
     const p2 = displayCoords(to.r, to.c);
 
-    // Pull the tip back slightly so the arrowhead doesn't bury itself
-    // under the destination square's piece image.
     const dx = p2.x - p1.x, dy = p2.y - p1.y;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
     const shorten = 5;
@@ -420,20 +428,20 @@ function drawAnalysisArrow(lineId, uciMove){
     line.style.display = "block";
 
 }
+
 function updateAnalysisDisplay(){
 
     const evalEl = document.getElementById("analysisEvalText");
     const bestEl = document.getElementById("analysisBestMoveText");
     const ponderEl = document.getElementById("analysisPonderText");
+    const depthEl = document.getElementById("analysisDepth");
+    const nodesEl = document.getElementById("analysisNodes");
+    const evalBarFill = document.getElementById("analysisEvalBarFill");
     if(!evalEl) return;
 
+    // Eval display
     if(analysisEvalCp !== null){
-
-        // The engine's score is from whichever side was to move when the
-        // query was sent — normalize it to always read from White's
-        // perspective so the number means the same thing every time.
         const whiteEval = analysisEvalPerspective === "white" ? analysisEvalCp : -analysisEvalCp;
-
         let label;
         if(analysisEvalIsMate){
             const mateIn = analysisEvalPerspective === "white" ? analysisEvalCp : -analysisEvalCp;
@@ -442,23 +450,65 @@ function updateAnalysisDisplay(){
             const pawns = (whiteEval / 100).toFixed(2);
             label = (whiteEval > 0 ? "+" : "") + pawns;
         }
-
-        evalEl.textContent = "Eval: " + label;
-
+        evalEl.textContent = label;
     }
 
-    const moves = analysisBestMoveUci ? analysisBestMoveUci.split(" ").filter(Boolean) : [];
-    const mainMove = moves[0] || null;
-    const ponderMove = moves[1] || null;
+    // Depth and nodes
+    if(depthEl) depthEl.textContent = "Depth: " + (analysisDepth || "--");
+    if(nodesEl) nodesEl.textContent = "Nodes: " + (analysisNodes ? (analysisNodes/1000).toFixed(1) + "k" : "--");
+
+    // Eval bar (scale -5 to +5)
+    if(evalBarFill){
+        if(analysisEvalCp !== null && !analysisEvalIsMate){
+            const whiteEval = analysisEvalPerspective === "white" ? analysisEvalCp : -analysisEvalCp;
+            const pct = Math.min(100, Math.max(0, (whiteEval + 500) / 1000 * 100));
+            evalBarFill.style.width = pct + "%";
+        } else {
+            evalBarFill.style.width = "50%";
+        }
+    }
+
+    // Best move and ponder (principal variation)
+    const pvMoves = window._analysisFullPV || [];
+    const mainMove = pvMoves[0] || null;
+    const secondMove = pvMoves[1] || null;
+    const thirdMove = pvMoves[2] || null;
 
     drawAnalysisArrow("analysisArrowMain", mainMove);
-    drawAnalysisArrow("analysisArrowPonder", ponderMove);
+    drawAnalysisArrow("analysisArrowPonder", secondMove);
 
     if(bestEl){
-        bestEl.textContent = mainMove ? "Suggested: " + squareName(squareToCoords(mainMove.substring(0,2)).r, squareToCoords(mainMove.substring(0,2)).c).toUpperCase() + " → " + squareName(squareToCoords(mainMove.substring(2,4)).r, squareToCoords(mainMove.substring(2,4)).c).toUpperCase() : "";
+        bestEl.textContent = mainMove ? "Suggested: " + mainMove.substring(0,2).toUpperCase() + " → " + mainMove.substring(2,4).toUpperCase() : "";
     }
     if(ponderEl){
-        ponderEl.textContent = ponderMove ? "Then likely: " + ponderMove.substring(0,2).toUpperCase() + " → " + ponderMove.substring(2,4).toUpperCase() : "";
+        let ponderText = "";
+        if(secondMove) ponderText += "Then likely: " + secondMove.substring(0,2).toUpperCase() + " → " + secondMove.substring(2,4).toUpperCase();
+        if(thirdMove) ponderText += " · " + thirdMove.substring(0,2).toUpperCase() + " → " + thirdMove.substring(2,4).toUpperCase();
+        ponderEl.textContent = ponderText;
     }
 
+    // Move history
+    const historyEl = document.getElementById("analysisMoveHistory");
+    if(historyEl){
+        historyEl.innerHTML = "";
+        analysisMoveHistory.forEach(function(move){
+            const span = document.createElement("span");
+            span.className = "move-history-move";
+            span.textContent = move.notation;
+            historyEl.appendChild(span);
+        });
+    }
+}
+
+function toggleBestLine(){
+    const content = document.getElementById("bestLineContent");
+    const toggle = document.getElementById("bestLineToggle");
+    if(!content || !toggle) return;
+    if(content.style.display === "none"){
+        content.style.display = "block";
+        toggle.textContent = "+";
+    }else{
+        content.style.display = "none";
+        toggle.textContent = "−";
+    }
 }
