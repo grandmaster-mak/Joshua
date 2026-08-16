@@ -136,7 +136,7 @@ function loadLessonChallenge(){
     currentPlayer = challenge.fen.split(" ")[1] === "w" ? "white" : "black";
 
     const turnLabel = currentPlayer === "white" ? "White to move" : "Black to move";
-showLessonInstruction(turnLabel + ". " + (challenge.instruction || "Find the best move."));
+    showLessonInstruction(turnLabel + ". " + (challenge.instruction || "Find the best move."));
     drawLessonArrow(challenge.arrowFrom, challenge.arrowTo);
     updateLessonProgress();
     createLessonBoard();
@@ -164,11 +164,24 @@ function showLessonFeedback(text){
 
 function updateLessonProgress(){
     const total = currentLesson.challenges.length;
-    const current = lessonChallengeIndex + 1;
-    const label = document.getElementById("lessonProgressLabel");
-    const bar = document.getElementById("lessonProgressBar");
-    if(label) label.textContent = "Challenge " + current + "/" + total;
-    if(bar) bar.style.width = Math.round((lessonChallengeIndex / total) * 100) + "%";
+    const stepper = document.getElementById("lessonProgressStepper");
+    const countBox = document.getElementById("lessonProgressCount");
+    if(!stepper || total === 0) return;
+
+    let html = "";
+    for(let i = 0; i < total; i++){
+        const isCompleted = i < lessonChallengeIndex;
+        const isCurrent = i === lessonChallengeIndex;
+
+        html += '<div class="lesson-step-dot' + (isCompleted ? ' completed' : '') + (isCurrent ? ' current' : '') + '">' + (i + 1) + '</div>';
+
+        if(i < total - 1){
+            html += '<div class="lesson-step-line' + (i < lessonChallengeIndex ? ' completed' : '') + '"></div>';
+        }
+    }
+
+    stepper.innerHTML = html;
+    if(countBox) countBox.textContent = (lessonChallengeIndex + 1) + "/" + total;
 }
 
 function drawLessonArrow(fromSq, toSq){
@@ -291,8 +304,6 @@ function clickLessonSquare(r, c){
 
     if(isLastChallenge){
         showLessonFeedback("🎉 Lesson complete — nice work!");
-        const bar = document.getElementById("lessonProgressBar");
-        if(bar) bar.style.width = "100%";
         if(typeof recordLessonCompleted === "function") recordLessonCompleted(currentLesson.id);
     }else{
         showLessonFeedback("✅ Correct! Moving to the next challenge...");
