@@ -4096,3 +4096,41 @@ html, body {
         font-size: 24px;
     }
 }
+/* ===== Make headers obey the accent color setting ===== */
+
+/* Leaderboard header */
+#leaderboardScreen .fsHeader {
+    background: linear-gradient(135deg, var(--themeOrange, #FF7A1A), #ff9d4d) !important;
+}
+
+/* Analysis header */
+#analysisScreen .fsHeader {
+    background: linear-gradient(135deg, var(--themeOrange, #FF7A1A), #ff9d4d) !important;
+}
+
+/* Daily Rewards header */
+#dailyRewardsScreen .fsHeader {
+    background: linear-gradient(135deg, var(--themeOrange, #FF7A1A), #ff9d4d) !important;
+}
+
+/* Challenge a Friend header */
+.challengeHeader {
+    background: linear-gradient(135deg, var(--themeOrange, #FF7A1A), #ff9d4d) !important;
+}
+
+/* Ensure header buttons and text remain visible */
+#leaderboardScreen .fsHeader button,
+#analysisScreen .fsHeader button,
+#dailyRewardsScreen .fsHeader button,
+.challengeHeader .challengeBackBtn {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+}
+
+#leaderboardScreen .fsHeader h2,
+#analysisScreen .fsHeader h2,
+#dailyRewardsScreen .fsHeader h2,
+.challengeHeader .challengeHeaderTitle,
+.challengeHeader .challengeHeaderSub {
+    color: #ffffff !important;
+}
