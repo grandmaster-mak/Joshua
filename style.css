@@ -3845,3 +3845,27 @@ html, body {
         linear-gradient(160deg, #0f1f1c 0%, #0a1512 100%) !important;
     background-attachment: fixed;
 }
+/* Analysis position picker: white cards with dark text */
+#analysisPositionPopup #analysisPositionList > div:not(.sub) {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+    border: none !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+}
+
+#analysisPositionPopup #analysisPositionList > div:not(.sub) * {
+    color: #1a1a1a !important;
+}
+
+/* Section headings (Openings / Middlegames / Endgames) dark */
+#analysisPositionList > div.sub {
+    color: #0f1f1c !important;
+    font-weight: 800 !important;
+}
+
+/* "Choose a Position" heading and subtitle dark */
+#analysisPositionPopup .popupContent h3,
+#analysisPositionPopup .popupContent p {
+    color: #1a1a1a !important;
+}
