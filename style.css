@@ -3869,3 +3869,14 @@ html, body {
 #analysisPositionPopup .popupContent p {
     color: #1a1a1a !important;
 }
+/* Center and enlarge section headings in Analysis position picker */
+#analysisPositionList > div.sub {
+    text-align: center !important;
+    font-size: 32px !important;
+    font-weight: 800 !important;
+    color: #0f1f1c !important;
+    margin: 18px 0 10px !important;
+    padding: 0 !important;
+    display: block !important;
+    width: 100% !important;
+}
