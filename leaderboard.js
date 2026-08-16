@@ -9,6 +9,7 @@
 let currentLeaderboardTab = "rating";
 
 function openLeaderboard(){
+    saveAppShellScroll();
     document.getElementById("appShell").style.display = "none";
     document.getElementById("leaderboardScreen").style.display = "flex";
     history.pushState({ screen: "leaderboard" }, "", "#leaderboard");
@@ -18,6 +19,7 @@ function openLeaderboard(){
 function closeLeaderboard(){
     document.getElementById("leaderboardScreen").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
+    restoreAppShellScroll();
     if(history.state && history.state.screen === "leaderboard"){
         history.back();
     }
