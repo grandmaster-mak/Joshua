@@ -3775,3 +3775,18 @@ html, body {
     flex-shrink: 0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+/* Back to Lessons button: long horizontal orange bar */
+#lessonDetailView .btnSecondary {
+    display: block;
+    width: calc(100% - 32px) !important;
+    margin: 16px auto !important;
+    text-align: center;
+    background: var(--themeOrange, #FF7A1A) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 16px !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+    box-shadow: 0 8px 20px rgba(255,122,26,0.3) !important;
+}
