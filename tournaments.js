@@ -31,6 +31,7 @@ let arenaCountdownInterval = null;
 let arenaPendingRef = null;
 
 function openTournaments(){
+    saveAppShellScroll();
     document.getElementById("appShell").style.display = "none";
     document.getElementById("tournamentsScreen").style.display = "flex";
     history.pushState({ screen: "tournaments", view: "list" }, "", "#tournaments");
@@ -43,6 +44,7 @@ function closeTournaments(){
     if(history.state && history.state.screen === "tournaments"){
         history.back();
     }
+    restoreAppShellScroll();
 }
 
 function showTournamentsList(){
