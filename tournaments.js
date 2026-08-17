@@ -29,7 +29,13 @@ let activeTournamentBracket = "main"; // "main" | "winners" | "losers" | "grandF
 let currentViewedTournamentId = null;
 let arenaCountdownInterval = null;
 let arenaPendingRef = null;
+function cacheTournaments(items){
+    try { localStorage.setItem("cachedTournaments", JSON.stringify(items)); } catch(e) {}
+}
 
+function loadCachedTournaments(){
+    try { return JSON.parse(localStorage.getItem("cachedTournaments") || "null"); } catch(e) { return null; }
+}
 function openTournaments(){
     saveAppShellScroll();
     document.getElementById("appShell").style.display = "none";
