@@ -71,6 +71,7 @@ function loadLessonsList(){
 
     const cached = loadCachedLessons();
     if(cached && cached.length > 0){
+        lessonPool = cached;                 // ← add this line
         renderLessonList(cached);
     } else {
         list.innerHTML = '<p class="sub">Loading...</p>';
@@ -88,6 +89,7 @@ function loadLessonsList(){
             lessons.push(Object.assign({ id: child.key }, child.val()));
         });
 
+        lessonPool = lessons;                 // ← add this line
         cacheLessons(lessons);
         renderLessonList(lessons);
 
