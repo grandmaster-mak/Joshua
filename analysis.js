@@ -33,11 +33,11 @@ function initAnalysisEngine(){
         analysisStockfish = new Worker("stockfish-18-lite-single.js");
 
         analysisStockfish.onerror = function(err){
-            console.error("Analysis engine failed to load:", err.message);
-            const evalEl = document.getElementById("analysisEvalText");
-            if(evalEl) evalEl.textContent = "Engine failed to load.";
-            analysisStockfish = null;
-        };
+    console.error("Analysis engine failed to load:", err.message);
+    const evalEl = document.getElementById("analysisEvalText");
+    if(evalEl) evalEl.textContent = "Engine unavailable offline";
+    analysisStockfish = null;
+};
 
         analysisStockfish.onmessage = function(e){
 
