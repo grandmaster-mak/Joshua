@@ -102,12 +102,19 @@ function loadTournamentsList(){
     if(!db) return;
 
     const list = document.getElementById("tournamentsList");
-    list.innerHTML = '<p class="sub">Loading...</p>';
+    if(!list) return;
+
+    const cached = loadCachedTournaments();
+    if(cached && cached.length > 0){
+        renderTournamentListItems(cached);
+    } else {
+        list.innerHTML = '<p class="sub">Loading...</p>';
+    }
 
     db.ref("tournaments").orderByChild("createdAt").limitToLast(30).once("value").then(function(snapshot){
 
         if(!snapshot.exists()){
-            list.innerHTML = '<p class="sub">No tournaments yet. Create the first one!</p>';
+            if(!cached) list.innerHTML = '<p class="sub">No tournaments yet. Create the first one!</p>';
             return;
         }
 
@@ -117,32 +124,44 @@ function loadTournamentsList(){
         });
         items.reverse();
 
-        list.innerHTML = "";
+        cacheTournaments(items);
+        renderTournamentListItems(items);
 
-        items.forEach(function(item){
+    }).catch(function(err){
+        if(!cached) list.innerHTML = '<p class="sub">Could not load tournaments: ' + escapeHtml(err.message) + '</p>';
+    });
 
-            const t = item.data;
-            const playerCount = t.players ? Object.keys(t.players).length : 0;
-            const capLabel = t.maxPlayers ? "/" + t.maxPlayers : "";
-            let statusLabel;
-            if(t.status === "registering") statusLabel = "Open";
-            else if(t.status === "active") statusLabel = (t.format === "arena") ? "Live" : "Round " + t.currentRound + "/" + t.rounds;
-            else statusLabel = "Completed";
+}
 
-            const formatLabel = formatFormatLabel(t.format);
-            const speedLabel = formatSpeedLabel(t.timeControl);
-            const startLabel = (t.status === "registering" && t.scheduledStart) ? " · Starts " + formatScheduledStart(t.scheduledStart) : "";
+function renderTournamentListItems(items){
 
-            const card = document.createElement("div");
-            card.className = "tournamentCard";
-            card.onclick = function(){ openTournamentDetail(item.id); };
-            card.innerHTML =
-                '<div class="tournamentCardName">🏆 ' + escapeHtml(t.name) + '</div>' +
-                '<div class="tournamentCardMeta">' + formatLabel + ' &middot; ' + speedLabel + ' &middot; ' + playerCount + capLabel + ' players &middot; ' + statusLabel + startLabel + '</div>';
+    const list = document.getElementById("tournamentsList");
+    if(!list) return;
 
-            list.appendChild(card);
+    list.innerHTML = "";
 
-        });
+    items.forEach(function(item){
+
+        const t = item.data;
+        const playerCount = t.players ? Object.keys(t.players).length : 0;
+        const capLabel = t.maxPlayers ? "/" + t.maxPlayers : "";
+        let statusLabel;
+        if(t.status === "registering") statusLabel = "Open";
+        else if(t.status === "active") statusLabel = (t.format === "arena") ? "Live" : "Round " + t.currentRound + "/" + t.rounds;
+        else statusLabel = "Completed";
+
+        const formatLabel = formatFormatLabel(t.format);
+        const speedLabel = formatSpeedLabel(t.timeControl);
+        const startLabel = (t.status === "registering" && t.scheduledStart) ? " · Starts " + formatScheduledStart(t.scheduledStart) : "";
+
+        const card = document.createElement("div");
+        card.className = "tournamentCard";
+        card.onclick = function(){ openTournamentDetail(item.id); };
+        card.innerHTML =
+            '<div class="tournamentCardName">🏆 ' + escapeHtml(t.name) + '</div>' +
+            '<div class="tournamentCardMeta">' + formatLabel + ' &middot; ' + speedLabel + ' &middot; ' + playerCount + capLabel + ' players &middot; ' + statusLabel + startLabel + '</div>';
+
+        list.appendChild(card);
 
     });
 
