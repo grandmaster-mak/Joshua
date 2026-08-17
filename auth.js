@@ -402,7 +402,11 @@ function showLoggedOutState(){
             currentUserRating = 100;
             currentUserPhotoURL = null;
             userExplicitlyLoggedOut = false;
-
+const cachedProfile = loadCachedProfileData();
+if(!navigator.onLine && cachedProfile && cachedProfile.username){
+    // Keep showing the cached logged-in state while offline
+    return;
+}
             // ---- Check for a pending challenge link ----
             // Safe to run immediately here (unlike the logged-in path
             // above) since this branch never writes profile data to
