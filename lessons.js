@@ -69,46 +69,56 @@ function loadLessonsList(){
     const list = document.getElementById("lessonsList");
     if(!list) return;
 
-    if(!db){
-        list.innerHTML = '<p class="sub">Could not connect — check your internet connection.</p>';
-        return;
+    const cached = loadCachedLessons();
+    if(cached && cached.length > 0){
+        renderLessonList(cached);
+    } else {
+        list.innerHTML = '<p class="sub">Loading...</p>';
     }
-
-    list.innerHTML = '<p class="sub">Loading...</p>';
 
     db.ref("lessons").once("value").then(function(snapshot){
 
         if(!snapshot.exists()){
-            list.innerHTML = '<p class="sub">No lessons have been added yet.</p>';
+            if(!cached) list.innerHTML = '<p class="sub">No lessons have been added yet.</p>';
             return;
         }
 
-        lessonPool = [];
+        const lessons = [];
         snapshot.forEach(function(child){
-            lessonPool.push(Object.assign({ id: child.key }, child.val()));
+            lessons.push(Object.assign({ id: child.key }, child.val()));
         });
 
-        list.innerHTML = "";
-
-        lessonPool.forEach(function(lesson){
-
-            const challengeCount = (lesson.challenges || []).length;
-
-            const card = document.createElement("div");
-            card.className = "tournamentCard";
-            card.style.height = "auto";
-            card.style.minHeight = "64px";
-            card.onclick = function(){ openLessonDetail(lesson.id); };
-            card.innerHTML =
-                '<div class="tournamentCardName">' + (lesson.icon || "📘") + " " + escapeHtml(lesson.title || "Untitled Lesson") + '</div>' +
-                '<div class="tournamentCardMeta">' + escapeHtml(lesson.description || "") + " · " + challengeCount + " challenge" + (challengeCount === 1 ? "" : "s") + '</div>';
-
-            list.appendChild(card);
-
-        });
+        cacheLessons(lessons);
+        renderLessonList(lessons);
 
     }).catch(function(err){
-        list.innerHTML = '<p class="sub">Could not load lessons: ' + escapeHtml(err.message) + '</p>';
+        if(!cached) list.innerHTML = '<p class="sub">Could not load lessons: ' + escapeHtml(err.message) + '</p>';
+    });
+
+}
+
+function renderLessonList(lessons){
+
+    const list = document.getElementById("lessonsList");
+    if(!list) return;
+
+    list.innerHTML = "";
+
+    lessons.forEach(function(lesson){
+
+        const challengeCount = (lesson.challenges || []).length;
+
+        const card = document.createElement("div");
+        card.className = "tournamentCard";
+        card.style.height = "auto";
+        card.style.minHeight = "64px";
+        card.onclick = function(){ openLessonDetail(lesson.id); };
+        card.innerHTML =
+            '<div class="tournamentCardName">' + (lesson.icon || "📘") + " " + escapeHtml(lesson.title || "Untitled Lesson") + '</div>' +
+            '<div class="tournamentCardMeta">' + escapeHtml(lesson.description || "") + " · " + challengeCount + " challenge" + (challengeCount === 1 ? "" : "s") + '</div>';
+
+        list.appendChild(card);
+
     });
 
 }
