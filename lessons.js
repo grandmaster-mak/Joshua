@@ -29,7 +29,13 @@ let lessonPool = [];
 let currentLesson = null;
 let lessonChallengeIndex = 0;
 let lessonSolved = false;
+function cacheLessons(lessons){
+    try { localStorage.setItem("cachedLessons", JSON.stringify(lessons)); } catch(e) {}
+}
 
+function loadCachedLessons(){
+    try { return JSON.parse(localStorage.getItem("cachedLessons") || "null"); } catch(e) { return null; }
+}
 function openLessons(){
 
     document.getElementById("appShell").style.display = "none";
