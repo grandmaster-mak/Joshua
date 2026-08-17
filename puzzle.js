@@ -152,13 +152,18 @@ function showCoachFeedback(text, tone){
 
 function loadPuzzlePool(){
 
+    const cached = loadCachedPuzzlePool();
+    const cachedPromise = cached ? Promise.resolve(cached) : null;
+
     if(!db){
+        if(cachedPromise) return cachedPromise;
         return Promise.reject(new Error("Not connected to Firebase."));
     }
 
     return db.ref("puzzles").once("value").then(function(snapshot){
 
         if(!snapshot.exists()){
+            cachePuzzlePool([]);
             return [];
         }
 
@@ -166,10 +171,13 @@ function loadPuzzlePool(){
         snapshot.forEach(function(child){
             out.push(Object.assign({ id: child.key }, child.val()));
         });
+
+        cachePuzzlePool(out);
         return out;
 
     }).catch(function(err){
         console.error("Failed to load puzzles from Firebase:", err.message);
+        if(cachedPromise) return cachedPromise;
         throw err;
     });
 
