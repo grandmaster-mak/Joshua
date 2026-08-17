@@ -77,7 +77,13 @@ let puzzleHintSquare = null;
 let puzzleIsReplay = false;
 
 const PUZZLE_UNLOCKS_PER_TIER = 20;
+function cachePuzzlePool(pool){
+    try { localStorage.setItem("cachedPuzzlePool", JSON.stringify(pool)); } catch(e) {}
+}
 
+function loadCachedPuzzlePool(){
+    try { return JSON.parse(localStorage.getItem("cachedPuzzlePool") || "null"); } catch(e) { return null; }
+}
 function pickRandom(arr){
     return arr[Math.floor(Math.random() * arr.length)];
 }
