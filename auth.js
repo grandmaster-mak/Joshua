@@ -392,7 +392,13 @@ function initAuthListener(){
     });
 
 }
-
+function loadCachedProfileData(){
+    try{
+        return JSON.parse(localStorage.getItem("cachedProfile") || "null");
+    }catch(e){
+        return null;
+    }
+}
 function showLoggedOutState(){
 
             currentUser = null;
