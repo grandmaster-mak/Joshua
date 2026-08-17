@@ -1,7 +1,5 @@
 *{ margin:0; padding:0; box-sizing:border-box; }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
 body{
     font-family:'Inter', system-ui, -apple-system, sans-serif;
     background:
@@ -2358,8 +2356,6 @@ input::placeholder{ color:#4a5060; }
    knights flanking as guards, using the app's real piece SVGs.
    Auto-dismissed by the inline script in index.html after 3s.
    ============================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap');
 
 #splashScreen{
     position:fixed;
