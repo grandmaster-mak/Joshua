@@ -2528,24 +2528,36 @@ function renderRecentGamesRows(entries, containerId){
 }
 
 function loadRecentGames(){
-    if(!db || !currentUser) return;
+    // Show cached recent games immediately, even before any network
+    const cached = loadCachedRecentGames();
+    if (cached && cached.length > 0) {
+        renderRecentGamesRows(cached);
+    }
 
-    renderRecentGamesRows(loadCachedRecentGames());
+    // If offline or Firebase is slow, do not hang; cached already shown.
+    if(!db || !currentUser){
+        return;
+    }
+
+    const timeout = setTimeout(function(){
+        // Fallback: if Firebase hasn't responded, do nothing — cached already visible.
+    }, 3000);
 
     db.ref("users/" + currentUser.uid + "/history")
         .orderByChild("time")
         .limitToLast(5)
         .once("value")
         .then(function(snapshot){
-
+            clearTimeout(timeout);
             const entries = [];
             snapshot.forEach(function(child){ entries.push(child.val()); });
             entries.reverse();
-
             cacheRecentGames(entries);
             renderRecentGamesRows(entries);
-
-        }).catch(function(){
+        })
+        .catch(function(){
+            clearTimeout(timeout);
+            // Keep cached data
         });
 }
 function openGameHistory(){
