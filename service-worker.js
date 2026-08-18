@@ -1,6 +1,11 @@
-const CACHE_VERSION = "v4";
+// ============================================================
+// Service Worker — offline-first static asset caching
+// ============================================================
+
+const CACHE_VERSION = "v6";
 const CACHE_NAME = "chess-app-" + CACHE_VERSION;
 
+// All important app files that should be available offline.
 const PRECACHE_URLS = [
   "/",
   "/index.html",
@@ -50,6 +55,7 @@ const PRECACHE_URLS = [
   "/sounds/bg_music.mp3"
 ];
 
+// Install — pre-cache static assets and take control immediately
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -57,6 +63,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
+// Activate — delete old caches and claim open pages
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -67,6 +74,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Fetch — cache-first for static files, stale-while-revalidate for navigations
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
@@ -75,19 +83,25 @@ self.addEventListener("fetch", (event) => {
   const isSameOrigin = url.origin === location.origin;
 
   if (isNavigation) {
+    // Serve cached page immediately, then update in background.
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request) || caches.match("/index.html"))
+      caches.match(event.request).then((cached) => {
+        const fetchPromise = fetch(event.request)
+          .then((response) => {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+            return response;
+          })
+          .catch(() => cached);
+
+        return cached || fetchPromise;
+      })
     );
     return;
   }
 
   if (isSameOrigin) {
+    // Static assets: cache-first, fallback to network and then cache.
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
@@ -99,6 +113,7 @@ self.addEventListener("fetch", (event) => {
       })
     );
   } else {
+    // Cross-origin requests (Firebase, fonts, API) — just fetch normally.
     event.respondWith(fetch(event.request));
   }
 });
