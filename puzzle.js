@@ -77,6 +77,7 @@ let puzzleHintSquare = null;
 let puzzleIsReplay = false;
 
 const PUZZLE_UNLOCKS_PER_TIER = 20;
+
 function cachePuzzlePool(pool){
     try { localStorage.setItem("cachedPuzzlePool", JSON.stringify(pool)); } catch(e) {}
 }
@@ -84,6 +85,7 @@ function cachePuzzlePool(pool){
 function loadCachedPuzzlePool(){
     try { return JSON.parse(localStorage.getItem("cachedPuzzlePool") || "null"); } catch(e) { return null; }
 }
+
 function pickRandom(arr){
     return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -166,25 +168,50 @@ function loadPuzzlePool(){
         return Promise.reject(new Error("Not connected to Firebase."));
     }
 
-    return db.ref("puzzles").once("value").then(function(snapshot){
+    return new Promise(function(resolve, reject){
 
-        if(!snapshot.exists()){
-            cachePuzzlePool([]);
-            return [];
-        }
+        let done = false;
+        const timeout = setTimeout(function(){
+            if(!done){
+                done = true;
+                if(cachedPromise){
+                    resolve(cached);
+                } else {
+                    reject(new Error("Network timeout"));
+                }
+            }
+        }, 3000);
 
-        const out = [];
-        snapshot.forEach(function(child){
-            out.push(Object.assign({ id: child.key }, child.val()));
+        db.ref("puzzles").once("value").then(function(snapshot){
+            if(done) return;
+            done = true;
+            clearTimeout(timeout);
+
+            if(!snapshot.exists()){
+                cachePuzzlePool([]);
+                resolve([]);
+                return;
+            }
+
+            const out = [];
+            snapshot.forEach(function(child){
+                out.push(Object.assign({ id: child.key }, child.val()));
+            });
+
+            cachePuzzlePool(out);
+            resolve(out);
+        }).catch(function(err){
+            if(done) return;
+            done = true;
+            clearTimeout(timeout);
+            console.error("Failed to load puzzles from Firebase:", err.message);
+            if(cachedPromise){
+                resolve(cached);
+            } else {
+                reject(err);
+            }
         });
 
-        cachePuzzlePool(out);
-        return out;
-
-    }).catch(function(err){
-        console.error("Failed to load puzzles from Firebase:", err.message);
-        if(cachedPromise) return cachedPromise;
-        throw err;
     });
 
 }
@@ -273,7 +300,7 @@ function loadPuzzleIntoBoard(puzzle, isReplay){
 // replay anything already solved.
 function openDailyPuzzle(){
 
-    // Show map immediately
+    // Show map immediately, no network needed for UI
     document.getElementById("appShell").style.display = "none";
     document.getElementById("puzzleMapScreen").style.display = "flex";
     history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
@@ -281,20 +308,29 @@ function openDailyPuzzle(){
     const bodyEl = document.getElementById("puzzleMapBody");
     if(bodyEl) bodyEl.innerHTML = '<p class="sub">Loading...</p>';
 
-    // No user – just render map without any user data
-    if(typeof currentUser === "undefined" || !currentUser || !db){
-        openPuzzleMap(true);
-        return;
-    }
-
     loadPuzzlePool().then(function(pool){
 
         const sorted = sortPuzzlesChronologically(pool);
-        const currentTierIndex = getCurrentTierIndex();
 
-        return db.ref("users/" + currentUser.uid + "/private").once("value").then(function(snapshot){
+        // If no user or db, render map with no solved data
+        if(typeof currentUser === "undefined" || !currentUser || !db){
+            renderPuzzleMap(sorted, {}, null);
+            return;
+        }
 
-            const priv = snapshot.val() || {};
+        // Otherwise load user-specific solved data with timeout fallback
+        return Promise.race([
+            db.ref("users/" + currentUser.uid + "/private").once("value"),
+            new Promise(function(resolve){
+                setTimeout(function(){ resolve(null); }, 3000);
+            })
+        ]).then(function(snapshot){
+
+            let priv = {};
+            if(snapshot && snapshot.val){
+                priv = snapshot.val() || {};
+            }
+
             const solvedIds = {};
             if(priv.puzzleHistory){
                 Object.keys(priv.puzzleHistory).forEach(function(key){
@@ -303,6 +339,7 @@ function openDailyPuzzle(){
                 });
             }
 
+            const currentTierIndex = getCurrentTierIndex();
             const tierPuzzles = sorted.slice(
                 currentTierIndex * PUZZLE_UNLOCKS_PER_TIER,
                 currentTierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
@@ -326,13 +363,14 @@ function openDailyPuzzle(){
                 history.replaceState({ screen: "puzzle" }, "", "#puzzle");
                 loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
             }else{
-                openPuzzleMap(true);
+                // Fallback to map rendering if data not available or daily gating
+                renderPuzzleMap(sorted, solvedIds, priv.puzzleLastSolved || null);
             }
 
         });
 
     }).catch(function(err){
-        console.error("Failed to check today's puzzle:", err.message);
+        console.error("Failed to load puzzle map:", err.message);
         if(bodyEl) bodyEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
     });
 
