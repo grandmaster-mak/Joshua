@@ -3111,7 +3111,13 @@ function checkForIncomingChallenge(){
     showInfoPopup("🔒 Login Required", "Please sign up or log in to accept the challenge.");
   }
 }
-
+// Show cached recent games immediately on page load
+window.addEventListener("DOMContentLoaded", function(){
+    const cached = loadCachedRecentGames();
+    if (cached && cached.length > 0) {
+        renderRecentGamesRows(cached);
+    }
+});
 // --- Handle pending challenge after login (call this from auth.js) ---
 function handlePendingChallenge(){
   var challengeId = localStorage.getItem("pendingChallenge");
