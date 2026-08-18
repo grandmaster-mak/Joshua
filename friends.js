@@ -627,7 +627,18 @@ function openChallengeScreen(){
     // Add a history entry so back can return to Home instead of leaving the app
     history.pushState({ screen: "challenge" }, "", "#challenge");
 }
-
+// Show cached friends list immediately on page load
+window.addEventListener("DOMContentLoaded", function(){
+    const cached = loadCachedFriendsList();
+    if (cached && cached.length > 0) {
+        const list = document.getElementById("friendsList");
+        if(!list) return;
+        list.innerHTML = "";
+        cached.forEach(function(entry){
+            list.appendChild(renderFriendCardFromCache(entry.uid, entry.data));
+        });
+    }
+});
 function closeChallengeScreen(){
     document.getElementById("challengeScreen").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
