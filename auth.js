@@ -38,7 +38,7 @@ function getGreeting(){
 function cacheProfile(data){
     try{
         localStorage.setItem("cachedProfile", JSON.stringify({
-            uid: currentUser ? currentUser.uid : (currentUser && currentUser.uid ? currentUser.uid : null),
+            uid: currentUser ? currentUser.uid : null,
             username: data.username || "",
             flag: data.flag || "",
             rating: data.rating || 100,
