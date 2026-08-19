@@ -398,23 +398,22 @@ function initAuthListener(){
         }else{
 
             clearTimeout(authNullRecoveryTimer);
-            authNullRecoveryTimer = setTimeout(function(){
+authNullRecoveryTimer = setTimeout(function(){
 
-                if(auth.currentUser) return;
+    if(auth.currentUser) return;
 
-                // If offline and we have a cached user, keep them logged in
-                if(!navigator.onLine){
-                    const cached = loadCachedProfileData();
-                    if(cached && cached.uid){
-                        loadCachedProfile();
-                        return;
-                    }
-                }
+    // Keep cached user if we have one and the user didn't log out
+    if(!userExplicitlyLoggedOut){
+        const cached = loadCachedProfileData();
+        if(cached && cached.uid){
+            loadCachedProfile();
+            return;
+        }
+    }
 
-                showLoggedOutState();
+    showLoggedOutState();
 
-            }, 2500);
-
+}, 2500);
         }
 
     });
