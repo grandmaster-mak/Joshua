@@ -2275,6 +2275,8 @@ function recordGameResult(myResult, opponentName){
     if(typeof currentUser === "undefined" || !currentUser) return;
     if(typeof db === "undefined" || !db) return;
 
+    if(gameMode === "online" && myColor === null) return; // spectator: no stats/history updates
+
     // --- Kingdom update: optimistic local + authoritative Firebase transaction ---
     if (currentUser && db) {
 
