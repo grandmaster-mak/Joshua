@@ -420,10 +420,10 @@ function listenForGameEvents(code){
     ref.on("child_added", function(snapshot){
 
         const event = snapshot.val();
-        if(!event) return;
+if(!event) return;
 
-        if(event.by === myColor) return;
-
+if(event.by === myColor) return;
+if(myColor === null) return; // spectator: skip interactive events
         if(event.type === "resign" && !gameOver){
             gameOver = true;
             clearInterval(timer);
