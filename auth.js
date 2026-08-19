@@ -64,6 +64,32 @@ function loadCachedProfileData(){
     }
 }
 
+function loadCachedProfile(){
+    const cached = loadCachedProfileData();
+    if(!cached) return;
+
+    // Restore a minimal currentUser from cache if Firebase hasn't given us one
+    if(cached.uid && !currentUser){
+        currentUser = { uid: cached.uid, isOfflineRestored: true };
+    }
+
+    currentUsername = cached.username || null;
+    currentUserFlag = cached.flag || "";
+    currentUserRating = cached.rating || 100;
+    currentUserPhotoURL = cached.photoURL || null;
+
+    applyHomeHeader(cached);
+
+    if(cached.username){
+        const loggedOutEl = document.getElementById("loggedOutView");
+        const loggedInEl = document.getElementById("loggedInView");
+        const usernameEl = document.getElementById("loggedInUsername");
+        if(loggedOutEl) loggedOutEl.style.display = "none";
+        if(loggedInEl) loggedInEl.style.display = "block";
+        if(usernameEl) usernameEl.textContent = currentUserFlag + " " + currentUsername;
+    }
+}
+
 function restoreCachedUserSession(){
     const cached = loadCachedProfileData();
     if(cached && cached.uid && !currentUser){
