@@ -423,20 +423,11 @@ function initAuthListener(){
 
 function showLoggedOutState(){
 
-    // Keep cached user if offline
+    // Keep cached user if offline and we have a cached profile
     if(!navigator.onLine){
         const cached = loadCachedProfileData();
         if(cached && cached.uid){
-            restoreCachedUserSession();
-            currentUsername = cached.username || null;
-            currentUserFlag = cached.flag || "";
-            currentUserRating = cached.rating || 100;
-            currentUserPhotoURL = cached.photoURL || null;
-
-            applyHomeHeader(cached);
-            document.getElementById("loggedOutView").style.display = "none";
-            document.getElementById("loggedInView").style.display = "block";
-            document.getElementById("loggedInUsername").textContent = currentUserFlag + " " + currentUsername;
+            loadCachedProfile();
             return;
         }
     }
@@ -475,6 +466,7 @@ function showLoggedOutState(){
     if(requestsSectionEl) requestsSectionEl.style.display = "none";
     if(searchResultEl) searchResultEl.innerHTML = "";
     if(onlineFriendsStripEl) onlineFriendsStripEl.innerHTML = '<p class="sub">Log in to see online friends.</p>';
+
 }
 
 initAuthListener();
