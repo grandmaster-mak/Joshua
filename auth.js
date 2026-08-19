@@ -422,8 +422,8 @@ authNullRecoveryTimer = setTimeout(function(){
 
 function showLoggedOutState(){
 
-    // Keep cached user if offline and we have a cached profile
-    if(!navigator.onLine){
+    // Keep cached user if we have one and the user didn't log out
+    if(!userExplicitlyLoggedOut){
         const cached = loadCachedProfileData();
         if(cached && cached.uid){
             loadCachedProfile();
