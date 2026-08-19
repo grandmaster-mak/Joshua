@@ -1998,6 +1998,8 @@ function resignGame(){
 }
 
 function actuallyResign(){
+    if(myColor === null) return; // spectator cannot resign
+
     if(typeof sendGameEvent === "function"){
         sendGameEvent("resign");
     }
