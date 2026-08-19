@@ -2032,6 +2032,8 @@ function abortGame(){
 
 function requestDraw(){
 
+    if(myColor === null) return; // spectator cannot offer draw
+
     closeOnlineMenu();
 
     if(gameMode === "online"){
