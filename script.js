@@ -2016,6 +2016,8 @@ function actuallyResign(){
 
 function abortGame(){
 
+    if(myColor === null) return; // spectator cannot abort
+
     if(typeof sendGameEvent === "function"){
         sendGameEvent("abort");
     }
