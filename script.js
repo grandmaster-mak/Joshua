@@ -2503,17 +2503,6 @@ function renderRecentGamesRows(entries, containerId){
             infoEl.style.cursor = "pointer";
             infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
 
-            if(entry.mode === "online" && typeof startCloneMatch === "function"){
-                const cloneBtn = document.createElement("button");
-                cloneBtn.className = "cloneBtn";
-                cloneBtn.textContent = "🧬 Clone";
-                cloneBtn.onclick = function(e){
-                    e.stopPropagation();
-                    startCloneMatch(entry.opponentUid, entry.opponent || "Opponent");
-                };
-                row.querySelector(".gameResultCol").appendChild(cloneBtn);
-            }
-
             if(db){
                 db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
                     const statusEl = row.querySelector(".liveStatusText");
