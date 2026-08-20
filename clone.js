@@ -26,6 +26,8 @@
 // ============================================================
 
 let cloneModeActive = false;
+cloneModeActive = true;
+isCloneGame = true;   // ADD THIS
 let cloneOpponentName = null;
 let cloneTactics = 50;
 let cloneAggression = 50;
