@@ -321,6 +321,10 @@ function logOut(){
         userExplicitlyLoggedOut = true;
         auth.signOut();
     }
+    // Clear cached profile so it won't be restored after logout
+    try {
+        localStorage.removeItem("cachedProfile");
+    } catch(e) {}
 }
 
 function initAuthListener(){
