@@ -2333,6 +2333,7 @@ function recordGameResult(myResult, opponentName){
                 // the streak passes through untouched.
                 data.consecutiveWins = Math.max(0, (data.consecutiveWins || 0) - WIN_STREAK_LOSS_PENALTY);
             }
+      
             return data;
         }, function(error, committed, snapshot){
             if (error) {
@@ -2449,7 +2450,10 @@ function recordGameResult(myResult, opponentName){
         });
     }
 }
-
+// Suggest clone after a loss in online mode
+if(gameMode === "online" && myResult === "loss" && opponentInfo.uid){
+    suggestCloneAfterLoss(opponentInfo.uid, opponentName);
+}
 // ============================================================
 // ===== RECENT GAMES / GAME HISTORY =====
 // ============================================================
