@@ -135,12 +135,26 @@ function loadCachedProfile(){
     }
 }
 
-try{
+async function initAuth() {
     auth = firebase.auth();
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-}catch(err){
-    console.error("Firebase Auth failed to initialize:", err.message);
+    try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        console.log("✅ Local persistence enabled");
+    } catch (err) {
+        console.error("❌ Local persistence failed, using in-memory:", err.message);
+        try {
+            await auth.setPersistence(firebase.auth.Auth.Persistence.IN_MEMORY);
+            console.log("✅ In-memory persistence enabled");
+        } catch (err2) {
+            console.error("❌ Even in-memory failed:", err2.message);
+        }
+    }
+    initAuthListener();
+    loadCachedProfile();
 }
+
+// Call initAuth instead of the old try/catch
+initAuth();
 
 function countryCodeToFlag(code){
     if(!code) return "🏳️";
