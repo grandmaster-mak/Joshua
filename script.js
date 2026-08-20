@@ -115,7 +115,28 @@ try {
     }
   }
 } catch(e) {}
+// For clone suggestion after a loss
+let lastLossOpponentUid = null;
+let lastLossOpponentName = null;
 
+function suggestCloneAfterLoss(opponentUid, opponentName){
+    lastLossOpponentUid = opponentUid;
+    lastLossOpponentName = opponentName;
+    const btn = document.getElementById("playCloneSuggestionBtn");
+    if(btn && gameMode === "online" && lastLossOpponentUid){
+        btn.style.display = "block";
+    } else {
+        btn.style.display = "none";
+    }
+}
+
+function startCloneFromSuggestion(){
+    if(lastLossOpponentUid){
+        document.getElementById("playCloneSuggestionBtn").style.display = "none";
+        closePopup(); // close game over popup
+        startCloneMatch(lastLossOpponentUid, lastLossOpponentName || "Opponent");
+    }
+}
 function cacheKingdomToLocalStorage(){
   try {
     localStorage.setItem('kingdomState', JSON.stringify(kingdomState));
