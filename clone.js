@@ -55,6 +55,8 @@ function startCloneMatch(opponentUid, opponentName){
         buildCloneProfile(games);
 
         cloneModeActive = true;
+        cloneModeActive = true;
+isCloneGame = true;  
         cloneOpponentName = opponentName;
 
         gameMode = "ai";
