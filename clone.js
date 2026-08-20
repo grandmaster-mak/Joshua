@@ -33,7 +33,7 @@ let cloneCalculation = 50;
 let cloneDefense = 50;
 let cloneEndgame = 50;
 let cloneOpening = 50;
-
+let isCloneGame = false;   // if not already declared in script.js
 function cloneClamp(n){
     return Math.max(5, Math.min(95, Math.round(n)));
 }
