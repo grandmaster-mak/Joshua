@@ -66,6 +66,7 @@ let blackUid = null;
 let pendingAcceptedChallenge= null;
 let challengeReadyListenRef= null;
 let isCloneGame = false;
+
 // ===== OPPONENT KINGDOM DATA =====
 let opponentKingdom = null;
 let opponentKingdomEmoji = '🏕️';
@@ -1748,6 +1749,7 @@ function openPlaySetup(mode){
 }
 
 function newGame(){
+    isCloneGame = false;   // RESET clone flag for normal games
 
     if(typeof stopOnlineListeners === "function") stopOnlineListeners();
 
@@ -1790,7 +1792,7 @@ function newGame(){
 
     whiteCaptured = [];
     blackCaptured = [];
-if(gameMode === "ai"){
+    if(gameMode === "ai"){
         whitePlayer = (typeof currentUsername !== "undefined" && currentUsername) ? currentUsername : "You";
         blackPlayer = isCoachMode ? "Coach" : "Computer";
         whiteFlag = (typeof currentUserFlag !== "undefined") ? currentUserFlag : "";
@@ -1871,6 +1873,10 @@ function showPopup(title, message){
     if(dnaBtn){
         dnaBtn.style.display = (gameMode === "ai" || gameMode === "online") ? "block" : "none";
     }
+
+    // Always hide clone suggestion by default; it will be shown after an online loss
+    const cloneBtn = document.getElementById("playCloneSuggestionBtn");
+    if(cloneBtn) cloneBtn.style.display = "none";
 
     document.getElementById("gameOverPopup").classList.add("show");
 }
@@ -2263,7 +2269,6 @@ function showRatingChangePopup(myResult){
     const el = document.getElementById("popupRatingChange");
     if(!el) return;
 
-    // Allow clone games to show rating change as well
     if(gameMode !== "online" && !ratedAIActive && !isCloneGame){
         el.style.display = "none";
         return;
@@ -2271,10 +2276,8 @@ function showRatingChangePopup(myResult){
 
     let delta = 0;
     if(isCloneGame){
-        // Clone: win +4, loss/draw 0
         if(myResult === "win") delta = 4;
     } else {
-        // Normal rated
         if(myResult === "win") delta = 8;
         else if(myResult === "loss") delta = -8;
     }
@@ -2361,7 +2364,6 @@ function recordGameResult(myResult, opponentName){
             }
       
             return data;
-          isCloneGame = false;
         }, function(error, committed, snapshot){
             if (error) {
                 console.error('🚨 KINGDOM WRITE FAILED. Check your Firebase rules:', error);
@@ -2417,17 +2419,17 @@ function recordGameResult(myResult, opponentName){
         }
 
         if(gameMode === "online" || ratedAIActive || isCloneGame){
-    data.rating = data.rating || 100;
+            data.rating = data.rating || 100;
 
-    if(isCloneGame){
-        // Clone games: win gives +4, loss/draw gives 0
-        if(myResult === "win") data.rating += 4;
-    } else {
-        // Normal rated games
-        if(myResult === "win") data.rating += 8;
-        else if(myResult === "loss") data.rating -= 8;
-    }
-}
+            if(isCloneGame){
+                // Clone games: win gives +4, loss/draw gives 0
+                if(myResult === "win") data.rating += 4;
+            } else {
+                // Normal rated games
+                if(myResult === "win") data.rating += 8;
+                else if(myResult === "loss") data.rating -= 8;
+            }
+        }
         if(gameMode === "online"){
             data.currentRoomCode = null;
         }
@@ -2476,11 +2478,13 @@ function recordGameResult(myResult, opponentName){
             console.error("Failed to save opponent game data for Clone:", err.message);
         });
     }
+
+    // Suggest clone after a loss in online mode
+    if(gameMode === "online" && myResult === "loss" && opponentInfo.uid){
+        suggestCloneAfterLoss(opponentInfo.uid, opponentName);
+    }
 }
-// Suggest clone after a loss in online mode
-if(gameMode === "online" && myResult === "loss" && opponentInfo.uid){
-    suggestCloneAfterLoss(opponentInfo.uid, opponentName);
-}
+
 // ============================================================
 // ===== RECENT GAMES / GAME HISTORY =====
 // ============================================================
