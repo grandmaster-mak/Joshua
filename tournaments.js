@@ -45,14 +45,26 @@ function openTournaments(){
 }
 
 function closeTournaments(){
+    const listVisible = document.getElementById("tournamentsListView").style.display === "block";
+
+    if(!listVisible){
+        // We are in create or detail view → go back to the tournament list
+        showTournamentsList();
+        // Replace the current history entry so the back button from the list
+        // will go to the previous screen (home) instead of re-showing detail.
+        history.replaceState({ screen: "tournaments", view: "list" }, "", "#tournaments");
+        return;
+    }
+
+    // We are already on the list view → exit tournaments to previous screen
     document.getElementById("tournamentsScreen").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
-    if(history.state && history.state.screen === "tournaments"){
-        history.back();
-    }
+    // Now pop the history entry we added when we opened tournaments.
+    // The previous entry is the base (screen null), so the popstate handler
+    // will show the home screen correctly.
+    history.back();
     restoreAppShellScroll();
 }
-
 function showTournamentsList(){
     document.getElementById("tournamentsListView").style.display = "block";
     document.getElementById("tournamentCreateView").style.display = "none";
