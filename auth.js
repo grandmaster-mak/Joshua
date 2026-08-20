@@ -35,9 +35,11 @@ function getGreeting(){
     return "Good evening 🌙";
 }
 
+// Save profile data to localStorage, including uid for offline restoration
 function cacheProfile(data){
     try{
         localStorage.setItem("cachedProfile", JSON.stringify({
+            uid: currentUser ? currentUser.uid : null,
             username: data.username || "",
             flag: data.flag || "",
             rating: data.rating || 100,
@@ -54,6 +56,43 @@ function cacheProfile(data){
         }));
     }catch(e){}
 }
+
+// Helper to safely read cached profile data
+function loadCachedProfileData(){
+    try{
+        return JSON.parse(localStorage.getItem("cachedProfile") || "null");
+    }catch(e){
+        return null;
+    }
+}
+
+// Load cached profile data and apply to UI, restoring minimal currentUser if needed
+function loadCachedProfile(){
+    const cached = loadCachedProfileData();
+    if(!cached) return;
+
+    // Restore currentUser from cache if Firebase hasn't given us one
+    if(cached.uid && !currentUser){
+        currentUser = { uid: cached.uid, isOfflineRestored: true };
+    }
+
+    currentUsername = cached.username || null;
+    currentUserFlag = cached.flag || "";
+    currentUserRating = cached.rating || 100;
+    currentUserPhotoURL = cached.photoURL || null;
+
+    applyHomeHeader(cached);
+
+    if(cached.username){
+        const loggedOutEl = document.getElementById("loggedOutView");
+        const loggedInEl = document.getElementById("loggedInView");
+        const usernameEl = document.getElementById("loggedInUsername");
+        if(loggedOutEl) loggedOutEl.style.display = "none";
+        if(loggedInEl) loggedInEl.style.display = "block";
+        if(usernameEl) usernameEl.textContent = currentUserFlag + " " + currentUsername;
+    }
+}
+
 function togglePasswordVisibility() {
     const input = document.getElementById("authPassword");
     const btn = document.getElementById("togglePasswordBtn");
@@ -67,35 +106,24 @@ function togglePasswordVisibility() {
         if (btn) btn.textContent = "👁️";
     }
 }
-function loadCachedProfile(){
-    try{
-        const cached = JSON.parse(localStorage.getItem("cachedProfile") || "null");
-        if(!cached) return;
 
-        currentUsername = cached.username || null;
-        currentUserFlag = cached.flag || "";
-        currentUserRating = cached.rating || 100;
-        currentUserPhotoURL = cached.photoURL || null;
-
-        applyHomeHeader(cached);
-
-        if(cached.username){
-            const loggedOutEl = document.getElementById("loggedOutView");
-            const loggedInEl = document.getElementById("loggedInView");
-            const usernameEl = document.getElementById("loggedInUsername");
-            if(loggedOutEl) loggedOutEl.style.display = "none";
-            if(loggedInEl) loggedInEl.style.display = "block";
-            if(usernameEl) usernameEl.textContent = currentUserFlag + " " + currentUsername;
-        }
-
-    }catch(e){}
-}
-
-try{
+// Properly initialize Firebase Auth with persistence and fallback
+async function initAuth() {
     auth = firebase.auth();
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-}catch(err){
-    console.error("Firebase Auth failed to initialize:", err.message);
+    try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        console.log("✅ Local persistence enabled");
+    } catch (err) {
+        console.error("❌ Local persistence failed, using in-memory:", err.message);
+        try {
+            await auth.setPersistence(firebase.auth.Auth.Persistence.IN_MEMORY);
+            console.log("✅ In-memory persistence enabled");
+        } catch (err2) {
+            console.error("❌ Even in-memory failed:", err2.message);
+        }
+    }
+    initAuthListener();
+    loadCachedProfile();
 }
 
 function countryCodeToFlag(code){
@@ -165,7 +193,6 @@ function applyHomeHeader(data){
     if(puzzleStreakEl) puzzleStreakEl.textContent = data.puzzleStreak || 0;
 
     if(typeof renderAchievementsGrid === "function") renderAchievementsGrid("accountAchievementsGrid", data.achievements);
-
 }
 
 function openCurrencyShop(kind){
@@ -190,8 +217,8 @@ function signUp(){
     const password = document.getElementById("authPassword").value;
     const username = document.getElementById("authUsername").value.trim();
     const country = document.getElementById("authCountry").value;
-const preferredLanguage = document.getElementById("authLanguage").value;
-if(typeof applyLanguage === "function") applyLanguage(preferredLanguage);
+    const preferredLanguage = document.getElementById("authLanguage").value;
+    if(typeof applyLanguage === "function") applyLanguage(preferredLanguage);
     if(!email || !password || !username || !country){
         document.getElementById("authStatus").textContent = "Please fill in all fields, including country.";
         return;
@@ -265,7 +292,7 @@ function logIn(){
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
     const preferredLanguage = document.getElementById("authLanguage").value;
-if(typeof applyLanguage === "function") applyLanguage(preferredLanguage);
+    if(typeof applyLanguage === "function") applyLanguage(preferredLanguage);
 
     if(!email || !password){
         document.getElementById("authStatus").textContent = "Please enter your email and password.";
@@ -291,6 +318,10 @@ function logOut(){
         userExplicitlyLoggedOut = true;
         auth.signOut();
     }
+    // Clear cached profile so it won't be restored after logout
+    try {
+        localStorage.removeItem("cachedProfile");
+    } catch(e) {}
 }
 
 function initAuthListener(){
@@ -300,8 +331,21 @@ function initAuthListener(){
     auth.onAuthStateChanged(function(user){
 
         if(user){
-
+            // User is logged in (or Firebase restored session)
+            userExplicitlyLoggedOut = false;
             currentUser = user;
+
+            // Immediately show cached profile if available (for offline speed)
+            const cached = loadCachedProfileData();
+            if(cached && cached.uid === user.uid){
+                applyHomeHeader(cached);
+                const loggedOutEl = document.getElementById("loggedOutView");
+                const loggedInEl = document.getElementById("loggedInView");
+                const usernameEl = document.getElementById("loggedInUsername");
+                if(loggedOutEl) loggedOutEl.style.display = "none";
+                if(loggedInEl) loggedInEl.style.display = "block";
+                if(usernameEl) usernameEl.textContent = (cached.flag || "") + " " + (cached.username || "");
+            }
 
             if(db){
                 const presenceRef = db.ref("presence/" + user.uid);
@@ -344,104 +388,87 @@ function initAuthListener(){
                 if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
                 if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
 
-                // ---- Handle pending challenge after login (unchanged) ----
+                // ---- Handle pending challenge after login ----
                 if(typeof handlePendingChallenge === "function"){
                     handlePendingChallenge();
                 }
 
-                // ---- Check for a pending challenge link (MOVED HERE) ----
-                // This used to run immediately after `currentUser = user;`
-                // above — before currentUsername/currentUserFlag/
-                // currentUserRating/currentUserPhotoURL (all set just
-                // above this comment) had actually loaded. A friend who
-                // tapped Accept quickly after opening the link would
-                // trigger a Firebase write containing an undefined
-                // username/flag, which Firebase's SDK rejects outright —
-                // showing as a vague "permission" error, and any partial
-                // write that slipped through left their name blank and
-                // defaulted to a plain white flag in the room. Now this
-                // only runs once profile data is guaranteed to be ready,
-                // right alongside handlePendingChallenge() above, which
-                // was already correctly placed here.
+                // ---- Check for a pending challenge link ----
                 if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
 
             }).catch(function(err){
                 console.log("Offline — showing cached profile instead.");
+                loadCachedProfile();
             });
 
-        }else{
-
+        } else {
+            // User is signed out (or not yet signed in)
             clearTimeout(authNullRecoveryTimer);
             authNullRecoveryTimer = setTimeout(function(){
 
                 if(auth.currentUser) return;
 
+                // If offline and we have a cached profile, keep showing it
                 if(!navigator.onLine && !userExplicitlyLoggedOut){
-                    console.log("Offline with no session yet — keeping cached profile displayed instead of showing the login screen.");
+                    const cached = loadCachedProfileData();
+                    if(cached && cached.uid){
+                        console.log("Offline with no session yet — restoring cached profile.");
+                        loadCachedProfile();
+                    } else {
+                        // No cache, show logged out
+                        showLoggedOutState();
+                    }
                     return;
                 }
 
+                // Online or explicitly logged out, show logged out state
                 showLoggedOutState();
 
             }, 2500);
 
             return;
-
         }
-
     });
-
 }
 
 function showLoggedOutState(){
+    currentUser = null;
+    currentUsername = null;
+    currentUserCountry = null;
+    currentUserFlag = "";
+    currentUserRating = 100;
+    currentUserPhotoURL = null;
+    // Do NOT reset userExplicitlyLoggedOut here! It should remain true after explicit logout.
 
-            currentUser = null;
-            currentUsername = null;
-            currentUserCountry = null;
-            currentUserFlag = "";
-            currentUserRating = 100;
-            currentUserPhotoURL = null;
-            userExplicitlyLoggedOut = false;
+    // ---- Check for a pending challenge link ----
+    if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
 
-            // ---- Check for a pending challenge link ----
-            // Safe to run immediately here (unlike the logged-in path
-            // above) since this branch never writes profile data to
-            // Firebase — it only stores the pending challenge ID locally
-            // and shows a login prompt. handlePendingChallenge() picks
-            // it back up once they actually log in, at which point the
-            // logged-in path above (with its profile-data-ready guard)
-            // takes over.
-            if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
+    document.getElementById("loggedOutView").style.display = "block";
+    document.getElementById("loggedInView").style.display = "none";
 
-            document.getElementById("loggedOutView").style.display = "block";
-            document.getElementById("loggedInView").style.display = "none";
+    const usernameEl = document.getElementById("username");
+    const ratingEl = document.getElementById("playerRating");
+    const ratingBadgeEl = document.getElementById("playerRatingBadge");
+    const winsEl = document.getElementById("gamesWon");
+    const starsEl = document.getElementById("playerStars");
 
-            const usernameEl = document.getElementById("username");
-            const ratingEl = document.getElementById("playerRating");
-            const ratingBadgeEl = document.getElementById("playerRatingBadge");
-            const winsEl = document.getElementById("gamesWon");
-            const starsEl = document.getElementById("playerStars");
+    if(usernameEl) usernameEl.textContent = "player";
+    if(ratingEl) ratingEl.textContent = "—";
+    if(ratingBadgeEl) ratingBadgeEl.textContent = "—";
+    if(winsEl) winsEl.textContent = "—";
+    if(starsEl) starsEl.style.display = "none";
 
-            if(usernameEl) usernameEl.textContent = "player";
-            if(ratingEl) ratingEl.textContent = "—";
-            if(ratingBadgeEl) ratingBadgeEl.textContent = "—";
-            if(winsEl) winsEl.textContent = "—";
-            if(starsEl) starsEl.style.display = "none";
+    const friendsListEl = document.getElementById("friendsList");
+    const requestsSectionEl = document.getElementById("friendRequestsSection");
+    const searchResultEl = document.getElementById("friendSearchResult");
+    const onlineFriendsStripEl = document.getElementById("onlineFriendsStrip");
 
-            const friendsListEl = document.getElementById("friendsList");
-            const requestsSectionEl = document.getElementById("friendRequestsSection");
-            const searchResultEl = document.getElementById("friendSearchResult");
-            const onlineFriendsStripEl = document.getElementById("onlineFriendsStrip");
-
-            if(friendsListEl) friendsListEl.innerHTML = '<p class="sub">Log in to see your friends.</p>';
-            if(requestsSectionEl) requestsSectionEl.style.display = "none";
-            if(searchResultEl) searchResultEl.innerHTML = "";
-            if(onlineFriendsStripEl) onlineFriendsStripEl.innerHTML = '<p class="sub">Log in to see online friends.</p>';
-
+    if(friendsListEl) friendsListEl.innerHTML = '<p class="sub">Log in to see your friends.</p>';
+    if(requestsSectionEl) requestsSectionEl.style.display = "none";
+    if(searchResultEl) searchResultEl.innerHTML = "";
+    if(onlineFriendsStripEl) onlineFriendsStripEl.innerHTML = '<p class="sub">Log in to see online friends.</p>';
 }
 
-initAuthListener();
-loadCachedProfile();
 // ---- Language selector on login screen ----
 const authLanguageSelect = document.getElementById("authLanguage");
 if(authLanguageSelect){
@@ -453,6 +480,7 @@ if(authLanguageSelect){
         if(settingLang) settingLang.value = lang;
     });
 }
+
 function handleProfilePhotoSelect(event){
 
     const file = event.target.files[0];
@@ -513,3 +541,6 @@ function handleProfilePhotoSelect(event){
     reader.readAsDataURL(file);
 
 }
+
+// Start the auth system
+initAuth();
