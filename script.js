@@ -65,7 +65,7 @@ let whiteUid = null;
 let blackUid = null;
 let pendingAcceptedChallenge= null;
 let challengeReadyListenRef= null;
-
+let isCloneGame = false;
 // ===== OPPONENT KINGDOM DATA =====
 let opponentKingdom = null;
 let opponentKingdomEmoji = '🏕️';
@@ -2388,11 +2388,18 @@ function recordGameResult(myResult, opponentName){
             data.winStreak = 0;
         }
 
-        if(gameMode === "online" || ratedAIActive){
-            data.rating = data.rating || 100;
-            if(myResult === "win") data.rating += 8;
-            else if(myResult === "loss") data.rating -= 8;
-        }
+        if(gameMode === "online" || ratedAIActive || isCloneGame){
+    data.rating = data.rating || 100;
+
+    if(isCloneGame){
+        // Clone games: win gives +4, loss/draw gives 0
+        if(myResult === "win") data.rating += 4;
+    } else {
+        // Normal rated games
+        if(myResult === "win") data.rating += 8;
+        else if(myResult === "loss") data.rating -= 8;
+    }
+}
         if(gameMode === "online"){
             data.currentRoomCode = null;
         }
