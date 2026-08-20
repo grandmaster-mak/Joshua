@@ -2361,6 +2361,7 @@ function recordGameResult(myResult, opponentName){
             }
       
             return data;
+          isCloneGame = false;
         }, function(error, committed, snapshot){
             if (error) {
                 console.error('🚨 KINGDOM WRITE FAILED. Check your Firebase rules:', error);
