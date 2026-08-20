@@ -402,32 +402,30 @@ function initAuthListener(){
             });
 
         } else {
-            // User is signed out (or not yet signed in)
-            clearTimeout(authNullRecoveryTimer);
-            authNullRecoveryTimer = setTimeout(function(){
+    clearTimeout(authNullRecoveryTimer);
+    authNullRecoveryTimer = setTimeout(function(){
 
-                if(auth.currentUser) return;
+        if(auth.currentUser) return;
 
-                // If offline and we have a cached profile, keep showing it
-                if(!navigator.onLine && !userExplicitlyLoggedOut){
-                    const cached = loadCachedProfileData();
-                    if(cached && cached.uid){
-                        console.log("Offline with no session yet — restoring cached profile.");
-                        loadCachedProfile();
-                    } else {
-                        // No cache, show logged out
-                        showLoggedOutState();
-                    }
-                    return;
-                }
-
-                // Online or explicitly logged out, show logged out state
+        // Always try to restore cached profile if user did not log out
+        if(!userExplicitlyLoggedOut){
+            const cached = loadCachedProfileData();
+            if(cached && cached.uid){
+                console.log("No auth session, but cached profile exists — restoring.");
+                loadCachedProfile();
+            } else {
+                console.log("No auth session and no cached profile — showing login.");
                 showLoggedOutState();
-
-            }, 2500);
-
-            return;
+            }
+        } else {
+            console.log("User explicitly logged out — showing login.");
+            showLoggedOutState();
         }
+
+    }, 2500);
+
+    return;
+}
     });
 }
 
