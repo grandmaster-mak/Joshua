@@ -2260,18 +2260,24 @@ function myOpponentUidAndPhoto(){
 }
 
 function showRatingChangePopup(myResult){
-
     const el = document.getElementById("popupRatingChange");
     if(!el) return;
 
-    if(gameMode !== "online" && !ratedAIActive){
+    // Allow clone games to show rating change as well
+    if(gameMode !== "online" && !ratedAIActive && !isCloneGame){
         el.style.display = "none";
         return;
     }
 
     let delta = 0;
-    if(myResult === "win") delta = 8;
-    else if(myResult === "loss") delta = -8;
+    if(isCloneGame){
+        // Clone: win +4, loss/draw 0
+        if(myResult === "win") delta = 4;
+    } else {
+        // Normal rated
+        if(myResult === "win") delta = 8;
+        else if(myResult === "loss") delta = -8;
+    }
 
     if(delta === 0){
         el.style.display = "none";
@@ -2281,7 +2287,6 @@ function showRatingChangePopup(myResult){
     el.textContent = "Rating: " + (delta > 0 ? "+" : "") + delta;
     el.style.color = delta > 0 ? "#4ade80" : "#e5484d";
     el.style.display = "block";
-
 }
 
 // ============================================================
