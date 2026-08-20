@@ -4130,3 +4130,84 @@ html, body {
 .challengeHeader .challengeHeaderSub {
     color: #ffffff !important;
 }
+/* ===== Toast notification popups (non‑blocking top banners) ===== */
+
+.popup.toast-popup {
+    top: 0;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(-120%);
+    width: 100%;
+    max-width: 420px;
+    background: transparent;
+    pointer-events: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    transition: transform 0.3s ease;
+    z-index: 1500;   /* above other popups and screens */
+}
+
+.popup.toast-popup.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* The inner card: small, clickable, auto width */
+.popup.toast-popup .popupContent {
+    pointer-events: auto;
+    width: auto;
+    min-width: 280px;
+    max-width: 95%;
+    margin: 8px auto;
+    background: #15181f;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    text-align: left;
+}
+
+/* Hide the big badge (we don't need it in a small banner) */
+.popup.toast-popup .badge {
+    display: none;
+}
+
+/* Title and message become small and inline */
+.popup.toast-popup h2 {
+    font-size: 15px;
+    margin: 0;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.popup.toast-popup p.sub {
+    font-size: 12px;
+    margin: 0;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Buttons become small inline actions */
+.popup.toast-popup button {
+    width: auto;
+    margin: 0;
+    padding: 7px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+/* Hide dividers */
+.popup.toast-popup .divider {
+    display: none;
+}
