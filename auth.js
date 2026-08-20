@@ -331,12 +331,12 @@ function initAuthListener(){
 
     if(!auth) return;
 
-    auth.onAuthStateChanged(function(user){
+   auth.onAuthStateChanged(function(user){
 
-        if(user){
+    if(user){
+        userExplicitlyLoggedOut = false;   // <-- add this line
 
-            currentUser = user;
-
+        currentUser = user;
             if(db){
                 const presenceRef = db.ref("presence/" + user.uid);
                 presenceRef.set(true);
