@@ -26,8 +26,6 @@
 // ============================================================
 
 let cloneModeActive = false;
-cloneModeActive = true;
-isCloneGame = true;   // ADD THIS
 let cloneOpponentName = null;
 let cloneTactics = 50;
 let cloneAggression = 50;
@@ -35,27 +33,7 @@ let cloneCalculation = 50;
 let cloneDefense = 50;
 let cloneEndgame = 50;
 let cloneOpening = 50;
-let lastLossOpponentUid = null;
-let lastLossOpponentName = null;
 
-function suggestCloneAfterLoss(opponentUid, opponentName){
-    lastLossOpponentUid = opponentUid;
-    lastLossOpponentName = opponentName;
-    const btn = document.getElementById("playCloneSuggestionBtn");
-    if(btn && gameMode === "online" && isCloneGame === false && lastLossOpponentUid){
-        btn.style.display = "block";
-    } else {
-        btn.style.display = "none";
-    }
-}
-
-function startCloneFromSuggestion(){
-    if(lastLossOpponentUid){
-        document.getElementById("playCloneSuggestionBtn").style.display = "none";
-        closePopup(); // close game over popup
-        startCloneMatch(lastLossOpponentUid, lastLossOpponentName || "Opponent");
-    }
-}
 function cloneClamp(n){
     return Math.max(5, Math.min(95, Math.round(n)));
 }
@@ -77,8 +55,6 @@ function startCloneMatch(opponentUid, opponentName){
         buildCloneProfile(games);
 
         cloneModeActive = true;
-        cloneModeActive = true;
-isCloneGame = true;  
         cloneOpponentName = opponentName;
 
         gameMode = "ai";
@@ -89,6 +65,9 @@ isCloneGame = true;
 
         closeTimeControl();
         newGame();
+
+        // Mark this game as a Clone match for rating logic
+        isCloneGame = true;
 
         blackPlayer = opponentName + " (Clone)";
         blackFlag = "🧬";
