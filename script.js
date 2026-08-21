@@ -19,8 +19,7 @@ let lastActiveTab = "home";
 let lastGameResult = null;
 let ratedAIActive = false;
 let ratedAISettings = null;
-let premove = null;       // { fromR, fromC, toR, toC }
-let premoveColor = null;
+
 // Online multiplayer state
 let myColor = null;
 let currentRoomCode = null;
@@ -57,6 +56,10 @@ let whiteCaptured = [];
 let blackCaptured = [];
 let halfMoveClock = 0;
 
+// Premove state (new)
+let premove = null;
+let premoveColor = null;
+
 // Online opponent metadata
 let whiteRating = null;
 let blackRating = null;
@@ -64,8 +67,8 @@ let whitePhoto = null;
 let blackPhoto = null;
 let whiteUid = null;
 let blackUid = null;
-let pendingAcceptedChallenge= null;
-let challengeReadyListenRef= null;
+let pendingAcceptedChallenge = null;
+let challengeReadyListenRef = null;
 let isCloneGame = false;
 
 // ===== OPPONENT KINGDOM DATA =====
@@ -74,49 +77,11 @@ let opponentKingdomEmoji = '🏕️';
 let opponentKingdomName = 'Village';
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
 const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
-// Wake lock: keep the screen on while a game is active.
-let wakeLock = null;
-let wakeLockSupported = false;
-
-async function requestWakeLock(){
-    if(!('wakeLock' in navigator)){
-        wakeLockSupported = false;
-        return;
-    }
-    wakeLockSupported = true;
-    try {
-        wakeLock = await navigator.wakeLock.request('screen');
-        wakeLock.addEventListener('release', () => {
-            wakeLock = null;
-        });
-    } catch(err) {
-        wakeLock = null;
-    }
-}
-
-function releaseWakeLock(){
-    if(wakeLock){
-        wakeLock.release().catch(() => {});
-        wakeLock = null;
-    }
-}
-
-document.addEventListener('visibilitychange', function(){
-    if(document.visibilityState === 'visible' && document.getElementById('game').style.display === 'flex'){
-        requestWakeLock();
-    }
-});
 
 // ============================================================
 // ===== KINGDOM SYSTEM (PERSISTENT – LOCAL STORAGE + FIREBASE TRANSACTION) =====
 // ============================================================
 
-// requiredStreak = number of CONSECUTIVE wins needed FRESH (from 0)
-// for that specific promotion — not cumulative, not a delta of a
-// bigger total. Since consecutiveWins already resets to 0 the moment
-// a player is promoted, using these numbers directly gives: Village
-// -> Town needs 3, Town -> Fortress needs 5, Fortress -> City needs 7,
-// and so on — each one its own fresh target, exactly as intended.
 const KINGDOM_LEVELS = [
   { id: 'village', name: 'Village', emoji: '🏕️', requiredStreak: 0, visualLevel: 1, description: 'A modest settlement' },
   { id: 'town', name: 'Town', emoji: '🏘️', requiredStreak: 3, visualLevel: 2, description: 'A growing community' },
@@ -133,11 +98,7 @@ let kingdomState = {
   consecutiveWins: 0,
   totalWins: 0
 };
-// A loss doesn't wipe the streak to 0 — it just costs a fixed number
-// of wins off the current streak (never below 0). Promotion still
-// resets to exactly 0, since a fresh kingdom always starts clean.
 const WIN_STREAK_LOSS_PENALTY = 2;
-// ---- Immediately restore from localStorage (runs before Firebase connects) ----
 try {
   const saved = localStorage.getItem('kingdomState');
   if (saved) {
@@ -149,7 +110,7 @@ try {
     }
   }
 } catch(e) {}
-// For clone suggestion after a loss
+
 let lastLossOpponentUid = null;
 let lastLossOpponentName = null;
 
@@ -158,12 +119,12 @@ function suggestCloneAfterLoss(opponentUid, opponentName){
     lastLossOpponentName = opponentName;
     const btn = document.getElementById("playCloneSuggestionBtn");
     if(!btn || gameMode !== "online" || !lastLossOpponentUid || !currentUser || !db){
-        btn.style.display = "none";
+        if(btn) btn.style.display = "none";
         return;
     }
 
-    // Only show the clone button if the player has actually played
-    // this opponent at least once before (recorded in opponentGames).
+    // Only show clone button if there is at least one recorded game
+    // against this opponent.
     db.ref("users/" + currentUser.uid + "/opponentGames/" + opponentUid)
         .once("value")
         .then(function(snapshot){
@@ -177,7 +138,7 @@ function suggestCloneAfterLoss(opponentUid, opponentName){
 function startCloneFromSuggestion(){
     if(lastLossOpponentUid){
         document.getElementById("playCloneSuggestionBtn").style.display = "none";
-        closePopup(); // close game over popup
+        closePopup();
         startCloneMatch(lastLossOpponentUid, lastLossOpponentName || "Opponent");
     }
 }
@@ -187,8 +148,6 @@ function cacheKingdomToLocalStorage(){
   } catch(e) {}
 }
 
-// Use this to get YOUR current kingdom – it reads kingdomState.currentLevel,
-// NOT consecutiveWins (which resets to 0 after every promotion).
 function getMyCurrentKingdom(){
   return KINGDOM_LEVELS.find(k => k.id === kingdomState.currentLevel) || KINGDOM_LEVELS[0];
 }
@@ -203,8 +162,6 @@ function getProgressToNext(currentStreak, nextKingdom) {
   return Math.min(100, Math.max(0, (currentStreak / nextKingdom.requiredStreak) * 100));
 }
 
-// Kept for external compatibility – returns the kingdom for a given streak
-// (using cumulative thresholds, not the new delta system). Prefer getMyCurrentKingdom().
 function getKingdomByStreak(streak) {
   let kingdom = KINGDOM_LEVELS[0];
   for (let i = KINGDOM_LEVELS.length - 1; i >= 0; i--) {
@@ -230,7 +187,6 @@ function getKingdomImagePath(kingdomId) {
   return images[kingdomId] || images['village'];
 }
 
-// Simple save (call when you just want to flush local state to Firebase)
 function saveKingdomToFirebase() {
   cacheKingdomToLocalStorage();
   if (currentUser && db) {
@@ -290,7 +246,6 @@ function saveAppShellScroll(){
 }
 
 function restoreAppShellScroll(){
-    // Use requestAnimationFrame to ensure layout is ready
     requestAnimationFrame(function(){
         window.scrollTo(0, appShellScrollPos);
     });
@@ -322,6 +277,10 @@ function shouldBoardFlipLocal() {
     const s = loadSettings();
     return s.boardFlip === true;
 }
+function isPremoveEnabled() {
+    const s = loadSettings();
+    return s.premoveEnabled !== false;   // default true
+}
 
 // Background music
 const bgMusic = document.getElementById('bgMusic');
@@ -330,7 +289,7 @@ if (bgMusic) {
     if (s.bgm === true) bgMusic.play();
 }
 
-let localBoardFlipped = false;   // for board flip setting
+let localBoardFlipped = false;
 
 // Reads coach/lesson text out loud using the browser's built-in
 // text-to-speech
@@ -350,7 +309,6 @@ function findMaleVoice(){
     return match || null;
 }
 
-// Preferred language variants for natural pronunciation
 const LANG_VARIANT_MAP = {
     en: "en-GB",
     fr: "fr-CA",
@@ -391,29 +349,23 @@ let voiceCache = {};
 
 function getBestVoiceForLang(lang){
     if(voiceCache[lang]) return voiceCache[lang];
-
     const voices = window.speechSynthesis.getVoices();
     if(!voices || voices.length === 0) return null;
-
     let match = voices.find(v => v.lang && v.lang.toLowerCase() === lang.toLowerCase());
     if(match){
         voiceCache[lang] = match;
         return match;
     }
-
     match = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(lang.toLowerCase()));
     if(match){
         voiceCache[lang] = match;
         return match;
     }
-
     return null;
 }
 
 function expandForSpeech(text){
-    // Chess squares: "e4" -> "e 4"
     text = text.replace(/\b([a-h])([1-8])\b/g, "$1 $2");
-    // AI abbreviation: "AI" -> "A I" (or "artificial intelligence")
     text = text.replace(/\bAI\b/g, "A I");
     return text;
 }
@@ -421,38 +373,27 @@ function expandForSpeech(text){
 function speakText(text){
     if(!text) return;
     if(!("speechSynthesis" in window)) return;
-
     const clean = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu, "").trim();
     if(!clean) return;
-
     window.speechSynthesis.cancel();
-
-    // Expand tricky tokens before speaking
     const speechText = expandForSpeech(clean);
-
     const utterance = new SpeechSynthesisUtterance(speechText);
-
     let baseLang = "en";
     if(typeof currentLanguage !== "undefined" && currentLanguage){
         baseLang = currentLanguage;
     }
-
     const preferredLang = LANG_VARIANT_MAP[baseLang] || baseLang;
     utterance.lang = preferredLang;
-
     utterance.rate = 1.1;
     utterance.pitch = 0.85;
-
     let voice = getBestVoiceForLang(preferredLang);
     if(!voice){
         voice = getBestVoiceForLang(baseLang);
     }
     if(voice) utterance.voice = voice;
-
     utterance.onstart = function(){ if(typeof setCoachTalking === "function") setCoachTalking(true); };
     utterance.onend = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
     utterance.onerror = function(){ if(typeof setCoachTalking === "function") setCoachTalking(false); };
-
     window.speechSynthesis.speak(utterance);
 }
 
@@ -507,11 +448,70 @@ const pieceValues = {
     K: 20000
 };
 
+// ===== Wake Lock =====
+let wakeLock = null;
+let wakeLockSupported = false;
+
+async function requestWakeLock(){
+    if(!('wakeLock' in navigator)){
+        wakeLockSupported = false;
+        return;
+    }
+    wakeLockSupported = true;
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+            wakeLock = null;
+        });
+    } catch(err) {
+        wakeLock = null;
+    }
+}
+
+function releaseWakeLock(){
+    if(wakeLock){
+        wakeLock.release().catch(() => {});
+        wakeLock = null;
+    }
+}
+
+document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible' && document.getElementById('game').style.display === 'flex'){
+        requestWakeLock();
+    }
+});
+
+// ===== Hide all screens before starting game =====
+function hideAllScreensBeforeGame(){
+    const fullScreens = [
+        "profileScreen",
+        "challengeScreen",
+        "challengeAcceptScreen",
+        "chatScreen",
+        "gameHistoryScreen",
+        "tournamentsScreen",
+        "leaderboardScreen",
+        "dailyRewardsScreen",
+        "puzzleScreen",
+        "puzzleMapScreen",
+        "lessonsScreen",
+        "analysisScreen",
+        "chessDnaScreen",
+        "settingsScreen"
+    ];
+
+    fullScreens.forEach(function(id){
+        const el = document.getElementById(id);
+        if(el) el.style.display = "none";
+    });
+
+    document.getElementById("appShell").style.display = "none";
+}
+
 function createBoard(){
 
     board.innerHTML = "";
 
-    // Board flip for offline games
     let boardFlipped = false;
     if (gameMode === "human" && shouldBoardFlipLocal()) {
         boardFlipped = localBoardFlipped;
@@ -562,12 +562,15 @@ function createBoard(){
             if(possibleMoves.some(move => move.r === r && move.c === c)){
                 square.classList.add("possible");
             }
-if(premove && premoveColor !== currentPlayer){
-    if((premove.fromR === r && premove.fromC === c) ||
-       (premove.toR === r && premove.toC === c)){
-        square.classList.add("premove");
-    }
-}
+
+            // Premove highlight
+            if(premove && premoveColor !== currentPlayer){
+                if((premove.fromR === r && premove.fromC === c) ||
+                   (premove.toR === r && premove.toC === c)){
+                    square.classList.add("premove");
+                }
+            }
+
             if(pieces[r][c] !== ""){
 
                 const img = document.createElement("img");
@@ -1182,24 +1185,17 @@ function updatePlayerNames(){
     const topFlag = orientation.top === "white" ? whiteFlag : blackFlag;
     const bottomFlag = orientation.bottom === "white" ? whiteFlag : blackFlag;
 
-    // ===== GET KINGDOM FOR BOTH PLAYERS =====
-    // My kingdom (the player using this device)
     const myKingdom = getKingdomByStreak(kingdomState.consecutiveWins);
     
-    // Opponent kingdom (from multiplayer data)
     let opponentKingdomData = myKingdom;
     if (gameMode === "online" && typeof window.opponentKingdom !== 'undefined' && window.opponentKingdom) {
         const oppKingdom = KINGDOM_LEVELS.find(k => k.id === window.opponentKingdom);
         if (oppKingdom) opponentKingdomData = oppKingdom;
     }
-    // ===== END KINGDOM =====
 
-    // Determine which side shows which kingdom based on orientation
     let topKingdom, bottomKingdom;
     
     if (gameMode === "online") {
-        // In online mode, the top player is the opponent if you're white
-        // and you if you're black (because board is flipped)
         if (myColor === "white") {
             topKingdom = opponentKingdomData;
             bottomKingdom = myKingdom;
@@ -1208,7 +1204,6 @@ function updatePlayerNames(){
             bottomKingdom = opponentKingdomData;
         }
     } else {
-        // Local games: both players use the same kingdom
         topKingdom = myKingdom;
         bottomKingdom = myKingdom;
     }
@@ -1248,7 +1243,6 @@ function updatePlayerNames(){
         }
     }
 
-    // Avatars
     const topAvatarEl = document.getElementById("topPlayerAvatar");
     const bottomAvatarEl = document.getElementById("bottomPlayerAvatar");
 
@@ -1330,6 +1324,25 @@ function saveUndoState(){
 
 }
 
+// ===== Premove helper =====
+function canSelectPieceForMoveOrPremove(pieceColor){
+    const premoveOn = isPremoveEnabled();
+
+    if(gameMode === "online"){
+        if(pieceColor !== myColor) return false;
+        return (currentPlayer === myColor) || premoveOn;
+    }
+
+    if(gameMode === "ai"){
+        // Human is always white in AI games
+        if(pieceColor !== "white") return false;
+        return (currentPlayer === "white") || premoveOn;
+    }
+
+    // Local two-player game
+    return premoveOn || (pieceColor === currentPlayer);
+}
+
 function clickSquare(r, c){
 
     if(gameMode === "ai" && currentPlayer === "black"){
@@ -1337,7 +1350,9 @@ function clickSquare(r, c){
     }
 
     if(gameMode === "online" && currentPlayer !== myColor){
-        return;
+        // Allow setting premove while it's not our turn
+    } else if(gameMode === "online" && currentPlayer !== myColor){
+        // This branch is never reached; kept for clarity
     }
 
     if(animationRunning) return;
@@ -1345,8 +1360,6 @@ function clickSquare(r, c){
     if(promotionSquare) return;
 
     // === PREMOVE SUPPORT ===
-    // If a premove is already waiting and it is now our turn, execute it
-    // before processing a new manual move.
     if(premove && premoveColor === currentPlayer){
         const prem = premove;
         premove = null;
@@ -1362,8 +1375,7 @@ function clickSquare(r, c){
         createBoard();
         return;
     }
-    // If a premove is waiting but it is NOT our turn yet, cancel it when
-    // the player taps anywhere, so they can set a new premove.
+
     if(premove && premoveColor !== currentPlayer){
         premove = null;
         premoveColor = null;
@@ -1381,36 +1393,34 @@ function clickSquare(r, c){
 
     if(selected == null){
 
-    if(piece === "") return;
+        if(piece === "") return;
 
-    const pieceColor = isWhite(piece) ? "white" : "black";
-    const isPlayerPiece = (gameMode === "online") ? pieceColor === myColor :
-                          (gameMode === "ai" || gameMode === "human") && pieceColor === currentPlayer;
+        const pieceColor = isWhite(piece) ? "white" : "black";
+        const canSelect = canSelectPieceForMoveOrPremove(pieceColor);
+        if(!canSelect) return;
 
-    if(!isPlayerPiece) return;
+        selected = {r,c};
+        selectSound.currentTime = 0;
+        selectSound.play();
 
-    selected = {r,c};
-    selectSound.currentTime = 0;
-    selectSound.play();
+        possibleMoves = getLegalMoves(piece, r, c);
 
-    possibleMoves = getLegalMoves(piece, r, c);
+        createBoard();
 
-    createBoard();
-
-}else{
+    }else{
 
         if(!isPossibleMove(r,c)){
 
-            if(piece !== "" &&
-               ((currentPlayer === "white" && isWhite(piece)) ||
-                (currentPlayer === "black" && isBlack(piece)))
-            ){
-                selected = {r,c};
-                selectSound.currentTime = 0;
-                selectSound.play();
-                possibleMoves = getLegalMoves(piece, r, c);
-                createBoard();
-                return;
+            if(piece !== ""){
+                const pieceColor = isWhite(piece) ? "white" : "black";
+                if(canSelectPieceForMoveOrPremove(pieceColor)){
+                    selected = {r,c};
+                    selectSound.currentTime = 0;
+                    selectSound.play();
+                    possibleMoves = getLegalMoves(piece, r, c);
+                    createBoard();
+                    return;
+                }
             }
 
             selected = null;
@@ -1420,31 +1430,21 @@ function clickSquare(r, c){
         }
 
         const fromR = selected.r;
-const fromC = selected.c;
+        const fromC = selected.c;
 
-// If it is NOT our turn, store this as a premove.
-const pieceForPremove = pieces[fromR][fromC];
-const pieceColorForPremove = isWhite(pieceForPremove) ? "white" : "black";
+        const pieceForPremove = pieces[fromR][fromC];
+        const pieceColorForPremove = isWhite(pieceForPremove) ? "white" : "black";
 
-if(gameMode === "online" && currentPlayer !== myColor){
-    premove = { fromR: fromR, fromC: fromC, toR: r, toC: c };
-    premoveColor = pieceColorForPremove;
-    selected = null;
-    possibleMoves = [];
-    createBoard();
-    return;
-}
+        if(pieceColorForPremove !== currentPlayer && isPremoveEnabled()){
+            premove = { fromR: fromR, fromC: fromC, toR: r, toC: c };
+            premoveColor = pieceColorForPremove;
+            selected = null;
+            possibleMoves = [];
+            createBoard();
+            return;
+        }
 
-if((gameMode === "ai" || gameMode === "human") && currentPlayer !== "white"){
-    premove = { fromR: fromR, fromC: fromC, toR: r, toC: c };
-    premoveColor = pieceColorForPremove;
-    selected = null;
-    possibleMoves = [];
-    createBoard();
-    return;
-}
-
-executeMove(fromR, fromC, r, c, false);
+        executeMove(fromR, fromC, r, c, false);
     }
 
 }
@@ -1468,10 +1468,6 @@ function executeMove(fromR, fromC, r, c, isAIMove){
     const wasRemoteMove = applyingRemoteMove;
     const aiPromotionForThisMove = aiPromotionPiece;
     const promotionPieceForThisMove = remotePromotionPiece;
-
-    if(gameMode === "online" && !applyingRemoteMove && !isPromotionMove && typeof sendMoveToFirebase === "function"){
-        sendMoveToFirebase(fromR, fromC, r, c, null);
-    }
 
     const finish = function(){
         completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPieceForThisMove, aiPromotionForThisMove);
@@ -1689,6 +1685,18 @@ function completeMove(fromR, fromC, r, c, isAIMove, wasRemoteMove, promotionPiec
         return;
     }
 
+    // Send move to Firebase after full local application (for online/rated AI)
+    if((gameMode === "online" || (gameMode === "ai" && ratedAIActive && currentRoomCode)) &&
+       !wasRemoteMove && typeof sendMoveToFirebase === "function")
+    {
+        sendMoveToFirebase(fromR, fromC, r, c, null);
+    }
+
+    // For rated AI games, update room FEN so spectators can catch up.
+    if(gameMode === "ai" && ratedAIActive && currentRoomCode && db){
+        db.ref("rooms/" + currentRoomCode + "/currentFen").set(boardToFEN());
+    }
+
     finishTurn(wasRemoteMove);
 }
 
@@ -1750,13 +1758,29 @@ function finishTurn(wasRemoteMove){
         gameOver = true;
     }
 
-    // Board flip for local games
     if(gameMode === "human" && shouldBoardFlipLocal()){
         localBoardFlipped = !localBoardFlipped;
     }
 
     updateTurn();
     createBoard();
+
+    // Execute premove if one is waiting for the new current player
+    if(premove && premoveColor === currentPlayer && !gameOver){
+        const prem = premove;
+        premove = null;
+        premoveColor = null;
+        setTimeout(function(){
+            const movingPiece = pieces[prem.fromR][prem.fromC];
+            if(movingPiece && getLegalMoves(movingPiece, prem.fromR, prem.fromC)
+                .some(function(m){ return m.r === prem.toR && m.c === prem.toC; }))
+            {
+                executeMove(prem.fromR, prem.fromC, prem.toR, prem.toC, false);
+            } else {
+                createBoard();
+            }
+        }, 50);
+    }
 
     if(gameMode === "online" && !wasRemoteMove && typeof pushClockUpdate === "function"){
         pushClockUpdate(moverColor);
@@ -1766,24 +1790,9 @@ function finishTurn(wasRemoteMove){
         checkCoachHangingPieces();
     }
 
-    // If a premove is waiting for this player, fire it now.
-if(premove && premoveColor === currentPlayer && !gameOver){
-    const prem = premove;
-    premove = null;
-    premoveColor = null;
-    setTimeout(function(){
-        if(getLegalMoves(pieces[prem.fromR][prem.fromC], prem.fromR, prem.fromC)
-            .some(function(m){ return m.r === prem.toR && m.c === prem.toC; }))
-        {
-            executeMove(prem.fromR, prem.fromC, prem.toR, prem.toC, false);
-        }
-        createBoard();
-    }, 50);
-}
-
-if(gameMode === "ai" && currentPlayer === "black" && !gameOver){
-    setTimeout(makeAIMove, 400);
-}
+    if(gameMode === "ai" && currentPlayer === "black" && !gameOver){
+        setTimeout(makeAIMove, 400);
+    }
 }
 
 function updateCaptured(){
@@ -1866,7 +1875,7 @@ function openPlaySetup(mode){
 }
 
 function newGame(){
-    isCloneGame = false;   // RESET clone flag for normal games
+    isCloneGame = false;
 
     if(typeof stopOnlineListeners === "function") stopOnlineListeners();
 
@@ -1899,6 +1908,10 @@ function newGame(){
     lastMove = null;
     promotionSquare = null;
     promotionColor = null;
+
+    // Reset premove
+    premove = null;
+    premoveColor = null;
 
     whiteKingMoved = false;
     blackKingMoved = false;
@@ -1951,8 +1964,8 @@ function newGame(){
     }
 
     document.getElementById("appShell").style.display = "none";
-document.getElementById("game").style.display = "flex";
-requestWakeLock();
+    document.getElementById("game").style.display = "flex";
+    requestWakeLock();
 }
 
 function createCoordinates(){
@@ -1992,15 +2005,26 @@ function showPopup(title, message){
         dnaBtn.style.display = (gameMode === "ai" || gameMode === "online") ? "block" : "none";
     }
 
-    // Always hide clone suggestion by default; it will be shown after an online loss
     const cloneBtn = document.getElementById("playCloneSuggestionBtn");
     if(cloneBtn) cloneBtn.style.display = "none";
 
     document.getElementById("gameOverPopup").classList.add("show");
+
+    const newGameBtn = document.getElementById("gameOverNewGameBtn");
+    if(newGameBtn){
+        if(gameMode === "online"){
+            newGameBtn.style.display = "none";
+        }else{
+            newGameBtn.style.display = "block";
+        }
+    }
+
+    releaseWakeLock();
 }
 
 function closePopup(){
     document.getElementById("gameOverPopup").classList.remove("show");
+    releaseWakeLock();
 }
 
 function showPromotion(color){
@@ -2011,12 +2035,10 @@ function showPromotion(color){
     document.getElementById("promoteN").src = "pieces/" + color + "N.svg";
 
     document.getElementById("promotionPopup").classList.add("show");
-    releaseWakeLock();
 }
 
 function closePromotion(){
     document.getElementById("promotionPopup").classList.remove("show");
-    releaseWakeLock();
 }
 
 function undoMove(){
@@ -2125,13 +2147,11 @@ function closeOnlineMenu(){
 }
 
 function resignGame(){
-    // For AI games, resign immediately without confirmation.
     if(gameMode === "ai"){
         actuallyResign();
         return;
     }
 
-    // For online/local human games, show confirmation if enabled.
     if(shouldConfirmResign()){
         document.getElementById("drawOfferPopup").querySelector("h2").textContent = "Resign?";
         document.getElementById("drawOfferPopup").querySelector(".sub").textContent = "Are you sure you want to resign?";
@@ -2155,7 +2175,6 @@ function resignGame(){
 }
 
 function actuallyResign(){
-    // In online games, spectators (myColor === null) cannot resign.
     if(gameMode === "online" && myColor === null) return;
 
     if(gameMode === "online" && typeof sendGameEvent === "function"){
@@ -2166,7 +2185,6 @@ function actuallyResign(){
     clearInterval(timer);
     closeOnlineMenu();
 
-    // For AI/local games, the player is always white.
     const loser = gameMode === "online" ? myColor : "white";
     const winner = loser === "white" ? "Black" : "White";
 
@@ -2177,7 +2195,6 @@ function actuallyResign(){
 }
 
 function abortGame(){
-    // Only spectators in online games are blocked from aborting.
     if(gameMode === "online" && myColor === null) return;
 
     if(gameMode === "online" && typeof sendGameEvent === "function"){
@@ -2188,7 +2205,6 @@ function abortGame(){
     clearInterval(timer);
     closeOnlineMenu();
 
-    // In AI/local games the player is always white.
     const loser = gameMode === "online" ? myColor : "white";
     const winner = loser === "white" ? "Black" : "White";
 
@@ -2199,7 +2215,6 @@ function abortGame(){
 }
 
 function requestDraw(){
-    // Only spectators in online games are blocked from drawing.
     if(gameMode === "online" && myColor === null) return;
 
     closeOnlineMenu();
@@ -2214,7 +2229,6 @@ function requestDraw(){
         return;
     }
 
-    // AI / local games: immediate draw.
     gameOver = true;
     clearInterval(timer);
     showPopup("🤝 Draw", "Game drawn by agreement.");
@@ -2223,7 +2237,7 @@ function requestDraw(){
 }
 function respondToDraw(accepted){
 
-    if(gameMode === "online" && myColor === null) return; // spectator cannot accept/decline
+    if(gameMode === "online" && myColor === null) return;
     document.getElementById("drawOfferPopup").classList.remove("show");
 
     if(typeof sendGameEvent === "function"){
@@ -2443,12 +2457,13 @@ function recordGameResult(myResult, opponentName){
     if(typeof currentUser === "undefined" || !currentUser) return;
     if(typeof db === "undefined" || !db) return;
 
-    if(gameMode === "online" && myColor === null) return; // spectator: no stats/history updates
+    if(gameMode === "online" && myColor === null) return;
 
-    // --- Kingdom update: optimistic local + authoritative Firebase transaction ---
-    if (currentUser && db) {
+    // --- Kingdom update only for Online and rated AI matches ---
+    const kingdomEligible = (gameMode === "online" || (gameMode === "ai" && ratedAIActive));
 
-        // 1. Optimistic local update (UI responds instantly)
+    if (currentUser && db && kingdomEligible) {
+
         const levelBefore = kingdomState.currentLevel;
 
         if (myResult === 'win') {
@@ -2461,10 +2476,6 @@ function recordGameResult(myResult, opponentName){
                 kingdomState.consecutiveWins = 0;
             }
         } else if (myResult === 'loss') {
-            // Local mirror of the penalty applied below in the Firebase
-            // transaction — just for instant UI feedback. The transaction
-            // is the source of truth; this only makes the screen update
-            // without waiting on the network round-trip.
             kingdomState.consecutiveWins = Math.max(0, (kingdomState.consecutiveWins || 0) - WIN_STREAK_LOSS_PENALTY);
         }
         cacheKingdomToLocalStorage();
@@ -2480,7 +2491,6 @@ function recordGameResult(myResult, opponentName){
             }, 500);
         }
 
-        // 2. Authoritative Firebase transaction
         db.ref("users/" + currentUser.uid + "/kingdom").transaction(function(data){
             if (!data) data = { currentLevel: 'village', consecutiveWins: 0, totalWins: 0 };
 
@@ -2495,10 +2505,6 @@ function recordGameResult(myResult, opponentName){
                     data.consecutiveWins = 0;
                 }
             } else if (myResult === 'loss') {
-                // Authoritative penalty — a loss costs a fixed amount off
-                // the streak instead of wiping it to 0, and never goes
-                // negative. Draws intentionally have no branch here, so
-                // the streak passes through untouched.
                 data.consecutiveWins = Math.max(0, (data.consecutiveWins || 0) - WIN_STREAK_LOSS_PENALTY);
             }
       
@@ -2510,7 +2516,6 @@ function recordGameResult(myResult, opponentName){
             }
             if (!committed || !snapshot.val()) return;
 
-            // Reconcile with what actually landed on the server
             const final = snapshot.val();
             kingdomState.currentLevel = final.currentLevel || 'village';
             kingdomState.consecutiveWins = final.consecutiveWins || 0;
@@ -2561,10 +2566,8 @@ function recordGameResult(myResult, opponentName){
             data.rating = data.rating || 100;
 
             if(isCloneGame){
-                // Clone games: win gives +4, loss/draw gives 0
                 if(myResult === "win") data.rating += 4;
             } else {
-                // Normal rated games
                 if(myResult === "win") data.rating += 8;
                 else if(myResult === "loss") data.rating -= 8;
             }
@@ -2618,7 +2621,6 @@ function recordGameResult(myResult, opponentName){
         });
     }
 
-    // Suggest clone after a loss in online mode
     if(gameMode === "online" && myResult === "loss" && opponentInfo.uid){
         suggestCloneAfterLoss(opponentInfo.uid, opponentName);
     }
@@ -2709,13 +2711,11 @@ function renderRecentGamesRows(entries, containerId){
 
 function loadRecentGames(){
 
-    // Always show cached recent games first, even if no user/db yet
     const cached = loadCachedRecentGames();
     if (cached && cached.length > 0) {
         renderRecentGamesRows(cached);
     }
 
-    // Only try Firebase if we have db and a user
     if(!db || !currentUser){
         return;
     }
@@ -2794,7 +2794,6 @@ function updateKingdomUI() {
     const nextKingdom = getNextKingdom(currentKingdom);
     const progress = getProgressToNext(kingdomState.consecutiveWins, nextKingdom);
 
-    // Update background image
     const bgImg = document.getElementById('kingdomBackgroundImg');
     if (bgImg) {
         const imgPath = getKingdomImagePath(currentKingdom.id);
@@ -2807,25 +2806,20 @@ function updateKingdomUI() {
         bgImg.style.display = 'block';
     }
 
-    // Update crown
     const crownEl = document.getElementById('kingdomRulerCrown');
     if (crownEl) crownEl.textContent = currentKingdom.emoji;
 
-    // Update kingdom name badge
     const badgeEl = document.getElementById('kingdomNameBadge');
     if (badgeEl) badgeEl.textContent = currentKingdom.emoji + ' ' + currentKingdom.name;
 
-    // Update ruler name
     const rulerName = document.getElementById('kingdomRulerName');
     if (rulerName && typeof currentUsername !== 'undefined' && currentUsername) {
         rulerName.textContent = currentUsername;
     }
 
-    // Update ruler title
     const rulerTitle = document.getElementById('kingdomRulerTitle');
     if (rulerTitle) rulerTitle.textContent = currentKingdom.name;
 
-    // Update ruler avatar
     const avatarEl = document.getElementById('kingdomRulerAvatar');
     if (avatarEl) {
         if (typeof currentUser !== 'undefined' && currentUser && currentUser.photoURL) {
@@ -2842,7 +2836,6 @@ function updateKingdomUI() {
         }
     }
 
-    // Update stats
     const statCurrent = document.getElementById('kingdomStatCurrent');
     if (statCurrent) statCurrent.textContent = currentKingdom.name;
 
@@ -2859,7 +2852,6 @@ function updateKingdomUI() {
         }
     }
 
-    // Update progress
     const nextLabel = document.getElementById('kingdomNextLabel');
     const progressFill = document.getElementById('kingdomProgressFill');
     const progressText = document.getElementById('kingdomProgressText');
@@ -2874,11 +2866,9 @@ function updateKingdomUI() {
         if (progressText) progressText.textContent = 'Maximum level reached!';
     }
 
-    // Update description
     const descEl = document.getElementById('kingdomDescription');
     if (descEl) descEl.textContent = currentKingdom.description;
 
-    // Update kingdom journey
     updateKingdomJourney(currentKingdom);
 }
 
@@ -2927,15 +2917,15 @@ function updateKingdomJourney(currentKingdom) {
 window.addEventListener("popstate", function(event){
 
     const state = event.state;
-// Safety: if challenge screen is visible but state doesn't match,
-// just close it and keep the app alive.
-const challengeScreenEl = document.getElementById("challengeScreen");
-if(challengeScreenEl && challengeScreenEl.style.display === "flex"){
-    if(!state || (state.screen !== "challenge")){
-        closeChallengeScreen();
-        return;
+
+    const challengeScreenEl = document.getElementById("challengeScreen");
+    if(challengeScreenEl && challengeScreenEl.style.display === "flex"){
+        if(!state || (state.screen !== "challenge")){
+            closeChallengeScreen();
+            return;
+        }
     }
-}
+
     const analysisPopupEl = document.getElementById("analysisPositionPopup");
     if(analysisPopupEl && analysisPopupEl.classList.contains("show")){
         if(typeof closeAnalysisPositionPicker === "function") closeAnalysisPositionPicker();
@@ -2970,7 +2960,14 @@ if(challengeScreenEl && challengeScreenEl.style.display === "flex"){
         return;
     }
 
-    // --- NEW: Challenge screen back button support ---
+    if(state && state.screen === "settings"){
+        const settingsEl = document.getElementById("settingsScreen");
+        if(settingsEl) settingsEl.style.display = "none";
+        document.getElementById("appShell").style.display = "flex";
+        switchScreen(lastActiveTab || "home");
+        return;
+    }
+
     if(state && state.screen === "challenge"){
         document.getElementById("appShell").style.display = "none";
         document.getElementById("challengeScreen").style.display = "flex";
@@ -2981,39 +2978,32 @@ if(challengeScreenEl && challengeScreenEl.style.display === "flex"){
         document.getElementById("challengeAcceptScreen").style.display = "flex";
         return;
     }
-    // --- END NEW ---
-if(state && state.screen === "settings"){
-    const settingsEl = document.getElementById("settingsScreen");
-    if(settingsEl) settingsEl.style.display = "none";
-    document.getElementById("appShell").style.display = "flex";
-    switchScreen(lastActiveTab || "home");
-    return;
-}
+
     if(!state || !state.screen){
-    document.getElementById("tournamentsScreen").style.display = "none";
-    document.getElementById("puzzleScreen").style.display = "none";
-    document.getElementById("puzzleMapScreen").style.display = "none";
-    document.getElementById("leaderboardScreen").style.display = "none";
-    document.getElementById("dailyRewardsScreen").style.display = "none";
-    document.getElementById("chatScreen").style.display = "none";
-    document.getElementById("analysisScreen").style.display = "none";
-    document.getElementById("lessonsScreen").style.display = "none";
-    document.getElementById("profileScreen").style.display = "none";
-    document.getElementById("gameHistoryScreen").style.display = "none";
-    document.getElementById("challengeScreen").style.display = "none";
-    document.getElementById("challengeAcceptScreen").style.display = "none";
-    const dnaScreenEl2 = document.getElementById("chessDnaScreen");
-    if(dnaScreenEl2) dnaScreenEl2.style.display = "none";
-    // NEW: hide the settings screen too when returning to base state
-    const settingsScreenEl = document.getElementById("settingsScreen");
-    if(settingsScreenEl) settingsScreenEl.style.display = "none";
-    if(typeof matchmakingSearchActive !== "undefined" && matchmakingSearchActive && typeof cancelQuickMatchManually === "function"){
-        cancelQuickMatchManually();
+        document.getElementById("tournamentsScreen").style.display = "none";
+        document.getElementById("puzzleScreen").style.display = "none";
+        document.getElementById("puzzleMapScreen").style.display = "none";
+        document.getElementById("leaderboardScreen").style.display = "none";
+        document.getElementById("dailyRewardsScreen").style.display = "none";
+        document.getElementById("chatScreen").style.display = "none";
+        document.getElementById("analysisScreen").style.display = "none";
+        document.getElementById("lessonsScreen").style.display = "none";
+        document.getElementById("profileScreen").style.display = "none";
+        document.getElementById("gameHistoryScreen").style.display = "none";
+        document.getElementById("challengeScreen").style.display = "none";
+        document.getElementById("challengeAcceptScreen").style.display = "none";
+        const dnaScreenEl2 = document.getElementById("chessDnaScreen");
+        if(dnaScreenEl2) dnaScreenEl2.style.display = "none";
+        // Hide settings screen when returning to base
+        const settingsScreenEl = document.getElementById("settingsScreen");
+        if(settingsScreenEl) settingsScreenEl.style.display = "none";
+        if(typeof matchmakingSearchActive !== "undefined" && matchmakingSearchActive && typeof cancelQuickMatchManually === "function"){
+            cancelQuickMatchManually();
+        }
+        document.getElementById("appShell").style.display = "flex";
+        switchScreen(lastActiveTab);
+        return;
     }
-    document.getElementById("appShell").style.display = "flex";
-    switchScreen(lastActiveTab);
-    return;
-}
 
     if(state.screen === "tournaments"){
         document.getElementById("appShell").style.display = "none";
@@ -3025,18 +3015,18 @@ if(state && state.screen === "settings"){
     }
 
     if(state.screen === "puzzle"){
-    document.getElementById("puzzleMapScreen").style.display = "none";
-    document.getElementById("appShell").style.display = "none";
-    document.getElementById("puzzleScreen").style.display = "flex";
-    return;
-}
+        document.getElementById("puzzleMapScreen").style.display = "none";
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("puzzleScreen").style.display = "flex";
+        return;
+    }
 
-if(state.screen === "puzzleMap"){
-    document.getElementById("puzzleScreen").style.display = "none";
-    document.getElementById("appShell").style.display = "none";
-    document.getElementById("puzzleMapScreen").style.display = "flex";
-    return;
-}
+    if(state.screen === "puzzleMap"){
+        document.getElementById("puzzleScreen").style.display = "none";
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("puzzleMapScreen").style.display = "flex";
+        return;
+    }
 
     if(state.screen === "leaderboard"){
         document.getElementById("appShell").style.display = "none";
@@ -3067,7 +3057,8 @@ if(state.screen === "puzzleMap"){
         document.getElementById("chatScreen").style.display = "flex";
         return;
     }
-if(state.screen === "chessdna"){
+
+    if(state.screen === "chessdna"){
         document.getElementById("chessDnaScreen").style.display = "flex";
         return;
     }
@@ -3088,7 +3079,6 @@ createCoordinates();
 
 let challengeListenRef = null;
 
-// --- Open Challenge screen from Home (button is already in your HTML) ---
 function openChallengeScreen(){
   if(!currentUser){
     showInfoPopup("🔒 Login Required", "Please log in to challenge a friend.");
@@ -3102,20 +3092,16 @@ function openChallengeScreen(){
 function closeChallengeScreen(){
     document.getElementById("challengeScreen").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
-    // Replace the current history entry with a base state so back never exits the app
     history.replaceState({ screen: null }, "", location.href);
     switchScreen(lastActiveTab);
 }
-// Attach to your existing "Challenge a Friend" button
 var challengeBtn = document.getElementById("challengeHomeBtn");
 if(challengeBtn) challengeBtn.addEventListener("click", openChallengeScreen);
 
-// --- Back button on Challenge screen ---
 document.getElementById("challengeBackBtn").addEventListener("click", function(){
   closeChallengeScreen();
 });
 
-// --- Create challenge ---
 document.getElementById("createChallengeBtn").addEventListener("click", async function(){
   var color = document.getElementById("challengeColor").value;
   var minutes = parseInt(document.getElementById("challengeTime").value);
@@ -3144,7 +3130,6 @@ document.getElementById("createChallengeBtn").addEventListener("click", async fu
   }
 });
 
-// --- Copy link ---
 document.getElementById("copyChallengeLink").addEventListener("click", function(){
   var input = document.getElementById("challengeLinkInput");
   input.select();
@@ -3152,13 +3137,11 @@ document.getElementById("copyChallengeLink").addEventListener("click", function(
   alert("Link copied!");
 });
 
-// --- Share via WhatsApp ---
 document.getElementById("shareChallengeLink").addEventListener("click", function(){
   var link = document.getElementById("challengeLinkInput").value;
   window.location.href = "https://wa.me/?text=" + encodeURIComponent("Play chess with me! " + link);
 });
 
-// --- Listen for challenge acceptance (creator side) ---
 function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
   if(challengeListenRef) challengeListenRef.off();
   challengeListenRef = db.ref("challenges/" + challengeId);
@@ -3167,19 +3150,18 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
     if(!data) return;
     if(data.status === "accepted" && data.roomCode){
       challengeListenRef.off();
-challengeListenRef = null;
+      challengeListenRef = null;
 
-// Make sure the challenge screen doesn't cover the popup
-document.getElementById("challengeScreen").style.display = "none";
+      document.getElementById("challengeScreen").style.display = "none";
 
-pendingAcceptedChallenge = {
-  roomCode: data.roomCode,
-  myColor: myColorVal,
-  timeSeconds: timeSeconds,
-  opponentName: data.opponentName || "Your friend",
-  challengeId: challengeId
-};
-showChallengeAcceptedNotification(pendingAcceptedChallenge.opponentName);
+      pendingAcceptedChallenge = {
+        roomCode: data.roomCode,
+        myColor: myColorVal,
+        timeSeconds: timeSeconds,
+        opponentName: data.opponentName || "Your friend",
+        challengeId: challengeId
+      };
+      showChallengeAcceptedNotification(pendingAcceptedChallenge.opponentName);
     }
   }, function(err){
     console.error("Challenge listener denied:", err.code, err.message);
@@ -3195,8 +3177,6 @@ function showChallengeAcceptedNotification(name){
 function closeChallengeAcceptedPopup(){
   document.getElementById("challengeAcceptedPopup").classList.remove("show");
 
-  // If the creator chose "Later", cancel the challenge so the opponent
-  // stops waiting.
   if(pendingAcceptedChallenge){
     cancelAcceptedChallenge();
   }
@@ -3207,7 +3187,6 @@ function cancelAcceptedChallenge(){
   var p = pendingAcceptedChallenge;
   pendingAcceptedChallenge = null;
 
-  // Mark challenge as cancelled in Firebase
   if(p.challengeId && db){
     db.ref("challenges/" + p.challengeId).update({
       status: "cancelled",
@@ -3216,7 +3195,6 @@ function cancelAcceptedChallenge(){
       console.error("Failed to cancel challenge:", err.code, err.message);
     });
 
-    // Clean up the room the accepter already created
     if(p.roomCode){
       db.ref("rooms/" + p.roomCode).remove().catch(function(err){
         console.error("Failed to remove room:", err.code, err.message);
@@ -3235,7 +3213,6 @@ function startAcceptedChallengeGame(){
   gameMode = "online";
   document.getElementById("challengeScreen").style.display = "none";
 
-  // Signal the accepter's waiting screen that it's time to enter too.
   if(p.challengeId && db){
     db.ref("challenges/" + p.challengeId + "/status").set("ready").catch(function(err){
       console.error("Failed to mark challenge ready:", err.code, err.message);
@@ -3271,7 +3248,6 @@ function listenForChallengeReady(challengeId, roomCode){
       challengeReadyListenRef.off();
       challengeReadyListenRef = null;
       closeChallengeWaitingPopup();
-      // Inform the accepter that the creator cancelled
       showInfoPopup("❌ Challenge Cancelled", "The creator is not ready to play right now.");
       document.getElementById("appShell").style.display = "flex";
       switchScreen(lastActiveTab);
@@ -3282,7 +3258,6 @@ function listenForChallengeReady(challengeId, roomCode){
     showInfoPopup("⚠️ Challenge Error", "Could not monitor challenge status: " + (err.code || err.message));
   });
 }
-// --- Check for incoming challenge from URL ---
 function checkForIncomingChallenge(){
 
   if(window.challengeParamChecked) return;
@@ -3300,14 +3275,12 @@ function checkForIncomingChallenge(){
     showInfoPopup("🔒 Login Required", "Please sign up or log in to accept the challenge.");
   }
 }
-// Show cached recent games immediately on page load
 window.addEventListener("DOMContentLoaded", function(){
     const cached = loadCachedRecentGames();
     if (cached && cached.length > 0) {
         renderRecentGamesRows(cached);
     }
 });
-// --- Handle pending challenge after login (call this from auth.js) ---
 function handlePendingChallenge(){
   var challengeId = localStorage.getItem("pendingChallenge");
   if(challengeId && currentUser){
@@ -3316,77 +3289,92 @@ function handlePendingChallenge(){
   }
 }
 
-// --- Show accept screen (friend side) ---
 function showChallengeAcceptScreen(challengeId){
   db.ref("challenges/" + challengeId).once("value").then(function(snap){
     var data = snap.val();
-    if(!data || data.status !== "waiting"){
+    if(!data){
       showInfoPopup("Challenge expired", "This challenge is no longer available.");
       return;
     }
+
+    if(data.status === "accepted" && data.roomCode){
+      myColor = data.creatorColor === "white" ? "black" : "white";
+      currentRoomCode = data.roomCode;
+      selectedTime = data.timeControl || 600;
+      gameMode = "online";
+      document.getElementById("appShell").style.display = "none";
+      document.getElementById("challengeAcceptScreen").style.display = "none";
+      hideAllScreensBeforeGame();
+      startOnlineGame(data.roomCode);
+      return;
+    }
+
+    if(data.status !== "waiting"){
+      showInfoPopup("Challenge expired", "This challenge is no longer available.");
+      return;
+    }
+
     document.getElementById("appShell").style.display = "none";
-document.getElementById("challengeAcceptScreen").style.display = "flex";
+    document.getElementById("challengeAcceptScreen").style.display = "flex";
 
-var myPlayColor = data.creatorColor === "white" ? "Black" : "White";
+    var myPlayColor = data.creatorColor === "white" ? "Black" : "White";
 
-document.getElementById("challengeAcceptAvatar").textContent = data.creatorFlag || "🏳️";
-document.getElementById("challengeAcceptName").textContent = data.creatorName + (data.creatorFlag ? " " + data.creatorFlag : "");
-document.getElementById("challengeAcceptColorValue").textContent = myPlayColor;
-document.getElementById("challengeAcceptColorIcon").textContent = myPlayColor === "White" ? "♙" : "♟";
-document.getElementById("challengeAcceptTimeValue").textContent = (data.timeControl/60) + " min";
+    document.getElementById("challengeAcceptAvatar").textContent = data.creatorFlag || "🏳️";
+    document.getElementById("challengeAcceptName").textContent = data.creatorName + (data.creatorFlag ? " " + data.creatorFlag : "");
+    document.getElementById("challengeAcceptColorValue").textContent = myPlayColor;
+    document.getElementById("challengeAcceptColorIcon").textContent = myPlayColor === "White" ? "♙" : "♟";
+    document.getElementById("challengeAcceptTimeValue").textContent = (data.timeControl/60) + " min";
     document.getElementById("acceptChallengeBtn").onclick = async function(){
-  if(!currentUser) return;
-  var roomCode = generateRoomCode();
-  var opponentColor = data.creatorColor === "white" ? "black" : "white";
-  var timeSeconds = data.timeControl;
+      if(!currentUser) return;
+      var roomCode = generateRoomCode();
+      var opponentColor = data.creatorColor === "white" ? "black" : "white";
+      var timeSeconds = data.timeControl;
 
-  try {
-    await db.ref("rooms/" + roomCode).set({ status: "playing", createdAt: Date.now() });
-    await db.ref("rooms/" + roomCode + "/players/" + data.creatorColor).set({
-      username: data.creatorName,
-      flag: data.creatorFlag,
-      uid: data.creatorUid,
-      rating: null,
-      photo: null,
-      kingdom: null,
-      kingdomEmoji: null,
-      kingdomName: null
-    });
-    var myKingdom = getMyCurrentKingdom ? getMyCurrentKingdom() : {emoji:'🏕️',name:'Village'};
-    await db.ref("rooms/" + roomCode + "/players/" + opponentColor).set({
-      username: currentUsername,
-      flag: currentUserFlag,
-      uid: currentUser.uid,
-      rating: currentUserRating || null,
-      photo: currentUserPhotoURL || null,
-      kingdom: myKingdom.id || null,
-      kingdomEmoji: myKingdom.emoji,
-      kingdomName: myKingdom.name
-    });
+      try {
+        await db.ref("rooms/" + roomCode).set({ status: "playing", createdAt: Date.now() });
+        await db.ref("rooms/" + roomCode + "/players/" + data.creatorColor).set({
+          username: data.creatorName,
+          flag: data.creatorFlag,
+          uid: data.creatorUid,
+          rating: null,
+          photo: null,
+          kingdom: null,
+          kingdomEmoji: null,
+          kingdomName: null
+        });
+        var myKingdom = getMyCurrentKingdom ? getMyCurrentKingdom() : {emoji:'🏕️',name:'Village'};
+        await db.ref("rooms/" + roomCode + "/players/" + opponentColor).set({
+          username: currentUsername,
+          flag: currentUserFlag,
+          uid: currentUser.uid,
+          rating: currentUserRating || null,
+          photo: currentUserPhotoURL || null,
+          kingdom: myKingdom.id || null,
+          kingdomEmoji: myKingdom.emoji,
+          kingdomName: myKingdom.name
+        });
 
-    // Set up everything needed to join, but DON'T start yet — wait for
-    // the creator to confirm via their own "Play Now" button first.
-    myColor = opponentColor;
-    currentRoomCode = roomCode;
-    selectedTime = timeSeconds;
-    gameMode = "online";
+        myColor = opponentColor;
+        currentRoomCode = roomCode;
+        selectedTime = timeSeconds;
+        gameMode = "online";
 
-    document.getElementById("challengeAcceptScreen").style.display = "none";
-    showChallengeWaitingPopup();
+        document.getElementById("challengeAcceptScreen").style.display = "none";
+        showChallengeWaitingPopup();
 
-    await db.ref("challenges/" + challengeId).update({
-      status: "accepted",
-      roomCode: roomCode,
-      opponentUid: currentUser.uid,
-      opponentName: currentUsername
-    });
+        await db.ref("challenges/" + challengeId).update({
+          status: "accepted",
+          roomCode: roomCode,
+          opponentUid: currentUser.uid,
+          opponentName: currentUsername
+        });
 
-    listenForChallengeReady(challengeId, roomCode);
-  } catch(err){
-    console.error("Failed to accept challenge:", err.code, err.message);
-    showInfoPopup("⚠️ Challenge Error", "Something went wrong: " + (err.code || err.message));
-  }
-};
+        listenForChallengeReady(challengeId, roomCode);
+      } catch(err){
+        console.error("Failed to accept challenge:", err.code, err.message);
+        showInfoPopup("⚠️ Challenge Error", "Something went wrong: " + (err.code || err.message));
+      }
+    };
 
     document.getElementById("declineChallengeBtn").onclick = function(){
       document.getElementById("challengeAcceptScreen").style.display = "none";
