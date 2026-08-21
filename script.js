@@ -2910,6 +2910,9 @@ if(challengeScreenEl && challengeScreenEl.style.display === "flex"){
     document.getElementById("challengeAcceptScreen").style.display = "none";
     const dnaScreenEl2 = document.getElementById("chessDnaScreen");
     if(dnaScreenEl2) dnaScreenEl2.style.display = "none";
+    // NEW: hide the settings screen too when returning to base state
+    const settingsScreenEl = document.getElementById("settingsScreen");
+    if(settingsScreenEl) settingsScreenEl.style.display = "none";
     if(typeof matchmakingSearchActive !== "undefined" && matchmakingSearchActive && typeof cancelQuickMatchManually === "function"){
         cancelQuickMatchManually();
     }
