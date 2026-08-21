@@ -251,7 +251,7 @@ function leaveSpectating(){
     document.getElementById("game").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
     switchScreen("home");
-
+releaseWakeLock();
 }
 
 function startOnlineGame(code){
