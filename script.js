@@ -1357,7 +1357,7 @@ function canSelectPieceForMoveOrPremove(pieceColor){
         return (currentPlayer === "white") || premoveOn;
     }
 
-    // Local two-player game
+    // Local two-player: either normal move or premove when not current player
     return premoveOn || (pieceColor === currentPlayer);
 }
 
