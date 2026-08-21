@@ -156,11 +156,21 @@ function suggestCloneAfterLoss(opponentUid, opponentName){
     lastLossOpponentUid = opponentUid;
     lastLossOpponentName = opponentName;
     const btn = document.getElementById("playCloneSuggestionBtn");
-    if(btn && gameMode === "online" && lastLossOpponentUid){
-        btn.style.display = "block";
-    } else {
+    if(!btn || gameMode !== "online" || !lastLossOpponentUid || !currentUser || !db){
         btn.style.display = "none";
+        return;
     }
+
+    // Only show the clone button if the player has actually played
+    // this opponent at least once before (recorded in opponentGames).
+    db.ref("users/" + currentUser.uid + "/opponentGames/" + opponentUid)
+        .once("value")
+        .then(function(snapshot){
+            btn.style.display = snapshot.exists() ? "block" : "none";
+        })
+        .catch(function(){
+            btn.style.display = "none";
+        });
 }
 
 function startCloneFromSuggestion(){
