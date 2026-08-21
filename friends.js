@@ -448,10 +448,12 @@ function actuallySendChallenge(friendUid, friendUsername){
 
     myColor = "white";
     currentRoomCode = code;
+    selectedTime = 600; // same 10-min default as the Challenge screen
 
     db.ref("rooms/" + code).set({
         status: "waiting",
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        timeControl: selectedTime
     });
 
     db.ref("rooms/" + code + "/players/white").set({
@@ -469,13 +471,33 @@ function actuallySendChallenge(friendUid, friendUsername){
         time: Date.now()
     });
 
+    // Use global listeners so they stay active even if the user
+    // navigates to another screen while waiting.
+    if(typeof window.challengeStatusRef !== "undefined" && window.challengeStatusRef){
+        try{ window.challengeStatusRef.off(); }catch(e){}
+    }
+
     const statusRef = db.ref("rooms/" + code + "/status");
+    window.challengeStatusRef = statusRef;
 
     statusRef.on("value", function(snapshot){
         if(snapshot.val() === "playing"){
             statusRef.off();
             closeInfoPopup();
+            if(typeof hideAllScreensBeforeGame === "function") hideAllScreensBeforeGame();
             startOnlineGame(code);
+        }
+    });
+
+    const declinedRef = db.ref("rooms/" + code + "/declined");
+    window.challengeDeclinedRef = declinedRef;
+
+    declinedRef.on("value", function(snapshot){
+        if(snapshot.val() === true){
+            declinedRef.off();
+            statusRef.off();
+            db.ref("rooms/" + code).remove();
+            showInfoPopup("❌ Challenge Declined", friendUsername + " declined your challenge.");
         }
     });
 
@@ -500,6 +522,7 @@ function listenForChallenges(){
 }
 
 function showChallengePopup(challenge, fromUid){
+
     const nameEl = document.getElementById("challengeFromName");
     const popup = document.getElementById("challengePopup");
     if(!nameEl || !popup) return;
@@ -512,6 +535,7 @@ function showChallengePopup(challenge, fromUid){
     popup.classList.remove("show");
     void popup.offsetWidth; // restart animation
     popup.classList.add("show");
+
 }
 
 function respondToChallenge(accepted){
@@ -528,7 +552,13 @@ function respondToChallenge(accepted){
         db.ref("users/" + currentUser.uid + "/private/incomingChallenges/" + fromUid).remove();
     }
 
-    if(!accepted) return;
+    if(!accepted){
+        // Notify the challenger that this challenge was declined.
+        if(code && db){
+            db.ref("rooms/" + code + "/declined").set(true);
+        }
+        return;
+    }
 
     myColor = "black";
     currentRoomCode = code;
@@ -543,6 +573,7 @@ function respondToChallenge(accepted){
 
     db.ref("rooms/" + code + "/status").set("playing");
 
+    if(typeof hideAllScreensBeforeGame === "function") hideAllScreensBeforeGame();
     startOnlineGame(code);
 
 }
@@ -691,6 +722,7 @@ document.addEventListener("DOMContentLoaded", function(){
             if(snapshot.val() === "playing"){
                 statusRef.off();
                 closeChallengeScreen();
+                if(typeof hideAllScreensBeforeGame === "function") hideAllScreensBeforeGame();
                 startOnlineGame(code);
             }
         });
@@ -743,6 +775,8 @@ document.addEventListener("DOMContentLoaded", function(){
         });
 
         db.ref("rooms/" + pendingChallengeCode + "/status").set("playing");
+
+        if(typeof hideAllScreensBeforeGame === "function") hideAllScreensBeforeGame();
         startOnlineGame(pendingChallengeCode);
 
     });
