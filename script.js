@@ -507,7 +507,17 @@ function hideAllScreensBeforeGame(){
 
     document.getElementById("appShell").style.display = "none";
 }
+function clearAllPremoves(){
+    premoveQueue = [];
+    createBoard();
+}
 
+function updatePremoveCancelBarVisibility(){
+    const bar = document.getElementById("premoveCancelBar");
+    if(bar){
+        bar.style.display = premoveQueue.length > 0 ? "flex" : "none";
+    }
+}
 function createBoard(){
 
     board.innerHTML = "";
