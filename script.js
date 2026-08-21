@@ -1339,6 +1339,34 @@ function clickSquare(r, c){
     if(gameOver) return;
     if(promotionSquare) return;
 
+    // === PREMOVE SUPPORT ===
+    // If a premove is already waiting and it is now our turn, execute it
+    // before processing a new manual move.
+    if(premove && premoveColor === currentPlayer){
+        const prem = premove;
+        premove = null;
+        premoveColor = null;
+        selected = null;
+        possibleMoves = [];
+        if(getLegalMoves(pieces[prem.fromR][prem.fromC], prem.fromR, prem.fromC)
+            .some(function(m){ return m.r === prem.toR && m.c === prem.toC; }))
+        {
+            executeMove(prem.fromR, prem.fromC, prem.toR, prem.toC, false);
+            return;
+        }
+        createBoard();
+        return;
+    }
+    // If a premove is waiting but it is NOT our turn yet, cancel it when
+    // the player taps anywhere, so they can set a new premove.
+    if(premove && premoveColor !== currentPlayer){
+        premove = null;
+        premoveColor = null;
+        createBoard();
+        return;
+    }
+    // === END PREMOVE ===
+
     const piece = pieces[r][c];
 
     if(selected != null && "speechSynthesis" in window){
