@@ -1152,7 +1152,35 @@ function updateTurn(){
 
     document.getElementById("turn").textContent = text;
 }
+function executePremovesForCurrentPlayer(){
+    if(premoveExecuting) return;
+    if(gameOver) return;
+    if(!isPremoveEnabled()) return;
 
+    // Only execute premoves for the side that is currently to move.
+    const queue = premoveQueue.filter(function(p){ return p.color === currentPlayer; });
+    if(queue.length === 0) return;
+
+    const nextPremove = queue[0];
+    const movingPiece = pieces[nextPremove.fromR][nextPremove.fromC];
+
+    // If the premove is illegal, cancel all remaining premoves for that side.
+    if(!movingPiece || !getLegalMoves(movingPiece, nextPremove.fromR, nextPremove.fromC)
+        .some(function(m){ return m.r === nextPremove.toR && m.c === nextPremove.toC; }))
+    {
+        premoveQueue = premoveQueue.filter(function(p){ return p.color !== currentPlayer; });
+        createBoard();
+        return;
+    }
+
+    // Remove this specific premove from the queue before executing.
+    const actualIndex = premoveQueue.indexOf(nextPremove);
+    if(actualIndex !== -1) premoveQueue.splice(actualIndex, 1);
+
+    premoveExecuting = true;
+    executeMove(nextPremove.fromR, nextPremove.fromC, nextPremove.toR, nextPremove.toC, false);
+    premoveExecuting = false;
+}
 function formatTime(seconds){
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
