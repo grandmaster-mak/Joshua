@@ -1415,9 +1415,31 @@ function clickSquare(r, c){
         }
 
         const fromR = selected.r;
-        const fromC = selected.c;
+const fromC = selected.c;
 
-        executeMove(fromR, fromC, r, c, false);
+// If it is NOT our turn, store this as a premove.
+const pieceForPremove = pieces[fromR][fromC];
+const pieceColorForPremove = isWhite(pieceForPremove) ? "white" : "black";
+
+if(gameMode === "online" && currentPlayer !== myColor){
+    premove = { fromR: fromR, fromC: fromC, toR: r, toC: c };
+    premoveColor = pieceColorForPremove;
+    selected = null;
+    possibleMoves = [];
+    createBoard();
+    return;
+}
+
+if((gameMode === "ai" || gameMode === "human") && currentPlayer !== "white"){
+    premove = { fromR: fromR, fromC: fromC, toR: r, toC: c };
+    premoveColor = pieceColorForPremove;
+    selected = null;
+    possibleMoves = [];
+    createBoard();
+    return;
+}
+
+executeMove(fromR, fromC, r, c, false);
     }
 
 }
