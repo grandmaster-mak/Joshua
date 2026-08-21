@@ -1377,31 +1377,6 @@ function clickSquare(r, c){
     if(gameOver) return;
     if(promotionSquare) return;
 
-    // === PREMOVE SUPPORT ===
-    if(premove && premoveColor === currentPlayer){
-        const prem = premove;
-        premove = null;
-        premoveColor = null;
-        selected = null;
-        possibleMoves = [];
-        if(getLegalMoves(pieces[prem.fromR][prem.fromC], prem.fromR, prem.fromC)
-            .some(function(m){ return m.r === prem.toR && m.c === prem.toC; }))
-        {
-            executeMove(prem.fromR, prem.fromC, prem.toR, prem.toC, false);
-            return;
-        }
-        createBoard();
-        return;
-    }
-
-    if(premove && premoveColor !== currentPlayer){
-        premove = null;
-        premoveColor = null;
-        createBoard();
-        return;
-    }
-    // === END PREMOVE ===
-
     const piece = pieces[r][c];
 
     if(selected != null && "speechSynthesis" in window){
@@ -1451,18 +1426,24 @@ function clickSquare(r, c){
         const fromC = selected.c;
 
         const pieceForPremove = pieces[fromR][fromC];
-        const pieceColorForPremove = isWhite(pieceForPremove) ? "white" : "black";
+const pieceColorForPremove = isWhite(pieceForPremove) ? "white" : "black";
 
-        if(pieceColorForPremove !== currentPlayer && isPremoveEnabled()){
-            premove = { fromR: fromR, fromC: fromC, toR: r, toC: c };
-            premoveColor = pieceColorForPremove;
-            selected = null;
-            possibleMoves = [];
-            createBoard();
-            return;
-        }
+if(pieceColorForPremove !== currentPlayer && isPremoveEnabled()){
+    // Store as a queued premove
+    premoveQueue.push({
+        fromR: fromR,
+        fromC: fromC,
+        toR: r,
+        toC: c,
+        color: pieceColorForPremove
+    });
+    selected = null;
+    possibleMoves = [];
+    createBoard();
+    return;
+}
 
-        executeMove(fromR, fromC, r, c, false);
+executeMove(fromR, fromC, r, c, false);
     }
 
 }
