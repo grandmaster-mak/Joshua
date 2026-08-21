@@ -1376,19 +1376,23 @@ function clickSquare(r, c){
 
     if(selected == null){
 
-        if(piece === "") return;
-        if(currentPlayer === "white" && !isWhite(piece)) return;
-        if(currentPlayer === "black" && !isBlack(piece)) return;
+    if(piece === "") return;
 
-        selected = {r,c};
-        selectSound.currentTime = 0;
-        selectSound.play();
+    const pieceColor = isWhite(piece) ? "white" : "black";
+    const isPlayerPiece = (gameMode === "online") ? pieceColor === myColor :
+                          (gameMode === "ai" || gameMode === "human") && pieceColor === currentPlayer;
 
-        possibleMoves = getLegalMoves(piece, r, c);
+    if(!isPlayerPiece) return;
 
-        createBoard();
+    selected = {r,c};
+    selectSound.currentTime = 0;
+    selectSound.play();
 
-    }else{
+    possibleMoves = getLegalMoves(piece, r, c);
+
+    createBoard();
+
+}else{
 
         if(!isPossibleMove(r,c)){
 
