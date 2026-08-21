@@ -1926,10 +1926,12 @@ function showPromotion(color){
     document.getElementById("promoteN").src = "pieces/" + color + "N.svg";
 
     document.getElementById("promotionPopup").classList.add("show");
+    releaseWakeLock();
 }
 
 function closePromotion(){
     document.getElementById("promotionPopup").classList.remove("show");
+    releaseWakeLock();
 }
 
 function undoMove(){
