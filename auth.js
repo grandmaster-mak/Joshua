@@ -216,7 +216,11 @@ function signUp(){
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
     const username = document.getElementById("authUsername").value.trim();
-    const country = document.getElementById("authCountry").value;
+const country = document.getElementById("authCountry").value;
+if(username.length > 10){
+    document.getElementById("authStatus").textContent = "Username must be 10 characters or less.";
+    return;
+}
     const preferredLanguage = document.getElementById("authLanguage").value;
     if(typeof applyLanguage === "function") applyLanguage(preferredLanguage);
     if(!email || !password || !username || !country){
