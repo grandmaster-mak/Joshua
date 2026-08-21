@@ -562,7 +562,12 @@ function createBoard(){
             if(possibleMoves.some(move => move.r === r && move.c === c)){
                 square.classList.add("possible");
             }
-
+if(premove && premoveColor !== currentPlayer){
+    if((premove.fromR === r && premove.fromC === c) ||
+       (premove.toR === r && premove.toC === c)){
+        square.classList.add("premove");
+    }
+}
             if(pieces[r][c] !== ""){
 
                 const img = document.createElement("img");
