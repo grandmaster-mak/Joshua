@@ -19,7 +19,8 @@ let lastActiveTab = "home";
 let lastGameResult = null;
 let ratedAIActive = false;
 let ratedAISettings = null;
-
+let premove = null;       // { fromR, fromC, toR, toC }
+let premoveColor = null;
 // Online multiplayer state
 let myColor = null;
 let currentRoomCode = null;
