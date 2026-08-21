@@ -2005,18 +2005,28 @@ function closeOnlineMenu(){
 }
 
 function resignGame(){
+    // For AI games, resign immediately without confirmation.
+    if(gameMode === "ai"){
+        actuallyResign();
+        return;
+    }
+
+    // For online/local human games, show confirmation if enabled.
     if(shouldConfirmResign()){
         document.getElementById("drawOfferPopup").querySelector("h2").textContent = "Resign?";
         document.getElementById("drawOfferPopup").querySelector(".sub").textContent = "Are you sure you want to resign?";
         document.getElementById("drawOfferPopup").classList.add("show");
+
         const acceptBtn = document.getElementById("drawOfferPopup").querySelector(".btnPrimary");
         acceptBtn.textContent = "Yes, resign";
         acceptBtn.onclick = function(){
             document.getElementById("drawOfferPopup").classList.remove("show");
             actuallyResign();
         };
-        document.getElementById("drawOfferPopup").querySelector(".btnDanger").textContent = "Cancel";
-        document.getElementById("drawOfferPopup").querySelector(".btnDanger").onclick = function(){
+
+        const declineBtn = document.getElementById("drawOfferPopup").querySelector(".btnDanger");
+        declineBtn.textContent = "Cancel";
+        declineBtn.onclick = function(){
             document.getElementById("drawOfferPopup").classList.remove("show");
         };
         return;
@@ -2025,16 +2035,21 @@ function resignGame(){
 }
 
 function actuallyResign(){
-    if(myColor === null) return; // spectator cannot resign
+    // In online games, spectators (myColor === null) cannot resign.
+    if(gameMode === "online" && myColor === null) return;
 
-    if(typeof sendGameEvent === "function"){
+    if(gameMode === "online" && typeof sendGameEvent === "function"){
         sendGameEvent("resign");
     }
+
     gameOver = true;
     clearInterval(timer);
     closeOnlineMenu();
-    const loser = gameMode === "online" ? myColor : currentPlayer;
+
+    // For AI/local games, the player is always white.
+    const loser = gameMode === "online" ? myColor : "white";
     const winner = loser === "white" ? "Black" : "White";
+
     showPopup("🚩 Resignation", winner + " wins by resignation.");
     createBoard();
     showKingMarkers(loser);
@@ -2062,7 +2077,6 @@ function abortGame(){
 }
 
 function requestDraw(){
-
     if(myColor === null) return; // spectator cannot offer draw
 
     closeOnlineMenu();
@@ -2070,10 +2084,15 @@ function requestDraw(){
     if(gameMode === "online"){
         if(typeof sendGameEvent === "function"){
             sendGameEvent("drawOffer");
+            // Give the offerer some feedback.
+            showInfoPopup("🤝 Draw Offer Sent", "Waiting for your opponent to respond...");
+        } else {
+            console.error("sendGameEvent is not defined.");
         }
         return;
     }
 
+    // Local (non-online) games: immediate draw.
     gameOver = true;
     clearInterval(timer);
     showPopup("🤝 Draw", "Game drawn by agreement.");
