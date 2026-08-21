@@ -500,7 +500,6 @@ function listenForChallenges(){
 }
 
 function showChallengePopup(challenge, fromUid){
-
     const nameEl = document.getElementById("challengeFromName");
     const popup = document.getElementById("challengePopup");
     if(!nameEl || !popup) return;
@@ -508,8 +507,11 @@ function showChallengePopup(challenge, fromUid){
     nameEl.textContent = (challenge.flag || "") + " " + challenge.username;
     popup.dataset.fromUid = fromUid;
     popup.dataset.code = challenge.code;
-    popup.classList.add("show");
 
+    // Ensure it behaves as a top toast banner.
+    popup.classList.remove("show");
+    void popup.offsetWidth; // restart animation
+    popup.classList.add("show");
 }
 
 function respondToChallenge(accepted){
