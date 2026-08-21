@@ -1905,24 +1905,20 @@
         }
 
         function closeSettingsScreen(){
-            document.getElementById('settingsScreen').style.display = 'none';
-            document.getElementById('appShell').style.display = 'flex';
-            history.back();
-        }
+    document.getElementById('settingsScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+    if(history.state && history.state.screen === 'settings'){
+        history.back();
+    }else{
+        switchScreen(lastActiveTab);
+    }
+}
 
         document.getElementById('settingsGear')?.addEventListener('click', openSettingsScreen);
 
         window.addEventListener('DOMContentLoaded', () => {
             renderBoardPresets();
             applyAllSettings();
-        });
-
-        window.addEventListener("popstate", function(event){
-            const state = event.state;
-            if(state && state.screen === "settings"){
-                document.getElementById("appShell").style.display = "none";
-                document.getElementById("settingsScreen").style.display = "block";
-            }
         });
     </script>
 
