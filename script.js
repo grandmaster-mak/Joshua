@@ -574,12 +574,20 @@ function createBoard(){
             }
 
             // Premove highlight
-            if(premove && premoveColor !== currentPlayer){
-                if((premove.fromR === r && premove.fromC === c) ||
-                   (premove.toR === r && premove.toC === c)){
-                    square.classList.add("premove");
-                }
-            }
+            // Premove queue highlights
+for(let pi = 0; pi < premoveQueue.length; pi++){
+    const p = premoveQueue[pi];
+    if(p.toR === r && p.toC === c){
+        square.classList.add("premove-dest");
+    }
+    if(p.fromR === r && p.fromC === c){
+        if(pi === premoveQueue.length - 1){
+            square.classList.add("premove-source-active");
+        }else{
+            square.classList.add("premove-source-fade");
+        }
+    }
+}
 
             if(pieces[r][c] !== ""){
 
