@@ -1905,13 +1905,17 @@
         }
 
         function closeSettingsScreen(){
+    // Hide settings and show the app shell immediately.
     document.getElementById('settingsScreen').style.display = 'none';
     document.getElementById('appShell').style.display = 'flex';
-    if(history.state && history.state.screen === 'settings'){
-        history.back();
-    }else{
-        switchScreen(lastActiveTab);
-    }
+
+    // Restore the correct bottom-nav screen without calling history.back().
+    switchScreen(lastActiveTab || 'home');
+
+    // Replace the current "settings" history entry with a clean state so
+    // the browser back button won't try to reopen Settings or show an
+    // unwanted screen.
+    history.replaceState({ screen: null }, "", location.href);
 }
 
         document.getElementById('settingsGear')?.addEventListener('click', openSettingsScreen);
