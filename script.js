@@ -1766,9 +1766,24 @@ function finishTurn(wasRemoteMove){
         checkCoachHangingPieces();
     }
 
-    if(gameMode === "ai" && currentPlayer === "black" && !gameOver){
-        setTimeout(makeAIMove, 400);
-    }
+    // If a premove is waiting for this player, fire it now.
+if(premove && premoveColor === currentPlayer && !gameOver){
+    const prem = premove;
+    premove = null;
+    premoveColor = null;
+    setTimeout(function(){
+        if(getLegalMoves(pieces[prem.fromR][prem.fromC], prem.fromR, prem.fromC)
+            .some(function(m){ return m.r === prem.toR && m.c === prem.toC; }))
+        {
+            executeMove(prem.fromR, prem.fromC, prem.toR, prem.toC, false);
+        }
+        createBoard();
+    }, 50);
+}
+
+if(gameMode === "ai" && currentPlayer === "black" && !gameOver){
+    setTimeout(makeAIMove, 400);
+}
 }
 
 function updateCaptured(){
