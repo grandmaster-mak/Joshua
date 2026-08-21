@@ -420,10 +420,11 @@ function listenForGameEvents(code){
     ref.on("child_added", function(snapshot){
 
         const event = snapshot.val();
-if(!event) return;
+        if(!event) return;
 
-if(event.by === myColor) return;
-if(myColor === null) return; // spectator: skip interactive events
+        if(event.by === myColor) return;
+        if(myColor === null) return; // spectator: skip interactive events
+
         if(event.type === "resign" && !gameOver){
             gameOver = true;
             clearInterval(timer);
@@ -444,17 +445,46 @@ if(myColor === null) return; // spectator: skip interactive events
             recordGameResult("win", myOpponentName());
         }
 
+        // ===== UPDATED drawOffer handler =====
         if(event.type === "drawOffer" && !gameOver){
-            document.getElementById("drawOfferPopup").classList.add("show");
-        }
+            // Reset popup to proper draw offer look and actions
+            const popup = document.getElementById("drawOfferPopup");
+            if(!popup) return;
 
-        if(event.type === "drawResponse" && event.accepted && !gameOver){
-            gameOver = true;
-            clearInterval(timer);
-            showPopup("🤝 Draw", "Game drawn by agreement.");
-            createBoard();
-            recordGameResult("draw", myOpponentName());
+            popup.querySelector("h2").textContent = "🤝 Draw Offer";
+            popup.querySelector(".sub").textContent = "Your opponent is offering a draw.";
+
+            const acceptBtn = popup.querySelector(".btnPrimary");
+            acceptBtn.textContent = "✅ Accept";
+            acceptBtn.onclick = function(){
+                popup.classList.remove("show");
+                respondToDraw(true);
+            };
+
+            const declineBtn = popup.querySelector(".btnDanger");
+            declineBtn.textContent = "❌ Decline";
+            declineBtn.onclick = function(){
+                popup.classList.remove("show");
+                respondToDraw(false);
+            };
+
+            popup.classList.add("show");
         }
+        // ===== END UPDATED drawOffer handler =====
+
+        // ===== UPDATED drawResponse handler =====
+        if(event.type === "drawResponse" && !gameOver){
+            if(event.accepted){
+                gameOver = true;
+                clearInterval(timer);
+                showPopup("🤝 Draw", "Game drawn by agreement.");
+                createBoard();
+                recordGameResult("draw", myOpponentName());
+            } else {
+                showInfoPopup("🤝 Draw Declined", "Your opponent declined the draw offer.");
+            }
+        }
+        // ===== END UPDATED drawResponse handler =====
 
     });
 }
