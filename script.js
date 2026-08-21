@@ -2894,7 +2894,13 @@ if(challengeScreenEl && challengeScreenEl.style.display === "flex"){
         return;
     }
     // --- END NEW ---
-
+if(state && state.screen === "settings"){
+    const settingsEl = document.getElementById("settingsScreen");
+    if(settingsEl) settingsEl.style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
+    switchScreen(lastActiveTab || "home");
+    return;
+}
     if(!state || !state.screen){
     document.getElementById("tournamentsScreen").style.display = "none";
     document.getElementById("puzzleScreen").style.display = "none";
