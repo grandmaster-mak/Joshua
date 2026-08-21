@@ -14,8 +14,6 @@ body{
     justify-content:center;
 }
 
-/* ===== App Shell (Home / Friends / Account + bottom nav) ===== */
-
 #appShell{
     display:flex;
     flex-direction:column;
@@ -4210,4 +4208,7 @@ html, body {
 /* Hide dividers */
 .popup.toast-popup .divider {
     display: none;
+}
+.premove{
+    box-shadow: inset 0 0 0 4px rgba(167,139,250,0.9) !important;
 }
