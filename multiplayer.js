@@ -76,6 +76,16 @@ function stopOnlineListeners(){
         try{ ref.off(); }catch(e){}
     });
     activeOnlineListenerRefs = [];
+
+    // Also clean up global challenge listeners if any.
+    if(window.challengeStatusRef){
+        try{ window.challengeStatusRef.off(); }catch(e){}
+        window.challengeStatusRef = null;
+    }
+    if(window.challengeDeclinedRef){
+        try{ window.challengeDeclinedRef.off(); }catch(e){}
+        window.challengeDeclinedRef = null;
+    }
 }
 
 function createOnlineRoom(){
@@ -251,7 +261,8 @@ function leaveSpectating(){
     document.getElementById("game").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
     switchScreen("home");
-releaseWakeLock();
+
+    releaseWakeLock();
 }
 
 function startOnlineGame(code){
@@ -260,9 +271,29 @@ function startOnlineGame(code){
 
     closeTimeControl();
 
+    // Hide every screen so the game board is always on top.
+    if(typeof hideAllScreensBeforeGame === "function") hideAllScreensBeforeGame();
+
     gameMode = "online";
     ratedAIActive = false;
     newGame();
+
+    // If this is a spectator joining a rated AI game, load its current
+    // board state instead of the starting position.
+    if(myColor === null && db && code){
+        db.ref("rooms/" + code).once("value").then(function(snapshot){
+            const room = snapshot.val();
+            if(room && room.type === "ratedAI" && room.currentFen){
+                pieces = fenToPieces(room.currentFen);
+                currentPlayer = room.currentFen.split(" ")[1] === "w" ? "white" : "black";
+                selected = null;
+                possibleMoves = [];
+                lastMove = null;
+                createBoard();
+                updateTurn();
+            }
+        });
+    }
 
     if(!serverTimeSynced){
         const timerEl = document.getElementById("topTimer");
@@ -328,16 +359,25 @@ function listenForOpponentPresence(code){
 
             abandonTimeout = setTimeout(function(){
 
-                db.ref("rooms/" + code + "/presence/" + opponentColor).once("value").then(function(recheck){
+                // Final safety checks before awarding an abandonment win:
+                // 1. The room still exists and is still playing.
+                // 2. Our side is still active.
+                // 3. The opponent presence is STILL false after a second look.
+                if(!db || !currentRoomCode || myColor === null || gameOver) return;
 
-                    if(recheck.val() === false && !gameOver){
-                        gameOver = true;
-                        clearInterval(timer);
-                        const winner = opponentColor === "white" ? "Black" : "White";
-                        showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
-                        recordGameResult("win", myOpponentName());
-                    }
+                db.ref("rooms/" + code).once("value").then(function(roomSnap){
+                    const room = roomSnap.val();
+                    if(!room || room.status !== "playing") return;
 
+                    return db.ref("rooms/" + code + "/presence/" + opponentColor).once("value").then(function(recheck){
+                        if(recheck.val() === false && !gameOver){
+                            gameOver = true;
+                            clearInterval(timer);
+                            const winner = opponentColor === "white" ? "Black" : "White";
+                            showPopup("🚩 Game Abandoned", winner + " wins by abandonment.");
+                            recordGameResult("win", myOpponentName());
+                        }
+                    });
                 });
 
             }, 10000);
@@ -447,7 +487,6 @@ function listenForGameEvents(code){
 
         // ===== UPDATED drawOffer handler =====
         if(event.type === "drawOffer" && !gameOver){
-            // Reset popup to proper draw offer look and actions
             const popup = document.getElementById("drawOfferPopup");
             if(!popup) return;
 
@@ -548,6 +587,10 @@ function pushClockUpdateNow(moverColor){
     db.ref("rooms/" + currentRoomCode + "/clock").transaction(function(current){
 
         if(!current) return current;
+
+        // Guard against double updates: only process if the turn still
+        // belongs to the mover who just completed a move.
+        if(current.turn !== moverColor) return current;
 
         const now = getServerNow();
         const elapsedSeconds = Math.max(0, Math.floor((now - current.turnStartedAt) / 1000));
@@ -816,6 +859,39 @@ function startRatedAIMatch(){
     ratedAISettings = (typeof getRatedAISettings === "function") ? getRatedAISettings(rating) : null;
     selectedTime = 600;
     if(typeof aiChatMessages !== "undefined") aiChatMessages = [];
+
+    // Create a room so other players can watch this rated AI game.
+    const aiRoomCode = generateRoomCode();
+    currentRoomCode = aiRoomCode;
+    myColor = "white"; // the real player is White vs AI
+
+    db.ref("rooms/" + aiRoomCode).set({
+        status: "playing",
+        createdAt: Date.now(),
+        timeControl: selectedTime,
+        type: "ratedAI"
+    });
+
+    db.ref("rooms/" + aiRoomCode + "/players/white").set({
+        username: currentUsername,
+        flag: currentUserFlag,
+        rating: currentUserRating || 100,
+        photo: currentUserPhotoURL || null,
+        uid: currentUser ? currentUser.uid : null
+    });
+
+    db.ref("rooms/" + aiRoomCode + "/players/black").set({
+        username: "Rated AI",
+        flag: "🤖",
+        rating: null,
+        photo: null,
+        uid: null
+    });
+
+    if(currentUser && db){
+        db.ref("users/" + currentUser.uid + "/public/currentRoomCode").set(aiRoomCode);
+        db.ref("users/" + currentUser.uid + "/public/currentRoomCode").onDisconnect().remove();
+    }
 
     closeTimeControl();
     newGame();
