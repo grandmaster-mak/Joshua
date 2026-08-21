@@ -73,6 +73,38 @@ let opponentKingdomEmoji = '🏕️';
 let opponentKingdomName = 'Village';
 const DEFAULT_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Crect width='70' height='70' fill='%231c2028'/%3E%3Ccircle cx='35' cy='27' r='13' fill='%234a5060'/%3E%3Cpath d='M10 62c0-14 11-21 25-21s25 7 25 21' fill='%234a5060'/%3E%3C/svg%3E";
 const MAN_AVATAR_SRC = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Ctext x='35' y='55' font-size='62' text-anchor='middle'%3E🤵%3C/text%3E%3C/svg%3E";
+// Wake lock: keep the screen on while a game is active.
+let wakeLock = null;
+let wakeLockSupported = false;
+
+async function requestWakeLock(){
+    if(!('wakeLock' in navigator)){
+        wakeLockSupported = false;
+        return;
+    }
+    wakeLockSupported = true;
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+            wakeLock = null;
+        });
+    } catch(err) {
+        wakeLock = null;
+    }
+}
+
+function releaseWakeLock(){
+    if(wakeLock){
+        wakeLock.release().catch(() => {});
+        wakeLock = null;
+    }
+}
+
+document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible' && document.getElementById('game').style.display === 'flex'){
+        requestWakeLock();
+    }
+});
 
 // ============================================================
 // ===== KINGDOM SYSTEM (PERSISTENT – LOCAL STORAGE + FIREBASE TRANSACTION) =====
