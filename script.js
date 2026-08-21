@@ -1791,23 +1791,10 @@ function finishTurn(wasRemoteMove){
 
     updateTurn();
     createBoard();
-
-    // Execute premove if one is waiting for the new current player
-    if(premove && premoveColor === currentPlayer && !gameOver){
-        const prem = premove;
-        premove = null;
-        premoveColor = null;
-        setTimeout(function(){
-            const movingPiece = pieces[prem.fromR][prem.fromC];
-            if(movingPiece && getLegalMoves(movingPiece, prem.fromR, prem.fromC)
-                .some(function(m){ return m.r === prem.toR && m.c === prem.toC; }))
-            {
-                executeMove(prem.fromR, prem.fromC, prem.toR, prem.toC, false);
-            } else {
-                createBoard();
-            }
-        }, 50);
-    }
+    // Execute any queued premove for the new current player.
+if(!gameOver){
+    setTimeout(executePremovesForCurrentPlayer, 50);
+}
 
     if(gameMode === "online" && !wasRemoteMove && typeof pushClockUpdate === "function"){
         pushClockUpdate(moverColor);
