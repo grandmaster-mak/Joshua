@@ -613,7 +613,7 @@ for(let pi = 0; pi < premoveQueue.length; pi++){
             }
 
             square.onclick = () => clickSquare(r, c);
-
+updatePremoveCancelBarVisibility();
             board.appendChild(square);
         }
 
