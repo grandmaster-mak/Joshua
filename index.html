@@ -953,7 +953,7 @@
             <p class="sub" id="popupRatingChange" style="display:none; font-weight:800; font-size:16px;"></p>
             <button class="btnSecondary" id="chessDnaBtn" style="display:none;" onclick="openChessDNA()">📊 View Chess DNA</button>
             <button class="btnGold" id="playCloneSuggestionBtn" style="display:none;" onclick="startCloneFromSuggestion()">🧬 Play Clone (Win back +4)</button>
-            <button class="btnPrimary" onclick="closePopup(); showTimeControl();">New Game</button>
+            <button class="btnPrimary" id="gameOverNewGameBtn" onclick="closePopup(); showTimeControl();">New Game</button>
             <button class="btnSecondary" onclick="closePopup();">Close</button>
         </div>
     </div>
@@ -1702,6 +1702,10 @@
                     <span class="setting-label">Board flip (offline games)</span>
                     <label class="toggle"><input type="checkbox" id="settingBoardFlip" onchange="saveSetting('boardFlip', this.checked)"><span class="slider"></span></label>
                 </div>
+                <div class="setting-row">
+                    <span class="setting-label">Enable Premoves</span>
+                    <label class="toggle"><input type="checkbox" id="settingPremove" onchange="saveSetting('premoveEnabled', this.checked)"><span class="slider"></span></label>
+                </div>
             </div>
 
             <!-- SOUNDS -->
@@ -1783,6 +1787,7 @@
             autoPromote: false,
             confirmResign: true,
             boardFlip: false,
+            premoveEnabled: true,
             moveSound: true,
             checkSound: true,
             checkmateSound: true,
@@ -1835,6 +1840,9 @@
                     break;
                 case 'boardFlip':
                     document.getElementById('settingBoardFlip').checked = value;
+                    break;
+                case 'premoveEnabled':
+                    document.getElementById('settingPremove').checked = value;
                     break;
                 case 'moveSound':
                     document.getElementById('settingMoveSound').checked = value;
@@ -1900,24 +1908,25 @@
         }
 
         function openSettingsScreen(){
+            if(!lastActiveTab) lastActiveTab = 'home';
             document.getElementById('appShell').style.display = 'none';
             document.getElementById('settingsScreen').style.display = 'block';
             history.pushState({ screen: 'settings' }, '', '#settings');
         }
 
         function closeSettingsScreen(){
-    // Hide settings and show the app shell immediately.
-    document.getElementById('settingsScreen').style.display = 'none';
-    document.getElementById('appShell').style.display = 'flex';
+            // Hide settings and show the app shell immediately.
+            document.getElementById('settingsScreen').style.display = 'none';
+            document.getElementById('appShell').style.display = 'flex';
 
-    // Restore the correct bottom-nav screen without calling history.back().
-    switchScreen(lastActiveTab || 'home');
+            // Restore the correct bottom-nav screen without calling history.back().
+            switchScreen(lastActiveTab || 'home');
 
-    // Replace the current "settings" history entry with a clean state so
-    // the browser back button won't try to reopen Settings or show an
-    // unwanted screen.
-    history.replaceState({ screen: null }, "", location.href);
-}
+            // Replace the current "settings" history entry with a clean state so
+            // the browser back button won't try to reopen Settings or show an
+            // unwanted screen.
+            history.replaceState({ screen: null }, "", location.href);
+        }
 
         document.getElementById('settingsGear')?.addEventListener('click', openSettingsScreen);
 
