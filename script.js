@@ -1866,7 +1866,8 @@ function newGame(){
     }
 
     document.getElementById("appShell").style.display = "none";
-    document.getElementById("game").style.display = "flex";
+document.getElementById("game").style.display = "flex";
+requestWakeLock();
 }
 
 function createCoordinates(){
