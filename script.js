@@ -2103,8 +2103,7 @@ function requestDraw(){
 }
 function respondToDraw(accepted){
 
-    if(myColor === null) return; // spectator cannot accept/decline
-
+    if(gameMode === "online" && myColor === null) return; // spectator cannot accept/decline
     document.getElementById("drawOfferPopup").classList.remove("show");
 
     if(typeof sendGameEvent === "function"){
