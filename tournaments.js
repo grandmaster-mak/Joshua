@@ -872,8 +872,12 @@ function advanceEliminationRound(t, tournamentId){
     const updates = {};
 
     if(remaining <= 1){
-        const championUid = nextRoundResult.bye ||
-            (Object.values(nextRoundResult.pairings)[0] && Object.values(nextRoundResult.pairings)[0].white);
+        let championUid = nextRoundResult.bye || null;
+        if(!championUid && nextRoundResult.pairings){
+            const pairing = Object.values(nextRoundResult.pairings)[0];
+            if(pairing) championUid = pairing.white || pairing.black || null;
+        }
+
         updates["tournaments/" + tournamentId + "/status"] = "completed";
         if(championUid) updates["tournaments/" + tournamentId + "/champion"] = championUid;
         db.ref().update(updates);
@@ -1297,7 +1301,7 @@ function startArenaPendingListener(tournamentId){
 
         joinArenaMatch(tournamentId, pairId);
 
-        db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid).set(null);
+        db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid").set(null);
 
     });
 
