@@ -2077,14 +2077,14 @@ function abortGame(){
 }
 
 function requestDraw(){
-    if(myColor === null) return; // spectator cannot offer draw
+    // Only spectators in online games are blocked from drawing.
+    if(gameMode === "online" && myColor === null) return;
 
     closeOnlineMenu();
 
     if(gameMode === "online"){
         if(typeof sendGameEvent === "function"){
             sendGameEvent("drawOffer");
-            // Give the offerer some feedback.
             showInfoPopup("🤝 Draw Offer Sent", "Waiting for your opponent to respond...");
         } else {
             console.error("sendGameEvent is not defined.");
@@ -2092,14 +2092,13 @@ function requestDraw(){
         return;
     }
 
-    // Local (non-online) games: immediate draw.
+    // AI / local games: immediate draw.
     gameOver = true;
     clearInterval(timer);
     showPopup("🤝 Draw", "Game drawn by agreement.");
     createBoard();
     recordGameResult("draw", myOpponentName());
 }
-
 function respondToDraw(accepted){
 
     if(myColor === null) return; // spectator cannot accept/decline
