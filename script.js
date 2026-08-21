@@ -2057,10 +2057,10 @@ function actuallyResign(){
 }
 
 function abortGame(){
+    // Only spectators in online games are blocked from aborting.
+    if(gameMode === "online" && myColor === null) return;
 
-    if(myColor === null) return; // spectator cannot abort
-
-    if(typeof sendGameEvent === "function"){
+    if(gameMode === "online" && typeof sendGameEvent === "function"){
         sendGameEvent("abort");
     }
 
@@ -2068,8 +2068,10 @@ function abortGame(){
     clearInterval(timer);
     closeOnlineMenu();
 
-    const loser = gameMode === "online" ? myColor : currentPlayer;
+    // In AI/local games the player is always white.
+    const loser = gameMode === "online" ? myColor : "white";
     const winner = loser === "white" ? "Black" : "White";
+
     showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
     createBoard();
     showKingMarkers(loser);
