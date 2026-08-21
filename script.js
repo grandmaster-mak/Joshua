@@ -57,9 +57,9 @@ let blackCaptured = [];
 let halfMoveClock = 0;
 
 // Premove state (new)
-let premove = null;
-let premoveColor = null;
-
+// Premove queue (new)
+let premoveQueue = [];
+let premoveExecuting = false;
 // Online opponent metadata
 let whiteRating = null;
 let blackRating = null;
