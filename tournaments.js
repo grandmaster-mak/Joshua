@@ -423,7 +423,7 @@ function renderTournamentDetail(tournamentId, t){
     if(isArena && t.status === "active"){
         renderArenaPairings(tournamentId, t);
         return;
-
+    }
     if(t.status === "active" && t.rounds_data && t.rounds_data[t.currentRound]){
 
         if(t.format === "double_elimination"){
