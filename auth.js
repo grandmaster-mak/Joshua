@@ -109,6 +109,12 @@ function togglePasswordVisibility() {
 
 // Properly initialize Firebase Auth with persistence and fallback
 async function initAuth() {
+    // Show the cached profile FIRST, before touching Firebase at all —
+    // same instant-display pattern already used for Recent Games and
+    // the Friends list, so the username/rating/stats appear the moment
+    // the app opens, network or no network.
+    loadCachedProfile();
+
     auth = firebase.auth();
     try {
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
@@ -123,7 +129,6 @@ async function initAuth() {
         }
     }
     initAuthListener();
-    loadCachedProfile();
 }
 
 function countryCodeToFlag(code){
