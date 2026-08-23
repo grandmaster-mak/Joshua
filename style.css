@@ -4239,3 +4239,4 @@ html, body {
     cursor: pointer;
     user-select: none;
 }
+.square.in-check{ background-color: #e5484d !important; }
