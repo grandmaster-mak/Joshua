@@ -336,6 +336,7 @@ function initAuthListener(){
 
         if(user){
             // User is logged in (or Firebase restored session)
+            clearTimeout(authNullRecoveryTimer);
             userExplicitlyLoggedOut = false;
             currentUser = user;
 
