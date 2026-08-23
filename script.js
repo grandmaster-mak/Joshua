@@ -3258,4 +3258,238 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
     if(!data) return;
     if(data.status === "accepted" && data.roomCode){
       challengeListenRef.off();
-      challengeListenRef = nul
+      challengeListenRef = null;
+
+      document.getElementById("challengeScreen").style.display = "none";
+
+      pendingAcceptedChallenge = {
+        roomCode: data.roomCode,
+        myColor: myColorVal,
+        timeSeconds: timeSeconds,
+        opponentName: data.opponentName || "Your friend",
+        challengeId: challengeId
+      };
+      showChallengeAcceptedNotification(pendingAcceptedChallenge.opponentName);
+    }
+  }, function(err){
+    console.error("Challenge listener denied:", err.code, err.message);
+    showInfoPopup("⚠️ Challenge Error", "Could not watch for acceptance: " + (err.code || err.message));
+  });
+}
+
+function showChallengeAcceptedNotification(name){
+  document.getElementById("challengeAcceptedName").textContent = name;
+  document.getElementById("challengeAcceptedPopup").classList.add("show");
+}
+
+function closeChallengeAcceptedPopup(){
+  document.getElementById("challengeAcceptedPopup").classList.remove("show");
+
+  if(pendingAcceptedChallenge){
+    cancelAcceptedChallenge();
+  }
+}
+function cancelAcceptedChallenge(){
+  if(!pendingAcceptedChallenge) return;
+
+  var p = pendingAcceptedChallenge;
+  pendingAcceptedChallenge = null;
+
+  if(p.challengeId && db){
+    db.ref("challenges/" + p.challengeId).update({
+      status: "cancelled",
+      cancelledAt: Date.now()
+    }).catch(function(err){
+      console.error("Failed to cancel challenge:", err.code, err.message);
+    });
+
+    if(p.roomCode){
+      db.ref("rooms/" + p.roomCode).remove().catch(function(err){
+        console.error("Failed to remove room:", err.code, err.message);
+      });
+    }
+  }
+}
+function startAcceptedChallengeGame(){
+  if(!pendingAcceptedChallenge) return;
+  var p = pendingAcceptedChallenge;
+  pendingAcceptedChallenge = null;
+  closeChallengeAcceptedPopup();
+  myColor = p.myColor;
+  currentRoomCode = p.roomCode;
+  selectedTime = p.timeSeconds;
+  gameMode = "online";
+  document.getElementById("challengeScreen").style.display = "none";
+
+  if(p.challengeId && db){
+    db.ref("challenges/" + p.challengeId + "/status").set("ready").catch(function(err){
+      console.error("Failed to mark challenge ready:", err.code, err.message);
+    });
+  }
+
+  startOnlineGame(p.roomCode);
+}
+function showChallengeWaitingPopup(){
+  var popup = document.getElementById("challengeWaitingPopup");
+  if(popup) popup.classList.add("show");
+}
+function closeChallengeWaitingPopup(){
+  var popup = document.getElementById("challengeWaitingPopup");
+  if(popup) popup.classList.remove("show");
+}
+function cancelChallengeWaiting(){
+  if(challengeReadyListenRef){ challengeReadyListenRef.off(); challengeReadyListenRef = null; }
+  closeChallengeWaitingPopup();
+  document.getElementById("appShell").style.display = "flex";
+  switchScreen(lastActiveTab);
+}
+function listenForChallengeReady(challengeId, roomCode){
+  if(challengeReadyListenRef) challengeReadyListenRef.off();
+  challengeReadyListenRef = db.ref("challenges/" + challengeId + "/status");
+  challengeReadyListenRef.on("value", function(snap){
+    if(snap.val() === "ready"){
+      challengeReadyListenRef.off();
+      challengeReadyListenRef = null;
+      closeChallengeWaitingPopup();
+      startOnlineGame(roomCode);
+    } else if(snap.val() === "cancelled"){
+      challengeReadyListenRef.off();
+      challengeReadyListenRef = null;
+      closeChallengeWaitingPopup();
+      showInfoPopup("❌ Challenge Cancelled", "The creator is not ready to play right now.");
+      document.getElementById("appShell").style.display = "flex";
+      switchScreen(lastActiveTab);
+    }
+  }, function(err){
+    console.error("Challenge ready listener denied:", err.code, err.message);
+    closeChallengeWaitingPopup();
+    showInfoPopup("⚠️ Challenge Error", "Could not monitor challenge status: " + (err.code || err.message));
+  });
+}
+function checkForIncomingChallenge(){
+
+  if(window.challengeParamChecked) return;
+  var params = new URLSearchParams(window.location.search);
+  var challengeId = params.get("challenge");
+  if(!challengeId) return;
+
+  window.challengeParamChecked = true;
+  window.pendingChallengeId = challengeId;
+
+  if(currentUser && db){
+    showChallengeAcceptScreen(challengeId);
+  } else {
+    localStorage.setItem("pendingChallenge", challengeId);
+    showInfoPopup("🔒 Login Required", "Please sign up or log in to accept the challenge.");
+  }
+}
+window.addEventListener("DOMContentLoaded", function(){
+    const cached = loadCachedRecentGames();
+    if (cached && cached.length > 0) {
+        renderRecentGamesRows(cached);
+    }
+});
+function handlePendingChallenge(){
+  var challengeId = localStorage.getItem("pendingChallenge");
+  if(challengeId && currentUser){
+    localStorage.removeItem("pendingChallenge");
+    showChallengeAcceptScreen(challengeId);
+  }
+}
+
+function showChallengeAcceptScreen(challengeId){
+  db.ref("challenges/" + challengeId).once("value").then(function(snap){
+    var data = snap.val();
+    if(!data){
+      showInfoPopup("Challenge expired", "This challenge is no longer available.");
+      return;
+    }
+
+    if(data.status === "accepted" && data.roomCode){
+      myColor = data.creatorColor === "white" ? "black" : "white";
+      currentRoomCode = data.roomCode;
+      selectedTime = data.timeControl || 600;
+      gameMode = "online";
+      document.getElementById("appShell").style.display = "none";
+      document.getElementById("challengeAcceptScreen").style.display = "none";
+      hideAllScreensBeforeGame();
+      startOnlineGame(data.roomCode);
+      return;
+    }
+
+    if(data.status !== "waiting"){
+      showInfoPopup("Challenge expired", "This challenge is no longer available.");
+      return;
+    }
+
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("challengeAcceptScreen").style.display = "flex";
+
+    var myPlayColor = data.creatorColor === "white" ? "Black" : "White";
+
+    document.getElementById("challengeAcceptAvatar").textContent = data.creatorFlag || "🏳️";
+    document.getElementById("challengeAcceptName").textContent = data.creatorName + (data.creatorFlag ? " " + data.creatorFlag : "");
+    document.getElementById("challengeAcceptColorValue").textContent = myPlayColor;
+    document.getElementById("challengeAcceptColorIcon").textContent = myPlayColor === "White" ? "♙" : "♟";
+    document.getElementById("challengeAcceptTimeValue").textContent = (data.timeControl/60) + " min";
+    document.getElementById("acceptChallengeBtn").onclick = async function(){
+      if(!currentUser) return;
+      var roomCode = generateRoomCode();
+      var opponentColor = data.creatorColor === "white" ? "black" : "white";
+      var timeSeconds = data.timeControl;
+
+      try {
+        await db.ref("rooms/" + roomCode).set({ status: "playing", createdAt: Date.now() });
+        await db.ref("rooms/" + roomCode + "/players/" + data.creatorColor).set({
+          username: data.creatorName,
+          flag: data.creatorFlag,
+          uid: data.creatorUid,
+          rating: null,
+          photo: null,
+          kingdom: null,
+          kingdomEmoji: null,
+          kingdomName: null
+        });
+        var myKingdom = getMyCurrentKingdom ? getMyCurrentKingdom() : {emoji:'🏕️',name:'Village'};
+        await db.ref("rooms/" + roomCode + "/players/" + opponentColor).set({
+          username: currentUsername,
+          flag: currentUserFlag,
+          uid: currentUser.uid,
+          rating: currentUserRating || null,
+          photo: currentUserPhotoURL || null,
+          kingdom: myKingdom.id || null,
+          kingdomEmoji: myKingdom.emoji,
+          kingdomName: myKingdom.name
+        });
+
+        myColor = opponentColor;
+        currentRoomCode = roomCode;
+        selectedTime = timeSeconds;
+        gameMode = "online";
+
+        document.getElementById("challengeAcceptScreen").style.display = "none";
+        showChallengeWaitingPopup();
+
+        await db.ref("challenges/" + challengeId).update({
+          status: "accepted",
+          roomCode: roomCode,
+          opponentUid: currentUser.uid,
+          opponentName: currentUsername
+        });
+
+        listenForChallengeReady(challengeId, roomCode);
+      } catch(err){
+        console.error("Failed to accept challenge:", err.code, err.message);
+        showInfoPopup("⚠️ Challenge Error", "Something went wrong: " + (err.code || err.message));
+      }
+    };
+
+    document.getElementById("declineChallengeBtn").onclick = function(){
+      document.getElementById("challengeAcceptScreen").style.display = "none";
+      document.getElementById("appShell").style.display = "flex";
+      history.back();
+    };
+  }).catch(function(err){
+    showInfoPopup("Error", "Could not load challenge: " + err.message);
+  });
+}
