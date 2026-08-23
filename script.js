@@ -518,6 +518,25 @@ function updatePremoveCancelBarVisibility(){
         bar.style.display = premoveQueue.length > 0 ? "flex" : "none";
     }
 }
+// Returns the board positions as they should be DRAWN on screen — the
+// real position with any queued premoves applied visually on top of it.
+// This never touches the real `pieces` array (used for check detection,
+// legality, captures, everything else) — it only affects what gets
+// rendered, which is exactly what makes a premove show instantly on your
+// own board while staying invisible to your opponent until it's real.
+function getDisplayPieces(){
+    const display = pieces.map(function(row){ return row.slice(); });
+
+    premoveQueue.forEach(function(p){
+        const moving = display[p.fromR][p.fromC];
+        if(!moving) return;
+        display[p.toR][p.toC] = moving;
+        display[p.fromR][p.fromC] = "";
+    });
+
+    return display;
+}
+
 function createBoard(){
 
     board.innerHTML = "";
