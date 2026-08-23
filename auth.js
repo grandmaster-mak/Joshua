@@ -410,7 +410,7 @@ function initAuthListener(){
     clearTimeout(authNullRecoveryTimer);
     authNullRecoveryTimer = setTimeout(function(){
 
-        if(auth.currentUser) return;
+        if(auth.currentUser || currentUser) return;
 
         // Always try to restore cached profile if user did not log out
         if(!userExplicitlyLoggedOut){
