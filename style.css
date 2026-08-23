@@ -4224,19 +4224,26 @@ html, body {
     box-shadow: inset 0 0 0 4px rgba(59,123,255,0.7) !important;
 }
 
-#premoveCancelBar{
-    display: none;
-    width: 100%;
-    margin-top: 10px;
-    padding: 12px 0;
-    background: #000;
-    color: #fff;
-    border-radius: 10px;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    user-select: none;
+.historyNavRow{
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
 }
-.square.in-check{ background-color: #e5484d !important; }
+
+.historyNavBtn{
+    flex: 1;
+    background: #000000;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 0;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    margin: 0;
+}
+
+.historyNavBtn:disabled{
+    opacity: 0.3;
+    cursor: default;
+}
