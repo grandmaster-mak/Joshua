@@ -423,7 +423,6 @@ function renderTournamentDetail(tournamentId, t){
     if(isArena && t.status === "active"){
         renderArenaPairings(tournamentId, t);
         return;
-    }
 
     if(t.status === "active" && t.rounds_data && t.rounds_data[t.currentRound]){
 
@@ -1301,7 +1300,7 @@ function startArenaPendingListener(tournamentId){
 
         joinArenaMatch(tournamentId, pairId);
 
-        db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid").set(null);)
+        db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid").set(null);
 
     });
 
