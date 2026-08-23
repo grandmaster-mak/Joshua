@@ -878,13 +878,14 @@
                     <span id="bottomPlayerName" class="playerTag"></span>
                     <p id="bottomTimer"></p>
                 </div>
-                <div class="historyNavRow">
-                    <button class="historyNavBtn" id="bottomBackBtn" onclick="handleBackButton()">◀</button>
-                    <button class="historyNavBtn" id="bottomForwardBtn" onclick="handleForwardButton()">▶</button>
-                </div>
                 <p class="ratingLine" id="bottomRatingLine" style="display:none;"></p>
-                <p>Captured: <span id="bottomCaptured"></span></p>
-            </div>
+                <div class="capturedRow">
+                    <p>Captured: <span id="bottomCaptured"></span></p>
+                    <div class="historyNavRow">
+                        <button class="historyNavBtn" id="bottomBackBtn" onclick="handleBackButton()">◀</button>
+                        <button class="historyNavBtn" id="bottomForwardBtn" onclick="handleForwardButton()">▶</button>
+                    </div>
+                </div>
         </div>
         <div id="panel">
             <p id="turn" style="display:none;">White to Move</p>
