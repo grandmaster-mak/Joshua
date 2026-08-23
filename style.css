@@ -445,7 +445,7 @@ input::placeholder{ color:#4a5060; }
     outline-offset: -3px;
 }
 
-.in-check{ background-color: #e5484d !important; }
+.square.in-check{ background-color: #e5484d !important; }
 
 .capturedPiece{
     width: 20px;
