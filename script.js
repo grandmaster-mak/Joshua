@@ -60,6 +60,11 @@ let halfMoveClock = 0;
 // Premove queue (new)
 let premoveQueue = [];
 let premoveExecuting = false;
+
+// Move-history back/forward review state (new)
+let boardSnapshots = [];
+let historyReviewIndex = null; // null = viewing the live position
+
 // Online opponent metadata
 let whiteRating = null;
 let blackRating = null;
@@ -507,17 +512,7 @@ function hideAllScreensBeforeGame(){
 
     document.getElementById("appShell").style.display = "none";
 }
-function clearAllPremoves(){
-    premoveQueue = [];
-    createBoard();
-}
 
-function updatePremoveCancelBarVisibility(){
-    const bar = document.getElementById("premoveCancelBar");
-    if(bar){
-        bar.style.display = premoveQueue.length > 0 ? "flex" : "none";
-    }
-}
 // Returns the board positions as they should be DRAWN on screen — the
 // real position with any queued premoves applied visually on top of it.
 // This never touches the real `pieces` array (used for check detection,
@@ -537,6 +532,74 @@ function getDisplayPieces(){
     return display;
 }
 
+function snapshotPieces(){
+    return pieces.map(function(row){ return row.slice(); });
+}
+
+// Back button: cancels the most recently queued premove first (one at a
+// time — press again to cancel the one before it). Once no premoves are
+// queued, it instead steps backward through the real move history so the
+// player can look at an earlier position. Works even when it's currently
+// this player's turn to move.
+function handleBackButton(){
+
+    if(premoveQueue.length > 0){
+        premoveQueue.pop();
+        createBoard();
+        return;
+    }
+
+    if(historyReviewIndex === null){
+        if(boardSnapshots.length < 2) return; // nothing played yet
+        historyReviewIndex = boardSnapshots.length - 2;
+    }else if(historyReviewIndex > 0){
+        historyReviewIndex--;
+    }
+
+    selected = null;
+    possibleMoves = [];
+    createBoard();
+
+}
+
+// Forward button: only does anything while reviewing history. Steps
+// toward the live position one move at a time, then switches itself off
+// (back to live) once it arrives there.
+function handleForwardButton(){
+
+    if(historyReviewIndex === null) return;
+
+    historyReviewIndex++;
+
+    if(historyReviewIndex >= boardSnapshots.length - 1){
+        historyReviewIndex = null;
+    }
+
+    selected = null;
+    possibleMoves = [];
+    createBoard();
+
+}
+
+// Only the bottom player box (always "your own" seat — online games flip
+// so myColor is always at the bottom, AI games always seat the human at
+// the bottom, and local two-player flips per turn so whoever is moving
+// is always at the bottom) ever shows these controls, per design: the
+// opponent's box on your screen never shows back/forward buttons.
+function updateHistoryNavButtons(){
+
+    const backDisabled = premoveQueue.length === 0 &&
+        (boardSnapshots.length < 2 || historyReviewIndex === 0);
+    const forwardDisabled = historyReviewIndex === null;
+
+    const backBtn = document.getElementById("bottomBackBtn");
+    if(backBtn) backBtn.disabled = backDisabled;
+
+    const forwardBtn = document.getElementById("bottomForwardBtn");
+    if(forwardBtn) forwardBtn.disabled = forwardDisabled;
+
+}
+
 function createBoard(){
 
     board.innerHTML = "";
@@ -546,6 +609,8 @@ function createBoard(){
         boardFlipped = localBoardFlipped;
     }
     const flipped = (gameMode === "online" && myColor === "black") || boardFlipped;
+
+    const displayPieces = (historyReviewIndex !== null) ? boardSnapshots[historyReviewIndex] : getDisplayPieces();
 
     for(let i = 0; i < 8; i++){
 
@@ -608,10 +673,10 @@ for(let pi = 0; pi < premoveQueue.length; pi++){
     }
 }
 
-            if(pieces[r][c] !== ""){
+            if(displayPieces[r][c] !== ""){
 
                 const img = document.createElement("img");
-                img.src = "pieces/" + pieces[r][c] + ".svg";
+                img.src = "pieces/" + displayPieces[r][c] + ".svg";
                 img.className = "piece";
                 square.appendChild(img);
 
@@ -632,11 +697,12 @@ for(let pi = 0; pi < premoveQueue.length; pi++){
             }
 
             square.onclick = () => clickSquare(r, c);
-updatePremoveCancelBarVisibility();
             board.appendChild(square);
         }
 
     }
+
+    updateHistoryNavButtons();
 
 }
 
@@ -1410,6 +1476,8 @@ function canSelectPieceForMoveOrPremove(pieceColor){
 
 function clickSquare(r, c){
 
+    if(historyReviewIndex !== null) return;
+
     if(gameMode === "ai" && currentPlayer === "black"){
         return;
     }
@@ -1771,6 +1839,8 @@ function choosePromotion(letter){
 function finishTurn(wasRemoteMove){
 
     positionHistory.push(getPositionKey());
+    boardSnapshots.push(snapshotPieces());
+    historyReviewIndex = null; // a real move just happened — snap back to live
 
     if(isThreefoldRepetition()){
         gameOver = true;
@@ -1942,9 +2012,10 @@ function newGame(){
     promotionSquare = null;
     promotionColor = null;
 
-    // Reset premove
-    premove = null;
-    premoveColor = null;
+    // Reset premoves and history review state
+    premoveQueue = [];
+    premoveExecuting = false;
+    historyReviewIndex = null;
 
     whiteKingMoved = false;
     blackKingMoved = false;
@@ -1990,6 +2061,8 @@ function newGame(){
     updateInGameControlsVisibility();
 
     positionHistory = [getPositionKey()];
+    boardSnapshots = [snapshotPieces()];
+    historyReviewIndex = null;
     createBoard();
 
     if(document.getElementById("game").style.display !== "flex"){
@@ -2103,6 +2176,8 @@ function undoMove(){
     gameOver = last.gameOver;
 
     if(positionHistory.length > 0) positionHistory.pop();
+    if(boardSnapshots.length > 1) boardSnapshots.pop();
+    historyReviewIndex = null;
 
     updateHistory();
     updateCaptured();
@@ -3183,238 +3258,4 @@ function listenForChallengeAccepted(challengeId, myColorVal, timeSeconds){
     if(!data) return;
     if(data.status === "accepted" && data.roomCode){
       challengeListenRef.off();
-      challengeListenRef = null;
-
-      document.getElementById("challengeScreen").style.display = "none";
-
-      pendingAcceptedChallenge = {
-        roomCode: data.roomCode,
-        myColor: myColorVal,
-        timeSeconds: timeSeconds,
-        opponentName: data.opponentName || "Your friend",
-        challengeId: challengeId
-      };
-      showChallengeAcceptedNotification(pendingAcceptedChallenge.opponentName);
-    }
-  }, function(err){
-    console.error("Challenge listener denied:", err.code, err.message);
-    showInfoPopup("⚠️ Challenge Error", "Could not watch for acceptance: " + (err.code || err.message));
-  });
-}
-
-function showChallengeAcceptedNotification(name){
-  document.getElementById("challengeAcceptedName").textContent = name;
-  document.getElementById("challengeAcceptedPopup").classList.add("show");
-}
-
-function closeChallengeAcceptedPopup(){
-  document.getElementById("challengeAcceptedPopup").classList.remove("show");
-
-  if(pendingAcceptedChallenge){
-    cancelAcceptedChallenge();
-  }
-}
-function cancelAcceptedChallenge(){
-  if(!pendingAcceptedChallenge) return;
-
-  var p = pendingAcceptedChallenge;
-  pendingAcceptedChallenge = null;
-
-  if(p.challengeId && db){
-    db.ref("challenges/" + p.challengeId).update({
-      status: "cancelled",
-      cancelledAt: Date.now()
-    }).catch(function(err){
-      console.error("Failed to cancel challenge:", err.code, err.message);
-    });
-
-    if(p.roomCode){
-      db.ref("rooms/" + p.roomCode).remove().catch(function(err){
-        console.error("Failed to remove room:", err.code, err.message);
-      });
-    }
-  }
-}
-function startAcceptedChallengeGame(){
-  if(!pendingAcceptedChallenge) return;
-  var p = pendingAcceptedChallenge;
-  pendingAcceptedChallenge = null;
-  closeChallengeAcceptedPopup();
-  myColor = p.myColor;
-  currentRoomCode = p.roomCode;
-  selectedTime = p.timeSeconds;
-  gameMode = "online";
-  document.getElementById("challengeScreen").style.display = "none";
-
-  if(p.challengeId && db){
-    db.ref("challenges/" + p.challengeId + "/status").set("ready").catch(function(err){
-      console.error("Failed to mark challenge ready:", err.code, err.message);
-    });
-  }
-
-  startOnlineGame(p.roomCode);
-}
-function showChallengeWaitingPopup(){
-  var popup = document.getElementById("challengeWaitingPopup");
-  if(popup) popup.classList.add("show");
-}
-function closeChallengeWaitingPopup(){
-  var popup = document.getElementById("challengeWaitingPopup");
-  if(popup) popup.classList.remove("show");
-}
-function cancelChallengeWaiting(){
-  if(challengeReadyListenRef){ challengeReadyListenRef.off(); challengeReadyListenRef = null; }
-  closeChallengeWaitingPopup();
-  document.getElementById("appShell").style.display = "flex";
-  switchScreen(lastActiveTab);
-}
-function listenForChallengeReady(challengeId, roomCode){
-  if(challengeReadyListenRef) challengeReadyListenRef.off();
-  challengeReadyListenRef = db.ref("challenges/" + challengeId + "/status");
-  challengeReadyListenRef.on("value", function(snap){
-    if(snap.val() === "ready"){
-      challengeReadyListenRef.off();
-      challengeReadyListenRef = null;
-      closeChallengeWaitingPopup();
-      startOnlineGame(roomCode);
-    } else if(snap.val() === "cancelled"){
-      challengeReadyListenRef.off();
-      challengeReadyListenRef = null;
-      closeChallengeWaitingPopup();
-      showInfoPopup("❌ Challenge Cancelled", "The creator is not ready to play right now.");
-      document.getElementById("appShell").style.display = "flex";
-      switchScreen(lastActiveTab);
-    }
-  }, function(err){
-    console.error("Challenge ready listener denied:", err.code, err.message);
-    closeChallengeWaitingPopup();
-    showInfoPopup("⚠️ Challenge Error", "Could not monitor challenge status: " + (err.code || err.message));
-  });
-}
-function checkForIncomingChallenge(){
-
-  if(window.challengeParamChecked) return;
-  var params = new URLSearchParams(window.location.search);
-  var challengeId = params.get("challenge");
-  if(!challengeId) return;
-
-  window.challengeParamChecked = true;
-  window.pendingChallengeId = challengeId;
-
-  if(currentUser && db){
-    showChallengeAcceptScreen(challengeId);
-  } else {
-    localStorage.setItem("pendingChallenge", challengeId);
-    showInfoPopup("🔒 Login Required", "Please sign up or log in to accept the challenge.");
-  }
-}
-window.addEventListener("DOMContentLoaded", function(){
-    const cached = loadCachedRecentGames();
-    if (cached && cached.length > 0) {
-        renderRecentGamesRows(cached);
-    }
-});
-function handlePendingChallenge(){
-  var challengeId = localStorage.getItem("pendingChallenge");
-  if(challengeId && currentUser){
-    localStorage.removeItem("pendingChallenge");
-    showChallengeAcceptScreen(challengeId);
-  }
-}
-
-function showChallengeAcceptScreen(challengeId){
-  db.ref("challenges/" + challengeId).once("value").then(function(snap){
-    var data = snap.val();
-    if(!data){
-      showInfoPopup("Challenge expired", "This challenge is no longer available.");
-      return;
-    }
-
-    if(data.status === "accepted" && data.roomCode){
-      myColor = data.creatorColor === "white" ? "black" : "white";
-      currentRoomCode = data.roomCode;
-      selectedTime = data.timeControl || 600;
-      gameMode = "online";
-      document.getElementById("appShell").style.display = "none";
-      document.getElementById("challengeAcceptScreen").style.display = "none";
-      hideAllScreensBeforeGame();
-      startOnlineGame(data.roomCode);
-      return;
-    }
-
-    if(data.status !== "waiting"){
-      showInfoPopup("Challenge expired", "This challenge is no longer available.");
-      return;
-    }
-
-    document.getElementById("appShell").style.display = "none";
-    document.getElementById("challengeAcceptScreen").style.display = "flex";
-
-    var myPlayColor = data.creatorColor === "white" ? "Black" : "White";
-
-    document.getElementById("challengeAcceptAvatar").textContent = data.creatorFlag || "🏳️";
-    document.getElementById("challengeAcceptName").textContent = data.creatorName + (data.creatorFlag ? " " + data.creatorFlag : "");
-    document.getElementById("challengeAcceptColorValue").textContent = myPlayColor;
-    document.getElementById("challengeAcceptColorIcon").textContent = myPlayColor === "White" ? "♙" : "♟";
-    document.getElementById("challengeAcceptTimeValue").textContent = (data.timeControl/60) + " min";
-    document.getElementById("acceptChallengeBtn").onclick = async function(){
-      if(!currentUser) return;
-      var roomCode = generateRoomCode();
-      var opponentColor = data.creatorColor === "white" ? "black" : "white";
-      var timeSeconds = data.timeControl;
-
-      try {
-        await db.ref("rooms/" + roomCode).set({ status: "playing", createdAt: Date.now() });
-        await db.ref("rooms/" + roomCode + "/players/" + data.creatorColor).set({
-          username: data.creatorName,
-          flag: data.creatorFlag,
-          uid: data.creatorUid,
-          rating: null,
-          photo: null,
-          kingdom: null,
-          kingdomEmoji: null,
-          kingdomName: null
-        });
-        var myKingdom = getMyCurrentKingdom ? getMyCurrentKingdom() : {emoji:'🏕️',name:'Village'};
-        await db.ref("rooms/" + roomCode + "/players/" + opponentColor).set({
-          username: currentUsername,
-          flag: currentUserFlag,
-          uid: currentUser.uid,
-          rating: currentUserRating || null,
-          photo: currentUserPhotoURL || null,
-          kingdom: myKingdom.id || null,
-          kingdomEmoji: myKingdom.emoji,
-          kingdomName: myKingdom.name
-        });
-
-        myColor = opponentColor;
-        currentRoomCode = roomCode;
-        selectedTime = timeSeconds;
-        gameMode = "online";
-
-        document.getElementById("challengeAcceptScreen").style.display = "none";
-        showChallengeWaitingPopup();
-
-        await db.ref("challenges/" + challengeId).update({
-          status: "accepted",
-          roomCode: roomCode,
-          opponentUid: currentUser.uid,
-          opponentName: currentUsername
-        });
-
-        listenForChallengeReady(challengeId, roomCode);
-      } catch(err){
-        console.error("Failed to accept challenge:", err.code, err.message);
-        showInfoPopup("⚠️ Challenge Error", "Something went wrong: " + (err.code || err.message));
-      }
-    };
-
-    document.getElementById("declineChallengeBtn").onclick = function(){
-      document.getElementById("challengeAcceptScreen").style.display = "none";
-      document.getElementById("appShell").style.display = "flex";
-      history.back();
-    };
-  }).catch(function(err){
-    showInfoPopup("Error", "Could not load challenge: " + err.message);
-  });
-}
+      challengeListenRef = nul
