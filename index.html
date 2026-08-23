@@ -1969,12 +1969,17 @@
         <h2 id="awardRevealTitle" class="awardRevealTitle">Achievement</h2>
     </div>
     <div id="debugErrorBox" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#e5484d; color:#fff; padding:14px; font-size:13px; z-index:99999; max-height:40vh; overflow-y:auto; font-family:monospace; white-space:pre-wrap;"></div>
-        <div id="debugErrorBox" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#e5484d; color:#fff; padding:14px; font-size:13px; z-index:99999; max-height:40vh; overflow-y:auto; font-family:monospace; white-space:pre-wrap;"></div>
 <script>
-  window.addEventListener("error", function(e){
+  function showDebugError(text){
     var box = document.getElementById("debugErrorBox");
     box.style.display = "block";
-    box.textContent += "ERROR: " + e.message + "\nFile: " + e.filename + "\nLine: " + e.lineno + "\n\n";
+    box.textContent += text + "\n\n";
+  }
+  window.addEventListener("error", function(e){
+    showDebugError("ERROR: " + e.message + "\nFile: " + e.filename + "\nLine: " + e.lineno);
+  });
+  window.addEventListener("unhandledrejection", function(e){
+    showDebugError("PROMISE ERROR: " + (e.reason && e.reason.message ? e.reason.message : e.reason));
   });
 </script>
 </body>
