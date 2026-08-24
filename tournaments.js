@@ -1300,7 +1300,7 @@ function startArenaPendingListener(tournamentId){
 
         joinArenaMatch(tournamentId, pairId);
 
-        db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid").set(null);
+        db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid).set(null);
 
     });
 
