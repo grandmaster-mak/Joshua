@@ -413,11 +413,25 @@ function initAuthListener(){
 
         } else {
     clearTimeout(authNullRecoveryTimer);
+
+    // Don't wait on the delayed check to restore from cache — on a poor
+    // or absent connection, Firebase can report "no user yet" for a
+    // while before it resolves the real (cached, offline-capable)
+    // session. Apply the cache immediately so the username never sits
+    // on "player" during that gap; the delayed timer below still runs
+    // as a backstop purely to decide whether to show the logged-out
+    // screen if nothing ever resolves.
+    if(!userExplicitlyLoggedOut){
+        const immediateCached = loadCachedProfileData();
+        if(immediateCached && immediateCached.uid){
+            loadCachedProfile();
+        }
+    }
+
     authNullRecoveryTimer = setTimeout(function(){
 
         if(auth.currentUser || currentUser) return;
 
-        // Always try to restore cached profile if user did not log out
         if(!userExplicitlyLoggedOut){
             const cached = loadCachedProfileData();
             if(cached && cached.uid){
