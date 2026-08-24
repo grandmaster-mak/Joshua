@@ -320,7 +320,17 @@
             <div class="home-header">
                 <div class="header-text">
                     <p class="greeting-line" id="greetingLine" data-i18n="home.greetingMorning">Good morning ☀️</p>
-                    <h1>Hello, <span id="username">player</span>!</h1>
+                    <h1>Hello, <span id="username">Player</span>!</h1>
+                    <script>
+                      (function(){
+                        try{
+                          var cached = JSON.parse(localStorage.getItem("cachedProfile") || "null");
+                          if(cached && cached.username){
+                            document.getElementById("username").textContent = cached.username;
+                          }
+                        }catch(e){}
+                      })();
+                    </script>
                     <p class="stars-line" id="playerStars" style="display:none;"></p>
                 </div>
                 <div class="profile-box">
