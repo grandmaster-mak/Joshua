@@ -66,7 +66,9 @@ function loadCachedProfileData(){
     }
 }
 
-// Load cached profile data and apply to UI, restoring minimal currentUser if needed
+// Load cached profile data and apply to UI, restoring minimal currentUser if needed.
+// This is the ONLY thing that runs before the screen paints — it never
+// waits on a network call, so it's always instant, good connection or none.
 function loadCachedProfile(){
     const cached = loadCachedProfileData();
     if(!cached) return;
@@ -333,6 +335,56 @@ function logOut(){
     } catch(e) {}
 }
 
+// Fetches the live profile in the background and quietly updates the UI
+// whenever (and if) it actually arrives — this NEVER blocks or delays
+// what's already on screen. The cached profile (applied synchronously,
+// with zero wait, the moment Firebase confirms a session) is what the
+// person sees immediately; this just refines it once real data shows up,
+// however long that takes — 200ms on good wifi, much longer on bad
+// network, or never on no network at all. Either way the UI never sits
+// waiting on it.
+function refreshLiveProfileInBackground(uid){
+
+    db.ref("users/" + uid + "/public").once("value").then(function(snapshot){
+
+        const data = snapshot.val() || {};
+
+        cacheProfile(data);
+
+        currentUsername = data.username || "Player";
+        currentUserCountry = data.country || "";
+        currentUserFlag = data.flag || countryCodeToFlag(data.country);
+        currentUserRating = data.rating || 100;
+        currentUserPhotoURL = data.photoURL || null;
+
+        document.getElementById("loggedOutView").style.display = "none";
+        document.getElementById("loggedInView").style.display = "block";
+        document.getElementById("loggedInUsername").textContent =
+            currentUserFlag + " " + currentUsername;
+
+        applyHomeHeader(data);
+
+        if(typeof listenForChallenges === "function") listenForChallenges();
+        if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
+        if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
+
+        // ---- Handle pending challenge after login ----
+        if(typeof handlePendingChallenge === "function"){
+            handlePendingChallenge();
+        }
+
+        // ---- Check for a pending challenge link ----
+        if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
+
+    }).catch(function(err){
+        // No live data arrived (offline, poor network, or a genuine
+        // error) — the cached profile is already showing, so there's
+        // nothing further to do here.
+        console.log("Live profile refresh did not complete:", err && err.message);
+    });
+
+}
+
 function initAuthListener(){
 
     if(!auth) return;
@@ -345,9 +397,12 @@ function initAuthListener(){
             userExplicitlyLoggedOut = false;
             currentUser = user;
 
-            // Immediately show cached profile if available (for offline speed)
+            // Apply whatever's cached RIGHT NOW, synchronously, no
+            // network wait of any kind — this is what makes the account
+            // screen, username, and everything else correct the instant
+            // the app opens, regardless of connection quality.
             const cached = loadCachedProfileData();
-            if(cached && cached.uid === user.uid){
+            if(cached){
                 applyHomeHeader(cached);
                 const loggedOutEl = document.getElementById("loggedOutView");
                 const loggedInEl = document.getElementById("loggedInView");
@@ -375,52 +430,20 @@ function initAuthListener(){
             if(typeof loadRecentGames === "function") loadRecentGames();
             if(typeof loadFriendRequests === "function") loadFriendRequests();
 
-            db.ref("users/" + user.uid + "/public").once("value").then(function(snapshot){
-
-                const data = snapshot.val() || {};
-
-                cacheProfile(data);
-
-                currentUsername = data.username || "Player";
-                currentUserCountry = data.country || "";
-                currentUserFlag = data.flag || countryCodeToFlag(data.country);
-                currentUserRating = data.rating || 100;
-                currentUserPhotoURL = data.photoURL || null;
-
-                document.getElementById("loggedOutView").style.display = "none";
-                document.getElementById("loggedInView").style.display = "block";
-                document.getElementById("loggedInUsername").textContent =
-                    currentUserFlag + " " + currentUsername;
-
-                applyHomeHeader(data);
-
-                if(typeof listenForChallenges === "function") listenForChallenges();
-                if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
-                if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
-
-                // ---- Handle pending challenge after login ----
-                if(typeof handlePendingChallenge === "function"){
-                    handlePendingChallenge();
-                }
-
-                // ---- Check for a pending challenge link ----
-                if(typeof checkForIncomingChallenge === "function") checkForIncomingChallenge();
-
-            }).catch(function(err){
-                console.log("Offline — showing cached profile instead.");
-                loadCachedProfile();
-            });
+            // The real network fetch happens in the background and only
+            // ever REFINES what's already showing — it can take as long
+            // as it needs to and the UI never waits on it.
+            refreshLiveProfileInBackground(user.uid);
 
         } else {
     clearTimeout(authNullRecoveryTimer);
 
-    // Don't wait on the delayed check to restore from cache — on a poor
-    // or absent connection, Firebase can report "no user yet" for a
-    // while before it resolves the real (cached, offline-capable)
-    // session. Apply the cache immediately so the username never sits
-    // on "player" during that gap; the delayed timer below still runs
-    // as a backstop purely to decide whether to show the logged-out
-    // screen if nothing ever resolves.
+    // Same principle as above: apply cache immediately, no delay,
+    // whenever there's no confirmed session yet — Firebase can report
+    // "no user yet" for a while on bad network before it resolves the
+    // real (cached, offline-capable) session, and the person should
+    // never see "player" or a logged-out screen during that gap if a
+    // cached profile already exists.
     if(!userExplicitlyLoggedOut){
         const immediateCached = loadCachedProfileData();
         if(immediateCached && immediateCached.uid){
