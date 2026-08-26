@@ -478,6 +478,7 @@ function listenForGameEvents(code){
         if(event.type === "abort" && !gameOver){
             gameOver = true;
             clearInterval(timer);
+            document.getElementById("drawOfferPopup").classList.remove("show");
             const winner = event.by === "white" ? "Black" : "White";
             showPopup("🏳️ Game Aborted", winner + " wins by abandonment.");
             createBoard();
