@@ -4232,29 +4232,33 @@ html, body {
 }
 
 .historyNavRow{
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    margin-top: 6px !important;
+    width: auto !important;
 }
 
 .historyNavBtn{
-    width: 42px;
-    height: 38px;
-    background: #000000;
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 800;
+    width: 32px !important;
+    height: 28px !important;
+    flex: none !important;
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
     cursor: pointer;
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .historyNavBtn:disabled{
-    opacity: 0.3;
+    background: #000000 !important;
+    opacity: 0.55 !important;
     cursor: default;
 }
