@@ -465,15 +465,16 @@ function listenForGameEvents(code){
         if(event.by === myColor) return;
         if(myColor === null) return; // spectator: skip interactive events
 
-        if(event.type === "resign" && !gameOver){
+       if(event.type === "resign" && !gameOver){
             gameOver = true;
             clearInterval(timer);
+            document.getElementById("drawOfferPopup").classList.remove("show");
             const winner = event.by === "white" ? "Black" : "White";
             showPopup("🚩 Resignation", winner + " wins by resignation.");
             createBoard();
             showKingMarkers(event.by);
             recordGameResult("win", myOpponentName());
-        }
+        } 
 
         if(event.type === "abort" && !gameOver){
             gameOver = true;
