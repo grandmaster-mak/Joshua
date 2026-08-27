@@ -2561,6 +2561,13 @@ function recordGameResult(myResult, opponentName){
 
     lastGameResult = myResult;
 
+    // ===== Comeback Mode routes to its own rating, skips normal path =====
+    if(typeof isComebackGame !== "undefined" && isComebackGame){
+        recordComebackResult(myResult);
+        return;
+    }
+    // ===== END Comeback Mode =====
+
     if(gameMode === "human") return;
     if(typeof currentUser === "undefined" || !currentUser) return;
     if(typeof db === "undefined" || !db) return;
