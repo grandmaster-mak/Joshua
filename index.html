@@ -990,7 +990,16 @@
             <button class="btnSecondary" onclick="closePopup();">Close</button>
         </div>
     </div>
-
+<div id="comebackMenuPopup" class="popup">
+    <div class="popupContent">
+        <div class="badge gold">🔥</div>
+        <h2>Comeback Mode</h2>
+        <p class="sub">One side always starts down 4–9 points of material. Has its own rating.</p>
+        <button class="btnPrimary" onclick="closeComebackMenu(); startComebackVsAI();">🤖 Practice vs AI (1 game)</button>
+        <button class="btnGold" onclick="closeComebackMenu(); startComebackQuickMatch();">🌐 Quick Match (2-game match)</button>
+        <button class="btnSecondary" onclick="closeComebackMenu();">Cancel</button>
+    </div>
+</div>
     <div id="promotionPopup" class="popup">
         <div class="popupContent">
             <div class="badge blue">♛</div>
