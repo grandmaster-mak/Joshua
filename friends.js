@@ -111,8 +111,25 @@ function searchForFriend(){
 
     resultBox.innerHTML = '<p class="sub">Searching...</p>';
 
+    // Force the browser to actually paint "Searching..." to the screen
+    // before we start the (possibly slow) network call — on weak
+    // connections the paint can otherwise get starved and skipped.
+    setTimeout(function(){
+        runFriendSearch(query, resultBox);
+    }, 0);
+
+}
+
+function runFriendSearch(query, resultBox){
+
+    let stalledTimeout = setTimeout(function(){
+        resultBox.innerHTML = '<p class="sub">Still searching — your connection seems slow...</p>';
+    }, 4000);
+
     db.ref("usernames/" + query).once("value")
         .then(function(snapshot){
+
+            clearTimeout(stalledTimeout);
 
             if(!snapshot.exists()){
                 resultBox.innerHTML = '<p class="sub">No user found with that username.</p>';
@@ -132,6 +149,7 @@ function searchForFriend(){
 
         })
         .catch(function(err){
+            clearTimeout(stalledTimeout);
             resultBox.innerHTML = '<p class="sub">Search failed: ' + escapeHtml(err.message) + '</p>';
         });
 
