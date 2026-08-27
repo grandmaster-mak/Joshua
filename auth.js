@@ -345,11 +345,15 @@ function logOut(){
 // waiting on it.
 function refreshLiveProfileInBackground(uid){
 
-    db.ref("users/" + uid + "/public").once("value").then(function(snapshot){
+    db.ref("users/" + uid + "/public").once("value").then(snapshot => {
+    const data = snapshot.val();
 
-        const data = snapshot.val() || {};
+    if (!data || !data.username) {
+        console.log("Live profile is incomplete");
+        return;
+    }
 
-        cacheProfile(data);
+    cacheProfile(data);
 
         currentUsername = data.username || "Player";
         currentUserCountry = data.country || "";
