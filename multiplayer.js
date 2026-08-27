@@ -25,12 +25,6 @@ try{
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
 
-    // Enable Firebase offline persistence so data loads instantly from cache
-    firebase.database().enablePersistence()
-        .catch(function(err) {
-            console.log("Offline persistence error:", err.code);
-        });
-
     db.ref(".info/serverTimeOffset").on("value", function(snapshot){
         serverTimeOffset = snapshot.val() || 0;
         if(!serverTimeSynced){
