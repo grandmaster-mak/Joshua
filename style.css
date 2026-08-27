@@ -4262,3 +4262,6 @@ html, body {
     opacity: 0.55 !important;
     cursor: default;
 }
+#friendsScreen.friendsScreenLight .sub {
+    color: #8a8580;
+}
