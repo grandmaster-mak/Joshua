@@ -2118,7 +2118,7 @@ function showPopup(title, message){
 
     const newGameBtn = document.getElementById("gameOverNewGameBtn");
     if(newGameBtn){
-        if(gameMode === "online"){
+        if(gameMode === "online" || (typeof isComebackMatch !== "undefined" && isComebackMatch)){
             newGameBtn.style.display = "none";
         }else{
             newGameBtn.style.display = "block";
