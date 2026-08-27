@@ -21,6 +21,7 @@ function escapeHtml(str){
 // async work is abandoned instead of racing the second one and wiping
 // out a freshly-arrived unread badge.
 let friendsListLoadToken = 0;
+
 // Live username suggestions as the user types
 function handleFriendSearchSuggestions(query){
     const container = document.getElementById("friendSuggestions");
@@ -51,7 +52,6 @@ function handleFriendSearchSuggestions(query){
             return;
         }
 
-        // Show the suggestions
         const promises = filtered.map(function(user){
             return db.ref("users/" + user.uid + "/public").once("value").then(function(userSnap){
                 const data = userSnap.val() || {};
@@ -92,8 +92,9 @@ function selectFriendSuggestion(uid, username){
         container.classList.remove("show");
         container.innerHTML = "";
     }
-    searchForFriend(); // runs the existing exact-search logic
+    searchForFriend();
 }
+
 function searchForFriend(){
 
     const query = document.getElementById("friendSearchInput").value.trim();
@@ -299,9 +300,9 @@ function declineFriendRequest(fromUid){
     loadFriendRequests();
 }
 
-// ---- Loads (or reloads) the friends list. Now it keeps the cached
-// rows visible while fetching live data, then swaps them in one go,
-// so the list never flashes blank.
+// ---- Loads (or reloads) the friends list. Keeps cached rows visible
+// while fetching live data, then swaps them in one go, so the list
+// never flashes blank.
 function cacheFriendsList(entries){
     try{ localStorage.setItem("cachedFriendsList", JSON.stringify(entries)); }catch(e){}
 }
@@ -340,10 +341,6 @@ function loadFriendsList(){
 
     const myToken = ++friendsListLoadToken;
 
-    // Paint instantly from last-known friends data — keeps the Friends
-    // tab usable while offline. The live fetch below will replace this
-    // with fresh rows (presence dots, chat badges) only once all data
-    // is ready, so there is never an empty gap.
     const cached = loadCachedFriendsList();
     if(cached && cached.length > 0){
         list.innerHTML = "";
@@ -356,7 +353,7 @@ function loadFriendsList(){
 
     db.ref("users/" + currentUser.uid + "/private/friends").once("value").then(function(snapshot){
 
-        if(myToken !== friendsListLoadToken) return; // a newer load has taken over — abandon this one
+        if(myToken !== friendsListLoadToken) return;
 
         if(!snapshot.exists()){
             list.innerHTML = '<p class="sub">You haven\'t added any friends yet.</p>';
@@ -371,11 +368,8 @@ function loadFriendsList(){
         if(typeof startFriendChatWatchers === "function") startFriendChatWatchers(uids);
         if(typeof loadOnlineFriendsStrip === "function") loadOnlineFriendsStrip(uids);
 
-        // Build the new list offline first, then replace the current content
-        // all at once — no flicker.
         let newRowsHtml = '';
 
-        // Gather all the user data + presence in one pass
         const friendPromises = uids.map(function(uid){
             return db.ref("users/" + uid + "/public").once("value").then(function(userSnap){
                 const data = userSnap.val();
@@ -412,19 +406,15 @@ function loadFriendsList(){
         Promise.all(friendPromises).then(function(rows){
             if(myToken !== friendsListLoadToken) return;
 
-            // Filter out nulls (friends without public data)
             newRowsHtml = rows.filter(function(r){ return r !== null; }).join('');
 
-            // Update the DOM in one fast operation — no blank moment
             list.innerHTML = newRowsHtml || '<p class="sub">You haven\'t added any friends yet.</p>';
 
-            // Update the cache
             cacheFriendsList(
                 uids.map(function(u){ return { uid: u, data: cacheAccumulator[u] }; })
                     .filter(function(e){ return e.data; })
             );
 
-            // Refresh any pending friend chat badges
             if(typeof updateFriendChatBadge === "function"){
                 uids.forEach(function(uid){ updateFriendChatBadge(uid); });
             }
@@ -443,9 +433,6 @@ function challengeFriend(friendUid, friendUsername){
 
     if(!db || !currentUser) return;
 
-    // Always check first — no matter where Challenge was tapped from
-    // (Friends list, Profile screen, anywhere else later) — so a
-    // challenge is never silently sent to someone already mid-game.
     db.ref("users/" + friendUid + "/public/currentRoomCode").once("value").then(function(snap){
         const code = snap.val();
         if(code){
@@ -466,7 +453,7 @@ function actuallySendChallenge(friendUid, friendUsername){
 
     myColor = "white";
     currentRoomCode = code;
-    selectedTime = 600; // same 10-min default as the Challenge screen
+    selectedTime = 600;
 
     db.ref("rooms/" + code).set({
         status: "waiting",
@@ -489,8 +476,6 @@ function actuallySendChallenge(friendUid, friendUsername){
         time: Date.now()
     });
 
-    // Use global listeners so they stay active even if the user
-    // navigates to another screen while waiting.
     if(typeof window.challengeStatusRef !== "undefined" && window.challengeStatusRef){
         try{ window.challengeStatusRef.off(); }catch(e){}
     }
@@ -549,9 +534,8 @@ function showChallengePopup(challenge, fromUid){
     popup.dataset.fromUid = fromUid;
     popup.dataset.code = challenge.code;
 
-    // Ensure it behaves as a top toast banner.
     popup.classList.remove("show");
-    void popup.offsetWidth; // restart animation
+    void popup.offsetWidth;
     popup.classList.add("show");
 
 }
@@ -571,7 +555,6 @@ function respondToChallenge(accepted){
     }
 
     if(!accepted){
-        // Notify the challenger that this challenge was declined.
         if(code && db){
             db.ref("rooms/" + code + "/declined").set(true);
         }
@@ -666,19 +649,17 @@ function loadOnlineFriendsStrip(friendUids){
     });
 
 }
+
 // ============================================================
 // Challenge a Friend — redesigned screen wiring
-// (Powers the #challengeScreen / #challengeAcceptScreen markup —
-// this HTML had the screens but no JS behind them yet.)
 // ============================================================
 
 function openChallengeScreen(){
     document.getElementById("challengeLinkArea").style.display = "none";
     document.getElementById("challengeScreen").style.display = "flex";
-    // Add a history entry so back can return to Home instead of leaving the app
     history.pushState({ screen: "challenge" }, "", "#challenge");
 }
-// Show cached friends list immediately on page load
+
 window.addEventListener("DOMContentLoaded", function(){
     const cached = loadCachedFriendsList();
     if (cached && cached.length > 0) {
@@ -690,10 +671,10 @@ window.addEventListener("DOMContentLoaded", function(){
         });
     }
 });
+
 function closeChallengeScreen(){
     document.getElementById("challengeScreen").style.display = "none";
     document.getElementById("appShell").style.display = "flex";
-    // Replace the current history entry with a clean state, so the browser never exits
     history.replaceState({ screen: null }, "", location.href);
     switchScreen(lastActiveTab);
 }
@@ -770,8 +751,6 @@ document.addEventListener("DOMContentLoaded", function(){
         window.open("https://wa.me/?text=" + text, "_blank");
     });
 
-    // ---- Accepting a challenge link ----
-
     let pendingChallengeCode = null;
     let pendingChallengeColor = null;
 
@@ -806,9 +785,6 @@ document.addEventListener("DOMContentLoaded", function(){
         pendingChallengeColor = null;
     });
 
-    // Checks the URL for #challenge=CODE on page load (this is what
-    // fires when someone opens a shared challenge link) and shows the
-    // Accept/Decline screen with the challenger's real info.
     const hashMatch = (location.hash || "").match(/challenge=([A-Za-z0-9]+)/);
     if(hashMatch && db){
 
