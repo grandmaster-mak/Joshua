@@ -11,6 +11,7 @@ let currentUserRating = 100;
 let currentUserPhotoURL = null;
 let authNullRecoveryTimer = null;
 
+let hasShownAuthenticatedProfile = false;
 // ---- Title / star-rating tiers, shown under the player's name on Home ----
 const PLAYER_TITLE_TIERS = [
     { min: 0,    title: "Beginner",     stars: 1 },
