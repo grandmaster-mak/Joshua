@@ -11,7 +11,11 @@ let currentUserRating = 100;
 let currentUserPhotoURL = null;
 let authNullRecoveryTimer = null;
 
+// Once true, this device has proven it has a real logged-in account this
+// session — a later network hiccup should never force the logged-out
+// screen after that point; only an explicit log-out can.
 let hasShownAuthenticatedProfile = false;
+
 // ---- Title / star-rating tiers, shown under the player's name on Home ----
 const PLAYER_TITLE_TIERS = [
     { min: 0,    title: "Beginner",     stars: 1 },
@@ -87,6 +91,7 @@ function loadCachedProfile(){
     applyHomeHeader(cached);
 
     if(cached.username){
+        hasShownAuthenticatedProfile = true;
         const loggedOutEl = document.getElementById("loggedOutView");
         const loggedInEl = document.getElementById("loggedInView");
         const usernameEl = document.getElementById("loggedInUsername");
@@ -330,6 +335,7 @@ function logOut(){
         userExplicitlyLoggedOut = true;
         auth.signOut();
     }
+    hasShownAuthenticatedProfile = false;
     // Clear cached profile so it won't be restored after logout
     try {
         localStorage.removeItem("cachedProfile");
@@ -346,15 +352,19 @@ function logOut(){
 // waiting on it.
 function refreshLiveProfileInBackground(uid){
 
-    db.ref("users/" + uid + "/public").once("value").then(snapshot => {
-    const data = snapshot.val();
+    db.ref("users/" + uid + "/public").once("value").then(function(snapshot){
 
-    if (!data || !data.username) {
-        console.log("Live profile is incomplete");
-        return;
-    }
+        const data = snapshot.val();
 
-    cacheProfile(data);
+        // Never let a blank/incomplete read overwrite a good cached
+        // profile — only trust this fetch if it actually has a username.
+        if(!data || !data.username){
+            console.log("Live profile fetch was empty — keeping existing cached profile.");
+            return;
+        }
+
+        cacheProfile(data);
+        hasShownAuthenticatedProfile = true;
 
         currentUsername = data.username || "Player";
         currentUserCountry = data.country || "";
@@ -415,6 +425,7 @@ function initAuthListener(){
                 if(loggedOutEl) loggedOutEl.style.display = "none";
                 if(loggedInEl) loggedInEl.style.display = "block";
                 if(usernameEl) usernameEl.textContent = (cached.flag || "") + " " + (cached.username || "");
+                if(cached.username) hasShownAuthenticatedProfile = true;
             }
 
             if(db){
@@ -441,43 +452,55 @@ function initAuthListener(){
             refreshLiveProfileInBackground(user.uid);
 
         } else {
-    clearTimeout(authNullRecoveryTimer);
+            clearTimeout(authNullRecoveryTimer);
 
-    // Same principle as above: apply cache immediately, no delay,
-    // whenever there's no confirmed session yet — Firebase can report
-    // "no user yet" for a while on bad network before it resolves the
-    // real (cached, offline-capable) session, and the person should
-    // never see "player" or a logged-out screen during that gap if a
-    // cached profile already exists.
-    if(!userExplicitlyLoggedOut){
-        const immediateCached = loadCachedProfileData();
-        if(immediateCached && immediateCached.uid){
-            loadCachedProfile();
-        }
-    }
+            // Same principle as above: apply cache immediately, no delay,
+            // whenever there's no confirmed session yet — Firebase can report
+            // "no user yet" for a while on bad network before it resolves the
+            // real (cached, offline-capable) session, and the person should
+            // never see "player" or a logged-out screen during that gap if a
+            // cached profile already exists.
+            if(!userExplicitlyLoggedOut){
+                const immediateCached = loadCachedProfileData();
+                if(immediateCached && immediateCached.uid){
+                    loadCachedProfile();
+                }
+            }
 
-    authNullRecoveryTimer = setTimeout(function(){
+            authNullRecoveryTimer = setTimeout(function(){
 
-        if(auth.currentUser || currentUser) return;
+                if(auth.currentUser || currentUser) return;
 
-        if(!userExplicitlyLoggedOut){
-            const cached = loadCachedProfileData();
-            if(cached && cached.uid){
-                console.log("No auth session, but cached profile exists — restoring.");
-                loadCachedProfile();
-            } else {
+                if(userExplicitlyLoggedOut){
+                    console.log("User explicitly logged out — showing login.");
+                    showLoggedOutState();
+                    return;
+                }
+
+                const cached = loadCachedProfileData();
+                if(cached && cached.uid){
+                    console.log("No auth session, but cached profile exists — restoring.");
+                    loadCachedProfile();
+                    return;
+                }
+
+                if(hasShownAuthenticatedProfile){
+                    // This device has already proven it has a real logged-in
+                    // account this session. Don't force the logged-out screen
+                    // just because a network hiccup wiped state mid-session —
+                    // leave the last-known UI as-is instead of scaring the
+                    // user with "Player".
+                    console.log("No session/cache right now, but we already showed a real profile this session — staying put.");
+                    return;
+                }
+
                 console.log("No auth session and no cached profile — showing login.");
                 showLoggedOutState();
-            }
-        } else {
-            console.log("User explicitly logged out — showing login.");
-            showLoggedOutState();
+
+            }, 2500);
+
+            return;
         }
-
-    }, 2500);
-
-    return;
-}
     });
 }
 
