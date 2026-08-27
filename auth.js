@@ -299,7 +299,9 @@ if(username.length > 10){
 
 }
 
-function logIn(){
+function logIn(retryCount){
+
+    retryCount = retryCount || 0;
 
     if(!auth){
         document.getElementById("authStatus").textContent = "Could not connect to account system.";
@@ -316,10 +318,26 @@ function logIn(){
         return;
     }
 
-    document.getElementById("authStatus").textContent = "Logging in...";
+    document.getElementById("authStatus").textContent = retryCount > 0
+        ? "Weak connection — retrying login (" + retryCount + "/3)..."
+        : "Logging in...";
 
     auth.signInWithEmailAndPassword(email, password)
         .catch(function(error){
+
+            if(error.code === "auth/network-request-failed" && retryCount < 3){
+                setTimeout(function(){
+                    logIn(retryCount + 1);
+                }, 2000 * (retryCount + 1)); // 2s, then 4s, then 6s
+                return;
+            }
+
+            if(error.code === "auth/network-request-failed"){
+                document.getElementById("authStatus").textContent =
+                    "Your connection is too weak to log in right now. Please try again when you have a better signal.";
+                return;
+            }
+
             document.getElementById("authStatus").textContent = "Error: " + error.message;
         });
 
