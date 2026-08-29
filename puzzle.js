@@ -46,6 +46,16 @@
 // Finishing a puzzle (closePuzzle() while puzzleSolved is true) always
 // returns to the Puzzle Map, never to the home screen directly.
 //
+// ---- Cache-first, like Recent Games / Friends list ----
+// Both openDailyPuzzle() and openPuzzleMap() decide what to show
+// INSTANTLY from whatever's saved on the device (cachePuzzlePool /
+// cachePuzzleUserState) — no network wait, ever, even on a first
+// launch after being offline. A real Firebase fetch always still runs
+// in the background afterward and quietly corrects the cache for next
+// time; it never discards fresh data just because it took a while
+// (that was the old bug), and it never yanks the player out of a
+// screen they're already looking at.
+//
 // ---- Replays don't affect rating/streak ----
 // A puzzle only awards puzzleRating, bumps puzzlesSolved, updates the
 // daily solve streak, and gets a new puzzleHistory entry the FIRST time
@@ -84,6 +94,17 @@ function cachePuzzlePool(pool){
 
 function loadCachedPuzzlePool(){
     try { return JSON.parse(localStorage.getItem("cachedPuzzlePool") || "null"); } catch(e) { return null; }
+}
+
+// ---- Cached "what have I solved, and when did I last solve something"
+// state — this is what lets openDailyPuzzle() decide instantly, the same
+// way Recent Games/Friends already paint instantly from cache.
+function cachePuzzleUserState(solvedIds, lastSolvedDate){
+    try { localStorage.setItem("cachedPuzzleUserState", JSON.stringify({ solvedIds: solvedIds, lastSolvedDate: lastSolvedDate })); } catch(e) {}
+}
+
+function loadCachedPuzzleUserState(){
+    try { return JSON.parse(localStorage.getItem("cachedPuzzleUserState") || "null"); } catch(e) { return null; }
 }
 
 function pickRandom(arr){
@@ -157,58 +178,62 @@ function showCoachFeedback(text, tone){
 }
 
 // ---- Loading the pool from Firebase — Firebase is fully in control ----
-
+//
+// IMPORTANT FIX: the old version used Promise.race([realFetch, 3s-timeout])
+// and simply discarded the real fetch if it hadn't landed within 3
+// seconds. On a slow connection that meant a puzzle that took, say, 4
+// seconds to arrive from Firebase was thrown away every single time —
+// the cache never got updated, forever, on that connection. Now the
+// real fetch is NEVER abandoned: it always finishes and always saves
+// to cache, no matter how long it takes. The timeout below only
+// controls how long we're willing to wait before falling back to
+// showing the cache — it never cancels or discards the real fetch.
 function loadPuzzlePool(){
 
     const cached = loadCachedPuzzlePool();
-    const cachedPromise = cached ? Promise.resolve(cached) : null;
 
     if(!db){
-        if(cachedPromise) return cachedPromise;
+        if(cached) return Promise.resolve(cached);
         return Promise.reject(new Error("Not connected to Firebase."));
     }
 
     return new Promise(function(resolve, reject){
 
-        let done = false;
+        let settled = false;
+
         const timeout = setTimeout(function(){
-            if(!done){
-                done = true;
-                if(cachedPromise){
-                    resolve(cached);
-                } else {
-                    reject(new Error("Network timeout"));
-                }
+            if(!settled && cached){
+                settled = true;
+                resolve(cached);
             }
-        }, 3000);
+        }, 1200);
 
         db.ref("puzzles").once("value").then(function(snapshot){
-            if(done) return;
-            done = true;
-            clearTimeout(timeout);
 
-            if(!snapshot.exists()){
-                cachePuzzlePool([]);
-                resolve([]);
-                return;
-            }
+            clearTimeout(timeout);
 
             const out = [];
-            snapshot.forEach(function(child){
-                out.push(Object.assign({ id: child.key }, child.val()));
-            });
+            if(snapshot.exists()){
+                snapshot.forEach(function(child){
+                    out.push(Object.assign({ id: child.key }, child.val()));
+                });
+            }
 
-            cachePuzzlePool(out);
-            resolve(out);
+            cachePuzzlePool(out); // always saved, whether or not we already resolved from cache
+
+            if(!settled){
+                settled = true;
+                resolve(out);
+            }else if(typeof onPuzzlePoolRefreshed === "function"){
+                onPuzzlePoolRefreshed(out);
+            }
+
         }).catch(function(err){
-            if(done) return;
-            done = true;
             clearTimeout(timeout);
             console.error("Failed to load puzzles from Firebase:", err.message);
-            if(cachedPromise){
-                resolve(cached);
-            } else {
-                reject(err);
+            if(!settled){
+                settled = true;
+                if(cached){ resolve(cached); } else { reject(err); }
             }
         });
 
@@ -290,47 +315,68 @@ function loadPuzzleIntoBoard(puzzle, isReplay){
 
 }
 
-// Bound to every "Puzzles" entry point in the app (Home quicklink,
-// Account stats row, Account Quick Access row).
-//
-// If there's a fresh, never-solved puzzle unlocked for TODAY, this
-// skips the map screen and loads that puzzle's board directly. If not
-// (already solved today's, waiting on tomorrow, or waiting on kingdom
-// promotion), it opens the Puzzle Map instead so the player can freely
-// replay anything already solved.
-function openDailyPuzzle(){
+// ---- Instant, cache-only decision: which puzzle (if any) should open
+// immediately, and what should the map look like right now — computed
+// with zero network wait, exactly like Recent Games/Friends paint from
+// cache before any fetch completes. Returns null only if there is no
+// cached puzzle pool at all yet (i.e. this device has never loaded
+// puzzles before).
+function getInstantPuzzleDecision(){
 
-    // Show map immediately, no network needed for UI
-    document.getElementById("appShell").style.display = "none";
-    document.getElementById("puzzleMapScreen").style.display = "flex";
-    history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
+    const cachedPool = loadCachedPuzzlePool();
+    if(!cachedPool || cachedPool.length === 0) return null;
 
-    const bodyEl = document.getElementById("puzzleMapBody");
-    if(bodyEl) bodyEl.innerHTML = '<p class="sub">Loading...</p>';
+    const sorted = sortPuzzlesChronologically(cachedPool);
+    const cachedState = loadCachedPuzzleUserState();
+    const solvedIds = (cachedState && cachedState.solvedIds) || {};
+    const lastSolvedDate = (cachedState && cachedState.lastSolvedDate) || null;
+
+    const currentTierIndex = getCurrentTierIndex();
+    const tierPuzzles = sorted.slice(
+        currentTierIndex * PUZZLE_UNLOCKS_PER_TIER,
+        currentTierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
+    );
+
+    let nextPlayableLocal = -1;
+    for(let i = 0; i < PUZZLE_UNLOCKS_PER_TIER; i++){
+        const p = tierPuzzles[i];
+        if(p && !solvedIds[p.id]){
+            nextPlayableLocal = i;
+            break;
+        }
+    }
+
+    const newUnlockedToday = isNewPuzzleUnlockedToday(lastSolvedDate);
+
+    if(nextPlayableLocal !== -1 && newUnlockedToday && tierPuzzles[nextPlayableLocal]){
+        return { mode: "puzzle", puzzle: tierPuzzles[nextPlayableLocal], sorted: sorted, solvedIds: solvedIds, lastSolvedDate: lastSolvedDate };
+    }
+
+    return { mode: "map", sorted: sorted, solvedIds: solvedIds, lastSolvedDate: lastSolvedDate };
+
+}
+
+// Runs after the screen is already showing something (from cache or a
+// bare "Loading..."). Always fetches the real, current truth from
+// Firebase — however long that takes — and quietly updates the local
+// cache for next time. If the Puzzle Map happens to be the screen still
+// on display when this lands, it refreshes it in place; it never
+// redirects the player out of a puzzle board they're actively solving.
+function refreshPuzzleDataInBackground(){
 
     loadPuzzlePool().then(function(pool){
 
         const sorted = sortPuzzlesChronologically(pool);
 
-        // If no user or db, render map with no solved data
         if(typeof currentUser === "undefined" || !currentUser || !db){
-            renderPuzzleMap(sorted, {}, null);
+            const mapVisible = document.getElementById("puzzleMapScreen") && document.getElementById("puzzleMapScreen").style.display === "flex";
+            if(mapVisible) renderPuzzleMap(sorted, {}, null);
             return;
         }
 
-        // Otherwise load user-specific solved data with timeout fallback
-        return Promise.race([
-            db.ref("users/" + currentUser.uid + "/private").once("value"),
-            new Promise(function(resolve){
-                setTimeout(function(){ resolve(null); }, 3000);
-            })
-        ]).then(function(snapshot){
+        db.ref("users/" + currentUser.uid + "/private").once("value").then(function(snapshot){
 
-            let priv = {};
-            if(snapshot && snapshot.val){
-                priv = snapshot.val() || {};
-            }
-
+            const priv = snapshot.val() || {};
             const solvedIds = {};
             if(priv.puzzleHistory){
                 Object.keys(priv.puzzleHistory).forEach(function(key){
@@ -339,40 +385,64 @@ function openDailyPuzzle(){
                 });
             }
 
-            const currentTierIndex = getCurrentTierIndex();
-            const tierPuzzles = sorted.slice(
-                currentTierIndex * PUZZLE_UNLOCKS_PER_TIER,
-                currentTierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
-            );
+            cachePuzzleUserState(solvedIds, priv.puzzleLastSolved || null);
 
-            let nextPlayableLocal = -1;
-            for(let i = 0; i < PUZZLE_UNLOCKS_PER_TIER; i++){
-                const p = tierPuzzles[i];
-                if(p && !solvedIds[p.id]){
-                    nextPlayableLocal = i;
-                    break;
-                }
-            }
-
-            const newUnlockedToday = isNewPuzzleUnlockedToday(priv.puzzleLastSolved || null);
-
-            if(nextPlayableLocal !== -1 && newUnlockedToday && tierPuzzles[nextPlayableLocal]){
-                document.getElementById("puzzleMapScreen").style.display = "none";
-                document.getElementById("puzzleScreen").style.display = "flex";
-                puzzleOpenedFromMap = false;
-                history.pushState({ screen: "puzzle" }, "", "#puzzle");
-                loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
-            }else{
-                // Fallback to map rendering if data not available or daily gating
+            const mapVisible = document.getElementById("puzzleMapScreen") && document.getElementById("puzzleMapScreen").style.display === "flex";
+            if(mapVisible){
                 renderPuzzleMap(sorted, solvedIds, priv.puzzleLastSolved || null);
             }
 
+        }).catch(function(err){
+            console.error("Failed to refresh puzzle solve-state:", err.message);
         });
 
     }).catch(function(err){
-        console.error("Failed to load puzzle map:", err.message);
-        if(bodyEl) bodyEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
+        console.error("Failed to refresh puzzle pool:", err.message);
+        const cachedPool = loadCachedPuzzlePool();
+        if(!cachedPool || cachedPool.length === 0){
+            const bodyEl = document.getElementById("puzzleMapBody");
+            if(bodyEl) bodyEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
+        }
     });
+
+}
+
+// Bound to every "Puzzles" entry point in the app (Home quicklink,
+// Account stats row, Account Quick Access row).
+//
+// Decides INSTANTLY from cache whether to jump straight into today's
+// puzzle or show the map — no network wait at all if this device has
+// opened puzzles before. Always kicks off a background refresh
+// afterward to keep the cache correct for next time.
+function openDailyPuzzle(){
+
+    const instant = getInstantPuzzleDecision();
+
+    if(instant && instant.mode === "puzzle"){
+
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("puzzleMapScreen").style.display = "none";
+        document.getElementById("puzzleScreen").style.display = "flex";
+        puzzleOpenedFromMap = false;
+        history.pushState({ screen: "puzzle" }, "", "#puzzle");
+        loadPuzzleIntoBoard(instant.puzzle, false);
+
+    }else{
+
+        document.getElementById("appShell").style.display = "none";
+        document.getElementById("puzzleMapScreen").style.display = "flex";
+        history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
+
+        if(instant){
+            renderPuzzleMap(instant.sorted, instant.solvedIds, instant.lastSolvedDate);
+        }else{
+            const bodyEl = document.getElementById("puzzleMapBody");
+            if(bodyEl) bodyEl.innerHTML = '<p class="sub">Loading...</p>';
+        }
+
+    }
+
+    refreshPuzzleDataInBackground();
 
 }
 
@@ -601,16 +671,26 @@ function updatePuzzleNavButtons(){
 // Map), this function does nothing at all. No rating change, no
 // puzzlesSolved bump, no streak update, no new history entry. Replays
 // are purely for practice and must never inflate stats.
+//
+// ALSO updates the local solved-state cache immediately (optimistically),
+// even before any Firebase write completes — so re-opening Puzzles right
+// after solving, even fully offline, never shows this same puzzle again.
 
 function recordPuzzleResult(){
 
     if(puzzleIsReplay) return;
-
-    if(typeof currentUser === "undefined" || !currentUser) return;
-    if(typeof db === "undefined" || !db) return;
     if(!currentPuzzle) return;
 
     const dateKey = todayDateString();
+
+    const existingState = loadCachedPuzzleUserState() || { solvedIds: {}, lastSolvedDate: null };
+    const updatedSolvedIds = Object.assign({}, existingState.solvedIds || {});
+    updatedSolvedIds[currentPuzzle.id] = true;
+    cachePuzzleUserState(updatedSolvedIds, dateKey);
+
+    if(typeof currentUser === "undefined" || !currentUser) return;
+    if(typeof db === "undefined" || !db) return;
+
     const ratingChange = puzzleMistakeMade ? 3 : 8;
 
     const userPublicRef = db.ref("users/" + currentUser.uid + "/public");
@@ -702,6 +782,9 @@ function updatePuzzleStatsDisplay(){
 // the next day / next promotion) — from here they can freely replay
 // any already-solved puzzle at their own pace, with no effect on
 // rating or streak.
+//
+// Like openDailyPuzzle(), this now paints INSTANTLY from cache and
+// refreshes in the background — no waiting screen on repeat visits.
 // ============================================================
 
 function openPuzzleMap(replace){
@@ -716,34 +799,21 @@ function openPuzzleMap(replace){
         history.pushState({ screen: "puzzleMap" }, "", "#puzzleMap");
     }
 
+    const cachedPool = loadCachedPuzzlePool();
+    const cachedState = loadCachedPuzzleUserState();
     const bodyEl = document.getElementById("puzzleMapBody");
-    if(bodyEl) bodyEl.innerHTML = '<p class="sub">Loading...</p>';
 
-    loadPuzzlePool().then(function(pool){
+    if(cachedPool && cachedPool.length > 0){
+        renderPuzzleMap(
+            sortPuzzlesChronologically(cachedPool),
+            (cachedState && cachedState.solvedIds) || {},
+            (cachedState && cachedState.lastSolvedDate) || null
+        );
+    }else if(bodyEl){
+        bodyEl.innerHTML = '<p class="sub">Loading...</p>';
+    }
 
-        const sorted = sortPuzzlesChronologically(pool);
-
-        if(typeof currentUser === "undefined" || !currentUser || !db){
-            renderPuzzleMap(sorted, {}, null);
-            return;
-        }
-
-        return db.ref("users/" + currentUser.uid + "/private").once("value").then(function(snapshot){
-            const priv = snapshot.val() || {};
-            const solvedIds = {};
-            if(priv.puzzleHistory){
-                Object.keys(priv.puzzleHistory).forEach(function(key){
-                    const entry = priv.puzzleHistory[key];
-                    if(entry && entry.puzzleId) solvedIds[entry.puzzleId] = true;
-                });
-            }
-            renderPuzzleMap(sorted, solvedIds, priv.puzzleLastSolved || null);
-        });
-
-    }).catch(function(err){
-        console.error("Failed to load puzzle map:", err.message);
-        if(bodyEl) bodyEl.innerHTML = '<p class="sub">Couldn\'t load puzzles — check your connection and try again.</p>';
-    });
+    refreshPuzzleDataInBackground();
 
 }
 
