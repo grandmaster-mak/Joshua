@@ -360,7 +360,7 @@ function openDailyPuzzle(){
                 document.getElementById("puzzleMapScreen").style.display = "none";
                 document.getElementById("puzzleScreen").style.display = "flex";
                 puzzleOpenedFromMap = false;
-                history.replaceState({ screen: "puzzle" }, "", "#puzzle");
+                history.pushState({ screen: "puzzle" }, "", "#puzzle");
                 loadPuzzleIntoBoard(tierPuzzles[nextPlayableLocal], false);
             }else{
                 // Fallback to map rendering if data not available or daily gating
