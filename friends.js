@@ -104,54 +104,74 @@ function searchForFriend(){
         resultBox.innerHTML = '<p class="sub">Enter a username to search.</p>';
         return;
     }
-
-    if(!db || !currentUser){
+    if(!currentUser){
         resultBox.innerHTML = '<p class="sub">Please log in to add friends.</p>';
         return;
     }
 
-    resultBox.innerHTML = '<p class="sub">Searching...</p>';
+    const cachedMap = loadCachedUsernamesMap();
+    if(cachedMap && cachedMap[query] !== undefined){
+        const foundUid = cachedMap[query];
+        if(foundUid === currentUser.uid){
+            resultBox.innerHTML = '<p class="sub">That\'s your own username.</p>';
+        }else{
+            renderSearchResult(foundUid, loadCachedUserProfile(foundUid) || {});
+        }
+    }else{
+        resultBox.innerHTML = '<p class="sub">Searching...</p>';
+    }
 
-    // Force the browser to actually paint "Searching..." to the screen
-    // before we start the (possibly slow) network call — on weak
-    // connections the paint can otherwise get starved and skipped.
-    setTimeout(function(){
-        runFriendSearch(query, resultBox);
-    }, 0);
-
+    if(!db) return;
+    runFriendSearch(query, resultBox);
 }
 
 function runFriendSearch(query, resultBox){
 
     let stalledTimeout = setTimeout(function(){
-        resultBox.innerHTML = '<p class="sub">Still searching — your connection seems slow...</p>';
+        if(!resultBox.querySelector(".friendCard")){
+            resultBox.innerHTML = '<p class="sub">Still searching — your connection seems slow...</p>';
+        }
     }, 4000);
 
     db.ref("usernames/" + query).once("value")
         .then(function(snapshot){
 
             clearTimeout(stalledTimeout);
+            const currentInput = document.getElementById("friendSearchInput");
+            const stillRelevant = currentInput && currentInput.value.trim() === query;
 
             if(!snapshot.exists()){
-                resultBox.innerHTML = '<p class="sub">No user found with that username.</p>';
+                const map = loadCachedUsernamesMap() || {};
+                delete map[query];
+                cacheUsernamesMap(map);
+                if(stillRelevant && !resultBox.querySelector(".friendCard")){
+                    resultBox.innerHTML = '<p class="sub">No user found with that username.</p>';
+                }
                 return;
             }
 
             const foundUid = snapshot.val();
+            const map = loadCachedUsernamesMap() || {};
+            map[query] = foundUid;
+            cacheUsernamesMap(map);
 
             if(foundUid === currentUser.uid){
-                resultBox.innerHTML = '<p class="sub">That\'s your own username.</p>';
+                if(stillRelevant) resultBox.innerHTML = '<p class="sub">That\'s your own username.</p>';
                 return;
             }
 
             return db.ref("users/" + foundUid + "/public").once("value").then(function(userSnap){
-                renderSearchResult(foundUid, userSnap.val() || {});
+                const data = userSnap.val() || {};
+                cacheUserProfile(foundUid, data);
+                if(stillRelevant) renderSearchResult(foundUid, data);
             });
 
         })
         .catch(function(err){
             clearTimeout(stalledTimeout);
-            resultBox.innerHTML = '<p class="sub">Search failed: ' + escapeHtml(err.message) + '</p>';
+            if(!resultBox.querySelector(".friendCard")){
+                resultBox.innerHTML = '<p class="sub">Search failed: ' + escapeHtml(err.message) + '</p>';
+            }
         });
 
 }
