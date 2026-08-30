@@ -310,7 +310,25 @@ function cacheFriendsList(entries){
 function loadCachedFriendsList(){
     try{ return JSON.parse(localStorage.getItem("cachedFriendsList") || "null"); }catch(e){ return null; }
 }
-
+function cacheUsernamesMap(map){
+    try { localStorage.setItem("cachedUsernamesMap", JSON.stringify(map)); } catch(e) {}
+}
+function loadCachedUsernamesMap(){
+    try { return JSON.parse(localStorage.getItem("cachedUsernamesMap") || "null"); } catch(e) { return null; }
+}
+function cacheUserProfile(uid, data){
+    try {
+        const all = JSON.parse(localStorage.getItem("cachedUserProfiles") || "{}");
+        all[uid] = data;
+        localStorage.setItem("cachedUserProfiles", JSON.stringify(all));
+    } catch(e) {}
+}
+function loadCachedUserProfile(uid){
+    try {
+        const all = JSON.parse(localStorage.getItem("cachedUserProfiles") || "{}");
+        return all[uid] || null;
+    } catch(e) { return null; }
+}
 function renderFriendCardFromCache(uid, data){
     const safeUsername = escapeHtml(data.username);
     const row = document.createElement("div");
