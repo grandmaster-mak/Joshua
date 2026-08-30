@@ -159,44 +159,40 @@ function runFriendSearch(query, resultBox){
 function renderSearchResult(uid, data){
 
     const resultBox = document.getElementById("friendSearchResult");
-    const safeUsername = escapeHtml(data.username);
+    const safeUsername = escapeHtml(data.username || "");
+
+    resultBox.innerHTML =
+        '<div class="friendCard">' +
+            '<div class="friendIdentity" style="cursor:pointer;" onclick="openPlayerProfile(\'' + uid + '\')">' +
+                '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+                '<div class="friendInfo">' +
+                    '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + safeUsername + '</span>' +
+                    '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<span id="friendSearchActionSlot"><button class="btnSecondary" disabled>...</button></span>' +
+        '</div>';
+
+    if(!db || !currentUser) return;
 
     db.ref("users/" + currentUser.uid + "/private/friends/" + uid).once("value").then(function(friendSnap){
-
         const isFriend = friendSnap.exists();
-
-        db.ref("users/" + currentUser.uid + "/private/friendRequestsOutgoing/" + uid).once("value").then(function(reqSnap){
-
+        return db.ref("users/" + currentUser.uid + "/private/friendRequestsOutgoing/" + uid).once("value").then(function(reqSnap){
             const alreadyRequested = reqSnap.exists();
-
-            let buttonHtml;
+            const slot = document.getElementById("friendSearchActionSlot");
+            if(!slot) return; // they searched something else already
 
             if(isFriend){
-                buttonHtml = '<button class="btnSecondary" disabled>Already Friends</button>';
+                slot.innerHTML = '<button class="btnSecondary" disabled>Already Friends</button>';
             }else if(alreadyRequested){
-                buttonHtml = '<button class="btnSecondary" disabled>Request Sent</button>';
+                slot.innerHTML = '<button class="btnSecondary" disabled>Request Sent</button>';
             }else{
-                buttonHtml = '<button class="btnPrimary" data-friend-uid="' + uid + '" data-friend-name="' + safeUsername + '" onclick="sendFriendRequest(this.dataset.friendUid, this.dataset.friendName)">Add Friend</button>';
+                slot.innerHTML = '<button class="btnPrimary" data-friend-uid="' + uid + '" data-friend-name="' + safeUsername + '" onclick="sendFriendRequest(this.dataset.friendUid, this.dataset.friendName)">Add Friend</button>';
             }
-
-            resultBox.innerHTML =
-                '<div class="friendCard">' +
-                    '<div class="friendIdentity" style="cursor:pointer;" onclick="openPlayerProfile(\'' + uid + '\')">' +
-                        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
-                        '<div class="friendInfo">' +
-                            '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + safeUsername + '</span>' +
-                            '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
-                        '</div>' +
-                    '</div>' +
-                    buttonHtml +
-                '</div>';
-
         });
-
     });
 
 }
-
 function sendFriendRequest(targetUid, targetUsername){
 
     if(!currentUser || !db) return;
