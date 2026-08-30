@@ -24,63 +24,78 @@ let friendsListLoadToken = 0;
 
 // Live username suggestions as the user types
 function handleFriendSearchSuggestions(query){
+
     const container = document.getElementById("friendSuggestions");
     if(!container) return;
 
     const trimmed = query.trim();
-    if(!trimmed || !db || !currentUser){
+    if(!trimmed || !currentUser){
         container.classList.remove("show");
         container.innerHTML = "";
         return;
     }
 
+    const cachedMap = loadCachedUsernamesMap();
+    if(cachedMap) renderFriendSuggestionsFromMap(trimmed, cachedMap, container);
+
+    if(!db) return;
+
     db.ref("usernames").once("value").then(function(snap){
+        const freshMap = {};
+        snap.forEach(function(child){ freshMap[child.key] = child.val(); });
+        cacheUsernamesMap(freshMap);
 
-        const users = [];
-        snap.forEach(function(child){
-            users.push({ username: child.key, uid: child.val() });
-        });
-
-        const filtered = users.filter(function(u){
-            return u.uid !== currentUser.uid &&
-                   u.username.toLowerCase().startsWith(trimmed.toLowerCase());
-        }).slice(0, 8);
-
-        if(filtered.length === 0){
-            container.classList.remove("show");
-            container.innerHTML = "";
-            return;
+        const currentInput = document.getElementById("friendSearchInput");
+        if(currentInput && currentInput.value.trim() === trimmed){
+            renderFriendSuggestionsFromMap(trimmed, freshMap, container);
         }
-
-        const promises = filtered.map(function(user){
-            return db.ref("users/" + user.uid + "/public").once("value").then(function(userSnap){
-                const data = userSnap.val() || {};
-                return {
-                    uid: user.uid,
-                    username: user.username,
-                    flag: data.flag || "",
-                    photoURL: data.photoURL || DEFAULT_AVATAR_SRC
-                };
-            });
-        });
-
-        Promise.all(promises).then(function(suggestions){
-            let html = "";
-            suggestions.forEach(function(s){
-                html +=
-                    '<div class="friendSuggestionItem" data-uid="' + s.uid + '" data-username="' + escapeHtml(s.username) + '" onclick="selectFriendSuggestion(this.dataset.uid, this.dataset.username)">' +
-                        '<img class="friendSuggestionAvatar" src="' + s.photoURL + '" alt="">' +
-                        '<span>' + escapeHtml(s.flag) + ' ' + escapeHtml(s.username) + '</span>' +
-                    '</div>';
-            });
-
-            container.innerHTML = html;
-            container.classList.add("show");
-        });
-
     }).catch(function(err){
-        console.error("Friend suggestion error:", err.message);
+        console.error("Friend suggestion refresh error:", err.message);
     });
+
+}
+
+function renderFriendSuggestionsFromMap(trimmed, usernamesMap, container){
+
+    const users = Object.keys(usernamesMap).map(function(username){
+        return { username: username, uid: usernamesMap[username] };
+    });
+
+    const filtered = users.filter(function(u){
+        return u.uid !== currentUser.uid &&
+               u.username.toLowerCase().startsWith(trimmed.toLowerCase());
+    }).slice(0, 8);
+
+    if(filtered.length === 0){
+        container.classList.remove("show");
+        container.innerHTML = "";
+        return;
+    }
+
+    let html = "";
+    filtered.forEach(function(u){
+        const cachedProfile = loadCachedUserProfile(u.uid);
+        const flag = cachedProfile ? (cachedProfile.flag || "") : "";
+        const photo = cachedProfile ? (cachedProfile.photoURL || DEFAULT_AVATAR_SRC) : DEFAULT_AVATAR_SRC;
+        html +=
+            '<div class="friendSuggestionItem" data-uid="' + u.uid + '" data-username="' + escapeHtml(u.username) + '" onclick="selectFriendSuggestion(this.dataset.uid, this.dataset.username)">' +
+                '<img class="friendSuggestionAvatar" src="' + photo + '" alt="">' +
+                '<span>' + escapeHtml(flag) + ' ' + escapeHtml(u.username) + '</span>' +
+            '</div>';
+    });
+
+    container.innerHTML = html;
+    container.classList.add("show");
+
+    if(db){
+        filtered.forEach(function(u){
+            db.ref("users/" + u.uid + "/public").once("value").then(function(userSnap){
+                const data = userSnap.val();
+                if(data) cacheUserProfile(u.uid, data);
+            }).catch(function(){});
+        });
+    }
+
 }
 
 // When a suggestion is clicked
