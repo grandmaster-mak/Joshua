@@ -20,15 +20,17 @@ function escapeHtml(str){
 // succession (e.g. tab tap + an auth state re-fire), the first call's
 // async work is abandoned instead of racing the second one and wiping
 // out a freshly-arrived unread badge.
-let friendsListLoadToken = 0;
+let friendSuggestionDebounceTimer = null;
+let friendSuggestionQuerySeq = 0;
 
-// Live username suggestions as the user types
 function handleFriendSearchSuggestions(query){
 
     const container = document.getElementById("friendSuggestions");
     if(!container) return;
 
     const trimmed = query.trim();
+    clearTimeout(friendSuggestionDebounceTimer);
+
     if(!trimmed || !currentUser){
         container.classList.remove("show");
         container.innerHTML = "";
@@ -40,21 +42,36 @@ function handleFriendSearchSuggestions(query){
 
     if(!db) return;
 
-    db.ref("usernames").once("value").then(function(snap){
-        const freshMap = {};
-        snap.forEach(function(child){ freshMap[child.key] = child.val(); });
-        cacheUsernamesMap(freshMap);
+    const mySeq = ++friendSuggestionQuerySeq;
 
-        const currentInput = document.getElementById("friendSearchInput");
-        if(currentInput && currentInput.value.trim() === trimmed){
-            renderFriendSuggestionsFromMap(trimmed, freshMap, container);
-        }
-    }).catch(function(err){
-        console.error("Friend suggestion refresh error:", err.message);
-    });
+    // Wait for a short pause in typing, THEN ask Firebase only for
+    // usernames starting with what's typed — not the whole list. This
+    // is the actual fix: a tiny, targeted request instead of a full
+    // download on every keystroke.
+    friendSuggestionDebounceTimer = setTimeout(function(){
+
+        const endRange = trimmed + "\uf8ff";
+
+        db.ref("usernames").orderByKey().startAt(trimmed).endAt(endRange).limitToFirst(10).once("value").then(function(snap){
+
+            if(mySeq !== friendSuggestionQuerySeq) return; // a newer keystroke already took over
+
+            const freshMap = loadCachedUsernamesMap() || {};
+            snap.forEach(function(child){ freshMap[child.key] = child.val(); });
+            cacheUsernamesMap(freshMap);
+
+            const currentInput = document.getElementById("friendSearchInput");
+            if(currentInput && currentInput.value.trim() === trimmed){
+                renderFriendSuggestionsFromMap(trimmed, freshMap, container);
+            }
+
+        }).catch(function(err){
+            console.error("Friend suggestion refresh error:", err.message);
+        });
+
+    }, 350);
 
 }
-
 function renderFriendSuggestionsFromMap(trimmed, usernamesMap, container){
 
     const users = Object.keys(usernamesMap).map(function(username){
