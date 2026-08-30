@@ -22,6 +22,7 @@ function escapeHtml(str){
 // out a freshly-arrived unread badge.
 let friendSuggestionDebounceTimer = null;
 let friendSuggestionQuerySeq = 0;
+let friendsListLoadToken = 0;
 
 function handleFriendSearchSuggestions(query){
 
