@@ -62,9 +62,9 @@ function renderFriendSuggestionsFromMap(trimmed, usernamesMap, container){
     });
 
     const filtered = users.filter(function(u){
-        return u.uid !== currentUser.uid &&
-               u.username.toLowerCase().startsWith(trimmed.toLowerCase());
-    }).slice(0, 8);
+    return u.uid !== currentUser.uid &&
+           u.username.toLowerCase().startsWith(trimmed.toLowerCase());
+}).slice(0, 10);
 
     if(filtered.length === 0){
         container.classList.remove("show");
