@@ -5,6 +5,15 @@
 // currently in a game — a live "Watch" button that drops you straight
 // into spectating, no room code needed.
 //
+// Cache-first, same pattern as Recent Games/Friends/Puzzles: every part
+// of a profile (their public stats, their recent games, their friends
+// list) paints instantly from whatever's already saved on this device,
+// then quietly refreshes in the background — no blank "Loading..."
+// wait on repeat visits, even on a poor connection. The public-stats
+// cache is the SAME per-uid cache friends.js already builds from search
+// and suggestions, so viewing a profile you've searched before is
+// instant even the very first time you open it.
+//
 // Requires one more Firebase Rules addition beyond what's already been
 // set up for the leaderboard: users/{uid}/history needs to be readable
 // by any logged-in user, the same way users/{uid}/public already is —
@@ -19,6 +28,38 @@ let profilePresenceRef = null;
 let profileRoomRef = null;
 let profileFriendUids = [];
 let profileFriendsShownCount = 0;
+
+// ---- Small caches specific to the profile screen. Note: the per-uid
+// PUBLIC STATS cache (cacheUserProfile/loadCachedUserProfile) already
+// exists in friends.js — reused here as-is rather than duplicated.
+
+function cacheProfileRecentGames(uid, entries){
+    try {
+        const all = JSON.parse(localStorage.getItem("cachedProfileRecentGames") || "{}");
+        all[uid] = entries;
+        localStorage.setItem("cachedProfileRecentGames", JSON.stringify(all));
+    } catch(e) {}
+}
+function loadCachedProfileRecentGames(uid){
+    try {
+        const all = JSON.parse(localStorage.getItem("cachedProfileRecentGames") || "{}");
+        return all[uid] || null;
+    } catch(e) { return null; }
+}
+
+function cacheProfileFriendUids(uid, uids){
+    try {
+        const all = JSON.parse(localStorage.getItem("cachedProfileFriendUids") || "{}");
+        all[uid] = uids;
+        localStorage.setItem("cachedProfileFriendUids", JSON.stringify(all));
+    } catch(e) {}
+}
+function loadCachedProfileFriendUids(uid){
+    try {
+        const all = JSON.parse(localStorage.getItem("cachedProfileFriendUids") || "{}");
+        return all[uid] || null;
+    } catch(e) { return null; }
+}
 
 function openPlayerProfile(uid){
 
@@ -79,18 +120,36 @@ function stopProfileLiveListeners(){
     profileRoomRef = null;
 }
 
+// Instant paint from cache (if this device has ever seen this player
+// before — via search, friends list, a shared game, anywhere), then a
+// real fetch always still runs in the background to correct/refresh it,
+// however long that takes on a poor connection. currentProfileUid is
+// checked before applying the slow result, so navigating to a DIFFERENT
+// profile while this is still in flight can never overwrite what's now
+// on screen with stale data for the wrong person.
 function loadPlayerProfile(uid){
 
-    document.getElementById("profileRecentGamesList").innerHTML = '<p class="sub">Loading...</p>';
+    const cached = loadCachedUserProfile(uid);
+
+    if(cached){
+        renderPlayerProfile(uid, cached);
+    }else{
+        document.getElementById("profileUsername").textContent = "Loading...";
+        document.getElementById("profileRecentGamesList").innerHTML = '<p class="sub">Loading...</p>';
+        document.getElementById("profileFriendsList").innerHTML = '<p class="sub">Loading...</p>';
+    }
 
     db.ref("users/" + uid + "/public").once("value").then(function(snapshot){
 
+        if(currentProfileUid !== uid) return; // they've since opened a different profile
+
         const data = snapshot.val();
         if(!data){
-            document.getElementById("profileUsername").textContent = "Player not found";
+            if(!cached) document.getElementById("profileUsername").textContent = "Player not found";
             return;
         }
 
+        cacheUserProfile(uid, data);
         renderPlayerProfile(uid, data);
 
         // Only the OWNER of an achievement ever sees the "new award"
@@ -101,10 +160,12 @@ function loadPlayerProfile(uid){
         }
 
     }).catch(function(err){
-        document.getElementById("profileRecentGamesList").innerHTML = '<p class="sub">Could not load profile: ' + escapeHtml(err.message) + '</p>';
+        console.error("Failed to refresh profile:", err.message);
+        // Cache (if any) is already showing — nothing more to do here.
     });
 
 }
+
 function renderPlayerProfile(uid, data){
 
         currentProfileUsername = data.username || "Player";
@@ -122,6 +183,7 @@ function renderPlayerProfile(uid, data){
 
         if(!isMe && currentUser){
             db.ref("users/" + currentUser.uid + "/private/friends/" + uid).once("value").then(function(friendSnap){
+                if(currentProfileUid !== uid) return;
                 currentProfileIsFriend = friendSnap.exists();
                 document.getElementById("profileAddFriendBtn").style.display = currentProfileIsFriend ? "none" : "block";
             });
@@ -141,6 +203,9 @@ function renderPlayerProfile(uid, data){
 // Watch button in real time while the profile screen is open, so if the
 // player starts or finishes a game while you're looking at their
 // profile, the button appears/disappears without needing to reopen it.
+// Deliberately NOT cached — this is genuinely live status, and showing
+// a stale "online" or "in a game" state would be actively misleading
+// rather than helpfully instant.
 function startProfileLiveListeners(uid){
 
     stopProfileLiveListeners();
@@ -164,76 +229,91 @@ function loadProfileRecentGames(uid){
 
     const list = document.getElementById("profileRecentGamesList");
 
+    const cached = loadCachedProfileRecentGames(uid);
+    if(cached){
+        renderProfileRecentGamesList(cached);
+    }else{
+        list.innerHTML = '<p class="sub">Loading...</p>';
+    }
+
     db.ref("users/" + uid + "/history").orderByChild("time").limitToLast(5).once("value").then(function(snapshot){
 
-        if(!snapshot.exists()){
-            list.innerHTML = '<p class="sub">No games played yet.</p>';
-            return;
-        }
+        if(currentProfileUid !== uid) return; // navigated away before this landed
 
         const entries = [];
         snapshot.forEach(function(child){ entries.push(child.val()); });
         entries.reverse();
 
-        list.innerHTML = "";
-
-        entries.forEach(function(entry){
-
-            const label = entry.result === "win" ? "Won" : entry.result === "loss" ? "Lost" : "Draw";
-            const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
-            const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
-            // Renamed from "Online" to "Online Match" — this is the match
-            // TYPE (permanently recorded at game-end), not a live status.
-            // It will always say this for every online game, forever,
-            // regardless of whether the opponent is online right now.
-            const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online Match" : "Local";
-
-            const row = document.createElement("div");
-            row.className = "gameRow";
-            row.innerHTML =
-                '<div class="gameOpponentInfo">' +
-                    '<div class="gameAvatarWrap">' +
-                        '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
-                    '</div>' +
-                    '<div class="gameOpponentText">' +
-                        '<span class="gameOpponent">vs ' + escapeHtml(entry.opponent || "Unknown") + '</span>' +
-                        '<span class="gameMeta">' + modeLabel + '<span class="liveStatusText"></span></span>' +
-                    '</div>' +
-                '</div>' +
-                '<span class="gameResult ' + cls + '">' + label + '</span>';
-
-            if(entry.opponentUid){
-
-                const infoEl = row.querySelector(".gameOpponentInfo");
-                infoEl.style.cursor = "pointer";
-                infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
-
-                // Explicit text either way — "Online now" or "Offline" —
-                // instead of a dot that only appears sometimes, so it's
-                // always obvious the live check actually ran and isn't
-                // silently broken.
-                db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
-                    const statusEl = row.querySelector(".liveStatusText");
-                    if(!statusEl) return;
-                    if(presenceSnap.val() === true){
-                        statusEl.textContent = " · 🟢 Online now";
-                        statusEl.classList.add("liveOnline");
-                    }else{
-                        statusEl.textContent = " · Offline";
-                    }
-                }).catch(function(){
-                    const statusEl = row.querySelector(".liveStatusText");
-                    if(statusEl) statusEl.textContent = " · Status unavailable";
-                });
-
-            }
-
-            list.appendChild(row);
-
-        });
+        cacheProfileRecentGames(uid, entries);
+        renderProfileRecentGamesList(entries);
 
     }).catch(function(err){
-        list.innerHTML = '<p class="sub">Could not load recent games: ' + escapeHtml(err.message) + '</p>';
+        if(!cached){
+            list.innerHTML = '<p class="sub">Could not load recent games: ' + escapeHtml(err.message) + '</p>';
+        }
+    });
+
+}
+
+function renderProfileRecentGamesList(entries){
+
+    const list = document.getElementById("profileRecentGamesList");
+    if(!list) return;
+
+    if(!entries || entries.length === 0){
+        list.innerHTML = '<p class="sub">No games played yet.</p>';
+        return;
+    }
+
+    list.innerHTML = "";
+
+    entries.forEach(function(entry){
+
+        const label = entry.result === "win" ? "Won" : entry.result === "loss" ? "Lost" : "Draw";
+        const cls = entry.result === "win" ? "gameWon" : entry.result === "loss" ? "gameLost" : "gameDrawn";
+        const avatarSrc = entry.opponentPhoto || DEFAULT_AVATAR_SRC;
+        const modeLabel = entry.mode === "ai" ? "vs AI" : entry.mode === "online" ? "Online Match" : "Local";
+
+        const row = document.createElement("div");
+        row.className = "gameRow";
+        row.innerHTML =
+            '<div class="gameOpponentInfo">' +
+                '<div class="gameAvatarWrap">' +
+                    '<img class="gameAvatarImg" src="' + avatarSrc + '" alt="">' +
+                '</div>' +
+                '<div class="gameOpponentText">' +
+                    '<span class="gameOpponent">vs ' + escapeHtml(entry.opponent || "Unknown") + '</span>' +
+                    '<span class="gameMeta">' + modeLabel + '<span class="liveStatusText"></span></span>' +
+                '</div>' +
+            '</div>' +
+            '<span class="gameResult ' + cls + '">' + label + '</span>';
+
+        if(entry.opponentUid){
+
+            const infoEl = row.querySelector(".gameOpponentInfo");
+            infoEl.style.cursor = "pointer";
+            infoEl.onclick = function(){ openPlayerProfile(entry.opponentUid); };
+
+            // Live status (online/offline) is intentionally left as a real
+            // fetch, not cached — same reasoning as presence above.
+            db.ref("presence/" + entry.opponentUid).once("value").then(function(presenceSnap){
+                const statusEl = row.querySelector(".liveStatusText");
+                if(!statusEl) return;
+                if(presenceSnap.val() === true){
+                    statusEl.textContent = " · 🟢 Online now";
+                    statusEl.classList.add("liveOnline");
+                }else{
+                    statusEl.textContent = " · Offline";
+                }
+            }).catch(function(){
+                const statusEl = row.querySelector(".liveStatusText");
+                if(statusEl) statusEl.textContent = " · Status unavailable";
+            });
+
+        }
+
+        list.appendChild(row);
+
     });
 
 }
@@ -247,28 +327,52 @@ function loadProfileFriendsList(uid){
 
     const list = document.getElementById("profileFriendsList");
     const seeMoreBtn = document.getElementById("profileFriendsSeeMoreBtn");
-    list.innerHTML = '<p class="sub">Loading...</p>';
     seeMoreBtn.style.display = "none";
+
+    const cachedUids = loadCachedProfileFriendUids(uid);
+
+    if(cachedUids){
+        profileFriendUids = cachedUids;
+        profileFriendsShownCount = 0;
+        list.innerHTML = "";
+        if(cachedUids.length === 0){
+            list.innerHTML = '<p class="sub">No friends yet.</p>';
+        }else{
+            renderNextProfileFriendsBatch();
+        }
+    }else{
+        list.innerHTML = '<p class="sub">Loading...</p>';
+    }
 
     db.ref("users/" + uid + "/private/friends").once("value").then(function(snapshot){
 
-        if(!snapshot.exists()){
-            profileFriendUids = [];
+        if(currentProfileUid !== uid) return;
+
+        const freshUids = snapshot.exists() ? Object.keys(snapshot.val()) : [];
+        cacheProfileFriendUids(uid, freshUids);
+
+        profileFriendUids = freshUids;
+        profileFriendsShownCount = 0;
+        list.innerHTML = "";
+
+        if(freshUids.length === 0){
             list.innerHTML = '<p class="sub">No friends yet.</p>';
             return;
         }
 
-        profileFriendUids = Object.keys(snapshot.val());
-        profileFriendsShownCount = 0;
-        list.innerHTML = "";
         renderNextProfileFriendsBatch();
 
     }).catch(function(err){
-        list.innerHTML = '<p class="sub">Could not load friends: ' + escapeHtml(err.message) + '</p>';
+        if(!cachedUids){
+            list.innerHTML = '<p class="sub">Could not load friends: ' + escapeHtml(err.message) + '</p>';
+        }
     });
 
 }
 
+// Each friend gets a stable placeholder slot up front (so ordering stays
+// correct regardless of which fetch lands first), filled instantly from
+// cache when available and corrected in the background either way.
 function renderNextProfileFriendsBatch(){
 
     const list = document.getElementById("profileFriendsList");
@@ -276,46 +380,45 @@ function renderNextProfileFriendsBatch(){
 
     const batch = profileFriendUids.slice(profileFriendsShownCount, profileFriendsShownCount + 5);
 
-    const lookups = batch.map(function(friendUid){
-        return db.ref("users/" + friendUid + "/public").once("value").then(function(snap){
-            return { uid: friendUid, data: snap.val() };
-        });
-    });
+    batch.forEach(function(friendUid){
 
-    Promise.all(lookups).then(function(results){
+        const slot = document.createElement("div");
+        list.appendChild(slot);
 
-        results.forEach(function(result){
-            if(!result.data) return;
+        const cachedData = loadCachedUserProfile(friendUid);
+        if(cachedData) fillProfileFriendSlot(slot, friendUid, cachedData);
 
-            const row = document.createElement("div");
-            row.className = "friendIdentity profileFriendRowLight";
-            row.style.cursor = "pointer";
-            row.style.marginBottom = "10px";
-            row.onclick = function(){ openPlayerProfile(result.uid); };
-            row.innerHTML =
-                '<img class="friendAvatarImg" src="' + (result.data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
-                '<div class="friendInfo">' +
-                    '<span class="friendName">' + escapeHtml(result.data.flag || "") + ' ' + escapeHtml(result.data.username || "Player") + '</span>' +
-                    '<span class="friendRating">Rating ' + (result.data.rating || 100) + '</span>' +
-                '</div>' +
-                '<button class="profileFriendMsgBtn" data-uid="' + result.uid + '" data-name="' + escapeHtml(result.data.username || "Player") + '" onclick="event.stopPropagation(); openFriendChat(this.dataset.uid, this.dataset.name);">💬</button>';
-            list.appendChild(row);
-        });
-
-        profileFriendsShownCount += batch.length;
-
-        if(profileFriendsShownCount >= profileFriendUids.length){
-            seeMoreBtn.style.display = "none";
-        }else{
-            seeMoreBtn.style.display = "block";
-        }
-
-        if(profileFriendsShownCount === 0){
-            list.innerHTML = '<p class="sub">No friends yet.</p>';
-        }
+        db.ref("users/" + friendUid + "/public").once("value").then(function(snap){
+            const data = snap.val();
+            if(!data) return;
+            cacheUserProfile(friendUid, data);
+            fillProfileFriendSlot(slot, friendUid, data);
+        }).catch(function(){});
 
     });
 
+    profileFriendsShownCount += batch.length;
+
+    if(profileFriendsShownCount >= profileFriendUids.length){
+        seeMoreBtn.style.display = "none";
+    }else{
+        seeMoreBtn.style.display = "block";
+    }
+
+}
+
+function fillProfileFriendSlot(slot, uid, data){
+    slot.className = "friendIdentity profileFriendRowLight";
+    slot.style.cursor = "pointer";
+    slot.style.marginBottom = "10px";
+    slot.onclick = function(){ openPlayerProfile(uid); };
+    slot.innerHTML =
+        '<img class="friendAvatarImg" src="' + (data.photoURL || DEFAULT_AVATAR_SRC) + '" alt="">' +
+        '<div class="friendInfo">' +
+            '<span class="friendName">' + escapeHtml(data.flag || "") + ' ' + escapeHtml(data.username || "Player") + '</span>' +
+            '<span class="friendRating">Rating ' + (data.rating || 100) + '</span>' +
+        '</div>' +
+        '<button class="profileFriendMsgBtn" data-uid="' + uid + '" data-name="' + escapeHtml(data.username || "Player") + '" onclick="event.stopPropagation(); openFriendChat(this.dataset.uid, this.dataset.name);">💬</button>';
 }
 
 function showMoreProfileFriends(){
