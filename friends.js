@@ -398,7 +398,24 @@ function renderFriendCardFromCache(uid, data){
         '</div>';
     return row;
 }
-
+function cacheFriendStatus(uid, status){
+    try {
+        const all = JSON.parse(localStorage.getItem("cachedFriendStatus") || "{}");
+        all[uid] = status;
+        localStorage.setItem("cachedFriendStatus", JSON.stringify(all));
+    } catch(e) {}
+}
+function loadCachedFriendStatus(uid){
+    try {
+        const all = JSON.parse(localStorage.getItem("cachedFriendStatus") || "{}");
+        return all[uid] || null;
+    } catch(e) { return null; }
+}
+function friendStatusLabel(status){
+    if(status === "friend") return '<span class="friendSuggestionStatus statusFriend">✓ Friend</span>';
+    if(status === "sent") return '<span class="friendSuggestionStatus statusSent">Sent</span>';
+    return '<span class="friendSuggestionStatus statusNone">+ Add</span>';
+}
 function loadFriendsList(){
 
     if(!db || !currentUser) return;
