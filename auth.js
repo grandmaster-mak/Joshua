@@ -285,6 +285,7 @@ if(username.length > 10){
             };
             // ===== END KINGDOM INITIALIZATION =====
             updates["usernames/" + username] = uid;
+updates["usernamesLower/" + username.toLowerCase()] = uid;
 
             return db.ref().update(updates);
 
