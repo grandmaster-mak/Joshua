@@ -3586,21 +3586,34 @@ input::placeholder{ color:#4a5060; }
 .friendSuggestionItem {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    cursor: pointer;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 16px;
     color: #1a1a1a;
     font-weight: 600;
     border-bottom: 1px solid #f0f0f0;
 }
-
-.friendSuggestionItem:last-child {
-    border-bottom: none;
+.friendSuggestionItem:last-child { border-bottom: none; }
+.friendSuggestionMain {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
 }
-
-.friendSuggestionItem:hover {
-    background: #f5f5f5;
+.friendSuggestionMain:hover { opacity: 0.8; }
+.friendSuggestionStatus {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
+.statusFriend { background: #dcf5e4; color: #22c55e; }
+.statusSent { background: #fdecd2; color: #e2681a; }
+.statusNone { background: #eef1ff; color: #3b7bff; }
 
 .friendSuggestionAvatar {
     width: 30px;
