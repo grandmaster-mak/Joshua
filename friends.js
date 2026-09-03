@@ -53,7 +53,7 @@ function handleFriendSearchSuggestions(query){
 
         const endRange = trimmed + "\uf8ff";
 
-        db.ref("usernames").orderByKey().startAt(trimmed).endAt(endRange).limitToFirst(10).once("value").then(function(snap){
+        db.ref("usernamesLower").orderByKey().startAt(trimmed.toLowerCase()).endAt(trimmed.toLowerCase() + "\uf8ff").limitToFirst(10).once("value").then(function(snap){
 
             if(mySeq !== friendSuggestionQuerySeq) return; // a newer keystroke already took over
 
