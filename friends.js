@@ -80,9 +80,9 @@ function renderFriendSuggestionsFromMap(trimmed, usernamesMap, container){
     });
 
     const filtered = users.filter(function(u){
-    return u.uid !== currentUser.uid &&
-           u.username.toLowerCase().startsWith(trimmed.toLowerCase());
-}).slice(0, 10);
+        return u.uid !== currentUser.uid &&
+               u.username.toLowerCase().startsWith(trimmed.toLowerCase());
+    }).slice(0, 10);
 
     if(filtered.length === 0){
         container.classList.remove("show");
@@ -95,24 +95,50 @@ function renderFriendSuggestionsFromMap(trimmed, usernamesMap, container){
         const cachedProfile = loadCachedUserProfile(u.uid);
         const flag = cachedProfile ? (cachedProfile.flag || "") : "";
         const photo = cachedProfile ? (cachedProfile.photoURL || DEFAULT_AVATAR_SRC) : DEFAULT_AVATAR_SRC;
+        const cachedStatus = loadCachedFriendStatus(u.uid);
         html +=
-            '<div class="friendSuggestionItem" data-uid="' + u.uid + '" data-username="' + escapeHtml(u.username) + '" onclick="selectFriendSuggestion(this.dataset.uid, this.dataset.username)">' +
-                '<img class="friendSuggestionAvatar" src="' + photo + '" alt="">' +
-                '<span>' + escapeHtml(flag) + ' ' + escapeHtml(u.username) + '</span>' +
+            '<div class="friendSuggestionItem">' +
+                '<div class="friendSuggestionMain" onclick="selectFriendSuggestion(\'' + u.uid + '\', \'' + escapeHtml(u.username) + '\')">' +
+                    '<img class="friendSuggestionAvatar" src="' + photo + '" alt="">' +
+                    '<span>' + escapeHtml(flag) + ' ' + escapeHtml(u.username) + '</span>' +
+                '</div>' +
+                '<span class="friendSuggestionStatusSlot" id="fsStatus_' + u.uid + '">' + friendStatusLabel(cachedStatus) + '</span>' +
             '</div>';
     });
 
     container.innerHTML = html;
     container.classList.add("show");
 
-    if(db){
-        filtered.forEach(function(u){
-            db.ref("users/" + u.uid + "/public").once("value").then(function(userSnap){
-                const data = userSnap.val();
-                if(data) cacheUserProfile(u.uid, data);
-            }).catch(function(){});
-        });
-    }
+    if(!db) return;
+
+    filtered.forEach(function(u){
+
+        db.ref("users/" + u.uid + "/public").once("value").then(function(snap){
+            const data = snap.val();
+            if(data) cacheUserProfile(u.uid, data);
+        }).catch(function(){});
+
+        if(!currentUser) return;
+
+        db.ref("users/" + currentUser.uid + "/private/friends/" + u.uid).once("value").then(function(fSnap){
+
+            if(fSnap.exists()){
+                cacheFriendStatus(u.uid, "friend");
+                const slot = document.getElementById("fsStatus_" + u.uid);
+                if(slot) slot.innerHTML = friendStatusLabel("friend");
+                return;
+            }
+
+            db.ref("users/" + currentUser.uid + "/private/friendRequestsOutgoing/" + u.uid).once("value").then(function(rSnap){
+                const status = rSnap.exists() ? "sent" : "none";
+                cacheFriendStatus(u.uid, status);
+                const slot = document.getElementById("fsStatus_" + u.uid);
+                if(slot) slot.innerHTML = friendStatusLabel(status);
+            });
+
+        }).catch(function(){});
+
+    });
 
 }
 
