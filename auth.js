@@ -300,9 +300,9 @@ updates["usernamesLower/" + username.toLowerCase()] = uid;
 
 }
 
-function logIn(retryCount){
+let loginAttemptToken = 0;
 
-    retryCount = retryCount || 0;
+function logIn(){
 
     if(!auth){
         document.getElementById("authStatus").textContent = "Could not connect to account system.";
@@ -319,36 +319,63 @@ function logIn(retryCount){
         return;
     }
 
-    document.getElementById("authStatus").textContent = retryCount > 0
-        ? "Weak connection — retrying login (" + retryCount + "/3)..."
-        : "Logging in...";
+    // Every fresh tap of the Log In button starts a brand new attempt
+    // sequence and invalidates any still-running one — this is also how
+    // a person can effectively "cancel" a stuck attempt: just tap Log In
+    // again once they have better signal.
+    const myToken = ++loginAttemptToken;
 
-    auth.signInWithEmailAndPassword(email, password)
-        .catch(function(error){
-
-            if(error.code === "auth/network-request-failed" && retryCount < 3){
-                setTimeout(function(){
-                    logIn(retryCount + 1);
-                }, 2000 * (retryCount + 1)); // 2s, then 4s, then 6s
-                return;
-            }
-
-            if(error.code === "auth/network-request-failed"){
-                document.getElementById("authStatus").textContent =
-                    "Your connection is too weak to log in right now. Please try again when you have a better signal.";
-                return;
-            }
-
-            document.getElementById("authStatus").textContent = "Error: " + error.message;
-        });
+    attemptLogin(email, password, myToken, 0);
 
 }
 
-let userExplicitlyLoggedOut = false;
-function confirmLogOut(){
-    if(confirm("Are you sure you want to log out?")){
-        logOut();
-    }
+function attemptLogin(email, password, myToken, attemptNumber){
+
+    if(myToken !== loginAttemptToken) return; // superseded by a newer tap
+
+    document.getElementById("authStatus").textContent = attemptNumber === 0
+        ? "Logging in..."
+        : "Still trying to log in — your connection is slow, but we'll keep going...";
+
+    let settled = false;
+
+    // A per-attempt timeout so ONE hung request can't block progress
+    // forever — but running out never shows failure, it just quietly
+    // tries again. There is no maximum attempt count.
+    const timeoutMs = Math.min(6000 + attemptNumber * 1500, 15000);
+
+    const timeoutPromise = new Promise(function(resolve, reject){
+        setTimeout(function(){
+            if(!settled) reject({ code: "auth/network-request-failed", message: "timed out" });
+        }, timeoutMs);
+    });
+
+    Promise.race([
+        auth.signInWithEmailAndPassword(email, password).then(function(result){
+            settled = true;
+            return result;
+        }),
+        timeoutPromise
+    ]).catch(function(error){
+
+        settled = true;
+        if(myToken !== loginAttemptToken) return; // superseded
+
+        // Wrong password / bad email / etc — a REAL answer came back from
+        // Firebase, so this is the one case worth actually telling them,
+        // since retrying forever would never fix a wrong password.
+        if(error.code && error.code !== "auth/network-request-failed"){
+            document.getElementById("authStatus").textContent = "Error: " + error.message;
+            return;
+        }
+
+        // Any network-shaped failure: just try again, indefinitely.
+        setTimeout(function(){
+            attemptLogin(email, password, myToken, attemptNumber + 1);
+        }, 1500);
+
+    });
+
 }
 function logOut(){
     if(auth && currentUser && db){
