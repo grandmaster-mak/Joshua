@@ -4305,3 +4305,38 @@ html, body {
     gap:10px;
     flex:1;
 }
+#topPlayerBox{ position:relative; }
+#topPlayerBox.drawOfferFaded > *:not(#drawOfferBarOverlay){
+    opacity:0.35;
+    filter:blur(1px);
+    pointer-events:none;
+}
+.drawOfferBarOverlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    z-index:5;
+}
+.drawOfferBarText{
+    font-weight:800;
+    color:#fff;
+    font-size:14px;
+    text-shadow:0 1px 3px rgba(0,0,0,0.6);
+}
+.drawOfferBarBtn{
+    width:34px;
+    height:34px;
+    flex-shrink:0;
+    margin:0;
+    padding:0;
+    border:none;
+    border-radius:50%;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+}
+.drawOfferBarAccept{ background:#22c55e; color:#fff; }
+.drawOfferBarDecline{ background:#e5484d; color:#fff; }
