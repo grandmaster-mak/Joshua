@@ -1043,7 +1043,15 @@
             <button class="btnSecondary" onclick="closeOnlineMenu()">Cancel</button>
         </div>
     </div>
-
+<div id="resignConfirmPopup" class="popup">
+    <div class="popupContent">
+        <div class="badge red">🚩</div>
+        <h2>Resign?</h2>
+        <p class="sub">Are you sure you want to resign?</p>
+        <button class="btnDanger" onclick="closeResignConfirmPopup(); actuallyResign();">Yes, Resign</button>
+        <button class="btnSecondary" onclick="closeResignConfirmPopup();">Cancel</button>
+    </div>
+</div>
     <div id="challengePopup" class="popup toast-popup">
         <div class="popupContent">
             <div class="badge blue">⚔️</div>
