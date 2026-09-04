@@ -643,17 +643,26 @@ function handleProfilePhotoSelect(event){
 
             const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
 
-            db.ref("users/" + currentUser.uid + "/public/photoURL").set(dataUrl)
-                .then(function(){
-                    currentUserPhotoURL = dataUrl;
-                    const homeAvatar = document.getElementById("homeProfileImg");
-                    const accountAvatar = document.getElementById("accountProfileImg");
-                    if(homeAvatar) homeAvatar.src = dataUrl;
-                    if(accountAvatar) accountAvatar.src = dataUrl;
-                })
-                .catch(function(err){
-                    alert("Could not save photo: " + err.message);
-                });
+           db.ref("users/" + currentUser.uid + "/public/photoURL").set(dataUrl)
+    .then(function(){
+        currentUserPhotoURL = dataUrl;
+        const homeAvatar = document.getElementById("homeProfileImg");
+        const accountAvatar = document.getElementById("accountProfileImg");
+        if(homeAvatar) homeAvatar.src = dataUrl;
+        if(accountAvatar) accountAvatar.src = dataUrl;
+
+        // Update the offline cache too — otherwise reloading right after
+        // changing your photo shows the OLD cached copy until the next
+        // background fetch happens to succeed.
+        const cached = loadCachedProfileData();
+        if(cached){
+            cached.photoURL = dataUrl;
+            try { localStorage.setItem("cachedProfile", JSON.stringify(cached)); } catch(e) {}
+        }
+    })
+    .catch(function(err){
+        alert("Could not save photo: " + err.message);
+    }); 
 
         };
 
