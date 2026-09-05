@@ -2698,13 +2698,26 @@ function recordGameResult(myResult, opponentName){
             if(aiDifficulty === "hard") data.beatHardAI = true;
         }
 
-        return data;
-    }, function(error, committed, snapshot){
-        if(error) alert("Stats save failed: " + error.message);
-    }).then(function(result){
-        if(typeof checkAchievements === "function") checkAchievements(currentUser.uid, result.snapshot.val());
-        showRatingChangePopup(myResult);
-    });
+    return data;
+}, function(error, committed, snapshot){
+    if(error) alert("Stats save failed: " + error.message);
+}).then(function(result){
+
+    const freshData = result.snapshot.val();
+
+    if(typeof checkAchievements === "function") checkAchievements(currentUser.uid, freshData);
+    showRatingChangePopup(myResult);
+
+    // Apply the new numbers immediately — otherwise the rating shown on
+    // Home/Account stays whatever it was BEFORE this game until the app
+    // is reopened (the only other place a full profile refresh happens).
+    if(freshData){
+        currentUserRating = freshData.rating || 100;
+        if(typeof cacheProfile === "function") cacheProfile(freshData);
+        if(typeof applyHomeHeader === "function") applyHomeHeader(freshData);
+    }
+
+}); 
 
     db.ref("users/" + currentUser.uid + "/history").push({
         opponent: opponentName || "Unknown",
