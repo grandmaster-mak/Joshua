@@ -337,28 +337,17 @@ function attemptLogin(email, password, myToken, attemptNumber){
         ? "Logging in..."
         : "Still trying to log in — your connection is slow, but we'll keep going...";
 
-    let settled = false;
+    // No artificial timeout here — an earlier version fired a SECOND
+    // concurrent login request whenever one seemed to be taking too
+    // long, without ever cancelling the first one. On a slow connection
+    // that piles up multiple simultaneous login attempts fighting over
+    // the same thin pipe, which makes things worse and can trip
+    // Firebase's own rate-limiting. Now there is exactly one real
+    // request in flight at a time — we simply wait for Firebase's own
+    // answer, however long that takes.
 
-    // A per-attempt timeout so ONE hung request can't block progress
-    // forever — but running out never shows failure, it just quietly
-    // tries again. There is no maximum attempt count.
-    const timeoutMs = Math.min(6000 + attemptNumber * 1500, 15000);
+    auth.signInWithEmailAndPassword(email, password).catch(function(error){
 
-    const timeoutPromise = new Promise(function(resolve, reject){
-        setTimeout(function(){
-            if(!settled) reject({ code: "auth/network-request-failed", message: "timed out" });
-        }, timeoutMs);
-    });
-
-    Promise.race([
-        auth.signInWithEmailAndPassword(email, password).then(function(result){
-            settled = true;
-            return result;
-        }),
-        timeoutPromise
-    ]).catch(function(error){
-
-        settled = true;
         if(myToken !== loginAttemptToken) return; // superseded
 
         // Wrong password / bad email / etc — a REAL answer came back from
@@ -643,26 +632,26 @@ function handleProfilePhotoSelect(event){
 
             const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
 
-           db.ref("users/" + currentUser.uid + "/public/photoURL").set(dataUrl)
-    .then(function(){
-        currentUserPhotoURL = dataUrl;
-        const homeAvatar = document.getElementById("homeProfileImg");
-        const accountAvatar = document.getElementById("accountProfileImg");
-        if(homeAvatar) homeAvatar.src = dataUrl;
-        if(accountAvatar) accountAvatar.src = dataUrl;
+            db.ref("users/" + currentUser.uid + "/public/photoURL").set(dataUrl)
+                .then(function(){
+                    currentUserPhotoURL = dataUrl;
+                    const homeAvatar = document.getElementById("homeProfileImg");
+                    const accountAvatar = document.getElementById("accountProfileImg");
+                    if(homeAvatar) homeAvatar.src = dataUrl;
+                    if(accountAvatar) accountAvatar.src = dataUrl;
 
-        // Update the offline cache too — otherwise reloading right after
-        // changing your photo shows the OLD cached copy until the next
-        // background fetch happens to succeed.
-        const cached = loadCachedProfileData();
-        if(cached){
-            cached.photoURL = dataUrl;
-            try { localStorage.setItem("cachedProfile", JSON.stringify(cached)); } catch(e) {}
-        }
-    })
-    .catch(function(err){
-        alert("Could not save photo: " + err.message);
-    }); 
+                    // Update the offline cache too — otherwise reloading right
+                    // after changing your photo shows the OLD cached copy
+                    // until the next background fetch happens to succeed.
+                    const cached = loadCachedProfileData();
+                    if(cached){
+                        cached.photoURL = dataUrl;
+                        try { localStorage.setItem("cachedProfile", JSON.stringify(cached)); } catch(e) {}
+                    }
+                })
+                .catch(function(err){
+                    alert("Could not save photo: " + err.message);
+                });
 
         };
 
