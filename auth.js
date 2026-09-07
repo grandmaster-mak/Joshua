@@ -366,6 +366,11 @@ function attemptLogin(email, password, myToken, attemptNumber){
     });
 
 }
+function confirmLogOut(){
+    if(confirm("Are you sure you want to log out?")){
+        logOut();
+    }
+}
 function logOut(){
     if(auth && currentUser && db){
         db.ref("presence/" + currentUser.uid).set(false);
