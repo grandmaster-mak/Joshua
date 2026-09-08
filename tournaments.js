@@ -253,6 +253,8 @@ function createTournament(){
     newRef.set(tournamentData).then(function(){
         history.replaceState({ screen: "tournaments", view: "detail", id: newRef.key }, "", "#tournaments-detail");
         renderTournamentDetailView(newRef.key);
+    }).catch(function(err){
+        alert("Could not create tournament: " + err.message);
     });
 
 }
@@ -357,7 +359,7 @@ function renderTournamentDetail(tournamentId, t){
                 arenaPlayBtn.style.display = "block";
                 arenaStatusEl.style.display = "block";
                 db.ref("tournaments/" + tournamentId + "/arenaQueue/" + currentUser.uid).once("value").then(function(snap){
-                    arenaStatusEl.textContent = snap.exists() ? "Searching for an opponent..." : "Tap Find Opponent to play.";
+                    renderArenaStatusContent(tournamentId, snap.exists());
                 });
             }else{
                 arenaPlayBtn.style.display = "none";
@@ -576,6 +578,8 @@ function joinTournament(){
             showInfoPopup("🏆 Tournament Full", "This tournament already has its maximum of " + t.maxPlayers + " players.");
         }
 
+    }).catch(function(err){
+        showInfoPopup("⚠️ Error", "Could not join the tournament: " + err.message);
     });
 
 }
@@ -646,6 +650,8 @@ function startTournament(){
         if(t.scheduledStart) return t; // scheduled tournaments never start manually
         beginTournamentInPlace(t);
         return t;
+    }).catch(function(err){
+        showInfoPopup("⚠️ Error", "Could not start the tournament: " + err.message);
     });
 
 }
@@ -766,7 +772,11 @@ function generateSwissPairings(playerUids, playersData, previousOpponents){
 // Randomly seeds players into a knockout bracket. An odd/non-power-of-2
 // count gets one random bye each round rather than requiring exact powers
 // of 2, same as how most casual knockout brackets are run.
-function generateEliminationPairings(playerUids){
+//
+// FIX: byes are now tracked the same way Swiss tracks them (via
+// playersData[uid].byes) so the same player can't be handed a free bye
+// round after round — previously this function had no memory at all.
+function generateEliminationPairings(playerUids, playersData){
 
     const shuffled = playerUids.slice();
     for(let i = shuffled.length - 1; i > 0; i--){
@@ -776,7 +786,17 @@ function generateEliminationPairings(playerUids){
 
     let byeUid = null;
     if(shuffled.length % 2 !== 0){
-        byeUid = shuffled.pop();
+        // Prefer someone who hasn't had a bye yet, same fairness rule Swiss uses.
+        let pick = -1;
+        if(playersData){
+            for(let i = 0; i < shuffled.length; i++){
+                const uid = shuffled[i];
+                const hasHadBye = playersData[uid] && playersData[uid].byes > 0;
+                if(!hasHadBye){ pick = i; break; }
+            }
+        }
+        if(pick === -1) pick = shuffled.length - 1;
+        byeUid = shuffled.splice(pick, 1)[0];
     }
 
     const pairings = {};
@@ -797,7 +817,7 @@ function generateEliminationPairings(playerUids){
 
 // Builds the next knockout round from the previous one's winners (a bye
 // counts as an automatic win).
-function generateEliminationNextRound(previousRoundInfo){
+function generateEliminationNextRound(previousRoundInfo, playersData){
 
     const winners = [];
 
@@ -809,7 +829,7 @@ function generateEliminationNextRound(previousRoundInfo){
 
     if(previousRoundInfo.bye) winners.push(previousRoundInfo.bye);
 
-    return generateEliminationPairings(winners);
+    return generateEliminationPairings(winners, playersData);
 
 }
 
@@ -857,18 +877,31 @@ function generateRoundRobinSchedule(playerUids){
 }
 
 // ============================================================
-// Double Elimination round advancement
+// FIX (main issue #1 and #2): round advancement is now a single atomic
+// Firebase transaction per tournament, instead of "read once, then write
+// separately." The old version could corrupt a tournament if the
+// organizer double-tapped the button (or if the button re-rendered twice
+// in quick succession): two reads could both see the same currentRound,
+// both compute a next round, and the second write would silently stomp
+// the first, or currentRound could get incremented twice while one
+// round's pairings vanish.
+//
+// isRoundComplete() is now checked INSIDE the transaction as well, not
+// only when deciding whether to show the button — so the round can never
+// be forced forward while games are still in progress, no matter what
+// calls this function or how many times.
+//
+// Each format's logic below only MUTATES the transaction's local copy of
+// the tournament object (t) and returns it — exactly the same pattern
+// beginTournamentInPlace() already used elsewhere in this file — so
+// Firebase's transaction retry mechanism handles any real concurrent
+// writes safely and automatically.
 // ============================================================
 
-function advanceEliminationRound(t, tournamentId){
+function mutateEliminationAdvance(t, currentRoundInfo){
 
-    const currentRoundInfo = t.rounds_data[t.currentRound];
-    if(!currentRoundInfo) return;
-
-    const nextRoundResult = generateEliminationNextRound(currentRoundInfo);
+    const nextRoundResult = generateEliminationNextRound(currentRoundInfo, t.players);
     const remaining = Object.keys(nextRoundResult.pairings).length * 2 + (nextRoundResult.bye ? 1 : 0);
-
-    const updates = {};
 
     if(remaining <= 1){
         let championUid = nextRoundResult.bye || null;
@@ -876,30 +909,25 @@ function advanceEliminationRound(t, tournamentId){
             const pairing = Object.values(nextRoundResult.pairings)[0];
             if(pairing) championUid = pairing.white || pairing.black || null;
         }
-
-        updates["tournaments/" + tournamentId + "/status"] = "completed";
-        if(championUid) updates["tournaments/" + tournamentId + "/champion"] = championUid;
-        db.ref().update(updates);
+        t.status = "completed";
+        if(championUid) t.champion = championUid;
         return;
     }
 
     const nextRound = t.currentRound + 1;
-    updates["tournaments/" + tournamentId + "/currentRound"] = nextRound;
-    updates["tournaments/" + tournamentId + "/rounds_data/" + nextRound] = nextRoundResult;
-
-    db.ref().update(updates);
+    t.currentRound = nextRound;
+    if(!t.rounds_data) t.rounds_data = {};
+    t.rounds_data[nextRound] = nextRoundResult;
 
 }
 
-function advanceDoubleEliminationRound(t, tournamentId){
-
-    const roundInfo = t.rounds_data[t.currentRound];
+function mutateDoubleEliminationAdvance(t, roundInfo){
 
     if(roundInfo.grandFinal){
         const gfPairing = Object.values(roundInfo.winners.pairings)[0];
         const championUid = gfPairing.result === "white" ? gfPairing.white : gfPairing.black;
-        db.ref("tournaments/" + tournamentId + "/status").set("completed");
-        db.ref("tournaments/" + tournamentId + "/champion").set(championUid);
+        t.status = "completed";
+        t.champion = championUid;
         return;
     }
 
@@ -925,9 +953,7 @@ function advanceDoubleEliminationRound(t, tournamentId){
     if(losersInfo.bye) losersStay.push(losersInfo.bye);
 
     const newLosersPool = losersStay.concat(droppedToLosers);
-
     const nextRound = t.currentRound + 1;
-    const updates = {};
 
     if(winnersStay.length === 1 && newLosersPool.length === 1){
         // Both brackets down to their champion — Grand Final.
@@ -940,105 +966,115 @@ function advanceDoubleEliminationRound(t, tournamentId){
                 roomCode: null
             }
         };
-        updates["tournaments/" + tournamentId + "/currentRound"] = nextRound;
-        updates["tournaments/" + tournamentId + "/rounds_data/" + nextRound] = { grandFinal: true, winners: { pairings: gfPairings, bye: null }, losers: null };
-        db.ref().update(updates);
+        t.currentRound = nextRound;
+        if(!t.rounds_data) t.rounds_data = {};
+        t.rounds_data[nextRound] = { grandFinal: true, winners: { pairings: gfPairings, bye: null }, losers: null };
         return;
     }
 
-    const nextWinners = winnersStay.length > 1 ? generateEliminationPairings(winnersStay) : { pairings: {}, bye: winnersStay[0] || null };
-    const nextLosers = newLosersPool.length > 1 ? generateEliminationPairings(newLosersPool) : { pairings: {}, bye: newLosersPool[0] || null };
+    const nextWinners = winnersStay.length > 1 ? generateEliminationPairings(winnersStay, t.players) : { pairings: {}, bye: winnersStay[0] || null };
+    const nextLosers = newLosersPool.length > 1 ? generateEliminationPairings(newLosersPool, t.players) : { pairings: {}, bye: newLosersPool[0] || null };
 
-    updates["tournaments/" + tournamentId + "/currentRound"] = nextRound;
-    updates["tournaments/" + tournamentId + "/rounds_data/" + nextRound] = { winners: nextWinners, losers: nextLosers };
-
-    db.ref().update(updates);
+    t.currentRound = nextRound;
+    if(!t.rounds_data) t.rounds_data = {};
+    t.rounds_data[nextRound] = { winners: nextWinners, losers: nextLosers };
 
 }
 
-// Fixed race condition: this used to read the tournament ONCE, then write
-// its result back using the LIVE currentViewedTournamentId global — if
-// the person tapped into a different tournament before the write landed,
-// the round data could land on the wrong tournament. Now the id is
-// captured locally the moment the button is tapped and threaded through
-// every helper, so later navigation can never redirect the write.
+function mutateRoundRobinAdvance(t){
+
+    if(t.currentRound >= t.rounds){
+        t.status = "completed";
+        return;
+    }
+
+    const nextRound = t.currentRound + 1;
+    const nextRoundInfo = t.rounds_data[nextRound];
+    t.currentRound = nextRound;
+
+    if(nextRoundInfo && nextRoundInfo.bye){
+        t.players[nextRoundInfo.bye].points = (t.players[nextRoundInfo.bye].points || 0) + 1;
+        t.players[nextRoundInfo.bye].byes = (t.players[nextRoundInfo.bye].byes || 0) + 1;
+    }
+
+}
+
+function mutateSwissAdvance(t){
+
+    if(t.currentRound >= t.rounds){
+        t.status = "completed";
+        return;
+    }
+
+    const playerUids = Object.keys(t.players || {});
+    const previousOpponents = {};
+    playerUids.forEach(function(uid){ previousOpponents[uid] = {}; });
+
+    for(let r = 1; r <= t.currentRound; r++){
+        const roundInfo = t.rounds_data[r];
+        if(!roundInfo || !roundInfo.pairings) continue;
+        Object.keys(roundInfo.pairings).forEach(function(pid){
+            const p = roundInfo.pairings[pid];
+            if(!previousOpponents[p.white]) previousOpponents[p.white] = {};
+            if(!previousOpponents[p.black]) previousOpponents[p.black] = {};
+            previousOpponents[p.white][p.black] = true;
+            previousOpponents[p.black][p.white] = true;
+        });
+    }
+
+    const nextRound = t.currentRound + 1;
+    const pairingResult = generateSwissPairings(playerUids, t.players, previousOpponents);
+
+    t.currentRound = nextRound;
+    t.rounds_data[nextRound] = pairingResult;
+
+    if(pairingResult.bye){
+        t.players[pairingResult.bye].points = (t.players[pairingResult.bye].points || 0) + 1;
+        t.players[pairingResult.bye].byes = (t.players[pairingResult.bye].byes || 0) + 1;
+    }
+
+}
+
 function advanceTournamentRound(){
 
     if(!currentViewedTournamentId || !db) return;
 
     const tournamentId = currentViewedTournamentId;
 
-    db.ref("tournaments/" + tournamentId).once("value").then(function(snapshot){
+    // Disable immediately so a double-tap can't even fire a second
+    // transaction while the first is still in flight.
+    const nextRoundBtn = document.getElementById("tournamentNextRoundBtn");
+    if(nextRoundBtn) nextRoundBtn.disabled = true;
 
-        const t = snapshot.val();
-        if(!t) return;
+    db.ref("tournaments/" + tournamentId).transaction(function(t){
+
+        if(!t) return t;
+        if(t.status !== "active") return t; // already finished, or not started — no-op
+
+        const roundInfo = t.rounds_data && t.rounds_data[t.currentRound];
+        if(!roundInfo) return t;
+
+        // The guard that used to live ONLY in the UI now lives here too —
+        // the round can never be forced forward mid-game, from anywhere.
+        if(!isRoundComplete(t, roundInfo)) return t;
 
         if(t.format === "double_elimination"){
-            advanceDoubleEliminationRound(t, tournamentId);
-            return;
+            mutateDoubleEliminationAdvance(t, roundInfo);
+        }else if(t.format === "elimination"){
+            mutateEliminationAdvance(t, roundInfo);
+        }else if(t.format === "round_robin"){
+            mutateRoundRobinAdvance(t);
+        }else{
+            mutateSwissAdvance(t);
         }
 
-        if(t.format === "elimination"){
-            advanceEliminationRound(t, tournamentId);
-            return;
-        }
+        return t;
 
-        if(t.format === "round_robin"){
-            if(t.currentRound >= t.rounds){
-                db.ref("tournaments/" + tournamentId + "/status").set("completed");
-                return;
-            }
-            const nextRound = t.currentRound + 1;
-            const nextRoundInfo = t.rounds_data[nextRound];
-            const updates = { ["tournaments/" + tournamentId + "/currentRound"]: nextRound };
-            if(nextRoundInfo && nextRoundInfo.bye){
-                updates["tournaments/" + tournamentId + "/players/" + nextRoundInfo.bye + "/points"] =
-                    (t.players[nextRoundInfo.bye].points || 0) + 1;
-                updates["tournaments/" + tournamentId + "/players/" + nextRoundInfo.bye + "/byes"] =
-                    (t.players[nextRoundInfo.bye].byes || 0) + 1;
-            }
-            db.ref().update(updates);
-            return;
-        }
-
-        // Swiss
-        if(t.currentRound >= t.rounds){
-            db.ref("tournaments/" + tournamentId + "/status").set("completed");
-            return;
-        }
-
-        const playerUids = Object.keys(t.players || {});
-        const previousOpponents = {};
-        playerUids.forEach(function(uid){ previousOpponents[uid] = {}; });
-
-        for(let r = 1; r <= t.currentRound; r++){
-            const roundInfo = t.rounds_data[r];
-            if(!roundInfo || !roundInfo.pairings) continue;
-            Object.keys(roundInfo.pairings).forEach(function(pid){
-                const p = roundInfo.pairings[pid];
-                if(!previousOpponents[p.white]) previousOpponents[p.white] = {};
-                if(!previousOpponents[p.black]) previousOpponents[p.black] = {};
-                previousOpponents[p.white][p.black] = true;
-                previousOpponents[p.black][p.white] = true;
-            });
-        }
-
-        const nextRound = t.currentRound + 1;
-        const pairingResult = generateSwissPairings(playerUids, t.players, previousOpponents);
-
-        const updates = {};
-        updates["tournaments/" + tournamentId + "/currentRound"] = nextRound;
-        updates["tournaments/" + tournamentId + "/rounds_data/" + nextRound] = pairingResult;
-
-        if(pairingResult.bye){
-            updates["tournaments/" + tournamentId + "/players/" + pairingResult.bye + "/points"] =
-                (t.players[pairingResult.bye].points || 0) + 1;
-            updates["tournaments/" + tournamentId + "/players/" + pairingResult.bye + "/byes"] =
-                (t.players[pairingResult.bye].byes || 0) + 1;
-        }
-
-        db.ref().update(updates);
-
+    }).catch(function(err){
+        console.error("Failed to advance tournament round:", err);
+        showInfoPopup("⚠️ Error", "Could not advance the round: " + err.message);
+    }).then(function(){
+        if(nextRoundBtn) nextRoundBtn.disabled = false;
     });
 
 }
@@ -1187,6 +1223,17 @@ function recordTournamentGameResult(myResult){
 // Arena — continuous matchmaking within a fixed time window
 // ============================================================
 
+// FIX (issue #3): the matchmaking queue now cleans up after itself.
+// - onDisconnect() removes a stuck queue entry if the player closes the
+//   tab, loses connection, or backgrounds the app while still searching.
+// - Leaving the tournament detail screen (stopTournamentDetailListener,
+//   called every time you navigate elsewhere) now also pulls you out of
+//   the queue, so no one can be silently matched with someone who's no
+//   longer even looking at the app.
+// - A visible Cancel action lets the player back out on purpose.
+let arenaQueueDisconnectRef = null;
+let arenaSearchingTournamentId = null;
+
 function startArenaCountdown(tournamentId, endsAt){
 
     stopArenaCountdown();
@@ -1237,7 +1284,16 @@ function joinArenaQueue(tournamentId){
 
     if(!tournamentId || !currentUser || !db) return;
 
-    const statusEl = document.getElementById("tournamentArenaStatus");
+    arenaSearchingTournamentId = tournamentId;
+
+    // Registered up front: if this device goes offline or the tab closes
+    // while still searching, Firebase itself removes the queue entry
+    // server-side — no ghost entries left for someone else to get paired
+    // with. Harmless to register even if the transaction below ends up
+    // matching us instantly instead of queueing us (there's simply
+    // nothing at that path to remove in that case).
+    arenaQueueDisconnectRef = db.ref("tournaments/" + tournamentId + "/arenaQueue/" + currentUser.uid);
+    arenaQueueDisconnectRef.onDisconnect().remove();
 
     db.ref("tournaments/" + tournamentId).transaction(function(t){
 
@@ -1276,12 +1332,56 @@ function joinArenaQueue(tournamentId){
         return t;
 
     }).then(function(){
-        if(statusEl){
-            statusEl.style.display = "block";
-            statusEl.textContent = "Searching for an opponent...";
-        }
+        renderArenaStatusContent(tournamentId, true);
+    }).catch(function(err){
+        showInfoPopup("⚠️ Error", "Could not join matchmaking: " + err.message);
     });
 
+}
+
+// Explicit "Cancel" action — pulls the player out of the queue on
+// purpose, distinct from the automatic onDisconnect cleanup above.
+function cancelArenaSearch(tournamentId){
+
+    if(!tournamentId || !currentUser || !db) return;
+
+    db.ref("tournaments/" + tournamentId + "/arenaQueue/" + currentUser.uid).remove().catch(function(){});
+
+    if(arenaQueueDisconnectRef){
+        arenaQueueDisconnectRef.cancel();
+        arenaQueueDisconnectRef = null;
+    }
+    arenaSearchingTournamentId = null;
+
+    renderArenaStatusContent(tournamentId, false);
+
+}
+
+// Called whenever we stop actively watching a tournament (navigating
+// away, switching to a different tournament's detail view, etc). Pulls
+// the player out of the queue so a match can never be created against
+// someone who's no longer even on this screen.
+function stopArenaSearchIfLeaving(){
+    if(arenaSearchingTournamentId && currentUser && db){
+        db.ref("tournaments/" + arenaSearchingTournamentId + "/arenaQueue/" + currentUser.uid).remove().catch(function(){});
+    }
+    if(arenaQueueDisconnectRef){
+        arenaQueueDisconnectRef.cancel();
+        arenaQueueDisconnectRef = null;
+    }
+    arenaSearchingTournamentId = null;
+}
+
+function renderArenaStatusContent(tournamentId, isSearching){
+    const statusEl = document.getElementById("tournamentArenaStatus");
+    if(!statusEl) return;
+    statusEl.style.display = "block";
+    if(isSearching){
+        statusEl.innerHTML = 'Searching for an opponent... ' +
+            '<button class="btnSecondary" style="width:auto;padding:4px 12px;font-size:12px;display:inline-block;margin-left:8px;" data-tid="' + tournamentId + '" onclick="cancelArenaSearch(this.dataset.tid)">Cancel</button>';
+    }else{
+        statusEl.textContent = "Tap Find Opponent to play.";
+    }
 }
 
 // Listens for this player being matched, and jumps straight into the game
@@ -1298,6 +1398,14 @@ function startArenaPendingListener(tournamentId){
         const pairId = snap.val();
         if(!pairId) return;
 
+        // We've been matched — no longer "searching," so cancel our own
+        // disconnect-cleanup hook (nothing left at that path to remove).
+        if(arenaQueueDisconnectRef){
+            arenaQueueDisconnectRef.cancel();
+            arenaQueueDisconnectRef = null;
+        }
+        arenaSearchingTournamentId = null;
+
         joinArenaMatch(tournamentId, pairId);
 
         db.ref("tournaments/" + tournamentId + "/arenaPending/" + currentUser.uid).set(null);
@@ -1311,6 +1419,7 @@ function stopArenaPendingListener(){
         arenaPendingRef.off();
         arenaPendingRef = null;
     }
+    stopArenaSearchIfLeaving();
 }
 
 function joinArenaMatch(tournamentId, pairId){
