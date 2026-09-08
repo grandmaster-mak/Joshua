@@ -10,6 +10,7 @@ const board = document.getElementById("board");
 let currentPlayer = "white";
 let gameMode = "human";
 let isCoachMode = false;
+let userExplicitlyLoggedOut = false;  
 
 // Tracks which bottom-nav tab (home/friends/account) was last active.
 let lastActiveTab = "home";
