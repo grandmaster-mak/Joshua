@@ -219,6 +219,15 @@ function openNotifications(){
     showInfoPopup("🔔 Notifications", "You're all caught up.");
 }
 
+// ============================================================
+// SIGN UP — now retries on network errors instead of dying on the
+// first hiccup, exactly the way Log In already did. Real errors
+// (username taken, email already in use, weak password, malformed
+// email) still show immediately — only network-shaped failures retry.
+// ============================================================
+
+let signupAttemptToken = 0;
+
 function signUp(){
 
     if(!auth){
@@ -229,22 +238,44 @@ function signUp(){
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
     const username = document.getElementById("authUsername").value.trim();
-const country = document.getElementById("authCountry").value;
-if(username.length > 10){
-    document.getElementById("authStatus").textContent = "Username must be 10 characters or less.";
-    return;
-}
+    const country = document.getElementById("authCountry").value;
+
+    if(username.length > 10){
+        document.getElementById("authStatus").textContent = "Username must be 10 characters or less.";
+        return;
+    }
+
     const preferredLanguage = document.getElementById("authLanguage").value;
     if(typeof applyLanguage === "function") applyLanguage(preferredLanguage);
+
     if(!email || !password || !username || !country){
         document.getElementById("authStatus").textContent = "Please fill in all fields, including country.";
         return;
     }
 
-    document.getElementById("authStatus").textContent = "Checking username...";
+    // Fail fast and honestly if the device itself reports no connection
+    // at all — no point starting an attempt that can't possibly succeed.
+    if(typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine){
+        document.getElementById("authStatus").textContent = "You appear to be offline. Reconnect and try again.";
+        return;
+    }
+
+    const myToken = ++signupAttemptToken;
+    attemptSignUp(email, password, username, country, myToken, 0);
+}
+
+function attemptSignUp(email, password, username, country, myToken, attemptNumber){
+
+    if(myToken !== signupAttemptToken) return; // superseded by a newer tap
+
+    document.getElementById("authStatus").textContent = attemptNumber === 0
+        ? "Checking username..."
+        : "Still trying to reach the server (attempt " + (attemptNumber + 1) + ") — we'll keep going...";
 
     db.ref("usernames/" + username).once("value")
         .then(function(nameSnap){
+
+            if(myToken !== signupAttemptToken) return Promise.reject("superseded");
 
             if(nameSnap.exists()){
                 document.getElementById("authStatus").textContent = "That username is already taken.";
@@ -252,11 +283,12 @@ if(username.length > 10){
             }
 
             document.getElementById("authStatus").textContent = "Creating account...";
-
             return auth.createUserWithEmailAndPassword(email, password);
 
         })
         .then(function(userCredential){
+
+            if(myToken !== signupAttemptToken) return;
 
             const uid = userCredential.user.uid;
 
@@ -285,17 +317,35 @@ if(username.length > 10){
             };
             // ===== END KINGDOM INITIALIZATION =====
             updates["usernames/" + username] = uid;
-updates["usernamesLower/" + username.toLowerCase()] = uid;
+            updates["usernamesLower/" + username.toLowerCase()] = uid;
 
             return db.ref().update(updates);
 
         })
         .then(function(){
+            if(myToken !== signupAttemptToken) return;
             document.getElementById("authStatus").textContent = "Account created! You're now logged in.";
         })
         .catch(function(error){
-            if(error === "username_taken") return;
-            document.getElementById("authStatus").textContent = "Error: " + error.message;
+
+            if(error === "username_taken" || error === "superseded") return;
+            if(myToken !== signupAttemptToken) return;
+
+            // A REAL answer came back from Firebase (email already in use,
+            // weak password, malformed email, etc) — worth showing, since
+            // retrying forever would never fix any of those.
+            if(error.code && error.code !== "auth/network-request-failed"){
+                document.getElementById("authStatus").textContent = "Error: " + error.message;
+                return;
+            }
+
+            // Network-shaped failure (including the username-check read
+            // itself timing out) — just try again, indefinitely, same
+            // policy as Log In.
+            setTimeout(function(){
+                attemptSignUp(email, password, username, country, myToken, attemptNumber + 1);
+            }, 1500);
+
         });
 
 }
@@ -319,6 +369,11 @@ function logIn(){
         return;
     }
 
+    if(typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine){
+        document.getElementById("authStatus").textContent = "You appear to be offline. Reconnect and try again.";
+        return;
+    }
+
     // Every fresh tap of the Log In button starts a brand new attempt
     // sequence and invalidates any still-running one — this is also how
     // a person can effectively "cancel" a stuck attempt: just tap Log In
@@ -335,7 +390,7 @@ function attemptLogin(email, password, myToken, attemptNumber){
 
     document.getElementById("authStatus").textContent = attemptNumber === 0
         ? "Logging in..."
-        : "Still trying to log in — your connection is slow, but we'll keep going...";
+        : "Still trying to log in (attempt " + (attemptNumber + 1) + ") — your connection is slow, but we'll keep going...";
 
     // No artificial timeout here — an earlier version fired a SECOND
     // concurrent login request whenever one seemed to be taking too
