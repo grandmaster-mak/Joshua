@@ -479,6 +479,7 @@ function refreshLiveProfileInBackground(uid){
         applyHomeHeader(data);
 
         if(typeof listenForChallenges === "function") listenForChallenges();
+        if(typeof listenForMyCircleSessions === "function") listenForMyCircleSessions();
         if(typeof refreshDailyChallengeUI === "function") refreshDailyChallengeUI();
         if(typeof refreshDailyRewardBadge === "function") refreshDailyRewardBadge();
 
