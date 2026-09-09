@@ -4346,3 +4346,31 @@ html, body {
 }
 .drawOfferBarAccept{ background:#22c55e; color:#fff; }
 .drawOfferBarDecline{ background:#e5484d; color:#fff; }
+/* ===== Circles screen — light theme, matches Friends/Account/Tournaments ===== */
+#circlesScreen{ background:#f2f0ee !important; }
+#circlesScreen h2{ color:#1a1a1a; font-size:20px; font-weight:700; margin:14px 0 6px; }
+#circlesScreen .sub{ color:#8a8580; }
+#circlesScreen .fieldLabel{ color: var(--themeOrange, #FF7A1A); }
+#circlesScreen label{ color:#1a1a1a; }
+
+#circlesScreen input,
+#circlesScreen select{
+    background:#ffffff;
+    color:#1a1a1a;
+    border:1px solid #eee1d6;
+}
+
+#circlesScreen .tournamentCard{
+    background:#ffffff; border:none; border-radius:16px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05); height:auto; padding:16px;
+}
+#circlesScreen .tournamentCardName{ color:#1a1a1a; font-size:16px; }
+#circlesScreen .tournamentCardMeta{ color:#8a8580; }
+
+#circlesScreen .friendCard,
+#circlesScreen .requestCard{
+    background:#ffffff; border:none;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05); border-radius:14px;
+}
+#circlesScreen .friendName{ color:#1a1a1a; }
+#circlesScreen .friendRating{ color:#8a8580; }
