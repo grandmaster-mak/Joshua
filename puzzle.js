@@ -1018,7 +1018,7 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, king
    const lockedBlurStyle = !isUnlocked ? "filter:blur(7px) saturate(0.6);" : ""; 
 
     card.innerHTML =
-        '<div class="puzzleMapCardContent" style="position:relative; z-index:2; padding:18px;">' +
+        '<div class="puzzleMapCardContent" style="position:relative; z-index:2; padding:18px; ' + lockedBlurStyle + '">' +
             '<div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px;">' +
                 '<div style="min-width:0;">' +
                     '<div style="display:flex; align-items:center; flex-wrap:wrap;"><span style="font-weight:800; font-size:19px; color:#1a1a1a; ' + headerTextShadow + '">' + escapeHtml(kingdom.name) + '</span>' + badgeHtml + '</div>' +
@@ -1030,10 +1030,15 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, king
                 '</div>' +
             '</div>' +
             '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">' + tilesHtml + '</div>' +
-        '</div>';
+        '</div>' +
+        (!isUnlocked ?
+            '<div class="puzzleMapLockOverlay" style="position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(255,255,255,0.5); pointer-events:none;">' +
+                '<div style="font-size:34px;">🔒</div>' +
+                '<div style="font-weight:800; color:#1a1a1a; font-size:13px; margin-top:6px;">Locked</div>' +
+            '</div>'
+        : '');
 
     const contentWrap = card.querySelector(".puzzleMapCardContent");
-
     card.querySelectorAll(".puzzleMapTile").forEach(function(tileEl){
         const localIdx = Number(tileEl.dataset.localIdx);
         const p = tierPuzzles[localIdx];
