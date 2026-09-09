@@ -3300,8 +3300,8 @@ input::placeholder{ color:#4a5060; }
 
 .challengeCreateBtn {
     width: 100%; margin-top: 20px; padding: 17px; border: none; border-radius: 16px;
-    background: linear-gradient(90deg, var(--themeOrange, #FF7A1A), #ff9d4d); color: #ffffff; font-weight: 800; font-size: 16px;
-    cursor: pointer; box-shadow: 0 8px 20px rgba(255,122,26,0.3);
+    background: var(--themeOrange, #FF7A1A); color: #ffffff; font-weight: 800; font-size: 16px;
+    cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 
