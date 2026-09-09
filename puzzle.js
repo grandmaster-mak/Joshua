@@ -21,11 +21,18 @@
 // KINGDOM_LEVELS / kingdomState in script.js): puzzles 1-20 belong to
 // Village, 21-40 to Town, 41-60 to Fortress, and so on.
 //
-// A tier's puzzles are only visible/playable once the player's saved
-// kingdom (kingdomState.currentLevel) has reached that tier. WITHIN an
-// unlocked tier, puzzles must be solved in order — solving puzzle N
-// unlocks puzzle N+1; you can still tap back into an already-solved
-// puzzle to replay it, but you can't skip ahead.
+// A tier's puzzles are only visible/playable once BOTH of the following
+// are true (FIXED — previously only the first condition was checked):
+//   1. The player's saved kingdom (kingdomState.currentLevel, earned by
+//      winning games) has reached that tier, AND
+//   2. The player has solved all 20 puzzles of every tier before it.
+// Reaching a kingdom by winning games does NOT by itself unlock that
+// kingdom's puzzles if earlier puzzle tiers are still incomplete — both
+// gates must be satisfied. See getPuzzleUnlockedTierIndex() below.
+//
+// WITHIN an unlocked tier, puzzles must be solved in order — solving
+// puzzle N unlocks puzzle N+1; you can still tap back into an
+// already-solved puzzle to replay it, but you can't skip ahead.
 //
 // ---- Daily gating ----
 // Within an unlocked tier, only ONE brand-new (never-solved) puzzle
@@ -249,13 +256,43 @@ function sortPuzzlesChronologically(pool){
 
 // Index (0-based) of the player's current kingdom tier within
 // KINGDOM_LEVELS. Falls back to 0 (Village) if kingdom data isn't
-// available for some reason.
+// available for some reason. This reflects WIN-STREAK progress only —
+// it does NOT by itself mean puzzle tiers up to here are unlocked; see
+// getPuzzleUnlockedTierIndex() for the combined gate.
 function getCurrentTierIndex(){
     if(typeof KINGDOM_LEVELS === "undefined" || typeof kingdomState === "undefined"){
         return 0;
     }
     const idx = KINGDOM_LEVELS.findIndex(function(k){ return k.id === kingdomState.currentLevel; });
     return idx >= 0 ? idx : 0;
+}
+
+// ---- FIX: combined puzzle-tier unlock gate ----
+// A tier index is unlocked only if BOTH of these hold:
+//   1. The player's kingdom (win-streak based) has reached that tier
+//      (tierIndex <= getCurrentTierIndex()).
+//   2. Every tier before it has been FULLY solved (all 20 puzzles).
+// Previously only condition 1 was checked, so a player could win their
+// way up to, say, Town kingdom while having solved zero Village
+// puzzles, and Town's puzzles would still show as unlocked. Now the
+// highest unlocked tier is capped at the first incomplete tier,
+// regardless of kingdom rank.
+function getPuzzleUnlockedTierIndex(sortedPool, solvedIds){
+
+    const kingdomTierIndex = getCurrentTierIndex();
+    let unlockedTierIndex = 0; // tier 0 (Village) is always the floor
+
+    for(let i = 0; i < kingdomTierIndex; i++){
+        const tierPuzzles = sortedPool.slice(i * PUZZLE_UNLOCKS_PER_TIER, i * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER);
+        const solvedCount = tierPuzzles.filter(function(p){ return p && solvedIds[p.id]; }).length;
+        if(solvedCount < PUZZLE_UNLOCKS_PER_TIER){
+            break; // this tier isn't finished — stop advancing, don't unlock further
+        }
+        unlockedTierIndex = i + 1;
+    }
+
+    return Math.min(unlockedTierIndex, kingdomTierIndex);
+
 }
 
 function fenToPieces(fen){
@@ -331,10 +368,14 @@ function getInstantPuzzleDecision(){
     const solvedIds = (cachedState && cachedState.solvedIds) || {};
     const lastSolvedDate = (cachedState && cachedState.lastSolvedDate) || null;
 
-    const currentTierIndex = getCurrentTierIndex();
+    // FIX: was getCurrentTierIndex() (kingdom rank only) — now uses the
+    // combined gate so this never opens a puzzle from a tier whose
+    // predecessor isn't fully solved yet, even if kingdom rank alone
+    // would have allowed it.
+    const unlockedTierIndex = getPuzzleUnlockedTierIndex(sorted, solvedIds);
     const tierPuzzles = sorted.slice(
-        currentTierIndex * PUZZLE_UNLOCKS_PER_TIER,
-        currentTierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
+        unlockedTierIndex * PUZZLE_UNLOCKS_PER_TIER,
+        unlockedTierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
     );
 
     let nextPlayableLocal = -1;
@@ -826,7 +867,11 @@ function renderPuzzleMap(sortedPool, solvedIds, lastSolvedDate){
     const bodyEl = document.getElementById("puzzleMapBody");
     if(!bodyEl) return;
 
-    const currentTierIndex = getCurrentTierIndex();
+    // FIX: was getCurrentTierIndex() (kingdom rank only) — the map now
+    // uses the combined gate everywhere, so the badges/lock reasons and
+    // the actual set of playable tiles always agree with each other.
+    const kingdomTierIndex = getCurrentTierIndex();
+    const puzzleUnlockedTierIndex = getPuzzleUnlockedTierIndex(sortedPool, solvedIds);
     const totalTiers = KINGDOM_LEVELS.length;
     const totalPuzzlesInGame = totalTiers * PUZZLE_UNLOCKS_PER_TIER;
 
@@ -848,7 +893,7 @@ function renderPuzzleMap(sortedPool, solvedIds, lastSolvedDate){
             tierIndex * PUZZLE_UNLOCKS_PER_TIER + PUZZLE_UNLOCKS_PER_TIER
         );
 
-        bodyEl.appendChild(buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex, lastSolvedDate));
+        bodyEl.appendChild(buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, kingdomTierIndex, puzzleUnlockedTierIndex, lastSolvedDate));
     }
 
     const progressPct = totalPuzzlesInGame > 0 ? Math.min(100, (totalSolved / totalPuzzlesInGame) * 100) : 0;
@@ -874,10 +919,18 @@ function renderPuzzleMap(sortedPool, solvedIds, lastSolvedDate){
 // description, X/20 solved), the 20-tile grid, and either a "Play"
 // button (next unsolved puzzle, only if unlocked for today), a
 // "come back tomorrow" note, or a "Conquered" banner.
-function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, currentTierIndex, lastSolvedDate){
+//
+// FIX: isUnlocked now uses the combined gate (tierIndex <=
+// puzzleUnlockedTierIndex) instead of kingdom rank alone. Two distinct
+// lock reasons are now shown: "reach this kingdom by winning games" vs
+// "finish the previous kingdom's puzzles first" — previously both cases
+// were shown as the same generic message, and the kingdom-rank-only
+// case was actually let through as unlocked when it shouldn't have been.
+function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, kingdomTierIndex, puzzleUnlockedTierIndex, lastSolvedDate){
 
-    const isUnlocked = tierIndex <= currentTierIndex;
-    const isCurrent = tierIndex === currentTierIndex;
+    const isUnlocked = tierIndex <= puzzleUnlockedTierIndex;
+    const isCurrent = tierIndex === puzzleUnlockedTierIndex;
+    const kingdomRankReached = tierIndex <= kingdomTierIndex;
     const newUnlockedToday = isNewPuzzleUnlockedToday(lastSolvedDate);
 
     let solvedCount = 0;
@@ -895,9 +948,17 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, curr
     const conquered = isUnlocked && solvedCount === PUZZLE_UNLOCKS_PER_TIER;
     const prevKingdom = tierIndex > 0 ? KINGDOM_LEVELS[tierIndex - 1] : null;
 
-    const descText = !isUnlocked
-        ? ("Complete " + (prevKingdom ? prevKingdom.name : "the previous kingdom") + " puzzles to unlock this place.")
-        : (conquered ? ("You've solved all " + kingdom.name + " puzzles.") : kingdom.description);
+    let descText;
+    if(isUnlocked){
+        descText = conquered ? ("You've solved all " + kingdom.name + " puzzles.") : kingdom.description;
+    }else if(!kingdomRankReached){
+        descText = "Win enough games to reach the " + kingdom.name + " kingdom to unlock this place.";
+    }else{
+        // Kingdom rank reached by wins, but a previous puzzle tier is
+        // still incomplete — this is exactly the case that used to be
+        // (incorrectly) shown as unlocked.
+        descText = "Finish all " + (prevKingdom ? prevKingdom.name : "the previous kingdom") + " puzzles to unlock this place.";
+    }
 
     const badgeHtml = !isUnlocked
         ? '<span style="background:#eee; color:#8a8580; font-size:11px; font-weight:700; padding:3px 10px; border-radius:10px; margin-left:8px; white-space:nowrap;">🔒 Locked</span>'
