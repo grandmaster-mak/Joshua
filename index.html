@@ -313,6 +313,57 @@
 
     <!-- App Shell -->
     <div id="appShell">
+        <!-- CIRCLES SCREEN -->
+<div id="circlesScreen" class="screen" style="display:none; padding-left:24px; padding-right:24px;">
+
+    <div id="circlesListView">
+        <h2>Circles</h2>
+        <p class="sub">Team up with friends, agree on a time, and build your Mansion together.</p>
+        <button class="btnPrimary" onclick="showCreateCircleView()">+ Create a Circle</button>
+
+        <span class="fieldLabel">Circle Invites</span>
+        <div id="circleInvitesList"><p class="sub">Loading...</p></div>
+
+        <span class="fieldLabel">My Circles</span>
+        <div id="myCirclesList"><p class="sub">Loading...</p></div>
+
+        <span class="fieldLabel">Discover Circles</span>
+        <div id="discoverCirclesList"><p class="sub">Loading...</p></div>
+    </div>
+
+    <div id="circleCreateView" style="display:none;">
+        <span class="fieldLabel">Circle Name</span>
+        <input type="text" id="circleNameInput" placeholder="e.g. Friday Night Crew">
+        <label style="display:flex; align-items:center; gap:8px; margin-top:14px;">
+            <input type="checkbox" id="circleIsPublicInput" checked style="width:auto; margin:0;">
+            <span class="sub" style="margin:0;">Public — anyone can find and join this Circle</span>
+        </label>
+        <button class="btnPrimary" onclick="createCircle()">Create Circle</button>
+        <button class="btnSecondary" onclick="showCirclesListView()">Cancel</button>
+    </div>
+
+    <div id="circleDetailView" style="display:none;">
+        <button class="btnSecondary" style="width:auto; padding:8px 14px;" onclick="showCirclesListView()">← Back</button>
+        <h2 id="circleDetailName"></h2>
+        <p class="sub" id="circleDetailMemberCount"></p>
+
+        <div id="circleJoinAction"></div>
+
+        <span class="fieldLabel">Members</span>
+        <div id="circleMembersList"></div>
+
+        <div id="circleInviteSection" style="display:none;">
+            <span class="fieldLabel">Invite a Friend</span>
+            <div id="circleInviteFriendsList"></div>
+        </div>
+
+        <div id="circleSessionSection" style="display:none;">
+            <span class="fieldLabel">Session</span>
+            <div id="circleSessionContent"></div>
+        </div>
+    </div>
+
+</div>
 
         <!-- HOME SCREEN -->
         <div id="homeScreen" class="screen">
