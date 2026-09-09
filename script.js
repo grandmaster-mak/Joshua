@@ -2466,7 +2466,9 @@ function switchScreen(name){
     if(name === "friends" && typeof loadFriendsData === "function"){
         loadFriendsData();
     }
-
+if(name === "circles" && typeof loadCirclesData === "function"){
+        loadCirclesData();
+    }
     if(name === "account" && currentUser && db && typeof checkAndShowOwnAwardBanner === "function"){
         db.ref("users/" + currentUser.uid + "/public").once("value").then(function(snap){
             const data = snap.val();
