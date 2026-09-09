@@ -2454,8 +2454,7 @@ function switchScreen(name){
 
     lastActiveTab = name;
 
-    const screens = ["home", "friends", "kingdom", "account"];
-
+   const screens = ["home", "friends", "kingdom", "circles", "account"]; 
     screens.forEach(function(s){
         document.getElementById(s + "Screen").style.display = (s === name) ? "flex" : "none";
     });
