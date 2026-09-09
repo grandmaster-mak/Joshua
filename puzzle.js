@@ -1015,6 +1015,7 @@ function buildPuzzleKingdomCard(kingdom, tierIndex, tierPuzzles, solvedIds, king
     }
 
     const headerTextShadow = "text-shadow:0 1px 4px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.7);";
+   const lockedBlurStyle = !isUnlocked ? "filter:blur(7px) saturate(0.6);" : ""; 
 
     card.innerHTML =
         '<div class="puzzleMapCardContent" style="position:relative; z-index:2; padding:18px;">' +
