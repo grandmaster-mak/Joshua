@@ -4113,22 +4113,22 @@ html, body {
 
 /* Leaderboard header */
 #leaderboardScreen .fsHeader {
-    background: linear-gradient(135deg, var(--themeOrange, #FF7A1A), #ff9d4d) !important;
+    background: var(--themeOrange, #FF7A1A) !important;
 }
 
 /* Analysis header */
 #analysisScreen .fsHeader {
-    background: linear-gradient(135deg, var(--themeOrange, #FF7A1A), #ff9d4d) !important;
+    background: var(--themeOrange, #FF7A1A) !important;
 }
 
 /* Daily Rewards header */
 #dailyRewardsScreen .fsHeader {
-    background: linear-gradient(135deg, var(--themeOrange, #FF7A1A), #ff9d4d) !important;
+    background: var(--themeOrange, #FF7A1A) !important;
 }
 
 /* Challenge a Friend header */
 .challengeHeader {
-    background: linear-gradient(135deg, var(--themeOrange, #FF7A1A), #ff9d4d) !important;
+    background: var(--themeOrange, #FF7A1A) !important;
 }
 
 /* Ensure header buttons and text remain visible */
