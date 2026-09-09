@@ -3155,13 +3155,13 @@ input::placeholder{ color:#4a5060; }
     box-sizing: border-box;
     margin: 4px 0 18px;
     padding: 14px 20px;
-    background: linear-gradient(90deg, var(--themeOrange, #FF7A1A), #ff9d4d);
+    background: var(--themeOrange, #FF7A1A);
     border: none;
     border-radius: 14px;
     color: #fff;
     font-weight: 700;
     font-size: 15px;
-    box-shadow: 0 4px 14px rgba(255,122,26,0.25);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
     cursor: pointer;
 }
 .challengeFriendBarIcon { font-size: 18px; }
