@@ -33,7 +33,8 @@ function initAnalysisEngine(){
         analysisStockfish = new Worker("stockfish-18-lite-single.js");
 
         analysisStockfish.onerror = function(err){
-    console.error("Analysis engine failed to load:", err.message);
+    if(err && typeof err.preventDefault === "function") err.preventDefault(); // stop it also bubbling to window's global error handler
+    console.error("Analysis engine failed to load:", err && err.message ? err.message : err);
     const evalEl = document.getElementById("analysisEvalText");
     if(evalEl) evalEl.textContent = "Engine unavailable offline";
     analysisStockfish = null;
