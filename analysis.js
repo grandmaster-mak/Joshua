@@ -155,6 +155,7 @@ function resetAnalysisBoard(){
 function flipAnalysisBoard(){
     analysisFlipped = !analysisFlipped;
     createAnalysisBoard();
+    updateAnalysisDisplay(); // redraw arrows for the new orientation using the existing PV — no engine requery needed
 }
 const ANALYSIS_CATEGORY_LABELS = { opening:"Openings", middlegame:"Middlegames", endgame:"Endgames" };
 
