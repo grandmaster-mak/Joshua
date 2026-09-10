@@ -727,10 +727,18 @@ function startCircleSessionTransaction(circleId, sitOutUid){
                 };
             }
 
+            const participantsInfo = {};
+            shuffled.forEach(function(uid){
+                participantsInfo[uid] = {
+                    username: (c.members[uid] || {}).username || "Player",
+                    flag: (c.members[uid] || {}).flag || ""
+                };
+            });
+
             const sessionId = db.ref("circleSessions").push().key;
 
             const updates = {};
-            updates["circleSessions/" + sessionId] = { circleId: circleId, startedAt: Date.now(), pairings: pairings };
+            updates["circleSessions/" + sessionId] = { circleId: circleId, startedAt: Date.now(), pairings: pairings, participants: participantsInfo };
             updates["circles/" + circleId + "/pendingSession/status"] = "confirmed";
             updates["circles/" + circleId + "/pendingSession/sessionId"] = sessionId;
             updates["circles/" + circleId + "/pendingSession/sitOutUid"] = sitOutUid || null;
