@@ -2709,6 +2709,7 @@ function recordGameResult(myResult, opponentName){
 
     if(typeof checkAchievements === "function") checkAchievements(currentUser.uid, freshData);
     showRatingChangePopup(myResult);
+      if(typeof updateMansionOnGameResult === "function") updateMansionOnGameResult(myResult);
 
     // Apply the new numbers immediately — otherwise the rating shown on
     // Home/Account stays whatever it was BEFORE this game until the app
