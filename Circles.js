@@ -59,7 +59,91 @@ let activeCirclePairingId = null;
 let currentViewedCircleId = null;
 let circleDetailRef = null;
 let joinedCircleSessionIds = {}; // guards against double-joining the same session if the listener fires more than once
+let shownGatheringSessionIds = {}; // avoids replaying the animation if this listener fires more than once
 
+function showCircleGatheringScreen(sessionId){
+
+    if(shownGatheringSessionIds[sessionId]) return;
+    shownGatheringSessionIds[sessionId] = true;
+
+    if(typeof hideAllScreensBeforeGame === "function") hideAllScreensBeforeGame();
+    document.getElementById("circleGatheringScreen").style.display = "flex";
+
+    db.ref("circleSessions/" + sessionId).once("value").then(function(snap){
+
+        const session = snap.val();
+        if(!session){
+            document.getElementById("circleGatheringScreen").style.display = "none";
+            maybeJoinMyCirclePairing(sessionId);
+            return;
+        }
+
+        renderCircleGatheringTables(session);
+
+        let remaining = 4;
+        const countdownEl = document.getElementById("circleGatheringCountdown");
+        if(countdownEl) countdownEl.textContent = "Taking your seats in " + remaining + "...";
+
+        const interval = setInterval(function(){
+            remaining--;
+            if(countdownEl) countdownEl.textContent = remaining > 0 ? "Taking your seats in " + remaining + "..." : "Let's play!";
+            if(remaining <= 0){
+                clearInterval(interval);
+                setTimeout(function(){
+                    document.getElementById("circleGatheringScreen").style.display = "none";
+                    maybeJoinMyCirclePairing(sessionId);
+                }, 600);
+            }
+        }, 1000);
+
+    }).catch(function(err){
+        console.error("Failed to load gathering session:", err.message);
+        document.getElementById("circleGatheringScreen").style.display = "none";
+        maybeJoinMyCirclePairing(sessionId);
+    });
+
+}
+
+function renderCircleGatheringTables(session){
+
+    const container = document.getElementById("circleGatheringTables");
+    if(!container) return;
+
+    container.innerHTML = "";
+
+    const participants = session.participants || {};
+    const pairings = session.pairings || {};
+    let delayIndex = 0;
+
+    Object.keys(pairings).forEach(function(pid){
+
+        const p = pairings[pid];
+        const whiteInfo = participants[p.white] || { username: "Player", flag: "" };
+        const blackInfo = participants[p.black] || { username: "Player", flag: "" };
+
+        const tableEl = document.createElement("div");
+        tableEl.className = "circleGatheringTable";
+        tableEl.innerHTML =
+            buildGatheringAvatarHtml(whiteInfo, delayIndex++) +
+            '<div class="circleGatheringBoardIcon">♟️</div>' +
+            buildGatheringAvatarHtml(blackInfo, delayIndex++);
+
+        container.appendChild(tableEl);
+
+    });
+
+}
+
+function buildGatheringAvatarHtml(info, delayIndex){
+    const initial = (info.username || "?").charAt(0).toUpperCase();
+    const delay = (delayIndex * 0.15).toFixed(2);
+    return (
+        '<div class="circleGatheringAvatarWrap" style="animation-delay:' + delay + 's;">' +
+            '<div class="circleGatheringAvatarCircle">' + escapeHtml(initial) + '</div>' +
+            '<span class="circleGatheringAvatarName">' + escapeHtml(info.flag || "") + ' ' + escapeHtml(info.username) + '</span>' +
+        '</div>'
+    );
+}
 // ---- Top-level entry point, called from switchScreen('circles') ----
 function isActiveCircleSessionGame(){
     return !!(activeCircleSessionId && activeCirclePairingId);
