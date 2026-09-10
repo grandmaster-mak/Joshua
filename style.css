@@ -4396,3 +4396,62 @@ html, body {
     max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 @keyframes circleGatheringFadeIn{ to{ opacity:1; transform:translateY(0); } }
+/* ===== My Mansion — ornate gold/black trophy-room theme ===== */
+
+.mansionOrnateHeader{
+    display:flex; align-items:center; gap:14px;
+    padding:18px 20px; flex-shrink:0;
+}
+.mansionOrnateBackBtn{
+    width:42px; height:42px; margin:0; padding:0; flex-shrink:0;
+    border-radius:50%; background:rgba(255,215,0,0.12);
+    border:1.5px solid rgba(255,215,0,0.5); color:#ffd700;
+    font-size:20px; cursor:pointer;
+}
+.mansionOrnateTitleWrap{ flex:1; text-align:center; }
+.mansionOrnateCrown{ font-size:20px; line-height:1; margin-bottom:2px; }
+.mansionOrnateTitle{
+    font-family:'Cinzel', serif; font-weight:800; font-size:24px;
+    margin:0; letter-spacing:0.5px;
+    color:#ffd700;
+    text-shadow:0 0 12px rgba(255,215,0,0.35);
+}
+
+.mansionOrnateFrameWrap{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    padding:8px 26px 0;
+}
+.mansionOrnateFrame{
+    width:100%; aspect-ratio:3/4; border-radius:20px; overflow:hidden;
+    padding:5px;
+    background:linear-gradient(135deg,#ffe9a8,#c9932e,#ffd700,#8a6416);
+    box-shadow:0 0 26px rgba(255,215,0,0.25), 0 12px 30px rgba(0,0,0,0.6);
+}
+.mansionOrnateFrame img{
+    width:100%; height:100%; object-fit:cover;
+    border-radius:16px; display:block;
+    border:2px solid rgba(0,0,0,0.5);
+}
+.mansionOrnateLeaf{
+    position:absolute; top:50%; transform:translateY(-50%);
+    font-size:26px; opacity:0.85;
+}
+.mansionOrnateLeafLeft{ left:0; }
+.mansionOrnateLeafRight{ right:0; transform:translateY(-50%) scaleX(-1); }
+
+.mansionOrnatePlaque{
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    margin:22px 30px 4px; padding:12px 18px;
+    background:linear-gradient(135deg,#1a1408,#241c0c);
+    border:1.5px solid rgba(255,215,0,0.55); border-radius:30px;
+}
+.mansionOrnatePlaque h3{
+    font-family:'Cinzel', serif; font-weight:700; font-size:17px;
+    color:#ffd700; margin:0; letter-spacing:0.4px;
+}
+.mansionOrnateDiamond{ color:#ffd700; font-size:13px; opacity:0.8; }
+
+.mansionOrnateProgress{
+    text-align:center; color:#c9b27a; font-size:13px;
+    margin:6px 0 24px; letter-spacing:0.3px;
+}
