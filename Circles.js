@@ -61,7 +61,27 @@ let circleDetailRef = null;
 let joinedCircleSessionIds = {}; // guards against double-joining the same session if the listener fires more than once
 
 // ---- Top-level entry point, called from switchScreen('circles') ----
+function isActiveCircleSessionGame(){
+    return !!(activeCircleSessionId && activeCirclePairingId);
+}
 
+function finalizeCircleSessionGameResult(myResult){
+    if(!activeCircleSessionId || !activeCirclePairingId || !db) return;
+    const sessionId = activeCircleSessionId;
+    const pid = activeCirclePairingId;
+    activeCircleSessionId = null;
+    activeCirclePairingId = null;
+
+    // Whichever player's client reports first "wins" the write — the
+    // other's report becomes a harmless no-op since the field's already
+    // filled. Fine for now; a more precise version can come later.
+    db.ref("circleSessions/" + sessionId + "/pairings/" + pid + "/result").transaction(function(current){
+        if(current) return;
+        return myResult;
+    }).catch(function(err){
+        console.error("Failed to record circle session pairing result:", err.message);
+    });
+}
 function loadCirclesData(){
     showCirclesListView();
     loadCircleInvites();
