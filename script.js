@@ -3113,6 +3113,7 @@ window.addEventListener("popstate", function(event){
 
     if(!state || !state.screen){
         document.getElementById("tournamentsScreen").style.display = "none";
+      document.getElementById("mansionScreen").style.display = "none";
         document.getElementById("puzzleScreen").style.display = "none";
         document.getElementById("puzzleMapScreen").style.display = "none";
         document.getElementById("leaderboardScreen").style.display = "none";
