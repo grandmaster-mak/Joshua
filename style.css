@@ -4347,7 +4347,7 @@ html, body {
 .drawOfferBarAccept{ background:#22c55e; color:#fff; }
 .drawOfferBarDecline{ background:#e5484d; color:#fff; }
 /* ===== Circles screen — light theme, matches Friends/Account/Tournaments ===== */
-#circlesScreen{ background:#f2f0ee !important; }
+#circlesScreen{ background:#f2f0ee !important; flex-direction: column; }
 #circlesScreen h2{ color:#1a1a1a; font-size:20px; font-weight:700; margin:14px 0 6px; }
 #circlesScreen .sub{ color:#8a8580; }
 #circlesScreen .fieldLabel{ color: var(--themeOrange, #FF7A1A); }
