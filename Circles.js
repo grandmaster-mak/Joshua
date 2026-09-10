@@ -771,8 +771,9 @@ function listenForMyCircleSessions(){
         if(!c || !c.members || !c.members[currentUser.uid]) return;
         if(!c.pendingSession || c.pendingSession.status !== "confirmed") return;
         if(!c.pendingSession.sessionId) return;
+        if(c.pendingSession.sitOutUid === currentUser.uid) return; // sitting out this round — no gathering/game for them
 
-        maybeJoinMyCirclePairing(c.pendingSession.sessionId);
+        showCircleGatheringScreen(c.pendingSession.sessionId);
 
     });
 
