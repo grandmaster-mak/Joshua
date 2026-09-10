@@ -50,6 +50,11 @@ function updateMansionOnGameResult(myResult){
     if(typeof currentUser === "undefined" || !currentUser || typeof db === "undefined" || !db) return;
     if(myResult !== "win" && myResult !== "loss") return; // draws don't move the fence
 
+    // Mansion progress now only comes from real Circle sessions, not
+    // any online win — see activeCircleSessionId in circles.js.
+    if(typeof isActiveCircleSessionGame !== "function" || !isActiveCircleSessionGame()) return;
+    if(typeof finalizeCircleSessionGameResult === "function") finalizeCircleSessionGameResult(myResult);
+
     const ref = db.ref("users/" + currentUser.uid + "/public/mansion/fenceStage");
 
     ref.transaction(function(current){
