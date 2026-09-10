@@ -372,7 +372,18 @@
 
     </div>
 </div>
-
+<!-- MANSION VIEWER SCREEN -->
+<div id="mansionScreen" style="display:none; position:fixed; inset:0; z-index:200; flex-direction:column; background:#f2f0ee; max-width:420px; margin:0 auto; overflow-y:auto;">
+    <div class="accountOrangeHeader" style="padding:24px 20px 20px; display:flex; align-items:center; gap:14px;">
+        <button onclick="closeMyMansion()" style="width:auto; margin:0; background:#fff; border:none; border-radius:14px; width:42px; height:42px; color:#1a1a1a; font-size:20px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15); flex-shrink:0;">←</button>
+        <h2 style="color:#fff; margin:0; font-size:22px; font-weight:800;">🏛️ My Mansion</h2>
+    </div>
+    <div style="padding:20px;">
+        <img id="mansionViewerImage" src="" alt="Mansion" style="width:100%; border-radius:16px; box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+        <h3 id="mansionViewerLabel" style="text-align:center; margin-top:14px; color:#1a1a1a;"></h3>
+        <p id="mansionViewerProgress" class="sub" style="text-align:center;"></p>
+    </div>
+</div>
         <!-- HOME SCREEN -->
         <div id="homeScreen" class="screen">
 
