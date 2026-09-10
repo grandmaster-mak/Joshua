@@ -54,7 +54,8 @@
 // (script.js), startOnlineGame/hideAllScreensBeforeGame (script.js /
 // multiplayer.js), showInfoPopup, DEFAULT_AVATAR_SRC.
 // ============================================================
-
+let activeCircleSessionId = null;
+let activeCirclePairingId = null;
 let currentViewedCircleId = null;
 let circleDetailRef = null;
 let joinedCircleSessionIds = {}; // guards against double-joining the same session if the listener fires more than once
