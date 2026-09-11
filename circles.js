@@ -60,6 +60,66 @@ let circleDetailRef = null;
 let joinedCircleSessionIds = {}; // guards against double-joining the same session if the listener fires more than once
 let shownGatheringSessionIds = {}; // guards against replaying the gathering animation if the listener fires more than once
 
+// ---- Avatar selection ("Choose Your Character") ----
+const AVATAR_OPTIONS = [
+    { id: 1, image: "pieces/avatar_1.jpg" },
+    { id: 2, image: "pieces/avatar_2.jpg" },
+    { id: 3, image: "pieces/avatar_3.jpg" },
+    { id: 4, image: "pieces/avatar_4.jpg" },
+    { id: 5, image: "pieces/avatar_5.jpg" },
+    { id: 6, image: "pieces/avatar_6.jpg" }
+];
+
+function cacheMyAvatarId(id){
+    try{ localStorage.setItem("cachedAvatarId", JSON.stringify(id)); }catch(e){}
+}
+function loadCachedMyAvatarId(){
+    try{
+        const v = JSON.parse(localStorage.getItem("cachedAvatarId") || "null");
+        return (typeof v === "number") ? v : null;
+    }catch(e){ return null; }
+}
+
+function openAvatarPicker(){
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("avatarPickerScreen").style.display = "flex";
+    history.pushState({ screen: "avatarPicker" }, "", "#avatarPicker");
+    renderAvatarPickerGrid();
+}
+
+function closeAvatarPicker(){
+    document.getElementById("avatarPickerScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "flex";
+    if(history.state && history.state.screen === "avatarPicker"){
+        history.back();
+    }
+}
+
+function renderAvatarPickerGrid(){
+    const grid = document.getElementById("avatarPickerGrid");
+    if(!grid) return;
+    const currentId = loadCachedMyAvatarId();
+    grid.innerHTML = "";
+    AVATAR_OPTIONS.forEach(function(opt){
+        const card = document.createElement("div");
+        card.className = "avatarPickerCard" + (opt.id === currentId ? " avatarPickerCardActive" : "");
+        card.innerHTML =
+            '<img src="' + opt.image + '" alt="Avatar ' + opt.id + '">' +
+            (opt.id === currentId ? '<span class="avatarPickerCheck">✓</span>' : '');
+        card.onclick = function(){ selectMyAvatar(opt.id); };
+        grid.appendChild(card);
+    });
+}
+
+function selectMyAvatar(avatarId){
+    cacheMyAvatarId(avatarId);
+    renderAvatarPickerGrid();
+    if(!db || !currentUser) return;
+    db.ref("users/" + currentUser.uid + "/public/avatarId").set(avatarId).catch(function(err){
+        console.error("Failed to save avatar choice:", err.message);
+    });
+}
+
 // Set while the player is actually inside a Circle-session game, so
 // mansion.js knows this particular win/loss counts toward the Mansion
 // (as opposed to a Quick Match, tournament game, etc).
@@ -737,25 +797,41 @@ function startCircleSessionTransaction(circleId, sitOutUid){
                 };
             }
 
-            const participantsInfo = {};
-            shuffled.forEach(function(uid){
-                participantsInfo[uid] = {
-                    username: (c.members[uid] || {}).username || "Player",
-                    flag: (c.members[uid] || {}).flag || ""
-                };
+            const avatarFetches = shuffled.map(function(uid){
+                return db.ref("users/" + uid + "/public/avatarId").once("value").then(function(snap){
+                    return { uid: uid, avatarId: snap.val() || null };
+                }).catch(function(){
+                    return { uid: uid, avatarId: null };
+                });
             });
 
-            const sessionId = db.ref("circleSessions").push().key;
+            Promise.all(avatarFetches).then(function(avatarResults){
 
-            const updates = {};
-            updates["circleSessions/" + sessionId] = { circleId: circleId, startedAt: Date.now(), pairings: pairings, participants: participantsInfo };
-            updates["circles/" + circleId + "/pendingSession/status"] = "confirmed";
-            updates["circles/" + circleId + "/pendingSession/sessionId"] = sessionId;
-            updates["circles/" + circleId + "/pendingSession/sitOutUid"] = sitOutUid || null;
-            updates["circles/" + circleId + "/lastSessionId"] = sessionId;
+                const avatarByUid = {};
+                avatarResults.forEach(function(r){ avatarByUid[r.uid] = r.avatarId; });
 
-            db.ref().update(updates).catch(function(err){
-                showInfoPopup("⚠️ Error", "Could not save the session: " + err.message);
+                const participantsInfo = {};
+                shuffled.forEach(function(uid){
+                    participantsInfo[uid] = {
+                        username: (c.members[uid] || {}).username || "Player",
+                        flag: (c.members[uid] || {}).flag || "",
+                        avatarId: avatarByUid[uid] || null
+                    };
+                });
+
+                const sessionId = db.ref("circleSessions").push().key;
+
+                const updates = {};
+                updates["circleSessions/" + sessionId] = { circleId: circleId, startedAt: Date.now(), pairings: pairings, participants: participantsInfo };
+                updates["circles/" + circleId + "/pendingSession/status"] = "confirmed";
+                updates["circles/" + circleId + "/pendingSession/sessionId"] = sessionId;
+                updates["circles/" + circleId + "/pendingSession/sitOutUid"] = sitOutUid || null;
+                updates["circles/" + circleId + "/lastSessionId"] = sessionId;
+
+                db.ref().update(updates).catch(function(err){
+                    showInfoPopup("⚠️ Error", "Could not save the session: " + err.message);
+                });
+
             });
 
         });
@@ -881,9 +957,6 @@ function showCircleGatheringScreen(sessionId){
     if(typeof hideAllScreensBeforeGame === "function") hideAllScreensBeforeGame();
     document.getElementById("circleGatheringScreen").style.display = "flex";
 
-    const tablesEl = document.getElementById("circleGatheringTables");
-    if(tablesEl) tablesEl.innerHTML = '<p class="sub" style="text-align:center;">Gathering everyone...</p>';
-
     db.ref("circleSessions/" + sessionId).once("value").then(function(snap){
 
         const session = snap.val();
@@ -950,11 +1023,16 @@ function renderCircleGatheringTables(session){
 }
 
 function buildGatheringAvatarHtml(info, delayIndex){
-    const initial = (info.username || "?").charAt(0).toUpperCase();
     const delay = (delayIndex * 0.15).toFixed(2);
+    const avatarOption = AVATAR_OPTIONS.find(function(a){ return a.id === info.avatarId; });
+
+    const visualHtml = avatarOption
+        ? '<img class="circleGatheringAvatarImg" src="' + avatarOption.image + '" alt="">'
+        : '<div class="circleGatheringAvatarCircle">' + escapeHtml((info.username || "?").charAt(0).toUpperCase()) + '</div>';
+
     return (
         '<div class="circleGatheringAvatarWrap" style="animation-delay:' + delay + 's;">' +
-            '<div class="circleGatheringAvatarCircle">' + escapeHtml(initial) + '</div>' +
+            visualHtml +
             '<span class="circleGatheringAvatarName">' + escapeHtml(info.flag || "") + ' ' + escapeHtml(info.username) + '</span>' +
         '</div>'
     );
