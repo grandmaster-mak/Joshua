@@ -4455,3 +4455,18 @@ html, body {
     text-align:center; color:#c9b27a; font-size:13px;
     margin:6px 0 24px; letter-spacing:0.3px;
 }
+.avatarPickerCard{
+    position:relative; border-radius:14px; overflow:hidden; cursor:pointer;
+    border:2px solid rgba(255,255,255,0.08); aspect-ratio:1/2;
+}
+.avatarPickerCard img{ width:100%; height:100%; object-fit:cover; display:block; }
+.avatarPickerCardActive{ border-color:#FF7A1A; box-shadow:0 0 0 2px rgba(255,122,26,0.4); }
+.avatarPickerCheck{
+    position:absolute; top:6px; right:6px; width:22px; height:22px;
+    background:#FF7A1A; color:#fff; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;
+}
+.circleGatheringAvatarImg{
+    width:56px; height:80px; object-fit:cover; border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.4);
+}
