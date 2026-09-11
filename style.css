@@ -4457,9 +4457,12 @@ html, body {
 }
 .avatarPickerCard{
     position:relative; border-radius:14px; overflow:hidden; cursor:pointer;
-    border:2px solid rgba(255,255,255,0.08); aspect-ratio:1/2;
+    border:2px solid rgba(255,255,255,0.08);
+    height:220px;
+    display:flex; align-items:flex-end; justify-content:center;
+    background:rgba(255,255,255,0.03);
 }
-.avatarPickerCard img{ width:100%; height:100%; object-fit:cover; display:block; }
+.avatarPickerCard img{ width:100%; height:100%; object-fit:contain; display:block; }
 .avatarPickerCardActive{ border-color:#FF7A1A; box-shadow:0 0 0 2px rgba(255,122,26,0.4); }
 .avatarPickerCheck{
     position:absolute; top:6px; right:6px; width:22px; height:22px;
