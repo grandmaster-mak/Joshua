@@ -881,6 +881,9 @@ function showCircleGatheringScreen(sessionId){
     if(typeof hideAllScreensBeforeGame === "function") hideAllScreensBeforeGame();
     document.getElementById("circleGatheringScreen").style.display = "flex";
 
+    const tablesEl = document.getElementById("circleGatheringTables");
+    if(tablesEl) tablesEl.innerHTML = '<p class="sub" style="text-align:center;">Gathering everyone...</p>';
+
     db.ref("circleSessions/" + sessionId).once("value").then(function(snap){
 
         const session = snap.val();
