@@ -1254,8 +1254,15 @@ function executePremovesForCurrentPlayer(){
     if(!movingPiece || !getLegalMoves(movingPiece, nextPremove.fromR, nextPremove.fromC)
         .some(function(m){ return m.r === nextPremove.toR && m.c === nextPremove.toC; }))
     {
+        const cancelledCount = premoveQueue.filter(function(p){ return p.color === currentPlayer; }).length;
         premoveQueue = premoveQueue.filter(function(p){ return p.color !== currentPlayer; });
         createBoard();
+        if(cancelledCount > 0 && typeof showInfoPopup === "function"){
+            showInfoPopup(
+                "⚠️ Premoves Cancelled",
+                "Your queued premove" + (cancelledCount > 1 ? "s" : "") + " no longer matched the board (likely because you're in check) and " + (cancelledCount > 1 ? "were" : "was") + " cancelled."
+            );
+        }
         return;
     }
 
