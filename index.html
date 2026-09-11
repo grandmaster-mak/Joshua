@@ -1886,6 +1886,14 @@
     <div id="circleGatheringTables" style="display:flex; flex-direction:column; gap:20px; width:100%;"></div>
     <p id="circleGatheringCountdown" class="sub" style="margin-top:24px; font-weight:700; font-size:16px;"></p>
 </div>
+    <!-- AVATAR PICKER SCREEN -->
+<div id="avatarPickerScreen" style="display:none; flex-direction:column; position:fixed; inset:0; z-index:200; background:#0f1f1c; color:#eef0f3; max-width:420px; margin:0 auto; overflow-y:auto;">
+    <div style="display:flex; align-items:center; gap:14px; padding:18px 20px;">
+        <button onclick="closeAvatarPicker()" style="width:42px; height:42px; margin:0; padding:0; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#eef0f3; font-size:20px; cursor:pointer;">←</button>
+        <h2 style="margin:0; font-size:20px;">Choose Your Character</h2>
+    </div>
+    <div id="avatarPickerGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:0 16px 24px;"></div>
+</div>
 
     <!-- Firebase & Scripts -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
