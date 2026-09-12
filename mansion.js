@@ -134,3 +134,24 @@ function renderMansionViewer(stage){
     if(progress) progress.textContent = "Stage " + (safeStage + 1) + " of " + MANSION_FENCE_STAGES.length;
 
 }
+function openMemberMansion(uid, username){
+
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("mansionScreen").style.display = "flex";
+    history.pushState({ screen: "mansion" }, "", "#mansion");
+
+    const titleEl = document.querySelector(".mansionOrnateTitle");
+    if(titleEl) titleEl.textContent = username ? username + "'s Mansion" : "Mansion";
+
+    renderMansionViewer(0);
+
+    if(!db) return;
+
+    db.ref("users/" + uid + "/public/mansion/fenceStage").once("value").then(function(snap){
+        const stage = snap.val() || 0;
+        renderMansionViewer(stage);
+    }).catch(function(err){
+        console.error("Failed to load member's mansion:", err.message);
+    });
+
+}
