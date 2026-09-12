@@ -59,7 +59,8 @@ let currentViewedCircleId = null;
 let circleDetailRef = null;
 let joinedCircleSessionIds = {}; // guards against double-joining the same session if the listener fires more than once
 let shownGatheringSessionIds = {}; // guards against replaying the gathering animation if the listener fires more than once
-
+let circleGatheringInterval = null;
+let circleGatheringActiveSessionId = null;
 // ---- Avatar selection ("Choose Your Character") ----
 const AVATAR_OPTIONS = [
     { id: 1, image: "pieces/avatar_1.jpg" },
