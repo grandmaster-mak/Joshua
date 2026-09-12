@@ -404,7 +404,7 @@ function acceptCircleInvite(circleId){
     }).catch(function(err){
         showInfoPopup("⚠️ Error", "Could not join Circle: " + err.message);
     });
-
+}
 function declineCircleInvite(circleId){
     if(!db || !currentUser) return;
     db.ref("users/" + currentUser.uid + "/private/circleInvitesIncoming/" + circleId).remove();
