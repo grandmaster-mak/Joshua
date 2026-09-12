@@ -1000,15 +1000,17 @@ function showCircleGatheringScreen(sessionId){
 
         renderCircleGatheringTables(session);
 
+        circleGatheringActiveSessionId = sessionId;
+
         let remaining = 8;
         const countdownEl = document.getElementById("circleGatheringCountdown");
         if(countdownEl) countdownEl.textContent = "Taking your seats in " + remaining + "...";
 
-        const interval = setInterval(function(){
+        circleGatheringInterval = setInterval(function(){
             remaining--;
             if(countdownEl) countdownEl.textContent = remaining > 0 ? "Taking your seats in " + remaining + "..." : "Let's play!";
             if(remaining <= 0){
-                clearInterval(interval);
+                clearInterval(circleGatheringInterval);
                 setTimeout(function(){
                     document.getElementById("circleGatheringScreen").style.display = "none";
                     maybeJoinMyCirclePairing(sessionId);
