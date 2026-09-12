@@ -546,6 +546,7 @@ function renderCircleDetail(circleId, c){
     membersBox.innerHTML = "";
     memberUids.forEach(function(uid){
         const m = c.members[uid];
+        const safeName = escapeHtml(m.username).replace(/"/g, "&quot;");
         const row = document.createElement("div");
         row.className = "friendCard";
         row.innerHTML =
@@ -553,7 +554,8 @@ function renderCircleDetail(circleId, c){
                 '<div class="friendInfo">' +
                     '<span class="friendName">' + escapeHtml(m.flag || "") + ' ' + escapeHtml(m.username) + (uid === c.createdBy ? " 👑" : "") + '</span>' +
                 '</div>' +
-            '</div>';
+            '</div>' +
+            '<button class="btnSecondary" style="width:auto; padding:8px 12px; font-size:12px;" data-uid="' + uid + '" data-name="' + safeName + '" onclick="openMemberMansion(this.dataset.uid, this.dataset.name)">🏛️ Mansion</button>';
         membersBox.appendChild(row);
     });
 
