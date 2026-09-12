@@ -968,7 +968,7 @@ function showCircleGatheringScreen(sessionId){
 
         renderCircleGatheringTables(session);
 
-        let remaining = 4;
+        let remaining = 8;
         const countdownEl = document.getElementById("circleGatheringCountdown");
         if(countdownEl) countdownEl.textContent = "Taking your seats in " + remaining + "...";
 
