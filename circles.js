@@ -63,12 +63,12 @@ let circleGatheringInterval = null;
 let circleGatheringActiveSessionId = null;
 // ---- Avatar selection ("Choose Your Character") ----
 const AVATAR_OPTIONS = [
-    { id: 1, image: "pieces/avatar_1.jpg" },
-    { id: 2, image: "pieces/avatar_2.jpg" },
-    { id: 3, image: "pieces/avatar_3.jpg" },
-    { id: 4, image: "pieces/avatar_4.jpg" },
-    { id: 5, image: "pieces/avatar_5.jpg" },
-    { id: 6, image: "pieces/avatar_6.jpg" }
+    { id: 1, image: "pieces/avatar_1.jpg", gatherBase: "vatar_1" },
+    { id: 2, image: "pieces/avatar_2.jpg", gatherBase: "vatar_2" },
+    { id: 3, image: "pieces/avatar_3.jpg", gatherBase: "vatar_3" },
+    { id: 4, image: "pieces/avatar_4.jpg", gatherBase: "vatar_4" },
+    { id: 5, image: "pieces/avatar_5.jpg", gatherBase: "vatar_5" },
+    { id: 6, image: "pieces/avatar_6.jpg", gatherBase: "vatar_6" }
 ];
 
 function cacheMyAvatarId(id){
