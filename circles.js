@@ -1013,7 +1013,7 @@ function renderCircleGatheringTables(session){
         tableEl.className = "circleGatheringTable";
         tableEl.innerHTML =
             buildGatheringAvatarHtml(whiteInfo, delayIndex++) +
-            '<div class="circleGatheringBoardIcon">♟️</div>' +
+            '<div class="circleGatheringBoardIcon"><span class="iconChess">♟️</span><span class="iconHandshake">🤝</span></div>' +
             buildGatheringAvatarHtml(blackInfo, delayIndex++);
 
         container.appendChild(tableEl);
