@@ -93,6 +93,9 @@ function openMyMansion(){
     document.getElementById("mansionScreen").style.display = "flex";
     history.pushState({ screen: "mansion" }, "", "#mansion");
 
+    const titleEl = document.querySelector(".mansionOrnateTitle");
+    if(titleEl) titleEl.textContent = "My Mansion";
+
     // Instant paint from cache, same pattern as everything else in this
     // app (Recent Games, Friends, Puzzles) — zero network wait.
     renderMansionViewer(loadCachedMansionStage());
