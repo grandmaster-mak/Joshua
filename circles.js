@@ -1062,7 +1062,7 @@ function renderCircleGatheringTables(session){
     handshake.style.left = "50%";
     handshake.style.top = "48%";
     stage.appendChild(handshake);
-    setTimeout(function(){ handshake.classList.add("show"); }, 6200);
+    setTimeout(function(){ handshake.classList.add("show"); }, 12800);
 
     if(othersList){
         const otherPids = Object.keys(pairings).filter(function(pid){ return pid !== myPid; });
@@ -1131,6 +1131,6 @@ function createGatheringActor(stage, info, pos){
         const frames = actor.querySelectorAll("img");
         frames.forEach(function(f){ f.classList.remove("frameActive"); });
         if(frames[0]) frames[0].classList.add("frameActive");
-    }, 6000);
+    }, 12500);
 
 }
