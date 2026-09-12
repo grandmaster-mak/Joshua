@@ -1881,11 +1881,15 @@
     <p id="mansionViewerProgress" class="mansionOrnateProgress"></p>
 
 </div>
-    <div id="circleGatheringScreen" style="display:none; position:fixed; inset:0; z-index:300; flex-direction:column; align-items:center; justify-content:center; background: linear-gradient(rgba(5,10,8,0.72), rgba(5,10,8,0.85)), url('pieces/gathering_background.jpg') center/cover no-repeat; color:#eef0f3; max-width:420px; margin:0 auto; padding:24px; box-sizing:border-box; overflow-y:auto;">
-    <h2 style="margin-bottom:4px;">🏛️ Everyone's Gathering</h2>
-    <p class="sub" style="margin-bottom:20px;">Taking your seats at the boards...</p>
-    <div id="circleGatheringTables" style="display:flex; flex-direction:column; gap:20px; width:100%;"></div>
-    <p id="circleGatheringCountdown" class="sub" style="margin-top:24px; font-weight:700; font-size:16px;"></p>
+    <div id="circleGatheringScreen" style="display:none; position:fixed; inset:0; z-index:300; flex-direction:column; background:#050a08; max-width:420px; margin:0 auto; overflow-y:auto;">
+    <div style="padding:16px 20px 4px; text-align:center; flex-shrink:0;">
+        <h2 style="margin:0 0 4px; color:#eef0f3;">🏛️ Everyone's Gathering</h2>
+        <p class="sub" id="circleGatheringCountdown" style="margin:0;"></p>
+    </div>
+    <div id="circleGatheringStage" style="position:relative; width:100%; aspect-ratio:2/3; overflow:hidden;">
+        <img src="pieces/gathering_background.jpg" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">
+    </div>
+    <div id="circleGatheringOthersList" style="padding:14px 20px 24px;"></div>
 </div>
     <!-- AVATAR PICKER SCREEN -->
 <div id="avatarPickerScreen" style="display:none; flex-direction:column; position:fixed; inset:0; z-index:200; background: repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 40px), radial-gradient(circle at 25% 15%, rgba(45,212,191,0.14), transparent 50%), radial-gradient(circle at 85% 90%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(160deg, #0f1f1c 0%, #0a1512 100%); color:#eef0f3; max-width:420px; margin:0 auto; overflow-y:auto;">
