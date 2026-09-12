@@ -221,6 +221,7 @@ function createCircle(){
         createdBy: currentUser.uid,
         createdAt: Date.now(),
         isPublic: !!isPublic,
+        maxMembers: 10,
         members: memberEntry
     }).then(function(){
         if(nameInput) nameInput.value = "";
