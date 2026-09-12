@@ -1002,7 +1002,7 @@ function showCircleGatheringScreen(sessionId){
 
         circleGatheringActiveSessionId = sessionId;
 
-        let remaining = 8;
+        let remaining = 13;
         const countdownEl = document.getElementById("circleGatheringCountdown");
         if(countdownEl) countdownEl.textContent = "Taking your seats in " + remaining + "...";
 
