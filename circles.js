@@ -1050,10 +1050,10 @@ function renderCircleGatheringTables(session){
     });
 
     if(myInfo){
-        createGatheringActor(stage, myInfo, { startLeft: 78, startTop: 118, endLeft: 66, endTop: 52 });
+        createGatheringActor(stage, myInfo, { startLeft: 78, startTop: -20, endLeft: 66, endTop: 52 });
     }
     if(opponentInfo){
-        createGatheringActor(stage, opponentInfo, { startLeft: 22, startTop: 118, endLeft: 34, endTop: 52 });
+        createGatheringActor(stage, opponentInfo, { startLeft: 22, startTop: -20, endLeft: 34, endTop: 52 });
     }
 
     const handshake = document.createElement("div");
