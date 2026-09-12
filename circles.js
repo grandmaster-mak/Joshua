@@ -1091,11 +1091,11 @@ function createGatheringActor(stage, info, pos){
     actor.style.top = pos.startTop + "%";
 
     if(avatarOption){
-        const base = avatarOption.image.replace(/\.jpg$/, "");
+        const base = "pieces/" + avatarOption.gatherBase;
         actor.innerHTML =
-            '<img class="frameActive" src="' + base + '_a.jpg" alt="">' +
-            '<img src="' + base + '_b.jpg" alt="">' +
-            '<img src="' + base + '_c.jpg" alt="">' +
+            '<img class="frameActive" src="' + base + '_a.png" alt="">' +
+            '<img src="' + base + '_b.png" alt="">' +
+            '<img src="' + base + '_c.png" alt="">' +
             '<span class="circleGatheringActorName">' + escapeHtml(info.flag || "") + ' ' + escapeHtml(info.username) + '</span>';
     }else{
         actor.innerHTML =
