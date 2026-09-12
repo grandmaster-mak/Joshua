@@ -994,46 +994,109 @@ function showCircleGatheringScreen(sessionId){
 
 function renderCircleGatheringTables(session){
 
-    const container = document.getElementById("circleGatheringTables");
-    if(!container) return;
+    const stage = document.getElementById("circleGatheringStage");
+    const othersList = document.getElementById("circleGatheringOthersList");
+    if(!stage) return;
 
-    container.innerHTML = "";
+    stage.querySelectorAll(".circleGatheringAvatarActor, .circleGatheringHandshakeIcon").forEach(function(el){ el.remove(); });
 
     const participants = session.participants || {};
     const pairings = session.pairings || {};
-    let delayIndex = 0;
+
+    let myPid = null, myInfo = null, opponentInfo = null;
 
     Object.keys(pairings).forEach(function(pid){
-
         const p = pairings[pid];
-        const whiteInfo = participants[p.white] || { username: "Player", flag: "" };
-        const blackInfo = participants[p.black] || { username: "Player", flag: "" };
-
-        const tableEl = document.createElement("div");
-        tableEl.className = "circleGatheringTable";
-        tableEl.innerHTML =
-            buildGatheringAvatarHtml(whiteInfo, delayIndex++) +
-            '<div class="circleGatheringBoardIcon"><span class="iconChess">♟️</span><span class="iconHandshake">🤝</span></div>' +
-            buildGatheringAvatarHtml(blackInfo, delayIndex++);
-
-        container.appendChild(tableEl);
-
+        if(p.white === currentUser.uid || p.black === currentUser.uid){
+            myPid = pid;
+            const oppUid = (p.white === currentUser.uid) ? p.black : p.white;
+            myInfo = participants[currentUser.uid] || { username: currentUsername, flag: currentUserFlag, avatarId: loadCachedMyAvatarId() };
+            opponentInfo = participants[oppUid] || { username: "Player", flag: "" };
+        }
     });
+
+    if(myInfo){
+        createGatheringActor(stage, myInfo, { startLeft: 78, startTop: 118, endLeft: 66, endTop: 52 });
+    }
+    if(opponentInfo){
+        createGatheringActor(stage, opponentInfo, { startLeft: 22, startTop: 118, endLeft: 34, endTop: 52 });
+    }
+
+    const handshake = document.createElement("div");
+    handshake.className = "circleGatheringHandshakeIcon";
+    handshake.textContent = "🤝";
+    handshake.style.left = "50%";
+    handshake.style.top = "48%";
+    stage.appendChild(handshake);
+    setTimeout(function(){ handshake.classList.add("show"); }, 6200);
+
+    if(othersList){
+        const otherPids = Object.keys(pairings).filter(function(pid){ return pid !== myPid; });
+        if(otherPids.length === 0){
+            othersList.innerHTML = "";
+        }else{
+            let html = '<p class="sub" style="margin-bottom:6px;">Also playing right now:</p>';
+            otherPids.forEach(function(pid){
+                const p = pairings[pid];
+                const wName = (participants[p.white] || {}).username || "Player";
+                const bName = (participants[p.black] || {}).username || "Player";
+                html += '<p class="sub" style="margin:2px 0;">' + escapeHtml(wName) + ' vs ' + escapeHtml(bName) + '</p>';
+            });
+            othersList.innerHTML = html;
+        }
+    }
 
 }
 
-function buildGatheringAvatarHtml(info, delayIndex){
-    const delay = (delayIndex * 0.15).toFixed(2);
+function createGatheringActor(stage, info, pos){
+
     const avatarOption = AVATAR_OPTIONS.find(function(a){ return a.id === info.avatarId; });
+    const actor = document.createElement("div");
+    actor.className = "circleGatheringAvatarActor";
+    actor.style.left = pos.startLeft + "%";
+    actor.style.top = pos.startTop + "%";
 
-    const visualHtml = avatarOption
-        ? '<img class="circleGatheringAvatarImg" src="' + avatarOption.image + '" alt="">'
-        : '<div class="circleGatheringAvatarCircle">' + escapeHtml((info.username || "?").charAt(0).toUpperCase()) + '</div>';
+    if(avatarOption){
+        const base = avatarOption.image.replace(/\.jpg$/, "");
+        actor.innerHTML =
+            '<img class="frameActive" src="' + base + '_a.jpg" alt="">' +
+            '<img src="' + base + '_b.jpg" alt="">' +
+            '<img src="' + base + '_c.jpg" alt="">' +
+            '<span class="circleGatheringActorName">' + escapeHtml(info.flag || "") + ' ' + escapeHtml(info.username) + '</span>';
+    }else{
+        actor.innerHTML =
+            '<div style="width:100%;height:100%;border-radius:10px;background:linear-gradient(135deg,#3b7bff,#2158d6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;">' +
+                escapeHtml((info.username || "?").charAt(0).toUpperCase()) +
+            '</div>' +
+            '<span class="circleGatheringActorName">' + escapeHtml(info.flag || "") + ' ' + escapeHtml(info.username) + '</span>';
+    }
 
-    return (
-        '<div class="circleGatheringAvatarWrap" style="animation-delay:' + delay + 's;">' +
-            visualHtml +
-            '<span class="circleGatheringAvatarName">' + escapeHtml(info.flag || "") + ' ' + escapeHtml(info.username) + '</span>' +
-        '</div>'
-    );
+    stage.appendChild(actor);
+
+    let walkInterval = null;
+    if(avatarOption){
+        const frames = actor.querySelectorAll("img");
+        const order = [0, 1, 0, 2];
+        let step = 0;
+        walkInterval = setInterval(function(){
+            frames.forEach(function(f){ f.classList.remove("frameActive"); });
+            frames[order[step % order.length]].classList.add("frameActive");
+            step++;
+        }, 180);
+    }
+
+    requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+            actor.style.left = pos.endLeft + "%";
+            actor.style.top = pos.endTop + "%";
+        });
+    });
+
+    setTimeout(function(){
+        if(walkInterval) clearInterval(walkInterval);
+        const frames = actor.querySelectorAll("img");
+        frames.forEach(function(f){ f.classList.remove("frameActive"); });
+        if(frames[0]) frames[0].classList.add("frameActive");
+    }, 6000);
+
 }
