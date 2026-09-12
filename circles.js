@@ -372,11 +372,11 @@ function acceptCircleInvite(circleId){
 
     db.ref("circles/" + circleId).transaction(function(c){
         if(!c) return c;
-        if(!c.isPublic) return c; // not joinable without a direct invite
-        if(c.members && c.members[currentUser.uid]) return c; // already a member — no-op
 
         const currentCount = c.members ? Object.keys(c.members).length : 0;
-        if(currentCount >= (c.maxMembers || 10)) return c; // full — no-op
+        if(!c.members || !c.members[currentUser.uid]){
+            if(currentCount >= (c.maxMembers || 10)) return c; // full — no-op
+        }
 
         if(!c.members) c.members = {};
         c.members[currentUser.uid] = {
@@ -399,10 +399,11 @@ function acceptCircleInvite(circleId){
             return;
         }
 
+        db.ref("users/" + currentUser.uid + "/private/circleInvitesIncoming/" + circleId).remove();
         openCircleDetail(circleId);
 
     }).catch(function(err){
-        showInfoPopup("⚠️ Error", "Could not join Circle: " + err.message);
+        showInfoPopup("⚠️ Error", "Could not accept invite: " + err.message);
     });
 }
 function declineCircleInvite(circleId){
