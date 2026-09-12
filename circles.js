@@ -372,6 +372,12 @@ function acceptCircleInvite(circleId){
 
     db.ref("circles/" + circleId).transaction(function(c){
         if(!c) return c;
+        if(!c.isPublic) return c; // not joinable without a direct invite
+        if(c.members && c.members[currentUser.uid]) return c; // already a member — no-op
+
+        const currentCount = c.members ? Object.keys(c.members).length : 0;
+        if(currentCount >= (c.maxMembers || 10)) return c; // full — no-op
+
         if(!c.members) c.members = {};
         c.members[currentUser.uid] = {
             username: currentUsername,
@@ -380,17 +386,24 @@ function acceptCircleInvite(circleId){
         };
         return c;
     }).then(function(result){
-        if(!result.committed || !result.snapshot.val()){
+
+        const c = result.snapshot.val();
+
+        if(!result.committed || !c){
             showInfoPopup("⚠️ Circle Unavailable", "This Circle no longer exists.");
             return;
         }
-        db.ref("users/" + currentUser.uid + "/private/circleInvitesIncoming/" + circleId).remove();
-        openCircleDetail(circleId);
-    }).catch(function(err){
-        showInfoPopup("⚠️ Error", "Could not accept invite: " + err.message);
-    });
 
-}
+        if(!c.members || !c.members[currentUser.uid]){
+            showInfoPopup("🚪 Circle Full", "This Circle already has its maximum of " + (c.maxMembers || 10) + " people.");
+            return;
+        }
+
+        openCircleDetail(circleId);
+
+    }).catch(function(err){
+        showInfoPopup("⚠️ Error", "Could not join Circle: " + err.message);
+    });
 
 function declineCircleInvite(circleId){
     if(!db || !currentUser) return;
