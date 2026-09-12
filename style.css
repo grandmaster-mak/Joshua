@@ -4460,7 +4460,7 @@ html, body {
 }
 .circleGatheringAvatarActor{
     position:absolute;
-    width:16%;
+    width:19%;
     aspect-ratio:1/2.2;
     transition: left 6s ease-in-out, top 6s ease-in-out;
     z-index:5;
